@@ -6,7 +6,15 @@ import type { Pet } from '../types/pet';
 import type { User } from '../context/AuthContext';
 import type { Report, ReportReason } from '../types/admin';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE = (import.meta as ImportMetaWithEnv).env.VITE_API_URL || 'http://localhost:8000';
+
+interface ImportMetaWithEnv extends ImportMeta {
+  readonly env: {
+    readonly VITE_API_URL?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    readonly [key: string]: any;
+  };
+}
 
 function getToken(): string | null {
   return localStorage.getItem('pet_finder_token');
@@ -311,7 +319,7 @@ export const reportsApi = {
     const q = new URLSearchParams();
     if (params) Object.entries(params).forEach(([k, v]) => v != null && q.set(k, String(v)));
     return api<ReportResponse[]>(`/reports?${q}`).then((arr) =>
-      arr.map((r) => ({
+      arr.map<Report>((r) => ({
         id: r.id,
         petId: r.pet_id,
         reporterId: r.reporter_id,
@@ -319,7 +327,7 @@ export const reportsApi = {
         reason: r.reason as ReportReason,
         description: r.description,
         createdAt: new Date(r.created_at),
-        status: r.status,
+        status: r.status as Report['status'],
         reviewedBy: r.reviewed_by,
         reviewedAt: r.reviewed_at ? new Date(r.reviewed_at) : undefined,
         resolution: r.resolution,

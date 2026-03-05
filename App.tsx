@@ -45,7 +45,11 @@ function MainApp() {
       petsApi.list().then(setPets).catch(() => setPets([])),
       usersApi.list().then(setUsers).catch(() => setUsers([])),
       reportsApi.list().then(setReports).catch(() => setReports([])),
-    ]).finally(() => { if (showLoading) setDataLoading(false); });
+    ])
+      .then(() => {})
+      .finally(() => {
+        if (showLoading) setDataLoading(false);
+      });
   };
 
   useEffect(() => {
