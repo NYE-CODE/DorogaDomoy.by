@@ -49,6 +49,10 @@ def list_pets(
     is_archived: Optional[bool] = Query(None),
     search: Optional[str] = Query(None),
     author_id: Optional[str] = Query(None),
+    north: Optional[float] = Query(None),
+    south: Optional[float] = Query(None),
+    east: Optional[float] = Query(None),
+    west: Optional[float] = Query(None),
     db: Session = Depends(get_db),
     user: Optional[User] = Depends(get_current_user),
 ):
@@ -71,6 +75,13 @@ def list_pets(
         )
     if author_id:
         q = q.filter(Pet.author_id == author_id)
+    if None not in (north, south, east, west):
+        q = q.filter(
+            Pet.location_lat >= south,
+            Pet.location_lat <= north,
+            Pet.location_lng >= west,
+            Pet.location_lng <= east,
+        )
     pets = q.order_by(Pet.published_at.desc()).all()
     return [pet_to_response(p) for p in pets]
 
