@@ -155,7 +155,7 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                         type="tel"
                         value={formData.phone}
                         onChange={e => setFormData({...formData, phone: e.target.value})}
-                        placeholder="+380..."
+                        placeholder="+375291234567"
                         className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
                       />
                     </div>

@@ -54,5 +54,5 @@ export const formatDate = (date: Date): string => {
   if (diffDays < 7) return `${diffDays} дн. назад`;
   if (diffDays < 30) return `${Math.floor(diffDays / 7)} нед. назад`;
   
-  return date.toLocaleDateString('ru-RU');
+  return date.toLocaleDateString('ru-BY');
 };

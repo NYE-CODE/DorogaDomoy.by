@@ -205,7 +205,7 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-                  placeholder="email@example.com"
+                  placeholder="email@example.by"
                 />
               </div>
             </div>
@@ -335,7 +335,7 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
                   value={phone}
                   onChange={e => setPhone(e.target.value)}
                   className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-                  placeholder="+380501234567"
+                  placeholder="+375291234567"
                 />
               </div>
             </div>
@@ -367,7 +367,7 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
                   value={viber}
                   onChange={e => setViber(e.target.value)}
                   className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-                  placeholder="+380501234567"
+                  placeholder="+375291234567"
                 />
               </div>
             </div>
