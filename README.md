@@ -69,11 +69,11 @@ src/
 ## 👤 Тестовые аккаунты
 
 **Администратор:**
-- Email: admin@example.com
+- Email: admin@dorogadomoy.by
 - Пароль: любой
 
 **Пользователь:**
-- Email: user@example.com
+- Email: user@dorogadomoy.by
 - Пароль: любой
 
 ## 🔧 Настройка для продакшена

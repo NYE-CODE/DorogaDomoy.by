@@ -5,7 +5,7 @@
 
 const NOMINATIM_URL = 'https://nominatim.openstreetmap.org';
 const HEADERS: HeadersInit = {
-  'Accept-Language': 'ru',
+  'Accept-Language': 'ru-BY,ru',
   'User-Agent': 'DorogaDomoy.by/1.0',
 };
 
@@ -70,7 +70,7 @@ export async function geocode(address: string): Promise<{ lat: number; lng: numb
   if (!address.trim()) return null;
   try {
     const res = await fetch(
-      `${NOMINATIM_URL}/search?q=${encodeURIComponent(address)}&format=json&limit=1`,
+      `${NOMINATIM_URL}/search?q=${encodeURIComponent(address)}&format=json&limit=1&countrycodes=BY`,
       { headers: HEADERS }
     );
     const data = await res.json();

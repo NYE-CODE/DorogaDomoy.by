@@ -16,7 +16,7 @@ if not admin:
         password_hash=get_password_hash("admin123"),
         avatar="https://api.dicebear.com/7.x/avataaars/svg?seed=admin",
         role="admin",
-        contacts={"phone": "+380501234567", "telegram": "@admin"},
+        contacts={"phone": "+375291234567", "telegram": "@admin"},
     )
     db.add(admin)
     db.commit()
@@ -40,7 +40,7 @@ if db.query(Pet).count() == 0:
             location_lng=27.5590,
             author_id="user-admin",
             author_name="Администратор",
-            contacts={"telegram": "@admin", "phone": "+380501234567"},
+            contacts={"telegram": "@admin", "phone": "+375291234567"},
             moderation_status="approved",
         ),
     ]
