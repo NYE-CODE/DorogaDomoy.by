@@ -43,8 +43,11 @@ def pet_to_response(p: Pet) -> PetResponse:
 @router.get("", response_model=list[PetResponse])
 def list_pets(
     animal_type: Optional[str] = Query(None),
+    breed: Optional[str] = Query(None),
     city: Optional[str] = Query(None),
     status: Optional[str] = Query(None),
+    statuses: Optional[str] = Query(None),  # comma-separated list: searching,found
+    days: Optional[int] = Query(None, ge=1),
     moderation_status: Optional[str] = Query(None),
     is_archived: Optional[bool] = Query(None),
     search: Optional[str] = Query(None),
@@ -59,10 +62,18 @@ def list_pets(
     q = db.query(Pet)
     if animal_type:
         q = q.filter(Pet.animal_type == animal_type)
+    if breed:
+        q = q.filter(Pet.breed.ilike(f"%{breed}%"))
     if city:
         q = q.filter(Pet.city.ilike(f"%{city}%"))
     if status:
         q = q.filter(Pet.status == status)
+    if statuses:
+        status_values = [s.strip() for s in statuses.split(",") if s.strip()]
+        if status_values:
+            q = q.filter(Pet.status.in_(status_values))
+    if days:
+        q = q.filter(Pet.published_at >= datetime.utcnow() - timedelta(days=days))
     if moderation_status:
         q = q.filter(Pet.moderation_status == moderation_status)
     if is_archived is not None:

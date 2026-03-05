@@ -177,8 +177,11 @@ export interface StatisticsResponse {
 export const petsApi = {
   list: (params?: {
     animal_type?: string;
+    breed?: string;
     city?: string;
     status?: string;
+    statuses?: string;
+    days?: number;
     moderation_status?: string;
     is_archived?: boolean;
     search?: string;
@@ -187,10 +190,10 @@ export const petsApi = {
     south?: number;
     east?: number;
     west?: number;
-  }) => {
+  }, options: RequestInit = {}) => {
     const q = new URLSearchParams();
     if (params) Object.entries(params).forEach(([k, v]) => v != null && q.set(k, String(v)));
-    return api<PetResponse[]>(`/pets?${q}`).then((arr) => arr.map(toPet));
+    return api<PetResponse[]>(`/pets?${q}`, options).then((arr) => arr.map(toPet));
   },
 
   get: (id: string) => api<PetResponse>(`/pets/${id}`).then(toPet),

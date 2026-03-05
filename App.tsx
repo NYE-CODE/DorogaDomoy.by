@@ -34,7 +34,8 @@ type SortBy = 'date-new' | 'date-old' | 'distance';
 function MainApp() {
   const { user, isAuthenticated, openAuthModal, closeAuthModal, isLoading } = useAuth();
   const [view, setView] = useState<View>('main');
-  const [pets, setPets] = useState<Pet[]>([]);
+  const [allPets, setAllPets] = useState<Pet[]>([]);
+  const [mapPets, setMapPets] = useState<Pet[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
@@ -45,40 +46,90 @@ function MainApp() {
   const viewRef = useRef<View>('main');
   viewRef.current = view;
   const mapBoundsRef = useRef<LatLngBounds | null>(null);
+  const filtersRef = useRef<FilterState | null>(null);
+  const mapRequestAbortRef = useRef<AbortController | null>(null);
+  const mapRequestSeqRef = useRef(0);
 
-  const loadData = useCallback((showLoading = false): Promise<void> => {
+  const loadAdminData = useCallback((): Promise<void> => {
+    if (!isAdminRef.current) {
+      setUsers([]);
+      setReports([]);
+      return Promise.resolve();
+    }
+    return Promise.all([
+      usersApi.list().then(setUsers).catch(() => setUsers([])),
+      reportsApi.list().then(setReports).catch(() => setReports([])),
+    ]).then(() => {});
+  }, []);
+
+  const loadAllPets = useCallback((showLoading = false): Promise<void> => {
     if (showLoading) setDataLoading(true);
+    return petsApi.list()
+      .then(setAllPets)
+      .catch(() => setAllPets([]))
+      .finally(() => {
+        if (showLoading) setDataLoading(false);
+      });
+  }, []);
 
-    const admin = isAdminRef.current;
-    const currentView = viewRef.current;
+  const loadMapPets = useCallback((showLoading = false): Promise<void> => {
+    if (showLoading) setDataLoading(true);
     const currentBounds = mapBoundsRef.current;
-    const petParams = currentView === 'main' && currentBounds
-      ? {
-          north: currentBounds.getNorth(),
-          south: currentBounds.getSouth(),
-          east: currentBounds.getEast(),
-          west: currentBounds.getWest(),
-        }
-      : undefined;
-
-    const petsRequest: Promise<void> =
-      currentView === 'main' && !currentBounds
-        ? Promise.resolve().then(() => setPets([]))
-        : petsApi.list(petParams).then(setPets).catch(() => setPets([]));
-
-    const requests: Promise<void>[] = [
-      petsRequest,
-    ];
-
-    if (admin) {
-      requests.push(
-        usersApi.list().then(setUsers).catch(() => setUsers([])),
-        reportsApi.list().then(setReports).catch(() => setReports([])),
-      );
+    const currentFilters = filtersRef.current;
+    if (!currentBounds) {
+      setMapPets([]);
+      if (showLoading) setDataLoading(false);
+      return Promise.resolve();
     }
 
-    return Promise.all(requests)
-      .then(() => {})
+    mapRequestAbortRef.current?.abort();
+    const controller = new AbortController();
+    mapRequestAbortRef.current = controller;
+    const requestId = ++mapRequestSeqRef.current;
+
+    const params: Parameters<typeof petsApi.list>[0] = {
+      north: currentBounds.getNorth(),
+      south: currentBounds.getSouth(),
+      east: currentBounds.getEast(),
+      west: currentBounds.getWest(),
+      moderation_status: 'approved',
+      is_archived: false,
+    };
+
+    if (currentFilters) {
+      if (currentFilters.animalType !== 'all') {
+        params.animal_type = currentFilters.animalType;
+      }
+      if (currentFilters.breed.trim()) {
+        params.breed = currentFilters.breed.trim();
+      }
+      if (currentFilters.city.trim()) {
+        params.city = currentFilters.city.trim();
+      }
+      if (currentFilters.days !== 'all') {
+        params.days = currentFilters.days;
+      }
+      if (currentFilters.searchQuery.trim()) {
+        params.search = currentFilters.searchQuery.trim();
+      }
+      if (currentFilters.statuses.length > 0) {
+        params.statuses = currentFilters.statuses.join(',');
+      }
+    }
+
+    return petsApi.list(params, { signal: controller.signal })
+      .then((list) => {
+        if (requestId === mapRequestSeqRef.current) {
+          setMapPets(list);
+        }
+      })
+      .catch((err) => {
+        if (controller.signal.aborted) return;
+        if (requestId === mapRequestSeqRef.current) {
+          setMapPets([]);
+        }
+        if (err instanceof Error && err.name === 'AbortError') return;
+      })
       .finally(() => {
         if (showLoading) setDataLoading(false);
       });
@@ -88,18 +139,20 @@ function MainApp() {
   useEffect(() => {
     if (didInitRef.current) return;
     didInitRef.current = true;
-    loadData(true);
-  }, [loadData]);
+    Promise.all([
+      loadMapPets(true),
+      loadAdminData(),
+    ]).then(() => {});
+  }, [loadMapPets, loadAdminData]);
 
   useEffect(() => {
-    if (isAdmin) {
-      usersApi.list().then(setUsers).catch(() => setUsers([]));
-      reportsApi.list().then(setReports).catch(() => setReports([]));
-    } else {
+    if (!isAdmin) {
       setUsers([]);
       setReports([]);
+      return;
     }
-  }, [isAdmin]);
+    loadAdminData().then(() => {});
+  }, [isAdmin, loadAdminData]);
 
   useEffect(() => {
     let lastRefresh = Date.now();
@@ -109,7 +162,10 @@ function MainApp() {
       const now = Date.now();
       if (now - lastRefresh < THROTTLE_MS) return;
       lastRefresh = now;
-      loadData(false);
+      const petsPromise = viewRef.current === 'main'
+        ? loadMapPets(false)
+        : loadAllPets(false);
+      Promise.all([petsPromise, loadAdminData()]).then(() => {});
     };
 
     const onVisibility = () => {
@@ -122,7 +178,7 @@ function MainApp() {
       document.removeEventListener('visibilitychange', onVisibility);
       clearInterval(interval);
     };
-  }, [loadData]);
+  }, [loadMapPets, loadAllPets, loadAdminData]);
   const [selectedPet, setSelectedPet] = useState<Pet | null>(null);
   const [viewingUserId, setViewingUserId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -137,18 +193,26 @@ function MainApp() {
   }, [mapBounds]);
 
   useEffect(() => {
-    if (view !== 'main') {
-      loadData(false);
+    if (view === 'main') {
+      loadMapPets(false).then(() => {});
+      return;
     }
-  }, [view, loadData]);
+    loadAllPets(false).then(() => {});
+  }, [view, loadMapPets, loadAllPets]);
 
   useEffect(() => {
     if (view !== 'main' || !mapBounds) return;
     const timer = setTimeout(() => {
-      loadData(false);
+      loadMapPets(false).then(() => {});
     }, 300);
     return () => clearTimeout(timer);
-  }, [view, mapBounds, loadData]);
+  }, [view, mapBounds, loadMapPets]);
+
+  useEffect(() => {
+    return () => {
+      mapRequestAbortRef.current?.abort();
+    };
+  }, []);
   const savedLoc = (() => {
     try {
       const saved = localStorage.getItem('pet_finder_user_location');
@@ -194,6 +258,24 @@ function MainApp() {
     distance: 'all',
     searchQuery: '',
   });
+  filtersRef.current = filters;
+
+  useEffect(() => {
+    if (view !== 'main') return;
+    const timer = setTimeout(() => {
+      loadMapPets(false).then(() => {});
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [
+    view,
+    filters.animalType,
+    filters.breed,
+    filters.city,
+    filters.days,
+    filters.searchQuery,
+    filters.statuses,
+    loadMapPets,
+  ]);
 
   const handleCitySelect = (city: City) => {
     setMapCenter(city.coordinates);
@@ -229,48 +311,16 @@ function MainApp() {
     );
   };
 
-  // Filter pets based on current filters AND map bounds
+  const sourcePets = view === 'main' ? mapPets : allPets;
+
+  // Filter pets by current UI filters
   const filteredPets = useMemo(() => {
-    // Show only approved and non-archived pets on main page
-    let filtered = pets.filter(p => !p.isArchived && p.moderationStatus === 'approved');
-
-    // Filter by map bounds if available
-    if (mapBounds && view === 'main') {
-      filtered = filtered.filter(p => 
-        mapBounds.contains([p.location.lat, p.location.lng])
-      );
-    }
-
-    if (filters.animalType !== 'all') {
-      filtered = filtered.filter(p => p.animalType === filters.animalType);
-    }
-
-    if (filters.breed) {
-      filtered = filtered.filter(p => 
-        p.breed?.toLowerCase().includes(filters.breed.toLowerCase())
-      );
-    }
+    let filtered = sourcePets;
 
     if (filters.colors.length > 0) {
       filtered = filtered.filter(p => 
         p.colors.some(c => filters.colors.includes(c))
       );
-    }
-
-    if (filters.statuses.length > 0) {
-      filtered = filtered.filter(p => filters.statuses.includes(p.status));
-    }
-
-    if (filters.city) {
-      filtered = filtered.filter(p => 
-        p.city.toLowerCase().includes(filters.city.toLowerCase())
-      );
-    }
-
-    if (filters.days !== 'all') {
-      const daysAgo = new Date();
-      daysAgo.setDate(daysAgo.getDate() - filters.days);
-      filtered = filtered.filter(p => p.publishedAt >= daysAgo);
     }
 
     if (filters.distance !== 'all' && userLocation) {
@@ -280,26 +330,18 @@ function MainApp() {
       );
     }
 
-    if (filters.searchQuery) {
-      filtered = filtered.filter(p => 
-        p.description.toLowerCase().includes(filters.searchQuery.toLowerCase()) ||
-        p.breed?.toLowerCase().includes(filters.searchQuery.toLowerCase()) ||
-        p.city.toLowerCase().includes(filters.searchQuery.toLowerCase())
-      );
-    }
-
     return filtered;
-  }, [pets, filters, mapBounds, view, userLocation]);
+  }, [sourcePets, filters, userLocation]);
 
   // Calculate real-time statistics from active (non-archived) pets
   const statistics = useMemo(() => {
-    const activePets = pets.filter(p => !p.isArchived);
+    const activePets = sourcePets.filter(p => !p.isArchived);
     return {
       searching: activePets.filter(p => p.status === 'searching').length,
       found: activePets.filter(p => p.status === 'found').length,
       fostering: 0,
     };
-  }, [pets]);
+  }, [sourcePets]);
 
   // Show loading state while auth or data is initializing
   if (isLoading || dataLoading) {
@@ -329,7 +371,7 @@ function MainApp() {
         location: formData.location,
         contacts: formData.contacts,
       });
-      setPets((prev) => [newPet, ...prev]);
+      setAllPets((prev) => [newPet, ...prev]);
       setView('my-ads');
       toast.success('Объявление отправлено на модерацию!', {
         description: 'После проверки оно появится на карте',
@@ -355,7 +397,7 @@ function MainApp() {
         location: formData.location,
         contacts: formData.contacts,
       });
-      setPets((prev) => prev.map((p) => (p.id === editingPet.id ? updatedPet : p)));
+      setAllPets((prev) => prev.map((p) => (p.id === editingPet.id ? updatedPet : p)));
       setEditingPet(null);
       setShowForm(false);
       toast.success('Объявление обновлено и снова отправлено на модерацию');
@@ -378,11 +420,11 @@ function MainApp() {
           isArchived: true,
           archiveReason: reason,
         });
-        setPets((prev) => prev.map((p) => (p.id === deletingPet.id ? updated : p)));
+        setAllPets((prev) => prev.map((p) => (p.id === deletingPet.id ? updated : p)));
         toast.success('Объявление перемещено в архив', { description: reason });
       } else {
         await petsApi.delete(deletingPet.id);
-        setPets((prev) => prev.filter((p) => p.id !== deletingPet.id));
+        setAllPets((prev) => prev.filter((p) => p.id !== deletingPet.id));
         toast.success('Объявление удалено');
       }
     } catch (err) {
@@ -442,7 +484,7 @@ function MainApp() {
     if (view === 'my-ads') {
       return (
         <MyAdsPage 
-          pets={pets} 
+          pets={allPets} 
           onBack={() => setView('main')} 
           onCreateClick={handleCreateClick}
           onEditPet={openEditForm}
@@ -458,7 +500,7 @@ function MainApp() {
     if (view === 'admin') {
       return (
         <AdminPanel 
-          pets={pets}
+          pets={allPets}
           users={users} 
           reports={reports} 
           onBack={() => setView('main')}
@@ -470,7 +512,7 @@ function MainApp() {
                 moderationStatus: updatedPet.moderationStatus,
                 moderationReason: updatedPet.moderationReason,
               });
-              setPets((prev) => prev.map((x) => (x.id === p.id ? p : x)));
+              setAllPets((prev) => prev.map((x) => (x.id === p.id ? p : x)));
             } catch (err) {
               toast.error(err instanceof Error ? err.message : 'Ошибка');
               return;
@@ -485,7 +527,7 @@ function MainApp() {
               toast.error(err instanceof Error ? err.message : 'Ошибка');
               return;
             }
-            setPets((prev) => prev.filter((p) => p.id !== petId));
+            setAllPets((prev) => prev.filter((p) => p.id !== petId));
             toast.success('Объявление удалено');
           }}
           onUpdateUser={async (updatedUser) => {
@@ -512,7 +554,7 @@ function MainApp() {
               setReports(list);
               if (updatedReport.status === 'resolved' && updatedReport.petId) {
                 const reasonLabel = reportReasonLabels[updatedReport.reason as ReportReason] || updatedReport.reason;
-                const pet = pets.find((p) => p.id === updatedReport.petId);
+                const pet = allPets.find((p) => p.id === updatedReport.petId);
                 if (pet) {
                   const reasonText = `Жалоба одобрена: ${reasonLabel}`;
                   if (['spam', 'inappropriate', 'fake', 'other'].includes(updatedReport.reason)) {
@@ -520,20 +562,20 @@ function MainApp() {
                       moderationStatus: 'rejected',
                       moderationReason: reasonText,
                     });
-                    setPets((prev) => prev.map((x) => (x.id === p.id ? p : x)));
+                    setAllPets((prev) => prev.map((x) => (x.id === p.id ? p : x)));
                   } else if (updatedReport.reason === 'duplicate') {
                     const p = await petsApi.update(pet.id, {
                       isArchived: true,
                       archiveReason: reasonText,
                     });
-                    setPets((prev) => prev.map((x) => (x.id === p.id ? p : x)));
+                    setAllPets((prev) => prev.map((x) => (x.id === p.id ? p : x)));
                   } else if (updatedReport.reason === 'found') {
                     const p = await petsApi.update(pet.id, {
                       status: 'found',
                       isArchived: true,
                       archiveReason: reasonText,
                     });
-                    setPets((prev) => prev.map((x) => (x.id === p.id ? p : x)));
+                    setAllPets((prev) => prev.map((x) => (x.id === p.id ? p : x)));
                   }
                 }
               }
@@ -567,7 +609,7 @@ function MainApp() {
           }}
           onPetClick={setSelectedPet}
           users={users}
-          pets={pets}
+          pets={allPets}
         />
       );
     }
