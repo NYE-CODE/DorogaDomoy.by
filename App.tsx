@@ -42,13 +42,32 @@ function MainApp() {
   const isAdmin = isAuthenticated && user?.role === 'admin';
   const isAdminRef = useRef(isAdmin);
   isAdminRef.current = isAdmin;
+  const viewRef = useRef<View>('main');
+  viewRef.current = view;
+  const mapBoundsRef = useRef<LatLngBounds | null>(null);
 
   const loadData = useCallback((showLoading = false): Promise<void> => {
     if (showLoading) setDataLoading(true);
 
     const admin = isAdminRef.current;
+    const currentView = viewRef.current;
+    const currentBounds = mapBoundsRef.current;
+    const petParams = currentView === 'main' && currentBounds
+      ? {
+          north: currentBounds.getNorth(),
+          south: currentBounds.getSouth(),
+          east: currentBounds.getEast(),
+          west: currentBounds.getWest(),
+        }
+      : undefined;
+
+    const petsRequest: Promise<void> =
+      currentView === 'main' && !currentBounds
+        ? Promise.resolve().then(() => setPets([]))
+        : petsApi.list(petParams).then(setPets).catch(() => setPets([]));
+
     const requests: Promise<void>[] = [
-      petsApi.list().then(setPets).catch(() => setPets([])),
+      petsRequest,
     ];
 
     if (admin) {
@@ -113,6 +132,23 @@ function MainApp() {
   const [showContactRequiredModal, setShowContactRequiredModal] = useState(false);
   const [mobileView, setMobileView] = useState<'map' | 'list'>('list');
   const [mapBounds, setMapBounds] = useState<LatLngBounds | null>(null);
+  useEffect(() => {
+    mapBoundsRef.current = mapBounds;
+  }, [mapBounds]);
+
+  useEffect(() => {
+    if (view !== 'main') {
+      loadData(false);
+    }
+  }, [view, loadData]);
+
+  useEffect(() => {
+    if (view !== 'main' || !mapBounds) return;
+    const timer = setTimeout(() => {
+      loadData(false);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [view, mapBounds, loadData]);
   const savedLoc = (() => {
     try {
       const saved = localStorage.getItem('pet_finder_user_location');

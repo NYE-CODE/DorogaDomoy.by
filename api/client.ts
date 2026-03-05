@@ -183,6 +183,10 @@ export const petsApi = {
     is_archived?: boolean;
     search?: string;
     author_id?: string;
+    north?: number;
+    south?: number;
+    east?: number;
+    west?: number;
   }) => {
     const q = new URLSearchParams();
     if (params) Object.entries(params).forEach(([k, v]) => v != null && q.set(k, String(v)));
