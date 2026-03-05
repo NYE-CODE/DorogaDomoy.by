@@ -354,19 +354,19 @@ function MainApp() {
     if (!reportingPetId || !user) return;
     try {
       const r = await reportsApi.create(reportingPetId, reason, description);
-      setReports((prev) => [
+      setReports((prev): Report[] => [
         ...prev,
         {
           id: r.id,
-          petId: r.pet_id,
-          reporterId: r.reporter_id,
-          reporterName: r.reporter_name,
-          reason: r.reason as ReportReason,
+          petId: r.petId,
+          reporterId: r.reporterId,
+          reporterName: r.reporterName,
+          reason: r.reason,
           description: r.description,
-          createdAt: new Date(r.created_at),
+          createdAt: r.createdAt,
           status: r.status,
-          reviewedBy: r.reviewed_by,
-          reviewedAt: r.reviewed_at ? new Date(r.reviewed_at) : undefined,
+          reviewedBy: r.reviewedBy,
+          reviewedAt: r.reviewedAt,
           resolution: r.resolution,
         },
       ]);

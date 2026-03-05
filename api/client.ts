@@ -6,15 +6,7 @@ import type { Pet } from '../types/pet';
 import type { User } from '../context/AuthContext';
 import type { Report, ReportReason } from '../types/admin';
 
-const API_BASE = (import.meta as ImportMetaWithEnv).env.VITE_API_URL || 'http://localhost:8000';
-
-interface ImportMetaWithEnv extends ImportMeta {
-  readonly env: {
-    readonly VITE_API_URL?: string;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    readonly [key: string]: any;
-  };
-}
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 function getToken(): string | null {
   return localStorage.getItem('pet_finder_token');
