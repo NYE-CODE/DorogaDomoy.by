@@ -8,7 +8,7 @@ import type { Report, ReportReason } from '../types/admin';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-function getToken(): string | null {
+export function getToken(): string | null {
   return localStorage.getItem('pet_finder_token');
 }
 
@@ -331,7 +331,19 @@ export const reportsApi = {
     api<ReportResponse>('/reports', {
       method: 'POST',
       body: JSON.stringify({ pet_id: petId, reason, description }),
-    }),
+    }).then<Report>((r) => ({
+      id: r.id,
+      petId: r.pet_id,
+      reporterId: r.reporter_id,
+      reporterName: r.reporter_name,
+      reason: r.reason as ReportReason,
+      description: r.description,
+      createdAt: new Date(r.created_at),
+      status: r.status as Report['status'],
+      reviewedBy: r.reviewed_by,
+      reviewedAt: r.reviewed_at ? new Date(r.reviewed_at) : undefined,
+      resolution: r.resolution,
+    })),
 
   delete: (reportId: string) =>
     api<void>(`/reports/${reportId}`, { method: 'DELETE' }),

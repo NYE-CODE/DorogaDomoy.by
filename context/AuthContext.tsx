@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { authApi } from '../api/client';
+import { authApi, getToken } from '../api/client';
 
 export interface User {
   id: string;
@@ -38,6 +38,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   useEffect(() => {
+    if (!getToken()) {
+      setIsLoading(false);
+      return;
+    }
     authApi.me()
       .then(setUser)
       .catch(() => setUser(null))

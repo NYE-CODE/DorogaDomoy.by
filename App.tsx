@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, lazy, Suspense } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import { MyAdsPage } from './components/my-ads-page';
 import { ProfilePage } from './components/profile-page';
 import { UserProfilePage } from './components/user-profile-page';
@@ -39,33 +39,71 @@ function MainApp() {
   const [reports, setReports] = useState<Report[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
 
-  const loadData = (showLoading = false): Promise<void> => {
+  const isAdmin = isAuthenticated && user?.role === 'admin';
+  const isAdminRef = useRef(isAdmin);
+  isAdminRef.current = isAdmin;
+
+  const loadData = useCallback((showLoading = false): Promise<void> => {
     if (showLoading) setDataLoading(true);
-    return Promise.all([
+
+    const admin = isAdminRef.current;
+    const requests: Promise<void>[] = [
       petsApi.list().then(setPets).catch(() => setPets([])),
-      usersApi.list().then(setUsers).catch(() => setUsers([])),
-      reportsApi.list().then(setReports).catch(() => setReports([])),
-    ])
+    ];
+
+    if (admin) {
+      requests.push(
+        usersApi.list().then(setUsers).catch(() => setUsers([])),
+        reportsApi.list().then(setReports).catch(() => setReports([])),
+      );
+    }
+
+    return Promise.all(requests)
       .then(() => {})
       .finally(() => {
         if (showLoading) setDataLoading(false);
       });
-  };
-
-  useEffect(() => {
-    loadData(true);
   }, []);
 
+  const didInitRef = useRef(false);
   useEffect(() => {
-    const refresh = () => loadData(false);
-    const onVisibility = () => document.visibilityState === 'visible' && refresh();
+    if (didInitRef.current) return;
+    didInitRef.current = true;
+    loadData(true);
+  }, [loadData]);
+
+  useEffect(() => {
+    if (isAdmin) {
+      usersApi.list().then(setUsers).catch(() => setUsers([]));
+      reportsApi.list().then(setReports).catch(() => setReports([]));
+    } else {
+      setUsers([]);
+      setReports([]);
+    }
+  }, [isAdmin]);
+
+  useEffect(() => {
+    let lastRefresh = Date.now();
+    const THROTTLE_MS = 30_000;
+
+    const refresh = () => {
+      const now = Date.now();
+      if (now - lastRefresh < THROTTLE_MS) return;
+      lastRefresh = now;
+      loadData(false);
+    };
+
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') refresh();
+    };
+
     document.addEventListener('visibilitychange', onVisibility);
     const interval = setInterval(refresh, 60_000);
     return () => {
       document.removeEventListener('visibilitychange', onVisibility);
       clearInterval(interval);
     };
-  }, []);
+  }, [loadData]);
   const [selectedPet, setSelectedPet] = useState<Pet | null>(null);
   const [viewingUserId, setViewingUserId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -354,22 +392,7 @@ function MainApp() {
     if (!reportingPetId || !user) return;
     try {
       const r = await reportsApi.create(reportingPetId, reason, description);
-      setReports((prev): Report[] => [
-        ...prev,
-        {
-          id: r.id,
-          petId: r.petId,
-          reporterId: r.reporterId,
-          reporterName: r.reporterName,
-          reason: r.reason,
-          description: r.description,
-          createdAt: r.createdAt,
-          status: r.status,
-          reviewedBy: r.reviewedBy,
-          reviewedAt: r.reviewedAt,
-          resolution: r.resolution,
-        },
-      ]);
+      setReports((prev) => [...prev, r]);
       setReportingPetId(null);
       toast.success('Жалоба отправлена', {
         description: 'Модератор рассмотрит её в ближайшее время',
