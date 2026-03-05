@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, lazy, Suspense } from 'react';
 import { MyAdsPage } from './components/my-ads-page';
 import { ProfilePage } from './components/profile-page';
 import { UserProfilePage } from './components/user-profile-page';
@@ -23,10 +23,10 @@ import { PetCard } from './components/pet-card';
 import { PetModal } from './components/pet-modal';
 import { PetForm } from './components/pet-form';
 import { Filters } from './components/filters';
-import { MapView } from './components/map-view';
+const MapView = lazy(() => import('./components/map-view'));
 import { StatisticsPanel } from './components/statistics';
 import { Map as MapIcon, List } from 'lucide-react';
-import { LatLngBounds } from 'leaflet';
+import type { LatLngBounds } from 'leaflet';
 
 type View = 'main' | 'my-ads' | 'profile' | 'admin' | 'user-profile' | 'terms';
 type SortBy = 'date-new' | 'date-old' | 'distance';
@@ -598,13 +598,22 @@ function MainApp() {
 
           {/* Right Side - Map */}
           <div className={`md:col-span-7 lg:col-span-8 h-[500px] md:h-[700px] ${mobileView === 'list' ? 'hidden md:block' : 'block'}`}>
-            <MapView
-              pets={filteredPets}
-              onPetClick={setSelectedPet}
-              onBoundsChange={setMapBounds}
-              center={mapCenter}
-              zoom={mapZoom}
-            />
+            <Suspense fallback={
+              <div className="h-full w-full rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center">
+                <div className="text-center text-gray-500">
+                  <div className="w-8 h-8 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin mx-auto mb-2" />
+                  <p className="text-sm">Загрузка карты...</p>
+                </div>
+              </div>
+            }>
+              <MapView
+                pets={filteredPets}
+                onPetClick={setSelectedPet}
+                onBoundsChange={setMapBounds}
+                center={mapCenter}
+                zoom={mapZoom}
+              />
+            </Suspense>
           </div>
         </div>
       </div>
