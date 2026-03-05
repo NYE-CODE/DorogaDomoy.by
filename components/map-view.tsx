@@ -106,19 +106,15 @@ export function MapView({ pets, onPetClick, onBoundsChange, center = [53.9006, 2
 
     markersLayerRef.current.clearLayers();
 
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
     pets.forEach(pet => {
       const marker = L.marker(
         [pet.location.lat, pet.location.lng],
         { icon: createMarkerIcon(pet.animalType, pet.status) }
       );
 
-      // Handle marker click - only open modal
-      marker.on('click', () => {
-        onPetClick(pet);
-      });
-
-      // HTML for tooltip (shown on hover)
-      const tooltipHtml = `
+      const previewHtml = `
         <div class="w-48">
           <img 
             src="${pet.photos[0]}" 
@@ -137,13 +133,32 @@ export function MapView({ pets, onPetClick, onBoundsChange, center = [53.9006, 2
           </div>
         </div>
       `;
-      
-      // Bind tooltip that appears on hover
-      marker.bindTooltip(tooltipHtml, {
-        direction: 'top',
-        offset: [0, -10],
-        opacity: 0.95
-      });
+
+      if (isTouchDevice) {
+        const popupContent = document.createElement('div');
+        popupContent.innerHTML = previewHtml;
+        popupContent.style.cursor = 'pointer';
+        popupContent.addEventListener('click', () => {
+          onPetClick(pet);
+          mapInstanceRef.current?.closePopup();
+        });
+
+        marker.bindPopup(popupContent, {
+          offset: [0, -10],
+          closeButton: true,
+          className: 'pet-preview-popup',
+        });
+      } else {
+        marker.on('click', () => {
+          onPetClick(pet);
+        });
+
+        marker.bindTooltip(previewHtml, {
+          direction: 'top',
+          offset: [0, -10],
+          opacity: 0.95
+        });
+      }
       
       markersLayerRef.current?.addLayer(marker);
     });
