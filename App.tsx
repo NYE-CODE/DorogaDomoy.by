@@ -139,10 +139,10 @@ function MainApp() {
     if (didInitRef.current) return;
     didInitRef.current = true;
     Promise.all([
-      loadMapPets(true),
+      loadAllPets(true),
       loadAdminData(),
     ]).then(() => {});
-  }, [loadMapPets, loadAdminData]);
+  }, [loadAllPets, loadAdminData]);
 
   useEffect(() => {
     if (!isAdmin) {
@@ -330,7 +330,9 @@ function MainApp() {
     );
   };
 
-  const sourcePets = view === 'main' ? mapPets : allPets;
+  const sourcePets = view === 'main'
+    ? (mapBounds ? mapPets : allPets.filter(p => !p.isArchived && p.moderationStatus === 'approved'))
+    : allPets;
 
   // Filter pets by current UI filters
   const filteredPets = useMemo(() => {
@@ -697,7 +699,7 @@ function MainApp() {
                   <div className="text-center py-8">
                       <p className="text-gray-600">Питомцы не найдены</p>
                       <p className="text-sm text-gray-500 mt-1">
-                        {mapBounds ? 'Попробуйте изменить масштаб карты или фильтры' : 'Загрузка карты...'}
+                        Попробуйте изменить масштаб карты или фильтры
                       </p>
                   </div>
                 ) : (
