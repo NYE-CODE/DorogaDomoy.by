@@ -24,6 +24,7 @@ import { PetCard } from './components/pet-card';
 import { PetModal } from './components/pet-modal';
 import { PetForm } from './components/pet-form';
 import { Filters } from './components/filters';
+import { useIsMobile } from './components/ui/use-mobile';
 const MapView = lazy(() => import('./components/map-view'));
 import { StatisticsPanel } from './components/statistics';
 import { Map as MapIcon, List } from 'lucide-react';
@@ -41,6 +42,7 @@ function MainApp() {
   const [reports, setReports] = useState<Report[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
 
+  const isMobile = useIsMobile();
   const isAdmin = isAuthenticated && user?.role === 'admin';
   const isAdminRef = useRef(isAdmin);
   isAdminRef.current = isAdmin;
@@ -161,7 +163,7 @@ function MainApp() {
       const now = Date.now();
       if (now - lastRefresh < THROTTLE_MS) return;
       lastRefresh = now;
-      const petsPromise = viewRef.current === 'main'
+      const petsPromise = viewRef.current === 'main' && mapBoundsRef.current
         ? loadMapPets(false)
         : loadAllPets(false);
       Promise.all([petsPromise, loadAdminData()]).then(() => {});
@@ -187,22 +189,27 @@ function MainApp() {
   const [showContactRequiredModal, setShowContactRequiredModal] = useState(false);
   const [mobileView, setMobileView] = useState<'map' | 'list'>('list');
   const [mapBounds, setMapBounds] = useState<LatLngBounds | null>(null);
+  const [mapDataReady, setMapDataReady] = useState(false);
   useEffect(() => {
     mapBoundsRef.current = mapBounds;
   }, [mapBounds]);
 
   useEffect(() => {
-    if (view === 'main') {
-      loadMapPets(false).then(() => {});
+    if (view !== 'main') {
+      loadAllPets(false).then(() => {});
       return;
     }
-    loadAllPets(false).then(() => {});
+    if (mapBoundsRef.current) loadMapPets(false).then(() => {});
   }, [view, loadMapPets, loadAllPets]);
 
   useEffect(() => {
-    if (view !== 'main' || !mapBounds) return;
+    if (view !== 'main' || !mapBounds) {
+      if (!mapBounds) setMapDataReady(false);
+      return;
+    }
+    setMapDataReady(false);
     const timer = setTimeout(() => {
-      loadMapPets(false).then(() => {});
+      loadMapPets(false).then(() => setMapDataReady(true));
     }, 300);
     return () => clearTimeout(timer);
   }, [view, mapBounds, loadMapPets]);
@@ -280,7 +287,7 @@ function MainApp() {
   }, []);
 
   useEffect(() => {
-    if (view !== 'main') return;
+    if (view !== 'main' || !mapBoundsRef.current) return;
     const timer = setTimeout(() => {
       loadMapPets(false).then(() => {});
     }, 300);
@@ -330,8 +337,9 @@ function MainApp() {
     );
   };
 
+  const approvedAllPets = allPets.filter(p => !p.isArchived && p.moderationStatus === 'approved');
   const sourcePets = view === 'main'
-    ? (mapBounds ? mapPets : allPets.filter(p => !p.isArchived && p.moderationStatus === 'approved'))
+    ? (mapBounds && mapDataReady ? mapPets : approvedAllPets)
     : allPets;
 
   // Filter pets by current UI filters
@@ -720,22 +728,28 @@ function MainApp() {
 
           {/* Right Side - Map */}
           <div className={`md:col-span-7 lg:col-span-8 h-[500px] md:h-[700px] ${mobileView === 'list' ? 'max-h-0 overflow-hidden md:max-h-none md:overflow-visible' : 'block'}`}>
-            <Suspense fallback={
-              <div className="h-full w-full rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center">
-                <div className="text-center text-gray-500">
-                  <div className="w-8 h-8 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin mx-auto mb-2" />
-                  <p className="text-sm">Загрузка карты...</p>
+            {(!isMobile || mobileView === 'map') ? (
+              <Suspense fallback={
+                <div className="h-full w-full rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center">
+                  <div className="text-center text-gray-500">
+                    <div className="w-8 h-8 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin mx-auto mb-2" />
+                    <p className="text-sm">Загрузка карты...</p>
+                  </div>
                 </div>
+              }>
+                <MapView
+                  pets={filteredPets}
+                  onPetClick={setSelectedPet}
+                  onBoundsChange={setMapBounds}
+                  center={mapCenter}
+                  zoom={mapZoom}
+                />
+              </Suspense>
+            ) : (
+              <div className="h-full w-full rounded-lg border border-gray-200 bg-gray-100 flex items-center justify-center">
+                <p className="text-sm text-gray-500">Переключитесь на карту</p>
               </div>
-            }>
-              <MapView
-                pets={filteredPets}
-                onPetClick={setSelectedPet}
-                onBoundsChange={setMapBounds}
-                center={mapCenter}
-                zoom={mapZoom}
-              />
-            </Suspense>
+            )}
           </div>
         </div>
       </div>
