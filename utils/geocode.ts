@@ -38,9 +38,20 @@ interface NominatimAddress {
   country?: string;
 }
 
+function getLocalityName(addr: NominatimAddress): string {
+  return (
+    addr.city ||
+    addr.town ||
+    addr.village ||
+    addr.municipality ||
+    addr.suburb ||
+    ''
+  ).trim();
+}
+
 function formatShortAddress(addr: NominatimAddress): string {
   const get = (k: keyof NominatimAddress) => (addr[k] || '').trim();
-  const locality = get('city') || get('town') || get('village') || get('municipality') || get('suburb');
+  const locality = getLocalityName(addr);
   const district = get('state_district') || get('county') || get('municipality');
   const oblast = get('state');
   const road = get('road') || get('street');
@@ -99,6 +110,23 @@ export async function reverseGeocode(lat: number, lng: number): Promise<string |
       if (short) return short;
     }
     return data?.display_name ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export async function reverseGeocodeLocality(lat: number, lng: number): Promise<string | null> {
+  try {
+    const res = await fetch(
+      `${NOMINATIM_URL}/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1`,
+      { headers: HEADERS }
+    );
+    const data = await res.json();
+    const addr = data?.address as NominatimAddress | undefined;
+    if (!addr) return null;
+
+    const locality = getLocalityName(addr);
+    return locality || null;
   } catch {
     return null;
   }

@@ -12,7 +12,7 @@ import { DeleteReasonModal } from './components/delete-reason-modal';
 import { ReportModal } from './components/report-modal';
 import { City } from './utils/cities';
 import { calculateDistance } from './utils/distance';
-import { reverseGeocode } from './utils/geocode';
+import { reverseGeocodeLocality } from './utils/geocode';
 import { AdminPanel } from './components/admin-panel';
 import { Report, ReportReason, reportReasonLabels } from './types/admin';
 import { Pet } from './types/pet';
@@ -226,6 +226,7 @@ function MainApp() {
     } catch {}
     return null;
   })();
+  const initialSavedLocRef = useRef(savedLoc);
   const [mapCenter, setMapCenter] = useState<[number, number]>(
     savedLoc ? [savedLoc.lat, savedLoc.lng] : [53.9006, 27.5590]
   );
@@ -259,6 +260,25 @@ function MainApp() {
     searchQuery: '',
   });
   filtersRef.current = filters;
+
+  useEffect(() => {
+    const initialSavedLoc = initialSavedLocRef.current;
+    if (!initialSavedLoc?.city || !initialSavedLoc.city.includes(',')) return;
+
+    let cancelled = false;
+    reverseGeocodeLocality(initialSavedLoc.lat, initialSavedLoc.lng).then((locality) => {
+      if (cancelled || !locality || locality === initialSavedLoc.city) return;
+
+      setFilters((prev) => (
+        prev.city === initialSavedLoc.city ? { ...prev, city: locality } : prev
+      ));
+      setUserLocation({ lat: initialSavedLoc.lat, lng: initialSavedLoc.lng }, locality);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (view !== 'main') return;
@@ -297,7 +317,7 @@ function MainApp() {
         setUserLocation(location);
         setMapCenter([location.lat, location.lng]);
         setMapZoom(13);
-        const city = await reverseGeocode(location.lat, location.lng);
+        const city = await reverseGeocodeLocality(location.lat, location.lng);
         if (city) {
           setFilters((prev) => ({ ...prev, city }));
           setUserLocation(location, city);
