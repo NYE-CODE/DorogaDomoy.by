@@ -187,11 +187,13 @@ def delete_pet(
     user: User = Depends(get_current_user_required),
     db: Session = Depends(get_db),
 ):
+    from models import Report
     pet = db.query(Pet).filter(Pet.id == pet_id).first()
     if not pet:
         raise HTTPException(status_code=404, detail="Объявление не найдено")
     if pet.author_id != user.id and user.role != "admin":
         raise HTTPException(status_code=403, detail="Нет прав на удаление")
+    db.query(Report).filter(Report.pet_id == pet_id).delete()
     db.delete(pet)
     db.commit()
     return None
