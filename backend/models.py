@@ -51,7 +51,12 @@ class Pet(Base):
     moderated_by = Column(String, nullable=True)
 
     author = relationship("User", back_populates="pets", foreign_keys=[author_id])
-    reports = relationship("Report", back_populates="pet", foreign_keys="Report.pet_id")
+    reports = relationship(
+        "Report",
+        back_populates="pet",
+        foreign_keys="Report.pet_id",
+        cascade="all, delete-orphan",
+    )
 
 
 class Report(Base):

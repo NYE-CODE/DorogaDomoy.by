@@ -1,5 +1,8 @@
 """Pets CRUD API."""
+import base64
+import logging
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Optional
 import uuid
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -11,6 +14,42 @@ from schemas import PetCreate, PetUpdate, PetResponse, StatisticsResponse
 from auth import get_current_user, get_current_user_required, require_admin
 
 router = APIRouter(prefix="/pets", tags=["pets"])
+
+UPLOADS_DIR = Path(__file__).resolve().parent.parent / "uploads"
+
+MIME_TO_EXT = {
+    "image/jpeg": ".jpg",
+    "image/png": ".png",
+    "image/gif": ".gif",
+    "image/webp": ".webp",
+}
+
+MAX_PHOTO_BYTES = 10 * 1024 * 1024  # 10 MB per photo after decoding
+MAX_PHOTOS = 10
+
+
+def save_base64_photo(data_url: str) -> str:
+    """Decode a data:image/…;base64,… string, save to disk, return URL path."""
+    if not data_url.startswith("data:"):
+        return data_url
+
+    try:
+        header, encoded = data_url.split(",", 1)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Некорректный формат фото")
+
+    mime = header.split(";")[0].replace("data:", "")
+    ext = MIME_TO_EXT.get(mime, ".jpg")
+
+    raw = base64.b64decode(encoded)
+    if len(raw) > MAX_PHOTO_BYTES:
+        raise HTTPException(status_code=400, detail="Фото слишком большое (макс. 10 МБ)")
+
+    filename = f"{uuid.uuid4().hex}{ext}"
+    filepath = UPLOADS_DIR / filename
+    filepath.write_bytes(raw)
+
+    return f"/uploads/{filename}"
 
 
 def pet_to_response(p: Pet) -> PetResponse:
@@ -120,10 +159,17 @@ def create_pet(
     user: User = Depends(get_current_user_required),
     db: Session = Depends(get_db),
 ):
+    if not data.photos:
+        raise HTTPException(status_code=400, detail="Необходимо загрузить хотя бы одно фото")
+    if len(data.photos) > MAX_PHOTOS:
+        raise HTTPException(status_code=400, detail=f"Максимум {MAX_PHOTOS} фото")
+
+    photo_urls = [save_base64_photo(p) for p in data.photos]
+
     pet_id = "pet-" + str(uuid.uuid4())[:8]
     pet = Pet(
         id=pet_id,
-        photos=data.photos,
+        photos=photo_urls,
         animal_type=data.animal_type,
         breed=data.breed,
         colors=data.colors,
@@ -139,9 +185,14 @@ def create_pet(
         contacts=data.contacts.model_dump() if data.contacts else {},
         moderation_status="pending",
     )
-    db.add(pet)
-    db.commit()
-    db.refresh(pet)
+    try:
+        db.add(pet)
+        db.commit()
+        db.refresh(pet)
+    except Exception as e:
+        db.rollback()
+        logging.exception("Ошибка при создании объявления")
+        raise HTTPException(status_code=500, detail="Не удалось создать объявление") from e
     return pet_to_response(pet)
 
 
@@ -157,27 +208,45 @@ def update_pet(
         raise HTTPException(status_code=404, detail="Объявление не найдено")
     if pet.author_id != user.id and user.role != "admin":
         raise HTTPException(status_code=403, detail="Нет прав на редактирование")
+    ALLOWED_FIELDS = {
+        "photos", "animal_type", "breed", "colors", "gender",
+        "approximate_age", "status", "description", "city",
+        "location", "contacts", "is_archived", "archive_reason",
+        "moderation_status", "moderation_reason",
+    }
     d = data.model_dump(exclude_unset=True)
+    d = {k: v for k, v in d.items() if k in ALLOWED_FIELDS}
+    if "photos" in d and d["photos"] is not None:
+        if len(d["photos"]) > MAX_PHOTOS:
+            raise HTTPException(status_code=400, detail=f"Максимум {MAX_PHOTOS} фото")
+        d["photos"] = [save_base64_photo(p) for p in d["photos"]]
     if "location" in d and d["location"]:
         d["location_lat"] = d["location"]["lat"]
         d["location_lng"] = d["location"]["lng"]
         del d["location"]
+    if "contacts" in d and d["contacts"] is not None:
+        if hasattr(d["contacts"], "model_dump"):
+            d["contacts"] = d["contacts"].model_dump()
+        elif not isinstance(d["contacts"], dict):
+            d["contacts"] = dict(d["contacts"])
     for k, v in d.items():
-        if hasattr(pet, k):
-            setattr(pet, k, v)
+        setattr(pet, k, v)
     pet.updated_at = datetime.utcnow()
     if "moderation_status" in d or "moderation_reason" in d:
-        # Админ меняет статус модерации — обновляем метаданные
         pet.moderated_at = datetime.utcnow()
         pet.moderated_by = user.id
     elif pet.author_id == user.id:
-        # Автор редактирует контент — объявление снова на модерации
         pet.moderation_status = "pending"
         pet.moderation_reason = None
         pet.moderated_at = None
         pet.moderated_by = None
-    db.commit()
-    db.refresh(pet)
+    try:
+        db.commit()
+        db.refresh(pet)
+    except Exception as e:
+        db.rollback()
+        logging.exception("Ошибка при обновлении объявления %s", pet_id)
+        raise HTTPException(status_code=500, detail="Не удалось обновить объявление") from e
     return pet_to_response(pet)
 
 
@@ -187,13 +256,19 @@ def delete_pet(
     user: User = Depends(get_current_user_required),
     db: Session = Depends(get_db),
 ):
-    from models import Report
     pet = db.query(Pet).filter(Pet.id == pet_id).first()
     if not pet:
         raise HTTPException(status_code=404, detail="Объявление не найдено")
     if pet.author_id != user.id and user.role != "admin":
         raise HTTPException(status_code=403, detail="Нет прав на удаление")
-    db.query(Report).filter(Report.pet_id == pet_id).delete()
-    db.delete(pet)
-    db.commit()
+    try:
+        db.delete(pet)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        logging.exception("Ошибка при удалении объявления %s", pet_id)
+        raise HTTPException(
+            status_code=500,
+            detail="Не удалось удалить объявление. Попробуйте позже.",
+        ) from e
     return None

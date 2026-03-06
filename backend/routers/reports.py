@@ -1,4 +1,5 @@
 """Reports API."""
+import logging
 from datetime import datetime
 import uuid
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -63,9 +64,14 @@ def create_report(
         description=data.description,
         status="pending",
     )
-    db.add(report)
-    db.commit()
-    db.refresh(report)
+    try:
+        db.add(report)
+        db.commit()
+        db.refresh(report)
+    except Exception as e:
+        db.rollback()
+        logging.exception("Ошибка при создании жалобы")
+        raise HTTPException(status_code=500, detail="Не удалось отправить жалобу") from e
     return report_to_response(report)
 
 
@@ -74,7 +80,7 @@ def update_report(
     report_id: str,
     data: ReportUpdate,
     db: Session = Depends(get_db),
-    _: User = Depends(require_admin),
+    admin: User = Depends(require_admin),
 ):
     report = db.query(Report).filter(Report.id == report_id).first()
     if not report:
@@ -82,11 +88,16 @@ def update_report(
     if data.status:
         report.status = data.status
         report.reviewed_at = datetime.utcnow()
-        report.reviewed_by = "admin"
+        report.reviewed_by = admin.id
     if data.resolution:
         report.resolution = data.resolution
-    db.commit()
-    db.refresh(report)
+    try:
+        db.commit()
+        db.refresh(report)
+    except Exception as e:
+        db.rollback()
+        logging.exception("Ошибка при обновлении жалобы %s", report_id)
+        raise HTTPException(status_code=500, detail="Не удалось обновить жалобу") from e
     return report_to_response(report)
 
 
@@ -99,6 +110,14 @@ def delete_report(
     report = db.query(Report).filter(Report.id == report_id).first()
     if not report:
         raise HTTPException(status_code=404, detail="Жалоба не найдена")
-    db.delete(report)
-    db.commit()
+    try:
+        db.delete(report)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        logging.exception("Ошибка при удалении жалобы %s", report_id)
+        raise HTTPException(
+            status_code=500,
+            detail="Не удалось удалить жалобу. Попробуйте позже.",
+        ) from e
     return None
