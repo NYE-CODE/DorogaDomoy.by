@@ -70,8 +70,8 @@ def create_report(
         db.refresh(report)
     except Exception as e:
         db.rollback()
-        logging.exception("Ошибка при создании жалобы")
-        raise HTTPException(status_code=500, detail="Не удалось отправить жалобу") from e
+        logging.exception("Ошибка при создании жалобы: %s", e)
+        raise HTTPException(status_code=500, detail=f"Не удалось отправить жалобу: {type(e).__name__}") from e
     return report_to_response(report)
 
 
@@ -96,8 +96,8 @@ def update_report(
         db.refresh(report)
     except Exception as e:
         db.rollback()
-        logging.exception("Ошибка при обновлении жалобы %s", report_id)
-        raise HTTPException(status_code=500, detail="Не удалось обновить жалобу") from e
+        logging.exception("Ошибка при обновлении жалобы %s: %s", report_id, e)
+        raise HTTPException(status_code=500, detail=f"Не удалось обновить жалобу: {type(e).__name__}") from e
     return report_to_response(report)
 
 
@@ -115,9 +115,9 @@ def delete_report(
         db.commit()
     except Exception as e:
         db.rollback()
-        logging.exception("Ошибка при удалении жалобы %s", report_id)
+        logging.exception("Ошибка при удалении жалобы %s: %s", report_id, e)
         raise HTTPException(
             status_code=500,
-            detail="Не удалось удалить жалобу. Попробуйте позже.",
+            detail=f"Не удалось удалить жалобу: {type(e).__name__}",
         ) from e
     return None

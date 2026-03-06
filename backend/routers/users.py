@@ -82,6 +82,6 @@ def update_user(
         db.refresh(user)
     except Exception as e:
         db.rollback()
-        logging.exception("Ошибка при обновлении пользователя %s", user_id)
-        raise HTTPException(status_code=500, detail="Не удалось обновить пользователя") from e
+        logging.exception("Ошибка при обновлении пользователя %s: %s", user_id, e)
+        raise HTTPException(status_code=500, detail=f"Не удалось обновить пользователя: {type(e).__name__}") from e
     return user_to_response(user)

@@ -192,8 +192,8 @@ def create_pet(
         db.refresh(pet)
     except Exception as e:
         db.rollback()
-        logging.exception("Ошибка при создании объявления")
-        raise HTTPException(status_code=500, detail="Не удалось создать объявление") from e
+        logging.exception("Ошибка при создании объявления: %s", e)
+        raise HTTPException(status_code=500, detail=f"Не удалось создать объявление: {type(e).__name__}") from e
     return pet_to_response(pet)
 
 
@@ -246,8 +246,8 @@ def update_pet(
         db.refresh(pet)
     except Exception as e:
         db.rollback()
-        logging.exception("Ошибка при обновлении объявления %s", pet_id)
-        raise HTTPException(status_code=500, detail="Не удалось обновить объявление") from e
+        logging.exception("Ошибка при обновлении объявления %s: %s", pet_id, e)
+        raise HTTPException(status_code=500, detail=f"Не удалось обновить объявление: {type(e).__name__}") from e
     return pet_to_response(pet)
 
 
@@ -257,19 +257,19 @@ def delete_pet(
     user: User = Depends(get_current_user_required),
     db: Session = Depends(get_db),
 ):
-    from models import Report
     pet = db.query(Pet).filter(Pet.id == pet_id).first()
     if not pet:
         raise HTTPException(status_code=404, detail="Объявление не найдено")
     if pet.author_id != user.id and user.role != "admin":
         raise HTTPException(status_code=403, detail="Нет прав на удаление")
     try:
-        db.query(Report).filter(Report.pet_id == pet_id).delete(synchronize_session=False)
+        for report in list(pet.reports):
+            db.delete(report)
         db.delete(pet)
         db.commit()
     except Exception as e:
         db.rollback()
-        logging.exception("Ошибка при удалении объявления %s", pet_id)
+        logging.exception("Ошибка при удалении объявления %s: %s", pet_id, e)
         raise HTTPException(
             status_code=500,
             detail="Не удалось удалить объявление. Попробуйте позже.",
