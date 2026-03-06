@@ -89,37 +89,47 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
     }
   }, [initialData?.id, user?.id]);
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const compressImage = (file: File, maxDim = 1200, quality = 0.8): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          const ratio = Math.min(maxDim / width, maxDim / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext('2d')!.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+        URL.revokeObjectURL(img.src);
+      };
+      img.onerror = () => { URL.revokeObjectURL(img.src); reject(new Error('Не удалось загрузить изображение')); };
+      img.src = URL.createObjectURL(file);
+    });
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
 
-    Array.from(files).forEach((file) => {
-      // Check file type
+    for (const file of Array.from(files)) {
       if (!file.type.startsWith('image/')) {
         alert('Пожалуйста, загружайте только изображения');
-        return;
+        continue;
       }
-
-      // Check file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        alert('Файл слишком большой. Максимальный размер: 5MB');
-        return;
+      if (file.size > 15 * 1024 * 1024) {
+        alert('Файл слишком большой. Максимальный размер: 15 МБ');
+        continue;
       }
-
-      // Read file and convert to data URL
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          setFormData(prev => ({
-            ...prev,
-            photos: [...prev.photos, event.target!.result as string]
-          }));
-        }
-      };
-      reader.readAsDataURL(file);
-    });
-
-    // Reset input value to allow uploading the same file again
+      try {
+        const compressed = await compressImage(file);
+        setFormData(prev => ({ ...prev, photos: [...prev.photos, compressed] }));
+      } catch {
+        alert('Не удалось обработать изображение');
+      }
+    }
     e.target.value = '';
   };
 
