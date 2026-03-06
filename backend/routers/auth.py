@@ -1,4 +1,5 @@
 """Auth routes: login, register, me."""
+import logging
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Body
 from pydantic import BaseModel
@@ -46,9 +47,14 @@ def register(data: UserCreate, db: Session = Depends(get_db)):
         role="admin" if is_admin else data.role,
         contacts=data.contacts.model_dump() if hasattr(data, 'contacts') and data.contacts else {},
     )
-    db.add(user)
-    db.commit()
-    db.refresh(user)
+    try:
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    except Exception as e:
+        db.rollback()
+        logging.exception("Ошибка при регистрации пользователя")
+        raise HTTPException(status_code=500, detail="Не удалось зарегистрироваться") from e
     token = create_access_token(data={"sub": user.id})
     return Token(access_token=token, user=user_to_response(user))
 
@@ -84,10 +90,18 @@ def update_me(
     if body.name is not None:
         user.name = body.name
         user.avatar = f"https://api.dicebear.com/7.x/avataaars/svg?seed={body.name}"
-    if body.email is not None:
+    if body.email is not None and body.email != user.email:
+        existing = db.query(User).filter(User.email == body.email, User.id != user.id).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Этот email уже используется")
         user.email = body.email
     if body.contacts is not None:
         user.contacts = {**(user.contacts or {}), **body.contacts}
-    db.commit()
-    db.refresh(user)
+    try:
+        db.commit()
+        db.refresh(user)
+    except Exception as e:
+        db.rollback()
+        logging.exception("Ошибка при обновлении профиля %s", user.id)
+        raise HTTPException(status_code=500, detail="Не удалось обновить профиль") from e
     return user_to_response(user)

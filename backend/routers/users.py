@@ -1,4 +1,5 @@
 """Users API (admin + profile)."""
+import logging
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
@@ -66,10 +67,21 @@ def update_user(
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="Пользователь не найден")
+    ALLOWED_FIELDS = {"name", "email", "role", "is_blocked", "blocked_reason", "contacts"}
     d = data.model_dump(exclude_unset=True)
+    d = {k: v for k, v in d.items() if k in ALLOWED_FIELDS}
+    if "contacts" in d and d["contacts"] is not None:
+        if hasattr(d["contacts"], "model_dump"):
+            d["contacts"] = d["contacts"].model_dump()
+        elif not isinstance(d["contacts"], dict):
+            d["contacts"] = dict(d["contacts"])
     for k, v in d.items():
-        if hasattr(user, k):
-            setattr(user, k, v)
-    db.commit()
-    db.refresh(user)
+        setattr(user, k, v)
+    try:
+        db.commit()
+        db.refresh(user)
+    except Exception as e:
+        db.rollback()
+        logging.exception("Ошибка при обновлении пользователя %s", user_id)
+        raise HTTPException(status_code=500, detail="Не удалось обновить пользователя") from e
     return user_to_response(user)

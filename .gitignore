@@ -30,6 +30,7 @@ backend/__pycache__/
 backend/**/*.pyc
 backend/.venv/
 .venv/
+backend/uploads/
 
 ## Coverage / test artifacts
 coverage/

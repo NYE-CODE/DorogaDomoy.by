@@ -127,10 +127,15 @@ interface PetResponse {
   moderated_by?: string;
 }
 
+function resolvePhotoUrl(url: string): string {
+  if (!url || url.startsWith('http') || url.startsWith('data:')) return url;
+  return `${API_BASE}${url}`;
+}
+
 function toPet(p: PetResponse): Pet {
   return {
     id: p.id,
-    photos: p.photos,
+    photos: p.photos.map(resolvePhotoUrl),
     animalType: p.animal_type as Pet['animalType'],
     breed: p.breed,
     colors: p.colors as Pet['colors'],
