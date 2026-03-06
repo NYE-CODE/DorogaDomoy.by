@@ -43,11 +43,11 @@ export function ModerationPanel({ pets, onApprovePet, onRejectPet }: ModerationP
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-semibold text-gray-900">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">
           Модерация объявлений
         </h2>
-        <div className="px-4 py-2 bg-amber-50 text-amber-700 rounded-lg border border-amber-200 font-medium">
+        <div className="px-4 py-2 bg-amber-50 text-amber-700 rounded-lg border border-amber-200 font-medium text-sm self-start">
           На проверке: {pendingPets.length}
         </div>
       </div>
@@ -70,33 +70,30 @@ export function ModerationPanel({ pets, onApprovePet, onRejectPet }: ModerationP
                 key={pet.id}
                 className="bg-white border border-gray-200 rounded-lg p-6 hover:border-gray-300 transition-colors"
               >
-                <div className="flex gap-6">
+                <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
                   {/* Pet Image */}
                   <div className="flex-shrink-0">
                     <img
                       src={pet.photos[0]}
                       alt={animalTypeLabels[pet.animalType]}
-                      className="w-32 h-32 object-cover rounded-lg"
+                      className="w-full sm:w-32 h-48 sm:h-32 object-cover rounded-lg"
                     />
                   </div>
 
                   {/* Pet Info */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                          {animalTypeLabels[pet.animalType]}
-                          {pet.breed && ` · ${pet.breed}`}
-                        </h3>
-                        <div className="flex items-center gap-3 text-sm text-gray-600">
-                          <span>{pet.city}</span>
-                          <span>·</span>
-                          <span>{formatDate(pet.publishedAt)}</span>
-                          <span>·</span>
-                          <span className="inline-flex px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs">
-                            {statusLabels[pet.status]}
-                          </span>
-                        </div>
+                    <div className="mb-3">
+                      <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1">
+                        {animalTypeLabels[pet.animalType]}
+                        {pet.breed && ` · ${pet.breed}`}
+                      </h3>
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-sm text-gray-600">
+                        <span>{pet.city}</span>
+                        <span>·</span>
+                        <span>{formatDate(pet.publishedAt)}</span>
+                        <span className="inline-flex px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs">
+                          {statusLabels[pet.status]}
+                        </span>
                       </div>
                     </div>
 
@@ -104,20 +101,20 @@ export function ModerationPanel({ pets, onApprovePet, onRejectPet }: ModerationP
                       {pet.description}
                     </p>
 
-                    <div className="flex items-center gap-4 mb-4">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-4">
                       <div className="text-sm">
                         <span className="text-gray-600">Автор: </span>
                         <span className="font-medium text-gray-900">{pet.authorName}</span>
                       </div>
                       {pet.contacts.phone && (
                         <div className="text-sm">
-                          <span className="text-gray-600">Телефон: </span>
+                          <span className="text-gray-600">Тел: </span>
                           <span className="font-medium text-gray-900">{pet.contacts.phone}</span>
                         </div>
                       )}
                       {pet.contacts.telegram && (
                         <div className="text-sm">
-                          <span className="text-gray-600">Telegram: </span>
+                          <span className="text-gray-600">TG: </span>
                           <span className="font-medium text-gray-900">{pet.contacts.telegram}</span>
                         </div>
                       )}
@@ -125,13 +122,13 @@ export function ModerationPanel({ pets, onApprovePet, onRejectPet }: ModerationP
 
                     {/* Additional Photos */}
                     {pet.photos.length > 1 && (
-                      <div className="flex gap-2 mb-4">
+                      <div className="flex gap-2 mb-4 overflow-x-auto">
                         {pet.photos.slice(1, 5).map((photo, index) => (
                           <img
                             key={index}
                             src={photo}
                             alt={`Фото ${index + 2}`}
-                            className="w-16 h-16 object-cover rounded"
+                            className="w-16 h-16 object-cover rounded shrink-0"
                           />
                         ))}
                       </div>
@@ -141,14 +138,14 @@ export function ModerationPanel({ pets, onApprovePet, onRejectPet }: ModerationP
                     <div className="flex gap-3">
                       <button
                         onClick={() => handleApprove(pet)}
-                        className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
                       >
                         <CheckCircle2 className="w-4 h-4" />
                         Одобрить
                       </button>
                       <button
                         onClick={() => handleRejectClick(pet)}
-                        className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm"
                       >
                         <XCircle className="w-4 h-4" />
                         Отклонить

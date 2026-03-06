@@ -5,6 +5,7 @@ import { UserProfilePage } from './components/user-profile-page';
 import { TermsPage } from './components/terms-page';
 import { AuthProvider, useAuth, User } from './context/AuthContext';
 import { Header } from './components/layout/Header';
+import { Footer } from './components/layout/Footer';
 import { AuthModal } from './components/auth/AuthModal';
 import { ContactRequiredModal } from './components/contact-required-modal';
 import { toast, Toaster } from 'sonner';
@@ -753,6 +754,8 @@ function MainApp() {
       )}
 
       {renderContent()}
+
+      {view === 'main' && <Footer />}
 
       {/* Modals */}
       {selectedPet && (

@@ -309,16 +309,16 @@ export function AdminPanel({
           </div>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-          <table className="w-full">
+        <div className="bg-white border border-gray-200 rounded-lg overflow-x-auto">
+          <table className="w-full min-w-[700px]">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Пользователь</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Роль</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Контакты</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Статус</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Действия</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Пользователь</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Роль</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Контакты</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Статус</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Действия</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -331,20 +331,20 @@ export function AdminPanel({
               ) : (
                 paginatedUsers.map(user => (
                   <tr key={user.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
                         {user.avatar && (
-                          <img src={user.avatar} alt="" className="w-10 h-10 rounded-full" />
+                          <img src={user.avatar} alt="" className="w-8 h-8 rounded-full shrink-0" />
                         )}
-                        <p className="font-medium text-gray-900">{user.name}</p>
+                        <p className="font-medium text-gray-900 text-sm truncate max-w-[120px]">{user.name}</p>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{user.email}</td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-3 text-sm text-gray-600 truncate max-w-[180px]">{user.email}</td>
+                    <td className="px-4 py-3">
                       <select
                         value={user.role}
                         onChange={(e) => onUpdateUser({ ...user, role: e.target.value as User['role'] })}
-                        className="text-sm px-2 py-1 border border-gray-300 rounded"
+                        className="text-xs px-2 py-1 border border-gray-300 rounded"
                       >
                         <option value="user">Пользователь</option>
                         <option value="volunteer">Волонтёр</option>
@@ -352,24 +352,24 @@ export function AdminPanel({
                         <option value="admin">Админ</option>
                       </select>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
+                    <td className="px-4 py-3 text-sm text-gray-600 truncate max-w-[140px]">
                       {user.contacts.phone || user.contacts.telegram || user.contacts.viber || 'Нет'}
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-3">
                       {user.isBlocked ? (
-                        <span className="inline-flex px-2 py-1 text-xs rounded-full bg-red-100 text-red-700">
+                        <span className="inline-flex px-2 py-1 text-xs rounded-full bg-red-100 text-red-700 whitespace-nowrap">
                           Заблокирован
                         </span>
                       ) : (
-                        <span className="inline-flex px-2 py-1 text-xs rounded-full bg-green-100 text-green-700">
+                        <span className="inline-flex px-2 py-1 text-xs rounded-full bg-green-100 text-green-700 whitespace-nowrap">
                           Активен
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-3">
                       <button
                         onClick={() => onUpdateUser({ ...user, isBlocked: !user.isBlocked })}
-                        className={`text-sm ${user.isBlocked ? 'text-green-600 hover:text-green-700' : 'text-red-600 hover:text-red-700'}`}
+                        className={`text-sm whitespace-nowrap ${user.isBlocked ? 'text-green-600 hover:text-green-700' : 'text-red-600 hover:text-red-700'}`}
                       >
                         {user.isBlocked ? 'Разблокировать' : 'Заблокировать'}
                       </button>
@@ -489,10 +489,10 @@ export function AdminPanel({
           paginatedReports.map(report => {
             const pet = pets.find(p => p.id === report.petId);
             return (
-              <div key={report.id} className="bg-white border border-gray-200 rounded-lg p-6">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
+              <div key={report.id} className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
                       <span className={`inline-flex px-2 py-1 text-xs rounded-full ${
                         report.status === 'pending' ? 'bg-orange-100 text-orange-700' :
                         report.status === 'resolved' ? 'bg-green-100 text-green-700' :
@@ -526,7 +526,7 @@ export function AdminPanel({
                     </p>
                   </div>
 
-                  <div className="flex flex-col gap-2">
+                  <div className="flex sm:flex-col gap-2">
                     {report.status === 'pending' && (
                       <>
                         <button
@@ -672,7 +672,7 @@ export function AdminPanel({
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-[1920px] mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               <button
                 onClick={onBack}
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -680,12 +680,12 @@ export function AdminPanel({
                 <ArrowLeft className="w-5 h-5 text-gray-600" />
               </button>
               <div>
-                <h1 className="text-xl font-semibold text-gray-900">Панель администратора</h1>
-                <p className="text-sm text-gray-600">Управление платформой</p>
+                <h1 className="text-lg sm:text-xl font-semibold text-gray-900">Админ-панель</h1>
+                <p className="text-sm text-gray-600 hidden sm:block">Управление платформой</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-sm">
-              <Settings className="w-4 h-4" />
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-sm">
+              <Settings className="w-4 h-4 shrink-0" />
               Режим администратора
             </div>
           </div>
@@ -694,35 +694,37 @@ export function AdminPanel({
 
       {/* Tabs */}
       <div className="bg-white border-b border-gray-200">
-        <div className="max-w-[1920px] mx-auto px-4 md:px-6">
-          <div className="flex gap-1">
+        <div className="max-w-[1920px] mx-auto px-4 md:px-6 overflow-x-auto scrollbar-hide">
+          <div className="flex gap-1 min-w-max">
             {tabs.map(tab => {
               const Icon = tab.icon;
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
+                  className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors whitespace-nowrap text-sm ${
                     activeTab === tab.id
                       ? 'border-blue-600 text-blue-600'
                       : 'border-transparent text-gray-600 hover:text-gray-900'
                   }`}
                 >
-                  <Icon className="w-4 h-4" />
-                  {tab.label}
+                  <Icon className="w-4 h-4 shrink-0" />
+                  <span className="hidden sm:inline">{tab.label}</span>
+                  <span className="sm:hidden">{tab.label}</span>
                   {tab.id === 'reports' && stats.pendingReports > 0 && (
-                    <span className="px-2 py-0.5 bg-orange-100 text-orange-600 rounded-full text-xs font-medium">
+                    <span className="px-1.5 py-0.5 bg-orange-100 text-orange-600 rounded-full text-xs font-medium">
                       {stats.pendingReports}
                     </span>
                   )}
                   {tab.id === 'moderation' && pets.filter(p => p.moderationStatus === 'pending').length > 0 && (
-                    <span className="px-2 py-0.5 bg-amber-100 text-amber-600 rounded-full text-xs font-medium">
+                    <span className="px-1.5 py-0.5 bg-amber-100 text-amber-600 rounded-full text-xs font-medium">
                       {pets.filter(p => p.moderationStatus === 'pending').length}
                     </span>
                   )}
                 </button>
               );
-            })}</div>
+            })}
+          </div>
         </div>
       </div>
 

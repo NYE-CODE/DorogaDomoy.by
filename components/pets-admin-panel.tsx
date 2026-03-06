@@ -13,6 +13,7 @@ export function PetsAdminPanel({ pets, onDeletePet }: PetsAdminPanelProps) {
   const [petsFilter, setPetsFilter] = useState<PetsFilterType>('all');
   const [petsAnimalType, setPetsAnimalType] = useState<string>('all');
   const [petsStatus, setPetsStatus] = useState<string>('all');
+  const [petsModerationFilter, setPetsModerationFilter] = useState<string>('all');
   const [petsDateFilter, setPetsDateFilter] = useState<string>('all');
   const [petsPage, setPetsPage] = useState(1);
   const petsPerPage = 15;
@@ -27,6 +28,9 @@ export function PetsAdminPanel({ pets, onDeletePet }: PetsAdminPanelProps) {
     return true;
   }).filter(pet => {
     if (petsStatus !== 'all') return pet.status === petsStatus;
+    return true;
+  }).filter(pet => {
+    if (petsModerationFilter !== 'all') return pet.moderationStatus === petsModerationFilter;
     return true;
   }).filter(pet => {
     if (petsDateFilter === 'last7') {
@@ -50,15 +54,15 @@ export function PetsAdminPanel({ pets, onDeletePet }: PetsAdminPanelProps) {
       {/* Filters Panel */}
       <div className="bg-white border border-gray-200 rounded-lg p-4">
         <div className="flex flex-wrap gap-4 items-center">
-          <div>
+          <div className="w-full sm:w-auto">
             <label className="block text-xs font-medium text-gray-700 mb-1">Статус архивации</label>
-            <div className="flex gap-2">
+            <div className="flex gap-2 overflow-x-auto scrollbar-hide">
               <button
                 onClick={() => {
                   setPetsFilter('all');
                   setPetsPage(1);
                 }}
-                className={`px-4 py-2 text-sm rounded-lg transition-colors ${
+                className={`px-3 py-2 text-sm rounded-lg transition-colors whitespace-nowrap ${
                   petsFilter === 'all' 
                     ? 'bg-blue-600 text-white' 
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -71,7 +75,7 @@ export function PetsAdminPanel({ pets, onDeletePet }: PetsAdminPanelProps) {
                   setPetsFilter('active');
                   setPetsPage(1);
                 }}
-                className={`px-4 py-2 text-sm rounded-lg transition-colors ${
+                className={`px-3 py-2 text-sm rounded-lg transition-colors whitespace-nowrap ${
                   petsFilter === 'active' 
                     ? 'bg-blue-600 text-white' 
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -84,7 +88,7 @@ export function PetsAdminPanel({ pets, onDeletePet }: PetsAdminPanelProps) {
                   setPetsFilter('archived');
                   setPetsPage(1);
                 }}
-                className={`px-4 py-2 text-sm rounded-lg transition-colors ${
+                className={`px-3 py-2 text-sm rounded-lg transition-colors whitespace-nowrap ${
                   petsFilter === 'archived' 
                     ? 'bg-blue-600 text-white' 
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -129,6 +133,23 @@ export function PetsAdminPanel({ pets, onDeletePet }: PetsAdminPanelProps) {
           </div>
 
           <div className="flex-1 min-w-[200px]">
+            <label className="block text-xs font-medium text-gray-700 mb-1">Модерация</label>
+            <select
+              value={petsModerationFilter}
+              onChange={(e) => {
+                setPetsModerationFilter(e.target.value);
+                setPetsPage(1);
+              }}
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="all">Все</option>
+              <option value="pending">На модерации</option>
+              <option value="approved">Опубликовано</option>
+              <option value="rejected">Отклонено</option>
+            </select>
+          </div>
+
+          <div className="flex-1 min-w-[200px]">
             <label className="block text-xs font-medium text-gray-700 mb-1">Дата публикации</label>
             <select
               value={petsDateFilter}
@@ -150,14 +171,15 @@ export function PetsAdminPanel({ pets, onDeletePet }: PetsAdminPanelProps) {
         </div>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-        <table className="w-full">
+      <div className="bg-white border border-gray-200 rounded-lg overflow-x-auto">
+        <table className="w-full min-w-[700px]">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Фото</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Информация</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Автор</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Статус</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Модерация</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Дата</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Действия</th>
             </tr>
@@ -165,7 +187,7 @@ export function PetsAdminPanel({ pets, onDeletePet }: PetsAdminPanelProps) {
           <tbody className="divide-y divide-gray-200">
             {paginatedPets.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
                   Объявления не найдены
                 </td>
               </tr>
@@ -185,6 +207,19 @@ export function PetsAdminPanel({ pets, onDeletePet }: PetsAdminPanelProps) {
                   <td className="px-6 py-4">
                     <span className="inline-flex px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-700">
                       {statusLabels[pet.status]}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`inline-flex px-2 py-1 text-xs rounded-full ${
+                      pet.moderationStatus === 'approved'
+                        ? 'bg-green-100 text-green-700'
+                        : pet.moderationStatus === 'rejected'
+                        ? 'bg-red-100 text-red-700'
+                        : 'bg-amber-100 text-amber-700'
+                    }`}>
+                      {pet.moderationStatus === 'approved' ? 'Опубликовано' 
+                        : pet.moderationStatus === 'rejected' ? 'Отклонено' 
+                        : 'На модерации'}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">
