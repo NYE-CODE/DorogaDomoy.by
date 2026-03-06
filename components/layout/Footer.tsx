@@ -1,0 +1,86 @@
+import { Mail, MessageCircle, Bot, Heart } from 'lucide-react';
+
+export function Footer() {
+  return (
+    <footer className="bg-white border-t border-gray-200 mt-auto">
+      <div className="max-w-[1920px] mx-auto px-4 md:px-6 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* О проекте */}
+          <div>
+            <div className="flex items-center gap-3 mb-3">
+              <img src="/logo.png" alt="DorogaDomoy.by" className="h-8 w-auto" />
+              <span className="text-lg font-semibold text-gray-900">DorogaDomoy.by</span>
+            </div>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              Платформа для поиска пропавших питомцев в Беларуси. Помогаем животным вернуться домой.
+            </p>
+          </div>
+
+          {/* Контакты */}
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">Контакты</h3>
+            <ul className="space-y-2">
+              <li>
+                <a
+                  href="mailto:contact@dorogadomoy.by"
+                  className="flex items-center gap-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                >
+                  <Mail className="w-4 h-4 shrink-0" />
+                  contact@dorogadomoy.by
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://t.me/dorogadomoy_by"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                >
+                  <MessageCircle className="w-4 h-4 shrink-0" />
+                  Telegram-группа
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://t.me/dorogadomoy_support_bot"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                >
+                  <Bot className="w-4 h-4 shrink-0" />
+                  Бот поддержки
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Ссылки */}
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">Информация</h3>
+            <ul className="space-y-2">
+              <li>
+                <button className="text-sm text-gray-600 hover:text-blue-600 transition-colors">
+                  Как это работает
+                </button>
+              </li>
+              <li>
+                <button className="text-sm text-gray-600 hover:text-blue-600 transition-colors">
+                  Правила размещения
+                </button>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="border-t border-gray-200 mt-6 pt-6 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <p className="text-xs text-gray-500">
+            © {new Date().getFullYear()} DorogaDomoy.by — Дорога Домой
+          </p>
+          <p className="text-xs text-gray-500 flex items-center gap-1">
+            Сделано с <Heart className="w-3 h-3 text-red-500 fill-red-500" /> для питомцев Беларуси
+          </p>
+        </div>
+      </div>
+    </footer>
+  );
+}
