@@ -16,6 +16,7 @@ from auth import get_current_user, get_current_user_required, require_admin
 router = APIRouter(prefix="/pets", tags=["pets"])
 
 UPLOADS_DIR = Path(__file__).resolve().parent.parent / "uploads"
+UPLOADS_DIR.mkdir(exist_ok=True)
 
 MIME_TO_EXT = {
     "image/jpeg": ".jpg",
@@ -256,12 +257,14 @@ def delete_pet(
     user: User = Depends(get_current_user_required),
     db: Session = Depends(get_db),
 ):
+    from models import Report
     pet = db.query(Pet).filter(Pet.id == pet_id).first()
     if not pet:
         raise HTTPException(status_code=404, detail="Объявление не найдено")
     if pet.author_id != user.id and user.role != "admin":
         raise HTTPException(status_code=403, detail="Нет прав на удаление")
     try:
+        db.query(Report).filter(Report.pet_id == pet_id).delete(synchronize_session=False)
         db.delete(pet)
         db.commit()
     except Exception as e:

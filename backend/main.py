@@ -11,6 +11,7 @@ from database import init_db
 from routers import auth, pets, users, reports
 
 UPLOADS_DIR = Path(__file__).resolve().parent / "uploads"
+UPLOADS_DIR.mkdir(exist_ok=True)
 
 
 @asynccontextmanager

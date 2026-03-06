@@ -63,7 +63,7 @@ class Report(Base):
     __tablename__ = "reports"
 
     id = Column(String, primary_key=True, index=True)
-    pet_id = Column(String, ForeignKey("pets.id"), nullable=False)
+    pet_id = Column(String, ForeignKey("pets.id", ondelete="CASCADE"), nullable=False)
     reporter_id = Column(String, ForeignKey("users.id"), nullable=False)
     reporter_name = Column(String, nullable=False)
     reason = Column(String, nullable=False)  # spam, inappropriate, fake, duplicate, found, other
