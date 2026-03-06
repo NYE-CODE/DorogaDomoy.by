@@ -280,10 +280,10 @@ export function Filters({ filters, onFiltersChange, onCitySelect, userLocation, 
               </div>
             </div>
 
-            {/* Цвет */}
+            {/* Окрас */}
             <div className="md:col-span-2 lg:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Цвет
+                Окрас
               </label>
               <div className="flex flex-wrap gap-2">
                 {(Object.keys(colorLabels) as PetColor[]).map((color) => (

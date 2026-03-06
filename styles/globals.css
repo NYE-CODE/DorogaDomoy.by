@@ -191,7 +191,8 @@ html {
   font-family: inherit;
 }
 
-.custom-marker-icon {
+.custom-marker-icon,
+.location-picker-icon {
   background: none;
   border: none;
 }

@@ -189,7 +189,7 @@ function MainApp() {
   const [showContactRequiredModal, setShowContactRequiredModal] = useState(false);
   const [mobileView, setMobileView] = useState<'map' | 'list'>('list');
   const [mapBounds, setMapBounds] = useState<LatLngBounds | null>(null);
-  const [mapDataReady, setMapDataReady] = useState(false);
+  const [mapPetsLoaded, setMapPetsLoaded] = useState(false);
   useEffect(() => {
     mapBoundsRef.current = mapBounds;
   }, [mapBounds]);
@@ -203,13 +203,9 @@ function MainApp() {
   }, [view, loadMapPets, loadAllPets]);
 
   useEffect(() => {
-    if (view !== 'main' || !mapBounds) {
-      if (!mapBounds) setMapDataReady(false);
-      return;
-    }
-    setMapDataReady(false);
+    if (view !== 'main' || !mapBounds) return;
     const timer = setTimeout(() => {
-      loadMapPets(false).then(() => setMapDataReady(true));
+      loadMapPets(false).then(() => setMapPetsLoaded(true));
     }, 300);
     return () => clearTimeout(timer);
   }, [view, mapBounds, loadMapPets]);
@@ -339,7 +335,7 @@ function MainApp() {
 
   const approvedAllPets = allPets.filter(p => !p.isArchived && p.moderationStatus === 'approved');
   const sourcePets = view === 'main'
-    ? (mapBounds && mapDataReady ? mapPets : approvedAllPets)
+    ? (mapBounds && mapPetsLoaded ? mapPets : approvedAllPets)
     : allPets;
 
   // Filter pets by current UI filters
