@@ -1,12 +1,28 @@
 /**
  * API client for DorogaDomoy.by backend.
- * Base URL: VITE_API_URL or http://localhost:8000
+ * Base URL:
+ * - VITE_API_URL when explicitly configured
+ * - http://localhost:8000 in development
+ * - current origin in production (safe fallback)
  */
 import type { Pet } from '../types/pet';
 import type { User } from '../context/AuthContext';
 import type { Report, ReportReason } from '../types/admin';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const envApiUrl = import.meta.env.VITE_API_URL?.trim();
+const API_BASE = envApiUrl
+  ? envApiUrl.replace(/\/+$/, '')
+  : import.meta.env.DEV
+    ? 'http://localhost:8000'
+    : window.location.origin;
+
+function buildApiUrl(path: string): string {
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  return `${API_BASE}${normalizedPath}`;
+}
 
 export function getToken(): string | null {
   return localStorage.getItem('pet_finder_token');
@@ -27,7 +43,7 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
     ...(options.headers as Record<string, string>),
   };
   if (token) headers['Authorization'] = `Bearer ${token}`;
-  const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  const res = await fetch(buildApiUrl(path), { ...options, headers });
   if (res.status === 401) {
     clearToken();
     throw new Error('Сессия истекла');
