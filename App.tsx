@@ -77,11 +77,6 @@ function MainApp() {
     if (showLoading) setDataLoading(true);
     const currentBounds = mapBoundsRef.current;
     const currentFilters = filtersRef.current;
-    if (!currentBounds) {
-      setMapPets([]);
-      if (showLoading) setDataLoading(false);
-      return Promise.resolve();
-    }
 
     mapRequestAbortRef.current?.abort();
     const controller = new AbortController();
@@ -89,13 +84,16 @@ function MainApp() {
     const requestId = ++mapRequestSeqRef.current;
 
     const params: Parameters<typeof petsApi.list>[0] = {
-      north: currentBounds.getNorth(),
-      south: currentBounds.getSouth(),
-      east: currentBounds.getEast(),
-      west: currentBounds.getWest(),
       moderation_status: 'approved',
       is_archived: false,
     };
+
+    if (currentBounds) {
+      params.north = currentBounds.getNorth();
+      params.south = currentBounds.getSouth();
+      params.east = currentBounds.getEast();
+      params.west = currentBounds.getWest();
+    }
 
     if (currentFilters) {
       if (currentFilters.animalType !== 'all') {
@@ -141,10 +139,10 @@ function MainApp() {
     if (didInitRef.current) return;
     didInitRef.current = true;
     Promise.all([
-      loadMapPets(true),
+      loadAllPets(true),
       loadAdminData(),
     ]).then(() => {});
-  }, [loadMapPets, loadAdminData]);
+  }, [loadAllPets, loadAdminData]);
 
   useEffect(() => {
     if (!isAdmin) {
@@ -332,7 +330,9 @@ function MainApp() {
     );
   };
 
-  const sourcePets = view === 'main' ? mapPets : allPets;
+  const sourcePets = view === 'main'
+    ? (mapBounds ? mapPets : allPets.filter(p => !p.isArchived && p.moderationStatus === 'approved'))
+    : allPets;
 
   // Filter pets by current UI filters
   const filteredPets = useMemo(() => {
@@ -699,7 +699,7 @@ function MainApp() {
                   <div className="text-center py-8">
                       <p className="text-gray-600">Питомцы не найдены</p>
                       <p className="text-sm text-gray-500 mt-1">
-                        {mapBounds ? 'Попробуйте изменить масштаб карты или фильтры' : 'Загрузка карты...'}
+                        Попробуйте изменить масштаб карты или фильтры
                       </p>
                   </div>
                 ) : (
@@ -719,7 +719,7 @@ function MainApp() {
           </div>
 
           {/* Right Side - Map */}
-          <div className={`md:col-span-7 lg:col-span-8 h-[500px] md:h-[700px] ${mobileView === 'list' ? 'hidden md:block' : 'block'}`}>
+          <div className={`md:col-span-7 lg:col-span-8 h-[500px] md:h-[700px] ${mobileView === 'list' ? 'max-h-0 overflow-hidden md:max-h-none md:overflow-visible' : 'block'}`}>
             <Suspense fallback={
               <div className="h-full w-full rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center">
                 <div className="text-center text-gray-500">
