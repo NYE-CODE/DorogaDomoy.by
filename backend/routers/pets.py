@@ -9,9 +9,14 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from database import get_db
-from models import Pet, User
+from models import Pet, PlatformSettings, User
 from schemas import PetCreate, PetUpdate, PetResponse, StatisticsResponse
 from auth import get_current_user, get_current_user_required, require_admin
+
+
+def _moderation_required(db: Session) -> bool:
+    row = db.query(PlatformSettings).filter(PlatformSettings.key == "require_moderation").first()
+    return row.value == "true" if row else True
 
 router = APIRouter(prefix="/pets", tags=["pets"])
 
@@ -167,6 +172,9 @@ def create_pet(
 
     photo_urls = [save_base64_photo(p) for p in data.photos]
 
+    skip_moderation = user.role == "admin" or not _moderation_required(db)
+    initial_status = "approved" if skip_moderation else "pending"
+
     pet_id = "pet-" + str(uuid.uuid4())[:8]
     pet = Pet(
         id=pet_id,
@@ -184,7 +192,7 @@ def create_pet(
         author_id=user.id,
         author_name=user.name,
         contacts=data.contacts.model_dump() if data.contacts else {},
-        moderation_status="pending",
+        moderation_status=initial_status,
     )
     try:
         db.add(pet)
@@ -237,10 +245,11 @@ def update_pet(
         pet.moderated_at = datetime.utcnow()
         pet.moderated_by = user.id
     elif pet.author_id == user.id:
-        pet.moderation_status = "pending"
-        pet.moderation_reason = None
-        pet.moderated_at = None
-        pet.moderated_by = None
+        if _moderation_required(db) and user.role != "admin":
+            pet.moderation_status = "pending"
+            pet.moderation_reason = None
+            pet.moderated_at = None
+            pet.moderated_by = None
     try:
         db.commit()
         db.refresh(pet)

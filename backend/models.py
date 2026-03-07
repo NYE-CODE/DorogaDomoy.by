@@ -59,6 +59,13 @@ class Pet(Base):
     )
 
 
+class PlatformSettings(Base):
+    __tablename__ = "platform_settings"
+
+    key = Column(String, primary_key=True)
+    value = Column(String, nullable=False)
+
+
 class Report(Base):
     __tablename__ = "reports"
 

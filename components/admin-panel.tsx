@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, 
   FileText, 
@@ -20,6 +20,7 @@ import { Pet } from '../types/pet';
 import { User } from '../context/AuthContext';
 import { Report, AdminStats, reportReasonLabels } from '../types/admin';
 import { formatDate, statusLabels } from '../utils/pet-helpers';
+import { settingsApi } from '../api/client';
 import { ModerationPanel } from './moderation-panel';
 import { PetsAdminPanel } from './pets-admin-panel';
 
@@ -63,30 +64,33 @@ export function AdminPanel({
   const [reportsPage, setReportsPage] = useState(1);
   const reportsPerPage = 10;
 
-  // Platform settings (stored in localStorage)
-  const SETTINGS_KEY = 'pet_finder_platform_settings';
-  const [settings, setSettings] = useState(() => {
-    try {
-      const s = localStorage.getItem(SETTINGS_KEY);
-      if (s) {
-        const parsed = JSON.parse(s);
-        return {
-          requireModeration: parsed.requireModeration ?? true,
-          autoArchiveDays: parsed.autoArchiveDays ?? 90,
-          maxPhotos: parsed.maxPhotos ?? 5,
-        };
-      }
-    } catch {}
-    return { requireModeration: true, autoArchiveDays: 90, maxPhotos: 5 };
+  // Platform settings (stored on backend)
+  const [settings, setSettings] = useState({
+    requireModeration: true,
+    autoArchiveDays: 90,
+    maxPhotos: 5,
   });
 
+  useEffect(() => {
+    settingsApi.get().then((s) => {
+      setSettings({
+        requireModeration: s.require_moderation === 'true',
+        autoArchiveDays: parseInt(s.auto_archive_days, 10) || 90,
+        maxPhotos: parseInt(s.max_photos, 10) || 5,
+      });
+    }).catch(() => {});
+  }, []);
+
   const handleSaveSettings = () => {
-    try {
-      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    settingsApi.update({
+      require_moderation: settings.requireModeration ? 'true' : 'false',
+      auto_archive_days: String(settings.autoArchiveDays),
+      max_photos: String(settings.maxPhotos),
+    }).then(() => {
       toast.success('Настройки сохранены');
-    } catch {
+    }).catch(() => {
       toast.error('Не удалось сохранить настройки');
-    }
+    });
   };
 
   // Calculate real stats from data

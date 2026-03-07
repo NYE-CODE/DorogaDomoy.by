@@ -366,3 +366,20 @@ export const reportsApi = {
       body: JSON.stringify(data),
     }),
 };
+
+// --- Settings ---
+export interface PlatformSettings {
+  require_moderation: string;
+  auto_archive_days: string;
+  max_photos: string;
+}
+
+export const settingsApi = {
+  get: () => api<PlatformSettings>('/settings'),
+
+  update: (data: Partial<PlatformSettings>) =>
+    api<PlatformSettings>('/settings', {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+};
