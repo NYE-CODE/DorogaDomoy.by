@@ -18,6 +18,14 @@ def _moderation_required(db: Session) -> bool:
     row = db.query(PlatformSettings).filter(PlatformSettings.key == "require_moderation").first()
     return row.value == "true" if row else True
 
+
+def _max_photos(db: Session) -> int:
+    row = db.query(PlatformSettings).filter(PlatformSettings.key == "max_photos").first()
+    try:
+        return int(row.value) if row else MAX_PHOTOS
+    except (ValueError, TypeError):
+        return MAX_PHOTOS
+
 router = APIRouter(prefix="/pets", tags=["pets"])
 
 UPLOADS_DIR = Path(__file__).resolve().parent.parent / "uploads"
@@ -167,8 +175,11 @@ def create_pet(
 ):
     if not data.photos:
         raise HTTPException(status_code=400, detail="Необходимо загрузить хотя бы одно фото")
-    if len(data.photos) > MAX_PHOTOS:
-        raise HTTPException(status_code=400, detail=f"Максимум {MAX_PHOTOS} фото")
+    limit = _max_photos(db)
+    if len(data.photos) > limit:
+        raise HTTPException(status_code=400, detail=f"Максимум {limit} фото")
+    if data.description and len(data.description) > 500:
+        raise HTTPException(status_code=400, detail="Описание не может быть длиннее 500 символов")
 
     photo_urls = [save_base64_photo(p) for p in data.photos]
 
@@ -226,9 +237,12 @@ def update_pet(
     d = data.model_dump(exclude_unset=True)
     d = {k: v for k, v in d.items() if k in ALLOWED_FIELDS}
     if "photos" in d and d["photos"] is not None:
-        if len(d["photos"]) > MAX_PHOTOS:
-            raise HTTPException(status_code=400, detail=f"Максимум {MAX_PHOTOS} фото")
+        limit = _max_photos(db)
+        if len(d["photos"]) > limit:
+            raise HTTPException(status_code=400, detail=f"Максимум {limit} фото")
         d["photos"] = [save_base64_photo(p) for p in d["photos"]]
+    if "description" in d and d["description"] and len(d["description"]) > 500:
+        raise HTTPException(status_code=400, detail="Описание не может быть длиннее 500 символов")
     if "location" in d and d["location"]:
         d["location_lat"] = d["location"]["lat"]
         d["location_lng"] = d["location"]["lng"]

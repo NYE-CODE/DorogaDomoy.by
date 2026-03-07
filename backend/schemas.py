@@ -1,7 +1,7 @@
 """Pydantic schemas for API request/response."""
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
 
 
 # --- User ---
@@ -52,10 +52,17 @@ class PetLocation(BaseModel):
     lng: float
 
 
+def _trim_optional_str(v):
+    if v is None:
+        return None
+    s = str(v).strip()
+    return s if s else None
+
+
 class PetBase(BaseModel):
     photos: list[str] = []
     animal_type: str  # cat, dog, other
-    breed: Optional[str] = None
+    breed: Optional[str] = Field(None, max_length=80)
     colors: list[str] = []
     gender: str = "unknown"
     approximate_age: Optional[str] = None
@@ -65,6 +72,11 @@ class PetBase(BaseModel):
     location: PetLocation
     contacts: UserContacts = UserContacts()
 
+    @field_validator("breed", mode="before")
+    @classmethod
+    def trim_breed(cls, v):
+        return _trim_optional_str(v)
+
 
 class PetCreate(PetBase):
     pass
@@ -73,7 +85,7 @@ class PetCreate(PetBase):
 class PetUpdate(BaseModel):
     photos: Optional[list[str]] = None
     animal_type: Optional[str] = None
-    breed: Optional[str] = None
+    breed: Optional[str] = Field(None, max_length=80)
     colors: Optional[list[str]] = None
     gender: Optional[str] = None
     approximate_age: Optional[str] = None
@@ -86,6 +98,11 @@ class PetUpdate(BaseModel):
     archive_reason: Optional[str] = None
     moderation_status: Optional[str] = None
     moderation_reason: Optional[str] = None
+
+    @field_validator("breed", mode="before")
+    @classmethod
+    def trim_breed(cls, v):
+        return _trim_optional_str(v)
 
 
 class PetResponse(PetBase):

@@ -109,20 +109,22 @@ export function PetModal({ pet, onClose, onReport, onAuthorClick }: PetModalProp
         <head>
           <title>ПОИСК ПИТОМЦА - ${pet.animalType}</title>
           <style>
-            body { font-family: system-ui, -apple-system, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; color: #000; }
-            .header { text-align: center; border-bottom: 4px solid #ef4444; padding-bottom: 20px; margin-bottom: 30px; }
-            .title { font-size: 64px; font-weight: 900; color: #ef4444; margin: 0; line-height: 1; text-transform: uppercase; }
-            .subtitle { font-size: 32px; font-weight: bold; margin: 10px 0 0; text-transform: uppercase; }
-            .photo-container { text-align: center; margin-bottom: 30px; height: 500px; background: #f3f4f6; border-radius: 12px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+            @page { size: A4 portrait; margin: 10mm; }
+            * { box-sizing: border-box; margin: 0; padding: 0; }
+            body { font-family: system-ui, -apple-system, sans-serif; padding: 20px 24px; max-width: 800px; margin: 0 auto; color: #000; }
+            .header { text-align: center; border-bottom: 4px solid #ef4444; padding-bottom: 12px; margin-bottom: 16px; }
+            .title { font-size: 42px; font-weight: 900; color: #ef4444; line-height: 1; text-transform: uppercase; }
+            .subtitle { font-size: 20px; font-weight: bold; margin-top: 6px; text-transform: uppercase; }
+            .photo-container { text-align: center; margin-bottom: 16px; height: 340px; background: #f3f4f6; border-radius: 10px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
             .photo { max-width: 100%; max-height: 100%; object-fit: contain; }
-            .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; font-size: 24px; }
-            .label { font-weight: bold; color: #666; font-size: 18px; margin-bottom: 4px; }
+            .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 20px; margin-bottom: 14px; font-size: 18px; }
+            .label { font-weight: bold; color: #666; font-size: 13px; margin-bottom: 2px; text-transform: uppercase; }
             .value { font-weight: 600; }
-            .description { font-size: 24px; line-height: 1.4; margin-bottom: 40px; padding: 20px; background: #fff1f2; border-left: 6px solid #ef4444; }
-            .contact-box { border: 4px solid #000; padding: 30px; text-align: center; border-radius: 20px; background: #fff; margin-top: auto; }
-            .contact-label { font-size: 24px; font-weight: bold; text-transform: uppercase; margin-bottom: 10px; }
-            .phone { font-size: 56px; font-weight: 900; margin: 10px 0; letter-spacing: 1px; }
-            .footer { margin-top: 40px; text-align: center; font-size: 16px; color: #9ca3af; border-top: 1px solid #e5e7eb; pt: 20px; }
+            .description { font-size: 17px; line-height: 1.4; margin-bottom: 16px; padding: 12px 14px; background: #fff1f2; border-left: 5px solid #ef4444; }
+            .contact-box { border: 3px solid #000; padding: 16px; text-align: center; border-radius: 14px; }
+            .contact-label { font-size: 18px; font-weight: bold; text-transform: uppercase; margin-bottom: 4px; }
+            .phone { font-size: 38px; font-weight: 900; margin: 6px 0; letter-spacing: 1px; }
+            .footer { margin-top: 12px; text-align: center; font-size: 12px; color: #9ca3af; }
           </style>
         </head>
         <body>
@@ -130,47 +132,44 @@ export function PetModal({ pet, onClose, onReport, onAuthorClick }: PetModalProp
             <h1 class="title">${pet.status === 'searching' ? 'ПРОПАЛ ПИТОМЕЦ' : 'НАЙДЕН ПИТОМЕЦ'}</h1>
             <div class="subtitle">${pet.city} · ${animalTypeLabels[pet.animalType]}</div>
           </div>
-          
+
           <div class="photo-container">
             <img src="${pet.photos[0]}" class="photo" />
           </div>
-          
+
           <div class="info-grid">
             <div>
-              <div class="label">ПОРОДА</div>
+              <div class="label">Порода</div>
               <div class="value">${pet.breed || 'Не указана'}</div>
             </div>
             <div>
-              <div class="label">ЦВЕТ</div>
+              <div class="label">Окрас</div>
               <div class="value">${pet.colors.map(c => colorLabels[c]).join(', ')}</div>
             </div>
             <div>
-              <div class="label">ПОЛ</div>
+              <div class="label">Пол</div>
               <div class="value">${genderLabels[pet.gender]}</div>
             </div>
             ${pet.approximateAge ? `
             <div>
-              <div class="label">ВОЗРАСТ</div>
+              <div class="label">Возраст</div>
               <div class="value">${pet.approximateAge}</div>
             </div>` : ''}
           </div>
-          
+
           <div class="description">
             ${pet.description}
           </div>
-          
+
           <div class="contact-box">
-            <div class="contact-label">ЗВОНИТЬ В ЛЮБОЕ ВРЕМЯ</div>
+            <div class="contact-label">Звоните в любое время</div>
             <div class="phone">${pet.contacts.phone || 'СМ. КОНТАКТЫ'}</div>
             <div class="value">${pet.authorName}</div>
           </div>
-          
-          <div class="footer">
-            Создано на платформе DorogaDomoy.by
-          </div>
-          
+
+          <div class="footer">DorogaDomoy.by</div>
+
           <script>
-            // Wait for image to load before printing
             window.onload = () => { setTimeout(() => window.print(), 500); }
           </script>
         </body>
