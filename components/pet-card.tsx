@@ -17,6 +17,8 @@ export function PetCard({ pet, onClick, compact = false, onEdit, onDelete }: Pet
   // Check if current user is the author
   // We use 'current-user' check for mock data compatibility
   const isOwner = user && (pet.authorId === user.id || (user.id === 'user-demo' && pet.authorId === 'current-user'));
+  const isAdmin = user?.role === 'admin';
+  const canEditDelete = isOwner || isAdmin;
 
   // Get moderation status badge
   const getModerationBadge = () => {
@@ -146,8 +148,8 @@ export function PetCard({ pet, onClick, compact = false, onEdit, onDelete }: Pet
           {statusLabels[pet.status]}
         </div>
         
-        {/* Owner Actions */}
-        {isOwner && (onEdit || onDelete) && (
+        {/* Owner or Admin Actions */}
+        {canEditDelete && (onEdit || onDelete) && (
           <div className="absolute top-3 left-3 flex gap-2">
             {onEdit && (
               <button 

@@ -67,6 +67,11 @@ def update_user(
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="Пользователь не найден")
+    # Admin cannot demote themselves — prevents losing access to admin panel
+    if current.id == user_id and current.role == "admin" and "role" in data.model_dump(exclude_unset=True):
+        new_role = data.role
+        if new_role and new_role != "admin":
+            raise HTTPException(status_code=400, detail="Администратор не может изменить свою роль")
     ALLOWED_FIELDS = {"name", "email", "role", "is_blocked", "blocked_reason", "contacts"}
     d = data.model_dump(exclude_unset=True)
     d = {k: v for k, v in d.items() if k in ALLOWED_FIELDS}
