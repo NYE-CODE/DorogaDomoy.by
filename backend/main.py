@@ -9,7 +9,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from database import init_db, check_db_writable
-from routers import auth, pets, users, reports
+from routers import auth, pets, users, reports, settings
+
 
 logging.basicConfig(
     level=logging.INFO,
@@ -55,6 +56,7 @@ app.include_router(auth.router)
 app.include_router(pets.router)
 app.include_router(users.router)
 app.include_router(reports.router)
+app.include_router(settings.router)
 
 
 @app.get("/")

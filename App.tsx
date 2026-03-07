@@ -398,9 +398,13 @@ function MainApp() {
       });
       setAllPets((prev) => [newPet, ...prev]);
       setView('my-ads');
-      toast.success('Объявление отправлено на модерацию!', {
-        description: 'После проверки оно появится на карте',
-      });
+      if (newPet.moderationStatus === 'approved') {
+        toast.success('Объявление опубликовано!');
+      } else {
+        toast.success('Объявление отправлено на модерацию!', {
+          description: 'После проверки оно появится на карте',
+        });
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Ошибка создания объявления');
     }
@@ -425,7 +429,11 @@ function MainApp() {
       setAllPets((prev) => prev.map((p) => (p.id === editingPet.id ? updatedPet : p)));
       setEditingPet(null);
       setShowForm(false);
-      toast.success('Объявление обновлено и снова отправлено на модерацию');
+      if (updatedPet.moderationStatus === 'pending') {
+        toast.success('Объявление обновлено и отправлено на модерацию');
+      } else {
+        toast.success('Объявление обновлено!');
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Ошибка обновления объявления');
     }
