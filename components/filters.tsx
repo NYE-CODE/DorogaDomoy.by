@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { X, Filter, ChevronDown, ChevronUp } from 'lucide-react';
 import { AnimalType, PetStatus, PetColor } from '../types/pet';
 import { animalTypeLabels, statusLabels, colorLabels, activeStatuses } from '../utils/pet-helpers';
+import { useIsMobile } from './ui/use-mobile';
 import { searchCities, City } from '../utils/cities';
 
 export interface FilterState {
@@ -24,7 +25,8 @@ interface FiltersProps {
 }
 
 export function Filters({ filters, onFiltersChange, onCitySelect, userLocation, onRequestLocation }: FiltersProps) {
-  const [isOpen, setIsOpen] = useState(true);
+  const isMobile = useIsMobile();
+  const [isOpen, setIsOpen] = useState(!isMobile);
   const [citySuggestions, setCitySuggestions] = useState<City[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const cityInputRef = useRef<HTMLInputElement>(null);
