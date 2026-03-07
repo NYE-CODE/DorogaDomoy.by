@@ -53,8 +53,8 @@ def register(data: UserCreate, db: Session = Depends(get_db)):
         db.refresh(user)
     except Exception as e:
         db.rollback()
-        logging.exception("Ошибка при регистрации пользователя")
-        raise HTTPException(status_code=500, detail="Не удалось зарегистрироваться") from e
+        logging.exception("Ошибка при регистрации пользователя: %s", e)
+        raise HTTPException(status_code=500, detail=f"Не удалось зарегистрироваться: {type(e).__name__}") from e
     token = create_access_token(data={"sub": user.id})
     return Token(access_token=token, user=user_to_response(user))
 
@@ -102,6 +102,6 @@ def update_me(
         db.refresh(user)
     except Exception as e:
         db.rollback()
-        logging.exception("Ошибка при обновлении профиля %s", user.id)
-        raise HTTPException(status_code=500, detail="Не удалось обновить профиль") from e
+        logging.exception("Ошибка при обновлении профиля %s: %s", user.id, e)
+        raise HTTPException(status_code=500, detail=f"Не удалось обновить профиль: {type(e).__name__}") from e
     return user_to_response(user)
