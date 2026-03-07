@@ -61,10 +61,7 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
     setIsSavingProfile(true);
 
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      updateProfile(name, email);
+      await updateProfile(name, email);
       toast.success('Профиль обновлен!');
     } catch (error) {
       toast.error('Не удалось обновить профиль. Попробуйте снова.');
