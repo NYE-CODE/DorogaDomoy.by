@@ -6,6 +6,10 @@ import { useAuth } from '../context/AuthContext';
 import { LocationPicker } from './location-picker';
 import { DEFAULT_CITY } from '../utils/cities';
 import { geocode } from '../utils/geocode';
+import { toast } from 'sonner';
+import { settingsApi } from '../api/client';
+
+const MAX_DESCRIPTION = 500;
 
 interface PetFormProps {
   onClose: () => void;
@@ -73,11 +77,20 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
   );
 
   const [step, setStep] = useState(1);
+  const [tried, setTried] = useState(false);
+  const [maxPhotos, setMaxPhotos] = useState(10);
 
   useEffect(() => {
-    // Reset to step 1 when modal opens/closes or when switching between create/edit
     setStep(1);
+    setTried(false);
   }, [isEditing, initialData?.id]);
+
+  useEffect(() => {
+    settingsApi.get().then((s) => {
+      const val = parseInt(s.max_photos, 10);
+      if (val > 0) setMaxPhotos(val);
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (initialData) {
@@ -116,18 +129,24 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
 
     for (const file of Array.from(files)) {
       if (!file.type.startsWith('image/')) {
-        alert('Пожалуйста, загружайте только изображения');
+        toast.error('Загружайте только изображения (JPEG, PNG, WebP)');
         continue;
       }
       if (file.size > 15 * 1024 * 1024) {
-        alert('Файл слишком большой. Максимальный размер: 15 МБ');
+        toast.error('Файл слишком большой. Максимум 15 МБ');
         continue;
       }
       try {
         const compressed = await compressImage(file);
-        setFormData(prev => ({ ...prev, photos: [...prev.photos, compressed] }));
+        setFormData(prev => {
+          if (prev.photos.length >= maxPhotos) {
+            toast.warning(`Максимум ${maxPhotos} фото`);
+            return prev;
+          }
+          return { ...prev, photos: [...prev.photos, compressed] };
+        });
       } catch {
-        alert('Не удалось обработать изображение');
+        toast.error('Не удалось обработать изображение');
       }
     }
     e.target.value = '';
@@ -140,25 +159,46 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
     setFormData({ ...formData, colors: newColors });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (step < 2) {
-      if (canProceed()) setStep(step + 1);
-      return;
-    }
-    onSubmit(formData);
-    onClose();
+  const step1Errors = () => {
+    const errs: Record<string, string> = {};
+    if (!formData.status) errs.status = 'Выберите статус';
+    if (!formData.animalType) errs.animalType = 'Выберите тип животного';
+    if (formData.colors.length === 0) errs.colors = 'Выберите хотя бы один окрас';
+    return errs;
+  };
+
+  const step2Errors = () => {
+    const errs: Record<string, string> = {};
+    if (!formData.description?.trim()) errs.description = 'Введите описание';
+    else if (formData.description.length > MAX_DESCRIPTION) errs.description = `Макс. ${MAX_DESCRIPTION} символов`;
+    if (!formData.city?.trim()) errs.city = 'Укажите адрес';
+    if (formData.photos.length === 0) errs.photos = 'Загрузите хотя бы одно фото';
+    return errs;
   };
 
   const canProceed = () => {
     if (step === 1) {
       if (isEditing && initialData) return true;
-      return !!(formData.animalType && formData.colors.length > 0 && formData.status);
+      return Object.keys(step1Errors()).length === 0;
     }
     if (step === 2) {
-      return !!(formData.description?.trim() && formData.city?.trim() && formData.photos.length > 0);
+      return Object.keys(step2Errors()).length === 0;
     }
     return true;
+  };
+
+  const errors = tried ? (step === 1 ? step1Errors() : step2Errors()) : {};
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setTried(true);
+    if (step < 2) {
+      if (canProceed()) { setTried(false); setStep(step + 1); }
+      return;
+    }
+    if (!canProceed()) return;
+    onSubmit(formData);
+    onClose();
   };
 
   return (
@@ -191,6 +231,21 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Статус *
+                </label>
+                <select
+                  value={formData.status}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value as PetStatus })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                >
+                  <option value="searching">{statusLabels.searching}</option>
+                  <option value="found">{statusLabels.found}</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Тип животного *
                 </label>
                 <select
@@ -212,17 +267,21 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
                 <input
                   type="text"
                   value={formData.breed}
-                  onChange={(e) => setFormData({ ...formData, breed: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, breed: e.target.value.slice(0, 80) })}
                   placeholder="Введите породу (необязательно)"
+                  maxLength={80}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  {formData.breed.length} / 80
+                </p>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Цвет *
+                  Окрас *
                 </label>
-                <div className="flex flex-wrap gap-2">
+                <div className={`flex flex-wrap gap-2 p-2 rounded-lg ${errors.colors ? 'ring-2 ring-red-400 bg-red-50' : ''}`}>
                   {(Object.keys(colorLabels) as PetColor[]).map((color) => (
                     <button
                       key={color}
@@ -238,6 +297,7 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
                     </button>
                   ))}
                 </div>
+                {errors.colors && <p className="text-xs text-red-500 mt-1">{errors.colors}</p>}
               </div>
 
               <div>
@@ -267,21 +327,6 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Статус *
-                </label>
-                <select
-                  value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value as PetStatus })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
-                >
-                  <option value="searching">{statusLabels.searching}</option>
-                  <option value="found">{statusLabels.found}</option>
-                </select>
-              </div>
             </div>
           )}
 
@@ -289,23 +334,39 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
           {step === 2 && (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Описание *
-                </label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Описание *
+                  </label>
+                  <span className={`text-xs ${formData.description.length > MAX_DESCRIPTION ? 'text-red-500 font-medium' : 'text-gray-400'}`}>
+                    {formData.description.length} / {MAX_DESCRIPTION}
+                  </span>
+                </div>
                 <textarea
                   value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  onChange={(e) => {
+                    if (e.target.value.length <= MAX_DESCRIPTION) {
+                      setFormData({ ...formData, description: e.target.value });
+                    }
+                  }}
                   placeholder="Опишите питомца, особые приметы, обстоятельства..."
                   rows={5}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  maxLength={MAX_DESCRIPTION}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.description ? 'border-red-400' : 'border-gray-300'}`}
                   required
                 />
+                {errors.description && <p className="text-xs text-red-500 mt-1">{errors.description}</p>}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Фото * (минимум 1)
-                </label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Фото *
+                  </label>
+                  <span className={`text-xs ${formData.photos.length === 0 && errors.photos ? 'text-red-500 font-medium' : 'text-gray-400'}`}>
+                    {formData.photos.length} из {maxPhotos}
+                  </span>
+                </div>
                 <div className="space-y-2">
                   {formData.photos.map((photo, index) => (
                     <div key={index} className="relative">
@@ -319,18 +380,25 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
                       </button>
                     </div>
                   ))}
-                  <label className="w-full px-4 py-8 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 transition-colors flex flex-col items-center gap-2 text-gray-600 hover:text-blue-600 cursor-pointer">
-                    <Upload className="w-6 h-6" />
-                    <span className="text-sm">Загрузить фото</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={handlePhotoUpload}
-                      className="hidden"
-                    />
-                  </label>
+                  {formData.photos.length < maxPhotos && (
+                    <label className={`w-full px-4 py-8 border-2 border-dashed rounded-lg hover:border-blue-500 transition-colors flex flex-col items-center gap-2 text-gray-600 hover:text-blue-600 cursor-pointer ${errors.photos ? 'border-red-400 bg-red-50' : 'border-gray-300'}`}>
+                      <Upload className="w-6 h-6" />
+                      <span className="text-sm">Загрузить фото</span>
+                      <span className="text-xs text-gray-400">JPEG, PNG, WebP · до 15 МБ</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handlePhotoUpload}
+                        className="hidden"
+                      />
+                    </label>
+                  )}
+                  {formData.photos.length >= maxPhotos && (
+                    <p className="text-xs text-gray-500 text-center py-2">Загружено максимальное количество фото</p>
+                  )}
                 </div>
+                {errors.photos && <p className="text-xs text-red-500 mt-1">{errors.photos}</p>}
               </div>
 
               <div>
@@ -343,7 +411,7 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
                     value={formData.city}
                     onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                     placeholder="Минск, ул. Примерная, 1"
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className={`flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.city ? 'border-red-400' : 'border-gray-300'}`}
                     required
                   />
                   <button
@@ -359,7 +427,7 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
                           location: { lat: result.lat, lng: result.lng },
                         });
                       } else {
-                        alert('Адрес не найден. Проверьте ввод или выберите точку на карте.');
+                        toast.error('Адрес не найден. Проверьте ввод или выберите точку на карте.');
                       }
                     }}
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 shrink-0"
@@ -369,9 +437,10 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
                     На карте
                   </button>
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  Введите адрес и нажмите «На карте» или выберите точку на карте
-                </p>
+                {errors.city
+                  ? <p className="text-xs text-red-500 mt-1">{errors.city}</p>
+                  : <p className="text-xs text-gray-500 mt-1">Введите адрес и нажмите «На карте» или выберите точку на карте</p>
+                }
               </div>
 
               <div>
@@ -409,10 +478,10 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  if (canProceed()) setStep(2);
+                  setTried(true);
+                  if (canProceed()) { setTried(false); setStep(2); }
                 }}
-                disabled={!canProceed()}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
                 Далее
               </button>
