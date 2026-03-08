@@ -5,6 +5,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { XIcon } from "lucide-react";
 
 import { cn } from "./utils";
+import { useScrollLock } from "./use-scroll-lock";
 
 function Dialog({
   ...props
@@ -51,6 +52,7 @@ function DialogContent({
   children,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content>) {
+  useScrollLock(true);
   return (
     <DialogPortal data-slot="dialog-portal">
       <DialogOverlay />

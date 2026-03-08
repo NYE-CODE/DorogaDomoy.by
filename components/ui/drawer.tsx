@@ -4,6 +4,7 @@ import * as React from "react";
 import { Drawer as DrawerPrimitive } from "vaul";
 
 import { cn } from "./utils";
+import { useScrollLock } from "./use-scroll-lock";
 
 function Drawer({
   ...props
@@ -50,6 +51,7 @@ function DrawerContent({
   children,
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Content>) {
+  useScrollLock(true);
   return (
     <DrawerPortal data-slot="drawer-portal">
       <DrawerOverlay />

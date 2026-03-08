@@ -2,6 +2,7 @@ import { X, MapPin, Phone, MessageCircle, Calendar, Share2, Printer, Home, Heart
 import { Pet } from '../types/pet';
 import { statusLabels, statusColors, animalTypeLabels, colorLabels, genderLabels, formatDate } from '../utils/pet-helpers';
 import { toast } from 'sonner';
+import { useScrollLock } from './ui/use-scroll-lock';
 
 interface PetModalProps {
   pet: Pet | null;
@@ -11,6 +12,7 @@ interface PetModalProps {
 }
 
 export function PetModal({ pet, onClose, onReport, onAuthorClick }: PetModalProps) {
+  useScrollLock(!!pet);
   if (!pet) return null;
 
   // Get archive reason badge

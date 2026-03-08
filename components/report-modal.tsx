@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X, AlertTriangle } from 'lucide-react';
 import { ReportReason, reportReasonLabels } from '../types/admin';
+import { useScrollLock } from './ui/use-scroll-lock';
 
 interface ReportModalProps {
   petId: string;
@@ -9,6 +10,7 @@ interface ReportModalProps {
 }
 
 export function ReportModal({ petId, onClose, onSubmit }: ReportModalProps) {
+  useScrollLock(true);
   const [reason, setReason] = useState<ReportReason>('spam');
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);

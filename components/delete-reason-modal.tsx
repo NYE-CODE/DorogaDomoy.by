@@ -1,5 +1,6 @@
 import { X } from 'lucide-react';
 import { useState } from 'react';
+import { useScrollLock } from './ui/use-scroll-lock';
 
 interface DeleteReasonModalProps {
   onClose: () => void;
@@ -17,6 +18,7 @@ const deleteReasons = [
 ];
 
 export function DeleteReasonModal({ onClose, onConfirm, petDescription }: DeleteReasonModalProps) {
+  useScrollLock(true);
   const [selectedReason, setSelectedReason] = useState<string>('');
   const [customReason, setCustomReason] = useState<string>('');
 

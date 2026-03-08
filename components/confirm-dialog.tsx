@@ -1,4 +1,5 @@
 import { X } from 'lucide-react';
+import { useScrollLock } from './ui/use-scroll-lock';
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -21,6 +22,7 @@ export function ConfirmDialog({
   cancelText = 'Отмена',
   confirmClass = 'bg-blue-600 hover:bg-blue-700 text-white',
 }: ConfirmDialogProps) {
+  useScrollLock(open);
   if (!open) return null;
 
   const handleConfirm = () => {
