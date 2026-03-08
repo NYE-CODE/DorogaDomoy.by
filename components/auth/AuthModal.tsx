@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { X, Mail, Lock, User, ArrowRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'sonner';
+import { useScrollLock } from '../ui/use-scroll-lock';
 
 interface AuthModalProps {
   onNavigateToTerms?: () => void;
@@ -9,6 +10,7 @@ interface AuthModalProps {
 
 export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
   const { isAuthModalOpen, closeAuthModal, login, register } = useAuth();
+  useScrollLock(isAuthModalOpen);
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

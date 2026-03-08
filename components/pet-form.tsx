@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, Upload, MapPin, Search } from 'lucide-react';
 import { AnimalType, PetStatus, PetColor, Gender, Pet } from '../types/pet';
+import { useScrollLock } from './ui/use-scroll-lock';
 import { animalTypeLabels, statusLabels, colorLabels, genderLabels } from '../utils/pet-helpers';
 import { useAuth } from '../context/AuthContext';
 import { LocationPicker } from './location-picker';
@@ -71,7 +72,8 @@ function formDataFromPet(pet: Pet): PetFormData {
 
 export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: PetFormProps) {
   const { user } = useAuth();
-  
+  useScrollLock(true);
+
   const [formData, setFormData] = useState<PetFormData>(() =>
     initialData ? formDataFromPet(initialData) : defaultFormData
   );

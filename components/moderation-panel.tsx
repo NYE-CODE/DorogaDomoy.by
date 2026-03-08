@@ -3,6 +3,7 @@ import { CheckCircle2, XCircle, X, ChevronLeft, ChevronRight } from 'lucide-reac
 import { Pet } from '../types/pet';
 import { formatDate, statusLabels, animalTypeLabels } from '../utils/pet-helpers';
 import { useAuth } from '../context/AuthContext';
+import { useScrollLock } from './ui/use-scroll-lock';
 
 interface ModerationPanelProps {
   pets: Pet[];
@@ -13,6 +14,7 @@ interface ModerationPanelProps {
 export function ModerationPanel({ pets, onApprovePet, onRejectPet }: ModerationPanelProps) {
   const { user } = useAuth();
   const [rejectingPet, setRejectingPet] = useState<Pet | null>(null);
+  useScrollLock(!!rejectingPet);
   const [rejectReason, setRejectReason] = useState('');
   const [page, setPage] = useState(1);
   const perPage = 10;

@@ -1,4 +1,5 @@
 import { X, AlertCircle, User } from 'lucide-react';
+import { useScrollLock } from './ui/use-scroll-lock';
 
 interface ContactRequiredModalProps {
   open: boolean;
@@ -7,6 +8,7 @@ interface ContactRequiredModalProps {
 }
 
 export function ContactRequiredModal({ open, onClose, onGoToProfile }: ContactRequiredModalProps) {
+  useScrollLock(open);
   if (!open) return null;
 
   return (
