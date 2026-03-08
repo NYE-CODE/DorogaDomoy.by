@@ -3,6 +3,8 @@ import { X, Upload, MapPin, Search } from 'lucide-react';
 import { AnimalType, PetStatus, PetColor, Gender, Pet } from '../types/pet';
 import { useScrollLock } from './ui/use-scroll-lock';
 import { animalTypeLabels, statusLabels, colorLabels, genderLabels } from '../utils/pet-helpers';
+import { BreedCombobox } from './breed-combobox';
+import { CAT_BREEDS, DOG_BREEDS } from '../utils/breeds';
 import { useAuth } from '../context/AuthContext';
 import { LocationPicker } from './location-picker';
 import { DEFAULT_CITY } from '../utils/cities';
@@ -266,14 +268,23 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Порода
                 </label>
-                <input
-                  type="text"
-                  value={formData.breed}
-                  onChange={(e) => setFormData({ ...formData, breed: e.target.value.slice(0, 80) })}
-                  placeholder="Введите породу (необязательно)"
-                  maxLength={80}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
+                {formData.animalType === 'other' ? (
+                  <input
+                    type="text"
+                    value={formData.breed}
+                    onChange={(e) => setFormData({ ...formData, breed: e.target.value.slice(0, 80) })}
+                    placeholder="Введите породу (необязательно)"
+                    maxLength={80}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                ) : (
+                  <BreedCombobox
+                    breeds={formData.animalType === 'cat' ? CAT_BREEDS : DOG_BREEDS}
+                    value={formData.breed}
+                    onChange={(breed) => setFormData({ ...formData, breed })}
+                    placeholder="Выберите или введите породу"
+                  />
+                )}
                 <p className="text-xs text-gray-500 mt-1">
                   {formData.breed.length} / 80
                 </p>
