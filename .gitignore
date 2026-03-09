@@ -36,3 +36,6 @@ backend/uploads/
 coverage/
 pytest.cache/
 
+## DB
+*.db
+
