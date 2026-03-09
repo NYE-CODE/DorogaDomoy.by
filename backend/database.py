@@ -106,3 +106,4 @@ def check_db_writable() -> dict:
     finally:
         db.close()
     return info
+
