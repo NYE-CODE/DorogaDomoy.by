@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Optional
 import uuid
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
 from database import get_db
@@ -223,6 +224,10 @@ def create_pet(
         db.add(pet)
         db.commit()
         db.refresh(pet)
+    except OperationalError as e:
+        db.rollback()
+        logging.exception("Ошибка при создании объявления: %s", e)
+        raise HTTPException(status_code=500, detail=f"Ошибка БД: {str(e)}") from e
     except Exception as e:
         db.rollback()
         logging.exception("Ошибка при создании объявления: %s", e)
