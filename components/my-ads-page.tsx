@@ -82,7 +82,8 @@ export function MyAdsPage({ pets, onBack, onCreateClick, onEditPet, onDeletePet 
               {paginatedAds.map(pet => (
                 <PetCard 
                   key={pet.id} 
-                  pet={pet} 
+                  pet={pet}
+                  onClick={() => window.open(`/pet/${pet.id}`, '_blank')}
                   onEdit={onEditPet}
                   onDelete={onDeletePet}
                 />

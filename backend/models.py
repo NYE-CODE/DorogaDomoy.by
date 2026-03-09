@@ -1,6 +1,6 @@
 """SQLAlchemy models for User, Pet, Report."""
 from datetime import datetime
-from sqlalchemy import Column, String, Integer, Boolean, DateTime, ForeignKey, Text, JSON, Float
+from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Text, JSON, Float
 from sqlalchemy.orm import relationship
 from database import Base
 

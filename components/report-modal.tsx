@@ -4,12 +4,11 @@ import { ReportReason, reportReasonLabels } from '../types/admin';
 import { useScrollLock } from './ui/use-scroll-lock';
 
 interface ReportModalProps {
-  petId: string;
   onClose: () => void;
   onSubmit: (reason: ReportReason, description: string) => void;
 }
 
-export function ReportModal({ petId, onClose, onSubmit }: ReportModalProps) {
+export function ReportModal({ onClose, onSubmit }: ReportModalProps) {
   useScrollLock(true);
   const [reason, setReason] = useState<ReportReason>('spam');
   const [description, setDescription] = useState('');

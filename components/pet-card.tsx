@@ -223,7 +223,18 @@ export function PetCard({ pet, onClick, compact = false, onEdit, onDelete }: Pet
         </div>
 
         <div className="border-t pt-3">
-          <p className="text-xs text-gray-500 mb-2">Контакты: {pet.authorName}</p>
+          <p className="text-xs text-gray-500 mb-2">
+            Контакты:{' '}
+            <a
+              href={`/user/${pet.authorId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="text-blue-600 hover:text-blue-700 hover:underline"
+            >
+              {pet.authorName}
+            </a>
+          </p>
           
           {pet.isArchived ? (
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">

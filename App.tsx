@@ -1,19 +1,18 @@
 import { useState, useMemo, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import { MyAdsPage } from './components/my-ads-page';
 import { ProfilePage } from './components/profile-page';
-import { UserProfilePage } from './components/user-profile-page';
 import { TermsPage } from './components/terms-page';
-import { AuthProvider, useAuth, User } from './context/AuthContext';
+import { useAuth, User } from './context/AuthContext';
 import { Header } from './components/layout/Header';
 import { Footer } from './components/layout/Footer';
 import { AuthModal } from './components/auth/AuthModal';
 import { ContactRequiredModal } from './components/contact-required-modal';
 import { toast, Toaster } from 'sonner';
 import { DeleteReasonModal } from './components/delete-reason-modal';
-import { ReportModal } from './components/report-modal';
-import { City } from './utils/cities';
-import { calculateDistance } from './utils/distance';
+import { City, findClosestCity, DEFAULT_CITY } from './utils/cities';
 import { reverseGeocodeLocality } from './utils/geocode';
+import { CitySelectModal } from './components/city-select-modal';
+import { CityDetectPopup } from './components/city-detect-popup';
 import { AdminPanel } from './components/admin-panel';
 import { Report, ReportReason, reportReasonLabels } from './types/admin';
 import { Pet } from './types/pet';
@@ -21,7 +20,6 @@ import { PetFormData } from './components/pet-form';
 import { FilterState } from './components/filters';
 import { petsApi, usersApi, reportsApi } from './api/client';
 import { PetCard } from './components/pet-card';
-import { PetModal } from './components/pet-modal';
 import { PetForm } from './components/pet-form';
 import { Filters } from './components/filters';
 import { useIsMobile } from './components/ui/use-mobile';
@@ -30,9 +28,7 @@ import { StatisticsPanel } from './components/statistics';
 import { Map as MapIcon, List } from 'lucide-react';
 import type { LatLngBounds } from 'leaflet';
 
-type View = 'main' | 'my-ads' | 'profile' | 'admin' | 'user-profile' | 'terms';
-type SortBy = 'date-new' | 'date-old' | 'distance';
-
+type View = 'main' | 'my-ads' | 'profile' | 'admin' | 'terms';
 function MainApp() {
   const { user, isAuthenticated, openAuthModal, closeAuthModal, isLoading } = useAuth();
   const [view, setView] = useState<View>('main');
@@ -103,9 +99,6 @@ function MainApp() {
       }
       if (currentFilters.breed.trim()) {
         params.breed = currentFilters.breed.trim();
-      }
-      if (currentFilters.city.trim()) {
-        params.city = currentFilters.city.trim();
       }
       if (currentFilters.days !== 'all') {
         params.days = currentFilters.days;
@@ -180,12 +173,9 @@ function MainApp() {
       clearInterval(interval);
     };
   }, [loadMapPets, loadAllPets, loadAdminData]);
-  const [selectedPet, setSelectedPet] = useState<Pet | null>(null);
-  const [viewingUserId, setViewingUserId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingPet, setEditingPet] = useState<Pet | null>(null);
   const [deletingPet, setDeletingPet] = useState<Pet | null>(null);
-  const [reportingPetId, setReportingPetId] = useState<string | null>(null);
   const [showContactRequiredModal, setShowContactRequiredModal] = useState(false);
   const [mobileView, setMobileView] = useState<'map' | 'list'>('list');
   const [mapBounds, setMapBounds] = useState<LatLngBounds | null>(null);
@@ -229,36 +219,64 @@ function MainApp() {
     return null;
   })();
   const initialSavedLocRef = useRef(savedLoc);
+
+  const cityConfirmed = (() => {
+    try { return localStorage.getItem('pet_finder_city_confirmed') === 'true'; } catch { return false; }
+  })();
+
+  const belarusCenter: [number, number] = [53.7098, 27.9534];
+  const belarusZoom = 7;
+
   const [mapCenter, setMapCenter] = useState<[number, number]>(
-    savedLoc ? [savedLoc.lat, savedLoc.lng] : [53.9006, 27.5590]
+    savedLoc ? [savedLoc.lat, savedLoc.lng] : (cityConfirmed ? belarusCenter : [53.9006, 27.5590])
   );
-  const [mapZoom, setMapZoom] = useState(savedLoc ? 13 : 12);
-  const [userLocation, setUserLocationState] = useState<{ lat: number; lng: number } | null>(
-    savedLoc ? { lat: savedLoc.lat, lng: savedLoc.lng } : null
+  const [mapZoom, setMapZoom] = useState(
+    savedLoc ? (savedLoc.city ? 13 : belarusZoom) : (cityConfirmed ? belarusZoom : 12)
   );
 
-  const setUserLocation = (loc: { lat: number; lng: number } | null, city?: string) => {
-    setUserLocationState(loc);
-    if (loc) {
-      try {
-        const toSave: { lat: number; lng: number; city?: string } = { lat: loc.lat, lng: loc.lng };
-        if (city) toSave.city = city;
-        localStorage.setItem('pet_finder_user_location', JSON.stringify(toSave));
-      } catch {}
-    } else {
-      try { localStorage.removeItem('pet_finder_user_location'); } catch {}
-    }
+  const saveUserLocation = (loc: { lat: number; lng: number }, city?: string) => {
+    try {
+      const toSave: { lat: number; lng: number; city?: string } = { lat: loc.lat, lng: loc.lng };
+      if (city) toSave.city = city;
+      localStorage.setItem('pet_finder_user_location', JSON.stringify(toSave));
+    } catch {}
   };
-  const [sortBy, setSortBy] = useState<SortBy>('date-new');
-  
+  const [selectedCity, setSelectedCity] = useState(savedLoc?.city ?? '');
+  const [showCityModal, setShowCityModal] = useState(false);
+  const [showCityDetectPopup, setShowCityDetectPopup] = useState(false);
+  const [detectedCityName, setDetectedCityName] = useState('');
+  const detectedCityRef = useRef<City | null>(null);
+
+  useEffect(() => {
+    if (cityConfirmed) return;
+
+    const detectCity = async () => {
+      try {
+        const res = await fetch('http://ip-api.com/json/?fields=status,lat,lon', { signal: AbortSignal.timeout(5000) });
+        const data = await res.json();
+        if (data.status === 'success' && typeof data.lat === 'number' && typeof data.lon === 'number') {
+          const closest = findClosestCity(data.lat, data.lon);
+          detectedCityRef.current = closest;
+          setDetectedCityName(closest.name);
+          setShowCityDetectPopup(true);
+          return;
+        }
+      } catch {}
+
+      detectedCityRef.current = DEFAULT_CITY;
+      setDetectedCityName(DEFAULT_CITY.name);
+      setShowCityDetectPopup(true);
+    };
+
+    detectCity();
+  }, [cityConfirmed]);
+
   const [filters, setFilters] = useState<FilterState>({
     animalType: 'all',
     breed: '',
     colors: [],
     statuses: [],
-    city: savedLoc?.city ?? '',
     days: 'all',
-    distance: 'all',
     searchQuery: '',
   });
   filtersRef.current = filters;
@@ -271,10 +289,8 @@ function MainApp() {
     reverseGeocodeLocality(initialSavedLoc.lat, initialSavedLoc.lng).then((locality) => {
       if (cancelled || !locality || locality === initialSavedLoc.city) return;
 
-      setFilters((prev) => (
-        prev.city === initialSavedLoc.city ? { ...prev, city: locality } : prev
-      ));
-      setUserLocation({ lat: initialSavedLoc.lat, lng: initialSavedLoc.lng }, locality);
+      setSelectedCity((prev: string) => (prev === initialSavedLoc.city ? locality : prev));
+      saveUserLocation({ lat: initialSavedLoc.lat, lng: initialSavedLoc.lng }, locality);
     });
 
     return () => {
@@ -292,45 +308,42 @@ function MainApp() {
     view,
     filters.animalType,
     filters.breed,
-    filters.city,
     filters.days,
     filters.searchQuery,
     filters.statuses,
     loadMapPets,
   ]);
 
-  const handleCitySelect = (city: City) => {
+  const confirmCity = (city: City) => {
+    setSelectedCity(city.name);
     setMapCenter(city.coordinates);
     setMapZoom(city.zoom || 12);
-    toast.success(`Карта центрирована на ${city.name}`);
+    saveUserLocation({ lat: city.coordinates[0], lng: city.coordinates[1] }, city.name);
+    try { localStorage.setItem('pet_finder_city_confirmed', 'true'); } catch {}
   };
 
-  const handleRequestLocation = () => {
-    if (!navigator.geolocation) {
-      toast.error('Геолокация не поддерживается вашим браузером');
-      return;
+  const handleCityModalSelect = (city: City | null) => {
+    if (city) {
+      confirmCity(city);
+    } else {
+      setSelectedCity('');
+      setMapCenter([53.7098, 27.9534]);
+      setMapZoom(7);
+      try { localStorage.removeItem('pet_finder_user_location'); } catch {}
     }
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const location = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
-        };
-        setUserLocation(location);
-        setMapCenter([location.lat, location.lng]);
-        setMapZoom(13);
-        const city = await reverseGeocodeLocality(location.lat, location.lng);
-        if (city) {
-          setFilters((prev) => ({ ...prev, city }));
-          setUserLocation(location, city);
-        }
-        toast.success('Местоположение определено');
-      },
-      (error) => {
-        console.error('Error getting location:', error);
-        toast.error('Не удалось определить местоположение');
-      }
-    );
+    try { localStorage.setItem('pet_finder_city_confirmed', 'true'); } catch {}
+    setShowCityModal(false);
+  };
+
+  const handleCityDetectConfirm = () => {
+    const city = detectedCityRef.current;
+    if (city) confirmCity(city);
+    setShowCityDetectPopup(false);
+  };
+
+  const handleCityDetectReject = () => {
+    setShowCityDetectPopup(false);
+    setShowCityModal(true);
   };
 
   const approvedAllPets = allPets.filter(p => !p.isArchived && p.moderationStatus === 'approved');
@@ -338,25 +351,18 @@ function MainApp() {
     ? (mapBounds && mapPetsLoaded ? mapPets : approvedAllPets)
     : allPets;
 
-  // Filter pets by current UI filters
-  const filteredPets = useMemo(() => {
-    let filtered = sourcePets;
+  const mapDisplayPets = useMemo(() => {
+    if (filters.colors.length === 0) return sourcePets;
+    return sourcePets.filter(p => 
+      p.colors.some(c => filters.colors.includes(c))
+    );
+  }, [sourcePets, filters.colors]);
 
-    if (filters.colors.length > 0) {
-      filtered = filtered.filter(p => 
-        p.colors.some(c => filters.colors.includes(c))
-      );
-    }
-
-    if (filters.distance !== 'all' && userLocation) {
-      const distanceThreshold = typeof filters.distance === 'number' ? filters.distance : parseInt(String(filters.distance), 10);
-      filtered = filtered.filter(p => 
-        calculateDistance(userLocation.lat, userLocation.lng, p.location.lat, p.location.lng) <= distanceThreshold
-      );
-    }
-
-    return filtered;
-  }, [sourcePets, filters, userLocation]);
+  const listDisplayPets = useMemo(() => {
+    if (!selectedCity.trim()) return mapDisplayPets;
+    const cityLower = selectedCity.toLowerCase().trim();
+    return mapDisplayPets.filter(p => p.city.toLowerCase().includes(cityLower));
+  }, [mapDisplayPets, selectedCity]);
 
   // Calculate real-time statistics from active (non-archived) pets
   const statistics = useMemo(() => {
@@ -489,30 +495,6 @@ function MainApp() {
     setShowForm(true);
   };
 
-  const handleReportPet = (petId: string) => {
-    if (!isAuthenticated) {
-      toast.error('Войдите, чтобы пожаловаться на объявление');
-      openAuthModal();
-      return;
-    }
-    setSelectedPet(null); // Close pet modal
-    setReportingPetId(petId);
-  };
-
-  const handleSubmitReport = async (reason: ReportReason, description: string) => {
-    if (!reportingPetId || !user) return;
-    try {
-      const r = await reportsApi.create(reportingPetId, reason, description);
-      setReports((prev) => [...prev, r]);
-      setReportingPetId(null);
-      toast.success('Жалоба отправлена', {
-        description: 'Модератор рассмотрит её в ближайшее время',
-      });
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Ошибка отправки жалобы');
-    }
-  };
-
   const renderContent = () => {
     if (view === 'my-ads') {
       return (
@@ -632,21 +614,6 @@ function MainApp() {
       );
     }
 
-    if (view === 'user-profile') {
-      return (
-        <UserProfilePage
-          userId={viewingUserId}
-          onBack={() => {
-            setView('main');
-            setViewingUserId(null);
-          }}
-          onPetClick={setSelectedPet}
-          users={users}
-          pets={allPets}
-        />
-      );
-    }
-
     if (view === 'terms') {
       return <TermsPage onBack={() => setView('main')} />;
     }
@@ -688,9 +655,6 @@ function MainApp() {
             <Filters 
               filters={filters} 
               onFiltersChange={setFilters} 
-              onCitySelect={handleCitySelect}
-              userLocation={userLocation}
-              onRequestLocation={handleRequestLocation}
             />
           </div>
         </div>
@@ -702,27 +666,41 @@ function MainApp() {
             <div className="bg-white border border-gray-200 rounded-lg flex flex-col h-full max-h-full">
               <div className="p-4 border-b shrink-0">
                 <h3 className="font-semibold text-gray-900">
-                  Найдено в этой области: {filteredPets.length}
+                  {selectedCity.trim()
+                    ? `${selectedCity}: ${listDisplayPets.length}`
+                    : `Найдено: ${listDisplayPets.length}`
+                  }
                 </h3>
+                {selectedCity.trim() && listDisplayPets.length === 0 && mapDisplayPets.length > 0 && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    На карте есть объявления из других городов
+                  </p>
+                )}
               </div>
               
               <div className="p-4 space-y-3 overflow-y-auto flex-1">
-                {filteredPets.length === 0 ? (
+                {listDisplayPets.length === 0 ? (
                   <div className="text-center py-8">
-                      <p className="text-gray-600">Питомцы не найдены</p>
+                      <p className="text-gray-600">
+                        {selectedCity.trim()
+                          ? `В городе «${selectedCity}» объявлений не найдено`
+                          : 'Питомцы не найдены'
+                        }
+                      </p>
                       <p className="text-sm text-gray-500 mt-1">
-                        Попробуйте изменить масштаб карты или фильтры
+                        {selectedCity.trim()
+                          ? 'Переместите карту к нужному городу или измените город в шапке'
+                          : 'Попробуйте изменить масштаб карты или фильтры'
+                        }
                       </p>
                   </div>
                 ) : (
-                  filteredPets.map((pet) => (
+                  listDisplayPets.map((pet) => (
                     <PetCard
                       key={pet.id}
                       pet={pet}
-                      onClick={() => setSelectedPet(pet)}
+                      onClick={() => window.open(`/pet/${pet.id}`, '_blank')}
                       compact
-                      // We can pass onEdit/onDelete here too if we want them editable in main list
-                      // But usually user manages ads in My Ads
                     />
                   ))
                 )}
@@ -742,8 +720,8 @@ function MainApp() {
                 </div>
               }>
                 <MapView
-                  pets={filteredPets}
-                  onPetClick={setSelectedPet}
+                  pets={mapDisplayPets}
+                  onPetClick={(pet) => window.open(`/pet/${pet.id}`, '_blank')}
                   onBoundsChange={setMapBounds}
                   center={mapCenter}
                   zoom={mapZoom}
@@ -768,6 +746,8 @@ function MainApp() {
           onViewChange={setView} 
           onCreateClick={handleCreateClick}
           currentView={view}
+          selectedCity={selectedCity}
+          onCityClick={() => setShowCityModal(true)}
         />
       )}
 
@@ -776,19 +756,6 @@ function MainApp() {
       {view === 'main' && <Footer />}
 
       {/* Modals */}
-      {selectedPet && (
-        <PetModal 
-          pet={selectedPet} 
-          onClose={() => setSelectedPet(null)}
-          onReport={handleReportPet}
-          onAuthorClick={(authorId) => {
-            setViewingUserId(authorId);
-            setView('user-profile');
-            setSelectedPet(null);
-          }}
-        />
-      )}
-      
       {showForm && (
         <PetForm 
           onClose={() => {
@@ -814,14 +781,6 @@ function MainApp() {
         />
       )}
 
-      {reportingPetId && (
-        <ReportModal
-          petId={reportingPetId}
-          onClose={() => setReportingPetId(null)}
-          onSubmit={handleSubmitReport}
-        />
-      )}
-
       <ContactRequiredModal
         open={showContactRequiredModal}
         onClose={() => setShowContactRequiredModal(false)}
@@ -831,15 +790,25 @@ function MainApp() {
         }}
       />
 
+      <CitySelectModal
+        open={showCityModal}
+        onClose={() => setShowCityModal(false)}
+        onSelect={handleCityModalSelect}
+        currentCity={selectedCity}
+      />
+
+      <CityDetectPopup
+        open={showCityDetectPopup}
+        detectedCity={detectedCityName}
+        onConfirm={handleCityDetectConfirm}
+        onReject={handleCityDetectReject}
+      />
+
       <Toaster />
     </div>
   );
 }
 
 export default function App() {
-  return (
-    <AuthProvider>
-      <MainApp />
-    </AuthProvider>
-  );
+  return <MainApp />;
 }

@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { X, Upload, MapPin, Search } from 'lucide-react';
+import { X, Search, ChevronRight, ChevronLeft, ImagePlus } from 'lucide-react';
 import { AnimalType, PetStatus, PetColor, Gender, Pet } from '../types/pet';
 import { useScrollLock } from './ui/use-scroll-lock';
-import { animalTypeLabels, statusLabels, colorLabels, genderLabels } from '../utils/pet-helpers';
+import { colorLabels, genderLabels } from '../utils/pet-helpers';
 import { BreedCombobox } from './breed-combobox';
 import { CAT_BREEDS, DOG_BREEDS } from '../utils/breeds';
 import { useAuth } from '../context/AuthContext';
@@ -71,6 +71,23 @@ function formDataFromPet(pet: Pet): PetFormData {
     contacts: pet.contacts ?? {},
   };
 }
+
+const statusOptions: { value: PetStatus; label: string; icon: string; color: string; activeColor: string }[] = [
+  { value: 'searching', label: 'Ищут', icon: '🔍', color: 'text-gray-600', activeColor: 'bg-red-50 text-red-700 border-red-200 shadow-sm' },
+  { value: 'found', label: 'Найден', icon: '📍', color: 'text-gray-600', activeColor: 'bg-blue-50 text-blue-700 border-blue-200 shadow-sm' },
+];
+
+const animalTypeOptions: { value: AnimalType; label: string; icon: string }[] = [
+  { value: 'cat', label: 'Кот', icon: '🐱' },
+  { value: 'dog', label: 'Собака', icon: '🐕' },
+  { value: 'other', label: 'Другое', icon: '🦔' },
+];
+
+const genderOptions: { value: Gender; label: string }[] = [
+  { value: 'unknown', label: genderLabels.unknown },
+  { value: 'male', label: genderLabels.male },
+  { value: 'female', label: genderLabels.female },
+];
 
 export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: PetFormProps) {
   const { user } = useAuth();
@@ -207,25 +224,32 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
 
   return (
     <div 
-      className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
       onClick={onClose}
     >
       <div 
-        className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center justify-between z-10">
+        {/* Header */}
+        <div className="sticky top-0 bg-white/95 backdrop-blur-sm border-b border-gray-100 px-6 py-4 flex items-center justify-between z-10 rounded-t-2xl">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">
-              {isEditing ? 'Редактировать объявление' : 'Создать объявление'}
+            <h2 className="text-lg font-semibold text-gray-900">
+              {isEditing ? 'Редактирование' : 'Новое объявление'}
             </h2>
-            <p className="text-sm text-gray-600 mt-1">Шаг {step} из 2</p>
+            <div className="flex items-center gap-2 mt-1.5">
+              <div className="flex gap-1">
+                <div className={`h-1 w-8 rounded-full transition-colors ${step >= 1 ? 'bg-blue-600' : 'bg-gray-200'}`} />
+                <div className={`h-1 w-8 rounded-full transition-colors ${step >= 2 ? 'bg-blue-600' : 'bg-gray-200'}`} />
+              </div>
+              <span className="text-xs text-gray-400">Шаг {step} из 2</span>
+            </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
           >
-            <X className="w-5 h-5 text-gray-600" />
+            <X className="w-5 h-5 text-gray-500" />
           </button>
         </div>
 
@@ -233,77 +257,88 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
           {/* Step 1: Basic Info */}
           {step === 1 && (
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Статус *
-                </label>
-                <select
-                  value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value as PetStatus })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
-                >
-                  <option value="searching">{statusLabels.searching}</option>
-                  <option value="found">{statusLabels.found}</option>
-                </select>
+              {/* Status */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-gray-400 uppercase tracking-wide shrink-0">Статус *</span>
+                <div className="flex gap-1.5">
+                  {statusOptions.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, status: opt.value })}
+                      className={`px-3 py-1 text-sm rounded-lg border transition-all ${
+                        formData.status === opt.value
+                          ? opt.activeColor
+                          : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+                {errors.status && <p className="text-xs text-red-500 ml-2">{errors.status}</p>}
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Тип животного *
-                </label>
-                <select
-                  value={formData.animalType}
-                  onChange={(e) => setFormData({ ...formData, animalType: e.target.value as AnimalType })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
-                >
-                  <option value="cat">{animalTypeLabels.cat}</option>
-                  <option value="dog">{animalTypeLabels.dog}</option>
-                  <option value="other">{animalTypeLabels.other}</option>
-                </select>
+              {/* Animal type + Breed */}
+              <div className="flex flex-col sm:flex-row sm:items-end gap-3">
+                <div className="shrink-0">
+                  <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">Тип животного *</span>
+                  <div className="flex bg-gray-100 rounded-lg p-0.5 mt-1.5 w-fit">
+                    {animalTypeOptions.map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, animalType: opt.value, breed: '' })}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                          formData.animalType === opt.value
+                            ? 'bg-white text-gray-900 shadow-sm'
+                            : 'text-gray-500 hover:text-gray-700'
+                        }`}
+                      >
+                        <span className="text-base leading-none">{opt.icon}</span>
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                  {errors.animalType && <p className="text-xs text-red-500 mt-1">{errors.animalType}</p>}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">Порода</span>
+                  <div className="mt-1.5">
+                    {formData.animalType === 'other' ? (
+                      <input
+                        type="text"
+                        value={formData.breed}
+                        onChange={(e) => setFormData({ ...formData, breed: e.target.value.slice(0, 80) })}
+                        placeholder="Введите породу (необязательно)"
+                        maxLength={80}
+                        className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    ) : (
+                      <BreedCombobox
+                        breeds={formData.animalType === 'cat' ? CAT_BREEDS : DOG_BREEDS}
+                        value={formData.breed}
+                        onChange={(breed) => setFormData({ ...formData, breed })}
+                        placeholder="Выберите или введите породу"
+                      />
+                    )}
+                  </div>
+                </div>
               </div>
 
+              {/* Colors */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Порода
-                </label>
-                {formData.animalType === 'other' ? (
-                  <input
-                    type="text"
-                    value={formData.breed}
-                    onChange={(e) => setFormData({ ...formData, breed: e.target.value.slice(0, 80) })}
-                    placeholder="Введите породу (необязательно)"
-                    maxLength={80}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                ) : (
-                  <BreedCombobox
-                    breeds={formData.animalType === 'cat' ? CAT_BREEDS : DOG_BREEDS}
-                    value={formData.breed}
-                    onChange={(breed) => setFormData({ ...formData, breed })}
-                    placeholder="Выберите или введите породу"
-                  />
-                )}
-                <p className="text-xs text-gray-500 mt-1">
-                  {formData.breed.length} / 80
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Окрас *
-                </label>
-                <div className={`flex flex-wrap gap-2 p-2 rounded-lg ${errors.colors ? 'ring-2 ring-red-400 bg-red-50' : ''}`}>
+                <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">Окрас *</span>
+                <div className={`flex flex-wrap gap-1.5 mt-1.5 ${errors.colors ? 'ring-2 ring-red-300 bg-red-50/50 p-2 rounded-xl' : ''}`}>
                   {(Object.keys(colorLabels) as PetColor[]).map((color) => (
                     <button
                       key={color}
                       type="button"
                       onClick={() => toggleColor(color)}
-                      className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
+                      className={`px-2.5 py-1 text-sm rounded-lg border transition-all ${
                         formData.colors.includes(color)
-                          ? 'bg-blue-100 text-blue-700 border-blue-300'
-                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                          ? 'bg-blue-50 text-blue-700 border-blue-200'
+                          : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
                       }`}
                     >
                       {colorLabels[color]}
@@ -313,44 +348,48 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
                 {errors.colors && <p className="text-xs text-red-500 mt-1">{errors.colors}</p>}
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Пол
-                </label>
-                <select
-                  value={formData.gender}
-                  onChange={(e) => setFormData({ ...formData, gender: e.target.value as Gender })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="unknown">{genderLabels.unknown}</option>
-                  <option value="male">{genderLabels.male}</option>
-                  <option value="female">{genderLabels.female}</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Примерный возраст
-                </label>
-                <input
-                  type="text"
-                  value={formData.approximateAge}
-                  onChange={(e) => setFormData({ ...formData, approximateAge: e.target.value })}
-                  placeholder="Например: 2 года"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
+              {/* Gender + Age */}
+              <div className="flex flex-col sm:flex-row sm:items-end gap-3">
+                <div className="shrink-0">
+                  <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">Пол</span>
+                  <div className="flex bg-gray-100 rounded-lg p-0.5 mt-1.5 w-fit">
+                    {genderOptions.map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, gender: opt.value })}
+                        className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                          formData.gender === opt.value
+                            ? 'bg-white text-gray-900 shadow-sm'
+                            : 'text-gray-500 hover:text-gray-700'
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">Возраст</span>
+                  <input
+                    type="text"
+                    value={formData.approximateAge}
+                    onChange={(e) => setFormData({ ...formData, approximateAge: e.target.value })}
+                    placeholder="Напр.: 2 года"
+                    className="block mt-1.5 px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
               </div>
             </div>
           )}
 
           {/* Step 2: Details */}
           {step === 2 && (
-            <div className="space-y-4">
+            <div className="space-y-5">
+              {/* Description */}
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Описание *
-                  </label>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">Описание *</span>
                   <span className={`text-xs ${formData.description.length > MAX_DESCRIPTION ? 'text-red-500 font-medium' : 'text-gray-400'}`}>
                     {formData.description.length} / {MAX_DESCRIPTION}
                   </span>
@@ -363,68 +402,82 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
                     }
                   }}
                   placeholder="Опишите питомца, особые приметы, обстоятельства..."
-                  rows={5}
+                  rows={4}
                   maxLength={MAX_DESCRIPTION}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.description ? 'border-red-400' : 'border-gray-300'}`}
+                  className={`w-full mt-2 px-3 py-2.5 text-sm border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none ${errors.description ? 'border-red-300' : 'border-gray-200'}`}
                   required
                 />
                 {errors.description && <p className="text-xs text-red-500 mt-1">{errors.description}</p>}
               </div>
 
+              {/* Photos */}
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Фото *
-                  </label>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">Фото *</span>
                   <span className={`text-xs ${formData.photos.length === 0 && errors.photos ? 'text-red-500 font-medium' : 'text-gray-400'}`}>
                     {formData.photos.length} из {maxPhotos}
                   </span>
                 </div>
-                <div className="space-y-2">
-                  {formData.photos.map((photo, index) => (
-                    <div key={index} className="relative">
-                      <img src={photo} alt={`Photo ${index + 1}`} className="w-full h-32 object-cover rounded-lg" />
-                      <button
-                        type="button"
-                        onClick={() => setFormData({ ...formData, photos: formData.photos.filter((_, i) => i !== index) })}
-                        className="absolute top-2 right-2 p-1 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
+                <div className="mt-2">
+                  {formData.photos.length > 0 && (
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-2">
+                      {formData.photos.map((photo, index) => (
+                        <div key={index} className="relative aspect-square rounded-xl overflow-hidden group">
+                          <img src={photo} alt={`Фото ${index + 1}`} className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => setFormData({ ...formData, photos: formData.photos.filter((_, i) => i !== index) })}
+                            className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+                          >
+                            <X className="w-6 h-6 text-white" />
+                          </button>
+                        </div>
+                      ))}
+                      {formData.photos.length < maxPhotos && (
+                        <label className="aspect-square rounded-xl border-2 border-dashed border-gray-200 hover:border-blue-400 flex flex-col items-center justify-center cursor-pointer transition-colors text-gray-400 hover:text-blue-500">
+                          <ImagePlus className="w-6 h-6" />
+                          <input
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            onChange={handlePhotoUpload}
+                            className="hidden"
+                          />
+                        </label>
+                      )}
                     </div>
-                  ))}
-                  {formData.photos.length < maxPhotos && (
-                    <label className={`w-full px-4 py-8 border-2 border-dashed rounded-lg hover:border-blue-500 transition-colors flex flex-col items-center gap-2 text-gray-600 hover:text-blue-600 cursor-pointer ${errors.photos ? 'border-red-400 bg-red-50' : 'border-gray-300'}`}>
-                      <Upload className="w-6 h-6" />
-                      <span className="text-sm">Загрузить фото</span>
-                      <span className="text-xs text-gray-400">JPEG, PNG, WebP · до 15 МБ</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        onChange={handlePhotoUpload}
-                        className="hidden"
-                      />
-                    </label>
+                  )}
+                  {formData.photos.length === 0 && (
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                      <label className={`aspect-square rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-colors ${errors.photos ? 'border-red-300 bg-red-50/50 text-red-400' : 'border-gray-200 hover:border-blue-400 text-gray-400 hover:text-blue-500'}`}>
+                        <ImagePlus className="w-6 h-6" />
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={handlePhotoUpload}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
                   )}
                   {formData.photos.length >= maxPhotos && (
-                    <p className="text-xs text-gray-500 text-center py-2">Загружено максимальное количество фото</p>
+                    <p className="text-xs text-gray-400 text-center py-1">Загружено максимальное количество фото</p>
                   )}
                 </div>
                 {errors.photos && <p className="text-xs text-red-500 mt-1">{errors.photos}</p>}
               </div>
 
+              {/* Address */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Адрес *
-                </label>
-                <div className="flex gap-2">
+                <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">Адрес *</span>
+                <div className="flex gap-2 mt-2">
                   <input
                     type="text"
                     value={formData.city}
                     onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                     placeholder="Минск, ул. Примерная, 1"
-                    className={`flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.city ? 'border-red-400' : 'border-gray-300'}`}
+                    className={`flex-1 px-3 py-2 text-sm border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.city ? 'border-red-300' : 'border-gray-200'}`}
                     required
                   />
                   <button
@@ -443,7 +496,7 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
                         toast.error('Адрес не найден. Проверьте ввод или выберите точку на карте.');
                       }
                     }}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 shrink-0"
+                    className="px-4 py-2 bg-blue-600 text-white text-sm rounded-xl hover:bg-blue-700 transition-colors flex items-center gap-1.5 shrink-0"
                     title="Показать на карте"
                   >
                     <Search className="w-4 h-4" />
@@ -452,33 +505,35 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
                 </div>
                 {errors.city
                   ? <p className="text-xs text-red-500 mt-1">{errors.city}</p>
-                  : <p className="text-xs text-gray-500 mt-1">Введите адрес и нажмите «На карте» или выберите точку на карте</p>
+                  : <p className="text-xs text-gray-400 mt-1">Введите адрес и нажмите «На карте» или выберите точку на карте</p>
                 }
               </div>
 
+              {/* Map */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Точка на карте *
-                </label>
-                <LocationPicker
-                  initialLocation={formData.location}
-                  onLocationSelect={(newLocation) => setFormData((prev) => ({ ...prev, location: newLocation }))}
-                  onLocationWithAddress={(location, address) => {
-                    setFormData((prev) => ({ ...prev, location, city: address }));
-                  }}
-                />
+                <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">Точка на карте *</span>
+                <div className="mt-2 rounded-xl overflow-hidden border border-gray-200">
+                  <LocationPicker
+                    initialLocation={formData.location}
+                    onLocationSelect={(newLocation) => setFormData((prev) => ({ ...prev, location: newLocation }))}
+                    onLocationWithAddress={(location, address) => {
+                      setFormData((prev) => ({ ...prev, location, city: address }));
+                    }}
+                  />
+                </div>
               </div>
             </div>
           )}
 
           {/* Navigation */}
-          <div className="flex items-center justify-between mt-6 pt-6 border-t">
+          <div className="flex items-center justify-between mt-8 pt-5 border-t border-gray-100">
             {step > 1 ? (
               <button
                 type="button"
                 onClick={() => setStep(step - 1)}
-                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                className="flex items-center gap-1.5 px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
               >
+                <ChevronLeft className="w-4 h-4" />
                 Назад
               </button>
             ) : (
@@ -494,16 +549,17 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
                   setTried(true);
                   if (canProceed()) { setTried(false); setStep(2); }
                 }}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="flex items-center gap-1.5 px-6 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-colors"
               >
                 Далее
+                <ChevronRight className="w-4 h-4" />
               </button>
             ) : (
               <button
                 type="submit"
-                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                className="px-6 py-2.5 bg-green-600 text-white text-sm font-medium rounded-xl hover:bg-green-700 transition-colors"
               >
-                {isEditing ? 'Сохранить изменения' : 'Создать объявление'}
+                {isEditing ? 'Сохранить' : 'Создать объявление'}
               </button>
             )}
           </div>

@@ -34,15 +34,6 @@ export const genderLabels: Record<Gender, string> = {
 };
 
 export const activeStatuses: PetStatus[] = ['searching', 'found'];
-export const completedStatuses: PetStatus[] = [];
-
-export const isActiveStatus = (status: PetStatus): boolean => {
-  return activeStatuses.includes(status);
-};
-
-export const isCompletedStatus = (status: PetStatus): boolean => {
-  return completedStatuses.includes(status);
-};
 
 export const formatDate = (date: Date): string => {
   const now = new Date();
