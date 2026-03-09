@@ -15,15 +15,18 @@ from auth import get_current_user, get_current_user_required, require_admin
 
 
 def _moderation_required(db: Session) -> bool:
-    row = db.query(PlatformSettings).filter(PlatformSettings.key == "require_moderation").first()
-    return row.value == "true" if row else True
+    try:
+        row = db.query(PlatformSettings).filter(PlatformSettings.key == "require_moderation").first()
+        return row.value == "true" if row and hasattr(row, "value") else True
+    except Exception:
+        return True
 
 
 def _max_photos(db: Session) -> int:
-    row = db.query(PlatformSettings).filter(PlatformSettings.key == "max_photos").first()
     try:
-        return int(row.value) if row else MAX_PHOTOS
-    except (ValueError, TypeError):
+        row = db.query(PlatformSettings).filter(PlatformSettings.key == "max_photos").first()
+        return int(row.value) if row and row.value is not None else MAX_PHOTOS
+    except (ValueError, TypeError, AttributeError):
         return MAX_PHOTOS
 
 router = APIRouter(prefix="/pets", tags=["pets"])
@@ -40,6 +43,17 @@ MIME_TO_EXT = {
 
 MAX_PHOTO_BYTES = 10 * 1024 * 1024  # 10 MB per photo after decoding
 MAX_PHOTOS = 10
+
+
+def _contacts_to_dict(contacts) -> dict:
+    """Преобразует contacts в dict, поддерживая Pydantic model и plain dict."""
+    if contacts is None:
+        return {}
+    if hasattr(contacts, "model_dump"):
+        return contacts.model_dump()
+    if isinstance(contacts, dict):
+        return {k: v for k, v in contacts.items() if v is not None and v != ""}
+    return {}
 
 
 def save_base64_photo(data_url: str) -> str:
@@ -201,8 +215,8 @@ def create_pet(
         location_lat=data.location.lat,
         location_lng=data.location.lng,
         author_id=user.id,
-        author_name=user.name,
-        contacts=data.contacts.model_dump() if data.contacts else {},
+        author_name=user.name or "Пользователь",
+        contacts=_contacts_to_dict(data.contacts),
         moderation_status=initial_status,
     )
     try:
