@@ -1,6 +1,6 @@
 """Seed database with initial admin user and sample data."""
 from database import init_db, SessionLocal
-from models import User, Pet, Report
+from models import User, Pet
 from auth import get_password_hash
 
 init_db()

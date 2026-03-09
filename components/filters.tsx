@@ -1,60 +1,61 @@
-import { useState, useRef, useEffect } from 'react';
-import { X, Filter, ChevronDown, ChevronUp } from 'lucide-react';
+import { useState } from 'react';
+import { Search, SlidersHorizontal, ChevronDown, ChevronUp, RotateCcw } from 'lucide-react';
 import { AnimalType, PetStatus, PetColor } from '../types/pet';
 import { animalTypeLabels, statusLabels, colorLabels, activeStatuses } from '../utils/pet-helpers';
 import { useIsMobile } from './ui/use-mobile';
-import { searchCities, City } from '../utils/cities';
+import { BreedCombobox } from './breed-combobox';
+import { CAT_BREEDS, DOG_BREEDS } from '../utils/breeds';
 
 export interface FilterState {
   animalType: AnimalType | 'all';
   breed: string;
   colors: PetColor[];
   statuses: PetStatus[];
-  city: string;
   days: number | 'all';
-  distance: number | 'all'; // in kilometers
   searchQuery: string;
 }
 
 interface FiltersProps {
   filters: FilterState;
   onFiltersChange: (filters: FilterState) => void;
-  onCitySelect?: (city: City) => void;
-  userLocation?: { lat: number; lng: number } | null;
-  onRequestLocation?: () => void;
 }
 
-export function Filters({ filters, onFiltersChange, onCitySelect, userLocation, onRequestLocation }: FiltersProps) {
+const animalTypeOptions: { value: AnimalType | 'all'; label: string; icon: string }[] = [
+  { value: 'all', label: 'Все', icon: '🐾' },
+  { value: 'cat', label: animalTypeLabels.cat, icon: '🐱' },
+  { value: 'dog', label: animalTypeLabels.dog, icon: '🐕' },
+  { value: 'other', label: animalTypeLabels.other, icon: '🦔' },
+];
+
+const periodOptions: { value: number | 'all'; label: string }[] = [
+  { value: 'all', label: 'Все' },
+  { value: 7, label: '7 дней' },
+  { value: 30, label: '30 дней' },
+  { value: 90, label: '90 дней' },
+];
+
+export function Filters({ filters, onFiltersChange }: FiltersProps) {
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(!isMobile);
-  const [citySuggestions, setCitySuggestions] = useState<City[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const cityInputRef = useRef<HTMLInputElement>(null);
-  const suggestionsRef = useRef<HTMLDivElement>(null);
 
-  const handleReset = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleReset = () => {
     onFiltersChange({
       animalType: 'all',
       breed: '',
       colors: [],
       statuses: [],
-      city: '',
       days: 'all',
-      distance: 'all',
       searchQuery: '',
     });
   };
 
-  const hasActiveFilters = 
-    filters.animalType !== 'all' ||
-    filters.breed !== '' ||
-    filters.colors.length > 0 ||
-    filters.statuses.length > 0 ||
-    filters.city !== '' ||
-    filters.days !== 'all' ||
-    filters.distance !== 'all' ||
-    filters.searchQuery !== '';
+  const activeFilterCount = [
+    filters.animalType !== 'all',
+    filters.breed !== '',
+    filters.colors.length > 0,
+    filters.statuses.length > 0,
+    filters.days !== 'all',
+  ].filter(Boolean).length;
 
   const toggleStatus = (status: PetStatus) => {
     const newStatuses = filters.statuses.includes(status)
@@ -70,242 +71,161 @@ export function Filters({ filters, onFiltersChange, onCitySelect, userLocation, 
     onFiltersChange({ ...filters, colors: newColors });
   };
 
-  const handleCityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    onFiltersChange({ ...filters, city: value });
-    if (value.length > 2) {
-      setCitySuggestions(searchCities(value));
-      setShowSuggestions(true);
-    } else {
-      setCitySuggestions([]);
-      setShowSuggestions(false);
-    }
-  };
-
-  const handleCitySelect = (city: City) => {
-    onFiltersChange({ ...filters, city: city.name });
-    if (onCitySelect) {
-      onCitySelect(city);
-    }
-    setCitySuggestions([]);
-    setShowSuggestions(false);
-  };
-
-  useEffect(() => {
-    const currentRef = cityInputRef.current;
-    const suggestionsRefCurrent = suggestionsRef.current;
-    const handleClickOutside = (event: MouseEvent) => {
-      if (currentRef && !currentRef.contains(event.target as Node) && suggestionsRefCurrent && !suggestionsRefCurrent.contains(event.target as Node)) {
-        setShowSuggestions(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
   return (
-    <div className="bg-white border border-gray-200 rounded-lg">
-      <div 
-        className="p-4 flex items-center justify-between cursor-pointer"
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        <div className="flex items-center gap-2">
-          <Filter className="w-5 h-5 text-gray-600" />
-          <h3 className="font-semibold text-gray-900">Фильтры</h3>
-          {hasActiveFilters && (
-            <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full">
-              Активны
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-4">
-          {hasActiveFilters && (
-            <button
-              onClick={handleReset}
-              className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
-            >
-              <X className="w-4 h-4" />
-              Сбросить
-            </button>
-          )}
-          <button className="text-gray-500 hover:text-gray-700">
-            {isOpen ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-          </button>
-        </div>
+    <div className="space-y-3">
+      {/* Search — always visible */}
+      <div className="relative">
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+        <input
+          type="text"
+          value={filters.searchQuery}
+          onChange={(e) => onFiltersChange({ ...filters, searchQuery: e.target.value })}
+          placeholder="Поиск по кличке, описанию, приметам..."
+          className="w-full pl-11 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow shadow-sm"
+        />
       </div>
 
-      {isOpen && (
-        <div className="p-4 border-t border-gray-200">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {/* Поиск по тексту */}
-            <div className="md:col-span-2 lg:col-span-3 xl:col-span-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Поиск по описанию
-              </label>
-              <input
-                type="text"
-                value={filters.searchQuery}
-                onChange={(e) => onFiltersChange({ ...filters, searchQuery: e.target.value })}
-                placeholder="Поиск по кличке, описанию, особым приметам..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            
-            {/* Тип животного */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Тип животного
-              </label>
-              <select
-                value={filters.animalType}
-                onChange={(e) => onFiltersChange({ ...filters, animalType: e.target.value as AnimalType | 'all' })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+      {/* Collapsible filters */}
+      <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
+        <button
+          type="button"
+          className="w-full px-4 py-2.5 flex items-center justify-between"
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+            <SlidersHorizontal className="w-4 h-4" />
+            <span>Фильтры</span>
+            {activeFilterCount > 0 && (
+              <span className="min-w-[20px] h-5 px-1.5 flex items-center justify-center bg-blue-600 text-white text-xs font-semibold rounded-full">
+                {activeFilterCount}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {activeFilterCount > 0 && (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); handleReset(); }}
+                className="flex items-center gap-1 text-xs text-gray-500 hover:text-blue-600 transition-colors px-2 py-1 rounded-md hover:bg-gray-50"
               >
-                <option value="all">Все</option>
-                <option value="cat">{animalTypeLabels.cat}</option>
-                <option value="dog">{animalTypeLabels.dog}</option>
-                <option value="other">{animalTypeLabels.other}</option>
-              </select>
-            </div>
+                <RotateCcw className="w-3 h-3" />
+                Сбросить
+              </button>
+            )}
+            {isOpen
+              ? <ChevronUp className="w-4 h-4 text-gray-400" />
+              : <ChevronDown className="w-4 h-4 text-gray-400" />
+            }
+          </div>
+        </button>
 
-            {/* Порода */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Порода
-              </label>
-              <input
-                type="text"
-                value={filters.breed}
-                onChange={(e) => onFiltersChange({ ...filters, breed: e.target.value })}
-                placeholder="Введите породу..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-
-            {/* Город */}
-            <div className="relative">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Город
-              </label>
-              <input
-                type="text"
-                value={filters.city}
-                onChange={handleCityChange}
-                placeholder="Введите город..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                ref={cityInputRef}
-              />
-              {showSuggestions && citySuggestions.length > 0 && (
-                <div
-                  className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
-                  ref={suggestionsRef}
-                >
-                  {citySuggestions.map((city) => (
-                    <div
-                      key={city.name}
-                      className="cursor-pointer select-none px-4 py-2 hover:bg-gray-100"
-                      onClick={() => handleCitySelect(city)}
-                    >
-                      {city.name}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Период */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Период публикации
-              </label>
-              <select
-                value={filters.days}
-                onChange={(e) => onFiltersChange({ ...filters, days: e.target.value === 'all' ? 'all' : Number(e.target.value) })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="all">Весь период</option>
-                <option value="7">За 7 дней</option>
-                <option value="30">За 30 дней</option>
-                <option value="90">За 90 дней</option>
-              </select>
-            </div>
-
-            {/* Расстояние */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Расстояние от меня
-              </label>
-              <div className="space-y-2">
-                <select
-                  value={filters.distance}
-                  onChange={(e) => onFiltersChange({ ...filters, distance: e.target.value === 'all' ? 'all' : parseInt(e.target.value, 10) })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  disabled={!userLocation}
-                >
-                  <option value="all">Любое</option>
-                  <option value="5">До 5 км</option>
-                  <option value="10">До 10 км</option>
-                  <option value="25">До 25 км</option>
-                  <option value="50">До 50 км</option>
-                </select>
-                {!userLocation && onRequestLocation && (
+        {isOpen && (
+          <div className="px-4 pb-4 space-y-4 border-t border-gray-100 pt-3">
+            {/* Row 1: Animal type segments + Breed input */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex bg-gray-100 rounded-lg p-0.5 shrink-0">
+                {animalTypeOptions.map((opt) => (
                   <button
+                    key={opt.value}
                     type="button"
-                    onClick={onRequestLocation}
-                    className="text-xs text-blue-600 hover:text-blue-700"
+                    onClick={() => onFiltersChange({ ...filters, animalType: opt.value })}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                      filters.animalType === opt.value
+                        ? 'bg-white text-gray-900 shadow-sm'
+                        : 'text-gray-500 hover:text-gray-700'
+                    }`}
                   >
-                    Включить геолокацию
+                    <span className="text-base leading-none">{opt.icon}</span>
+                    <span>{opt.label}</span>
                   </button>
+                ))}
+              </div>
+              <div className="flex-1 min-w-0">
+                {filters.animalType === 'cat' || filters.animalType === 'dog' ? (
+                  <BreedCombobox
+                    breeds={filters.animalType === 'cat' ? CAT_BREEDS : DOG_BREEDS}
+                    value={filters.breed}
+                    onChange={(breed) => onFiltersChange({ ...filters, breed })}
+                    placeholder="Порода..."
+                  />
+                ) : (
+                  <input
+                    type="text"
+                    value={filters.breed}
+                    onChange={(e) => onFiltersChange({ ...filters, breed: e.target.value })}
+                    placeholder="Порода..."
+                    className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
                 )}
               </div>
             </div>
 
-            {/* Статус */}
-            <div className="md:col-span-2 lg:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Статус
-              </label>
-              <div className="flex flex-wrap gap-x-4 gap-y-2">
-                {activeStatuses.map((status) => (
-                  <label key={status} className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={filters.statuses.includes(status)}
-                      onChange={() => toggleStatus(status)}
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                    />
-                    <span className="text-sm text-gray-700">{statusLabels[status]}</span>
-                  </label>
-                ))}
+            {/* Row 2: Status chips + Period chips */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-x-6 gap-y-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-gray-400 uppercase tracking-wide shrink-0">Статус</span>
+                <div className="flex gap-1.5">
+                  {activeStatuses.map((status) => (
+                    <button
+                      key={status}
+                      type="button"
+                      onClick={() => toggleStatus(status)}
+                      className={`px-3 py-1 text-sm rounded-lg border transition-all ${
+                        filters.statuses.includes(status)
+                          ? status === 'searching'
+                            ? 'bg-red-50 text-red-700 border-red-200'
+                            : 'bg-blue-50 text-blue-700 border-blue-200'
+                          : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      {statusLabels[status]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-gray-400 uppercase tracking-wide shrink-0">Период</span>
+                <div className="flex gap-1.5">
+                  {periodOptions.map((opt) => (
+                    <button
+                      key={String(opt.value)}
+                      type="button"
+                      onClick={() => onFiltersChange({ ...filters, days: opt.value })}
+                      className={`px-3 py-1 text-sm rounded-lg border transition-all ${
+                        filters.days === opt.value
+                          ? 'bg-blue-50 text-blue-700 border-blue-200'
+                          : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
-            {/* Окрас */}
-            <div className="md:col-span-2 lg:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Окрас
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {(Object.keys(colorLabels) as PetColor[]).map((color) => (
-                  <button
-                    key={color}
-                    onClick={() => toggleColor(color)}
-                    className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
-                      filters.colors.includes(color)
-                        ? 'bg-blue-100 text-blue-700 border-blue-300'
-                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                    }`}
-                  >
-                    {colorLabels[color]}
-                  </button>
-                ))}
-              </div>
+            {/* Row 3: Colors */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-medium text-gray-400 uppercase tracking-wide shrink-0">Окрас</span>
+              {(Object.keys(colorLabels) as PetColor[]).map((color) => (
+                <button
+                  key={color}
+                  type="button"
+                  onClick={() => toggleColor(color)}
+                  className={`px-2.5 py-1 text-sm rounded-lg border transition-all ${
+                    filters.colors.includes(color)
+                      ? 'bg-blue-50 text-blue-700 border-blue-200'
+                      : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  {colorLabels[color]}
+                </button>
+              ))}
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

@@ -7,28 +7,16 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from models import User
-from schemas import UserCreate, UserLogin, UserResponse, Token, UserContacts
+from schemas import UserCreate, UserLogin, UserResponse, Token
 from auth import (
     get_password_hash,
     verify_password,
     create_access_token,
     get_current_user_required,
 )
+from utils import user_to_response
 
 router = APIRouter(prefix="/auth", tags=["auth"])
-
-
-def user_to_response(user: User) -> UserResponse:
-    return UserResponse(
-        id=user.id,
-        email=user.email,
-        name=user.name,
-        avatar=user.avatar,
-        role=user.role,
-        contacts=user.contacts or {},
-        is_blocked=user.is_blocked,
-        blocked_reason=user.blocked_reason,
-    )
 
 
 @router.post("/register", response_model=Token)

@@ -97,25 +97,7 @@ export async function geocode(address: string): Promise<{ lat: number; lng: numb
   }
 }
 
-export async function reverseGeocode(lat: number, lng: number): Promise<string | null> {
-  try {
-    const res = await fetch(
-      `${NOMINATIM_URL}/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1`,
-      { headers: HEADERS }
-    );
-    const data = await res.json();
-    const addr = data?.address as NominatimAddress | undefined;
-    if (addr) {
-      const short = formatShortAddress(addr);
-      if (short) return short;
-    }
-    return data?.display_name ?? null;
-  } catch {
-    return null;
-  }
-}
-
-export async function reverseGeocodeLocality(lat: number, lng: number): Promise<string | null> {
+async function fetchReverseData(lat: number, lng: number): Promise<{ addr: NominatimAddress; displayName: string } | null> {
   try {
     const res = await fetch(
       `${NOMINATIM_URL}/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1`,
@@ -124,10 +106,21 @@ export async function reverseGeocodeLocality(lat: number, lng: number): Promise<
     const data = await res.json();
     const addr = data?.address as NominatimAddress | undefined;
     if (!addr) return null;
-
-    const locality = getLocalityName(addr);
-    return locality || null;
+    return { addr, displayName: data?.display_name ?? '' };
   } catch {
     return null;
   }
+}
+
+export async function reverseGeocode(lat: number, lng: number): Promise<string | null> {
+  const result = await fetchReverseData(lat, lng);
+  if (!result) return null;
+  const short = formatShortAddress(result.addr);
+  return short || result.displayName || null;
+}
+
+export async function reverseGeocodeLocality(lat: number, lng: number): Promise<string | null> {
+  const result = await fetchReverseData(lat, lng);
+  if (!result) return null;
+  return getLocalityName(result.addr) || null;
 }

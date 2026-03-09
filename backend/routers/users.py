@@ -6,22 +6,10 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models import User
 from schemas import UserResponse, UserUpdate
-from auth import get_current_user_required, require_admin
+from auth import require_admin
+from utils import user_to_response
 
 router = APIRouter(prefix="/users", tags=["users"])
-
-
-def user_to_response(u: User) -> UserResponse:
-    return UserResponse(
-        id=u.id,
-        email=u.email,
-        name=u.name,
-        avatar=u.avatar,
-        role=u.role,
-        contacts=u.contacts or {},
-        is_blocked=u.is_blocked,
-        blocked_reason=u.blocked_reason,
-    )
 
 
 @router.get("", response_model=list[UserResponse])
@@ -49,7 +37,6 @@ def list_users(
 def get_user(
     user_id: str,
     db: Session = Depends(get_db),
-    current: User = Depends(get_current_user_required),
 ):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
