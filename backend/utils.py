@@ -13,4 +13,7 @@ def user_to_response(user: User) -> UserResponse:
         contacts=user.contacts or {},
         is_blocked=user.is_blocked,
         blocked_reason=user.blocked_reason,
+        telegram_id=user.telegram_id,
+        telegram_username=user.telegram_username,
+        telegram_linked_at=user.telegram_linked_at,
     )

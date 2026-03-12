@@ -37,9 +37,8 @@ engine = create_engine(
 def _set_sqlite_pragma(dbapi_connection, connection_record):
     cursor = dbapi_connection.cursor()
     cursor.execute("PRAGMA foreign_keys=ON")
-    cursor.execute("PRAGMA busy_timeout=30000")  # 30 sec wait on lock
-    # WAL отключен: на сетевых ФС и в некоторых Docker-окружениях
-    # он даёт "readonly database" при записи -wal/-shm
+    cursor.execute("PRAGMA busy_timeout=30000")
+    cursor.execute("PRAGMA journal_mode=WAL")
     cursor.close()
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

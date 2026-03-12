@@ -1,11 +1,12 @@
 """Pets CRUD API."""
+import asyncio
 import base64
 import logging
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional
 import uuid
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
@@ -13,6 +14,7 @@ from database import get_db
 from models import Pet, PlatformSettings, User
 from schemas import PetCreate, PetUpdate, PetResponse, StatisticsResponse
 from auth import get_current_user, get_current_user_required, require_admin
+from telegram_bot import send_notifications_for_pet
 
 
 def _moderation_required(db: Session) -> bool:
@@ -183,8 +185,9 @@ def get_pet(pet_id: str, db: Session = Depends(get_db)):
 
 
 @router.post("", response_model=PetResponse, status_code=201)
-def create_pet(
+async def create_pet(
     data: PetCreate,
+    background_tasks: BackgroundTasks,
     user: User = Depends(get_current_user_required),
     db: Session = Depends(get_db),
 ):
@@ -232,13 +235,32 @@ def create_pet(
         db.rollback()
         logging.exception("Ошибка при создании объявления: %s", e)
         raise HTTPException(status_code=500, detail=f"Не удалось создать объявление: {type(e).__name__}") from e
+
+    if initial_status == "approved":
+        background_tasks.add_task(_send_notifications_bg, pet.id)
+
     return pet_to_response(pet)
 
 
+async def _send_notifications_bg(pet_id: str):
+    """Background task: load pet from a fresh DB session and send notifications."""
+    from database import SessionLocal
+    db = SessionLocal()
+    try:
+        pet = db.query(Pet).filter(Pet.id == pet_id).first()
+        if pet:
+            await send_notifications_for_pet(pet, db)
+    except Exception as e:
+        logging.exception("Background notification error for pet %s: %s", pet_id, e)
+    finally:
+        db.close()
+
+
 @router.patch("/{pet_id}", response_model=PetResponse)
-def update_pet(
+async def update_pet(
     pet_id: str,
     data: PetUpdate,
+    background_tasks: BackgroundTasks,
     user: User = Depends(get_current_user_required),
     db: Session = Depends(get_db),
 ):
@@ -247,6 +269,9 @@ def update_pet(
         raise HTTPException(status_code=404, detail="Объявление не найдено")
     if pet.author_id != user.id and user.role != "admin":
         raise HTTPException(status_code=403, detail="Нет прав на редактирование")
+
+    old_moderation_status = pet.moderation_status
+
     ALLOWED_FIELDS = {
         "photos", "animal_type", "breed", "colors", "gender",
         "approximate_age", "status", "description", "city",
@@ -290,6 +315,10 @@ def update_pet(
         db.rollback()
         logging.exception("Ошибка при обновлении объявления %s: %s", pet_id, e)
         raise HTTPException(status_code=500, detail=f"Не удалось обновить объявление: {type(e).__name__}") from e
+
+    if old_moderation_status != "approved" and pet.moderation_status == "approved":
+        background_tasks.add_task(_send_notifications_bg, pet.id)
+
     return pet_to_response(pet)
 
 
