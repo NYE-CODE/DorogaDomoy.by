@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import { MyAdsPage } from './components/my-ads-page';
 import { ProfilePage } from './components/profile-page';
+import { SettingsPage } from './components/settings-page';
 import { TermsPage } from './components/terms-page';
 import { useAuth, User } from './context/AuthContext';
 import { Header } from './components/layout/Header';
@@ -28,7 +29,7 @@ import { StatisticsPanel } from './components/statistics';
 import { Map as MapIcon, List } from 'lucide-react';
 import type { LatLngBounds } from 'leaflet';
 
-type View = 'main' | 'my-ads' | 'profile' | 'admin' | 'terms';
+type View = 'main' | 'my-ads' | 'profile' | 'settings' | 'admin' | 'terms';
 function MainApp() {
   const { user, isAuthenticated, openAuthModal, closeAuthModal, isLoading } = useAuth();
   const [view, setView] = useState<View>('main');
@@ -510,6 +511,10 @@ function MainApp() {
 
     if (view === 'profile') {
       return <ProfilePage onBack={() => setView('main')} />;
+    }
+
+    if (view === 'settings') {
+      return <SettingsPage onBack={() => setView('main')} />;
     }
 
     if (view === 'admin') {

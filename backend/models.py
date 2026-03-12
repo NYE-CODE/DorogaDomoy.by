@@ -1,6 +1,6 @@
-"""SQLAlchemy models for User, Pet, Report."""
+"""SQLAlchemy models for User, Pet, Report, Notifications."""
 from datetime import datetime
-from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Text, JSON, Float
+from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Text, JSON, Float, BigInteger
 from sqlalchemy.orm import relationship
 from database import Base
 
@@ -19,8 +19,13 @@ class User(Base):
     blocked_reason = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
+    telegram_id = Column(BigInteger, unique=True, nullable=True, index=True)
+    telegram_username = Column(String, nullable=True)
+    telegram_linked_at = Column(DateTime, nullable=True)
+
     pets = relationship("Pet", back_populates="author", foreign_keys="Pet.author_id")
     reports = relationship("Report", back_populates="reporter", foreign_keys="Report.reporter_id")
+    notification_settings = relationship("NotificationSettings", back_populates="user", uselist=False, cascade="all, delete-orphan")
 
 
 class Pet(Base):
@@ -83,3 +88,48 @@ class Report(Base):
 
     pet = relationship("Pet", back_populates="reports", foreign_keys=[pet_id])
     reporter = relationship("User", back_populates="reports", foreign_keys=[reporter_id])
+
+
+class TelegramLinkCode(Base):
+    __tablename__ = "telegram_link_codes"
+
+    id = Column(String, primary_key=True, index=True)
+    code = Column(String, unique=True, index=True, nullable=False)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    expires_at = Column(DateTime, nullable=False)
+    used = Column(Boolean, default=False)
+
+    user = relationship("User")
+
+
+class NotificationSettings(Base):
+    __tablename__ = "notification_settings"
+
+    id = Column(String, primary_key=True, index=True)
+    user_id = Column(String, ForeignKey("users.id"), unique=True, nullable=False)
+    notifications_enabled = Column(Boolean, default=True)
+    notification_radius_km = Column(Float, default=1.0)
+    notify_animal_types = Column(JSON, default=lambda: ["dog", "cat", "other"])
+    home_lat = Column(Float, nullable=True)
+    home_lng = Column(Float, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    user = relationship("User", back_populates="notification_settings")
+
+
+class Notification(Base):
+    __tablename__ = "notifications"
+
+    id = Column(String, primary_key=True, index=True)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    pet_id = Column(String, ForeignKey("pets.id", ondelete="CASCADE"), nullable=False)
+    type = Column(String, nullable=False)  # new_nearby, status_update
+    message = Column(Text, nullable=False)
+    is_read = Column(Boolean, default=False)
+    sent_via = Column(String, default="telegram")  # telegram, web
+    sent_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User")
+    pet = relationship("Pet")

@@ -25,7 +25,48 @@ USER_COLUMNS_TO_ADD = [
     ("is_blocked", "INTEGER DEFAULT 0"),
     ("blocked_reason", "VARCHAR"),
     ("created_at", "DATETIME"),
+    ("telegram_id", "BIGINT"),
+    ("telegram_username", "VARCHAR"),
+    ("telegram_linked_at", "DATETIME"),
 ]
+
+NEW_TABLES = {
+    "telegram_link_codes": """
+        CREATE TABLE telegram_link_codes (
+            id VARCHAR PRIMARY KEY,
+            code VARCHAR UNIQUE NOT NULL,
+            user_id VARCHAR NOT NULL REFERENCES users(id),
+            created_at DATETIME,
+            expires_at DATETIME NOT NULL,
+            used INTEGER DEFAULT 0
+        )
+    """,
+    "notification_settings": """
+        CREATE TABLE notification_settings (
+            id VARCHAR PRIMARY KEY,
+            user_id VARCHAR UNIQUE NOT NULL REFERENCES users(id),
+            notifications_enabled INTEGER DEFAULT 1,
+            notification_radius_km REAL DEFAULT 1.0,
+            notify_animal_types JSON DEFAULT '["dog","cat","other"]',
+            home_lat REAL,
+            home_lng REAL,
+            created_at DATETIME,
+            updated_at DATETIME
+        )
+    """,
+    "notifications": """
+        CREATE TABLE notifications (
+            id VARCHAR PRIMARY KEY,
+            user_id VARCHAR NOT NULL REFERENCES users(id),
+            pet_id VARCHAR NOT NULL REFERENCES pets(id) ON DELETE CASCADE,
+            type VARCHAR NOT NULL,
+            message TEXT NOT NULL,
+            is_read INTEGER DEFAULT 0,
+            sent_via VARCHAR DEFAULT 'telegram',
+            sent_at DATETIME
+        )
+    """,
+}
 
 
 def get_existing_columns(conn, table):
@@ -52,6 +93,18 @@ def migrate(conn):
                 except sqlite3.OperationalError as e:
                     print(f"Warning: could not add {table}.{col_name}: {e}")
     return changes
+
+
+def ensure_new_tables(conn):
+    """Create new tables if they don't exist."""
+    for table_name, ddl in NEW_TABLES.items():
+        cur = conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+            (table_name,),
+        )
+        if not cur.fetchone():
+            conn.execute(ddl)
+            print(f"Created table: {table_name}")
 
 
 def ensure_platform_settings(conn):
@@ -86,6 +139,7 @@ if __name__ == "__main__":
     conn = sqlite3.connect(DB_PATH)
     try:
         changes = migrate(conn)
+        ensure_new_tables(conn)
         ensure_platform_settings(conn)
         conn.commit()
         if changes:

@@ -14,6 +14,9 @@ export interface User {
   };
   isBlocked?: boolean;
   blockedReason?: string;
+  telegramId?: number | null;
+  telegramUsername?: string | null;
+  telegramLinkedAt?: string | null;
 }
 
 interface AuthContextType {
@@ -25,6 +28,7 @@ interface AuthContextType {
   logout: () => void;
   updateContacts: (contacts: User['contacts']) => Promise<void>;
   updateProfile: (name: string, email: string) => Promise<void>;
+  refreshUser: () => Promise<void>;
   openAuthModal: () => void;
   closeAuthModal: () => void;
   isAuthModalOpen: boolean;
@@ -77,6 +81,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(u);
   };
 
+  const refreshUser = async () => {
+    try {
+      const u = await authApi.me();
+      setUser(u);
+    } catch {
+      // ignore
+    }
+  };
+
   const openAuthModal = () => setIsAuthModalOpen(true);
   const closeAuthModal = () => setIsAuthModalOpen(false);
 
@@ -91,6 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         logout,
         updateContacts,
         updateProfile,
+        refreshUser,
         openAuthModal,
         closeAuthModal,
         isAuthModalOpen,

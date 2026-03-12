@@ -50,6 +50,9 @@ export interface UserResponse {
   contacts: { phone?: string; telegram?: string; viber?: string };
   is_blocked?: boolean;
   blocked_reason?: string;
+  telegram_id?: number | null;
+  telegram_username?: string | null;
+  telegram_linked_at?: string | null;
 }
 
 export interface TokenResponse {
@@ -68,6 +71,9 @@ function toUser(u: UserResponse): User {
     contacts: u.contacts,
     isBlocked: u.is_blocked,
     blockedReason: u.blocked_reason,
+    telegramId: u.telegram_id,
+    telegramUsername: u.telegram_username,
+    telegramLinkedAt: u.telegram_linked_at,
   };
 }
 
@@ -262,45 +268,16 @@ export const usersApi = {
   list: (params?: { search?: string; role?: string; is_blocked?: boolean }) => {
     const q = new URLSearchParams();
     if (params) Object.entries(params).forEach(([k, v]) => v != null && q.set(k, String(v)));
-    return api<UserResponse[]>(`/users?${q}`).then((arr) =>
-      arr.map((u) => ({
-        id: u.id,
-        email: u.email,
-        name: u.name,
-        avatar: u.avatar,
-        role: u.role as User['role'],
-        contacts: u.contacts,
-        isBlocked: u.is_blocked,
-        blockedReason: u.blocked_reason,
-      }))
-    );
+    return api<UserResponse[]>(`/users?${q}`).then((arr) => arr.map(toUser));
   },
 
   update: (userId: string, data: Partial<{ role: string; is_blocked: boolean; blocked_reason: string }>) =>
     api<UserResponse>(`/users/${userId}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
-    }).then((u) => ({
-      id: u.id,
-      email: u.email,
-      name: u.name,
-      avatar: u.avatar,
-      role: u.role as User['role'],
-      contacts: u.contacts,
-      isBlocked: u.is_blocked,
-      blockedReason: u.blocked_reason,
-    })),
+    }).then(toUser),
 
-  get: (id: string) => api<UserResponse>(`/users/${id}`).then((u) => ({
-    id: u.id,
-    email: u.email,
-    name: u.name,
-    avatar: u.avatar,
-    role: u.role as User['role'],
-    contacts: u.contacts,
-    isBlocked: u.is_blocked,
-    blockedReason: u.blocked_reason,
-  })),
+  get: (id: string) => api<UserResponse>(`/users/${id}`).then(toUser),
 };
 
 // --- Reports ---
@@ -382,4 +359,60 @@ export const settingsApi = {
       method: 'PATCH',
       body: JSON.stringify(data),
     }),
+};
+
+// --- Telegram ---
+export interface TelegramLinkResponse {
+  code: string;
+  expires_in: number;
+  bot_url: string;
+}
+
+export interface TelegramLinkStatus {
+  linked: boolean;
+  telegram_username?: string;
+}
+
+export const telegramApi = {
+  requestLink: () =>
+    api<TelegramLinkResponse>('/auth/telegram-link/request', { method: 'POST' }),
+
+  checkStatus: () =>
+    api<TelegramLinkStatus>('/auth/telegram-link/status'),
+
+  unlink: () =>
+    api<{ detail: string }>('/auth/telegram-unlink', { method: 'DELETE' }),
+};
+
+// --- Notifications ---
+export interface NotificationSettingsData {
+  notifications_enabled: boolean;
+  notification_radius_km: number;
+}
+
+export interface NotificationItem {
+  id: string;
+  pet_id: string;
+  type: string;
+  message: string;
+  is_read: boolean;
+  sent_via: string;
+  sent_at: string;
+}
+
+export const notificationsApi = {
+  getSettings: () =>
+    api<NotificationSettingsData>('/notifications/settings'),
+
+  updateSettings: (data: Partial<NotificationSettingsData>) =>
+    api<NotificationSettingsData>('/notifications/settings', {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+
+  list: (limit = 50, offset = 0) =>
+    api<NotificationItem[]>(`/notifications?limit=${limit}&offset=${offset}`),
+
+  markRead: (id: string) =>
+    api<{ detail: string }>(`/notifications/${id}/read`, { method: 'PATCH' }),
 };

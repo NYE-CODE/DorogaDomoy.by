@@ -32,6 +32,9 @@ class UserResponse(UserBase):
     avatar: Optional[str] = None
     is_blocked: Optional[bool] = False
     blocked_reason: Optional[str] = None
+    telegram_id: Optional[int] = None
+    telegram_username: Optional[str] = None
+    telegram_linked_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
@@ -156,6 +159,46 @@ class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: UserResponse
+
+
+# --- Telegram Link ---
+class TelegramLinkRequestResponse(BaseModel):
+    code: str
+    expires_in: int
+    bot_url: str
+
+
+class TelegramLinkStatusResponse(BaseModel):
+    linked: bool
+    telegram_username: Optional[str] = None
+
+
+# --- Notification Settings ---
+class NotificationSettingsResponse(BaseModel):
+    notifications_enabled: bool = True
+    notification_radius_km: float = 1.0
+
+    class Config:
+        from_attributes = True
+
+
+class NotificationSettingsUpdate(BaseModel):
+    notifications_enabled: Optional[bool] = None
+    notification_radius_km: Optional[float] = Field(None, ge=1.0, le=10.0)
+
+
+# --- Notifications ---
+class NotificationResponse(BaseModel):
+    id: str
+    pet_id: str
+    type: str
+    message: str
+    is_read: bool
+    sent_via: str
+    sent_at: datetime
+
+    class Config:
+        from_attributes = True
 
 
 # --- Statistics ---

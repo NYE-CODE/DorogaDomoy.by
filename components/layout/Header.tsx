@@ -3,9 +3,9 @@ import { useAuth } from '../../context/AuthContext';
 import { useState, useRef, useEffect } from 'react';
 
 interface HeaderProps {
-  onViewChange: (view: 'main' | 'my-ads' | 'profile' | 'admin') => void;
+  onViewChange: (view: 'main' | 'my-ads' | 'profile' | 'admin' | 'settings') => void;
   onCreateClick: () => void;
-  currentView: 'main' | 'my-ads' | 'profile' | 'admin';
+  currentView: 'main' | 'my-ads' | 'profile' | 'admin' | 'settings';
   selectedCity: string;
   onCityClick: () => void;
 }
@@ -132,7 +132,7 @@ export function Header({ onViewChange, onCreateClick, currentView, selectedCity,
                     onClick={handleProfileClick}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                   >
-                    <Settings className="w-4 h-4" />
+                    <UserIcon className="w-4 h-4" />
                     Профиль
                   </button>
 
@@ -142,6 +142,17 @@ export function Header({ onViewChange, onCreateClick, currentView, selectedCity,
                   >
                     <UserIcon className="w-4 h-4" />
                     Мои объявления
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      onViewChange('settings');
+                      setIsMenuOpen(false);
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                  >
+                    <Settings className="w-4 h-4" />
+                    Настройки
                   </button>
 
                   {user?.role === 'admin' && (
