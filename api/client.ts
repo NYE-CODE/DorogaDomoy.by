@@ -271,13 +271,16 @@ export const usersApi = {
     return api<UserResponse[]>(`/users?${q}`).then((arr) => arr.map(toUser));
   },
 
-  update: (userId: string, data: Partial<{ role: string; is_blocked: boolean; blocked_reason: string }>) =>
+  update: (userId: string, data: Partial<{ name: string; email: string; role: string; is_blocked: boolean; blocked_reason: string }>) =>
     api<UserResponse>(`/users/${userId}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
     }).then(toUser),
 
   get: (id: string) => api<UserResponse>(`/users/${id}`).then(toUser),
+
+  delete: (userId: string) =>
+    api<void>(`/users/${userId}`, { method: 'DELETE' }),
 };
 
 // --- Reports ---

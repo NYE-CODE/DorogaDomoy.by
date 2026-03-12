@@ -3,6 +3,7 @@ import { ArrowLeft, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Pet } from '../types/pet';
 import { PetCard } from './pet-card';
 import { useAuth } from '../context/AuthContext';
+import { useI18n } from '../context/I18nContext';
 
 interface MyAdsPageProps {
   pets: Pet[];
@@ -14,12 +15,13 @@ interface MyAdsPageProps {
 
 export function MyAdsPage({ pets, onBack, onCreateClick, onEditPet, onDeletePet }: MyAdsPageProps) {
   const { user } = useAuth();
+  const { t } = useI18n();
   const [page, setPage] = useState(1);
   const perPage = 12;
   
-  // Filter pets belonging to the current user
   const myAds = pets.filter(pet => 
     user && (pet.authorId === user.id || (user.id === 'user-demo' && pet.authorId === 'current-user'))
+    && !pet.isArchived
   );
 
   // Pagination
@@ -27,21 +29,21 @@ export function MyAdsPage({ pets, onBack, onCreateClick, onEditPet, onDeletePet 
   const paginatedAds = myAds.slice((page - 1) * perPage, page * perPage);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <button
                 onClick={onBack}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
               >
-                <ArrowLeft className="w-5 h-5 text-gray-600" />
+                <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
               </button>
               <div>
-                <h1 className="text-xl font-semibold text-gray-900">Мои объявления</h1>
-                <p className="text-sm text-gray-600">
-                  Всего объявлений: {myAds.length}
+                <h1 className="text-xl font-semibold text-gray-900 dark:text-white">{t.myAds.title}</h1>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {t.myAds.totalAds}: {myAds.length}
                 </p>
               </div>
             </div>
@@ -51,8 +53,8 @@ export function MyAdsPage({ pets, onBack, onCreateClick, onEditPet, onDeletePet 
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               <Plus className="w-4 h-4" />
-              <span className="hidden sm:inline">Создать новое</span>
-              <span className="sm:hidden">Создать</span>
+              <span className="hidden sm:inline">{t.myAds.createNew}</span>
+              <span className="sm:hidden">{t.myAds.createShort}</span>
             </button>
           </div>
         </div>
@@ -60,12 +62,12 @@ export function MyAdsPage({ pets, onBack, onCreateClick, onEditPet, onDeletePet 
 
       <main className="max-w-7xl mx-auto px-4 md:px-6 py-8">
         {myAds.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-lg border border-gray-200">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+            <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
               <Plus className="w-8 h-8 text-gray-400" />
             </div>
-            <h2 className="text-lg font-medium text-gray-900 mb-2">У вас пока нет объявлений</h2>
-            <p className="text-gray-500 mb-6 max-w-md mx-auto">
+            <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-2">{t.myAds.noAds}</h2>
+            <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto">
               Если вы потеряли питомца или нашли чужого, создайте объявление, чтобы помочь ему вернуться домой.
             </p>
             <button
@@ -73,7 +75,7 @@ export function MyAdsPage({ pets, onBack, onCreateClick, onEditPet, onDeletePet 
               className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               <Plus className="w-4 h-4" />
-              Создать первое объявление
+              {t.myAds.createFirst}
             </button>
           </div>
         ) : (
@@ -92,24 +94,24 @@ export function MyAdsPage({ pets, onBack, onCreateClick, onEditPet, onDeletePet 
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-200">
+              <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
                 <button
                   onClick={() => setPage(page - 1)}
                   disabled={page === 1}
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   <ChevronLeft className="w-4 h-4" />
-                  Назад
+                  {t.common.back}
                 </button>
                 
-                <span className="text-sm text-gray-700">{page} / {totalPages}</span>
+                <span className="text-sm text-gray-700 dark:text-gray-300">{page} / {totalPages}</span>
                 
                 <button
                   onClick={() => setPage(page + 1)}
                   disabled={page === totalPages}
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  Вперед
+                  {t.common.forward}
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>

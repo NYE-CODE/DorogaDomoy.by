@@ -3,8 +3,7 @@ import { CheckIcon, ChevronsUpDownIcon } from 'lucide-react';
 import { Command, CommandGroup, CommandInput, CommandItem, CommandList } from './ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { cn } from './ui/utils';
-
-const OPTION_OTHER = 'Другое';
+import { useI18n } from '../context/I18nContext';
 
 interface BreedComboboxProps {
   breeds: readonly string[];
@@ -29,10 +28,12 @@ export function BreedCombobox({
   breeds,
   value,
   onChange,
-  placeholder = 'Выберите или введите породу',
+  placeholder,
   disabled,
   className,
 }: BreedComboboxProps) {
+  const { t } = useI18n();
+  const OPTION_OTHER = t.pet.animalType.other;
   const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState(value);
 
@@ -65,7 +66,8 @@ export function BreedCombobox({
     setOpen(nextOpen);
   };
 
-  const displayValue = value || placeholder;
+  const resolvedPlaceholder = placeholder || t.petForm.selectOrEnterBreed;
+  const displayValue = value || resolvedPlaceholder;
 
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
@@ -74,14 +76,14 @@ export function BreedCombobox({
           type="button"
           disabled={disabled}
           className={cn(
-            'flex h-9 w-full items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm',
+            'flex h-9 w-full items-center justify-between rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm',
             'focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none',
             'disabled:cursor-not-allowed disabled:opacity-50',
-            value ? 'text-gray-900' : 'text-gray-500',
+            value ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400',
             className
           )}
         >
-          <span className={cn('truncate', !value && 'text-gray-400')}>
+          <span className={cn('truncate', !value && 'text-gray-400 dark:text-gray-500')}>
             {displayValue}
           </span>
           <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -90,7 +92,7 @@ export function BreedCombobox({
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
         <Command shouldFilter={false}>
           <CommandInput
-            placeholder="Поиск или ввод..."
+            placeholder={t.petForm.searchOrEnter}
             value={inputValue}
             onValueChange={setInputValue}
           />
@@ -99,10 +101,10 @@ export function BreedCombobox({
               <CommandItem
                 value="__empty__"
                 onSelect={() => handleSelect('')}
-                className={matchSearch('не указана', inputValue) ? undefined : 'hidden'}
+                className={matchSearch(t.pet.notSpecified, inputValue) ? undefined : 'hidden'}
               >
                 <CheckIcon className={cn('mr-2 h-4 w-4', !value ? 'opacity-100' : 'opacity-0')} />
-                Не указана
+                {t.pet.notSpecified}
               </CommandItem>
               {filteredBreeds.map((breed) => (
                 <CommandItem key={breed} value={breed} onSelect={() => handleSelect(breed)}>
@@ -119,7 +121,7 @@ export function BreedCombobox({
                     setOpen(false);
                   }}
                 >
-                  Использовать «{trimmedInput}»
+                  {t.petForm.use} «{trimmedInput}»
                 </CommandItem>
               )}
               <CommandItem

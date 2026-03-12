@@ -11,5 +11,9 @@ export default defineConfig({
     server: {
         port: 3000,
         open: true,
+        watch: {
+            // SQLite writes from FastAPI should not trigger Vite full reloads.
+            ignored: ['**/backend/**', '**\\backend\\**', '**/*.db', '**/*.db-*'],
+        },
     },
 });
