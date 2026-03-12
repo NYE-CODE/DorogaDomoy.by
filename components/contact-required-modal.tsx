@@ -1,5 +1,6 @@
 import { X, AlertCircle, User } from 'lucide-react';
 import { useScrollLock } from './ui/use-scroll-lock';
+import { useI18n } from '../context/I18nContext';
 
 interface ContactRequiredModalProps {
   open: boolean;
@@ -8,6 +9,7 @@ interface ContactRequiredModalProps {
 }
 
 export function ContactRequiredModal({ open, onClose, onGoToProfile }: ContactRequiredModalProps) {
+  const { t } = useI18n();
   useScrollLock(open);
   if (!open) return null;
 
@@ -36,11 +38,10 @@ export function ContactRequiredModal({ open, onClose, onGoToProfile }: ContactRe
         {/* Content */}
         <div className="p-6">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3 text-center">
-            Добавьте контакты
+            {t.contactRequired.title}
           </h2>
           <p className="text-gray-600 dark:text-gray-400 text-center mb-6">
-            Чтобы создавать объявления, необходимо указать хотя бы один способ связи в профиле. 
-            Это позволит людям связаться с вами по поводу найденного питомца.
+            {t.contactRequired.description}
           </p>
 
           {/* Action buttons */}
@@ -50,14 +51,14 @@ export function ContactRequiredModal({ open, onClose, onGoToProfile }: ContactRe
               className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 active:scale-[0.98] transition-all font-medium"
             >
               <User className="w-4 h-4" />
-              Перейти в профиль
+              {t.contactRequired.goToProfile}
             </button>
             
             <button
               onClick={onClose}
               className="w-full py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors font-medium"
             >
-              Отмена
+              {t.common.cancel}
             </button>
           </div>
         </div>

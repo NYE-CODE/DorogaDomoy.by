@@ -1,6 +1,8 @@
 import { ArrowLeft, Search } from 'lucide-react';
+import { useI18n } from '../context/I18nContext';
 
 export default function NotFoundPage() {
+  const { t } = useI18n();
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4">
       <div className="text-center max-w-md">
@@ -14,9 +16,9 @@ export default function NotFoundPage() {
         </div>
 
         <h1 className="text-6xl font-bold text-gray-900 dark:text-white mb-2">404</h1>
-        <p className="text-lg text-gray-600 dark:text-gray-400 mb-1">Страница не найдена</p>
+        <p className="text-lg text-gray-600 dark:text-gray-400 mb-1">{t.notFoundPage.title}</p>
         <p className="text-sm text-gray-400 dark:text-gray-500 mb-8">
-          Похоже, эта страница потерялась — совсем как питомец, которого мы помогаем искать
+          {t.notFoundPage.description}
         </p>
 
         <a
@@ -24,7 +26,7 @@ export default function NotFoundPage() {
           className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors shadow-sm"
         >
           <ArrowLeft className="w-4 h-4" />
-          На главную
+          {t.notFoundPage.toMain}
         </a>
       </div>
     </div>

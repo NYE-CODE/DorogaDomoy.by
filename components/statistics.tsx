@@ -1,11 +1,13 @@
 import { Search, CheckCircle, Home } from 'lucide-react';
 import { Statistics } from '../types/pet';
+import { useI18n } from '../context/I18nContext';
 
 interface StatisticsProps {
   stats: Statistics;
 }
 
 export function StatisticsPanel({ stats }: StatisticsProps) {
+  const { t } = useI18n();
   return (
     <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6">
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3 sm:p-6 ">
@@ -14,7 +16,7 @@ export function StatisticsPanel({ stats }: StatisticsProps) {
             <Search className="w-4 h-4 sm:w-6 sm:h-6 text-red-600" />
           </div>
           <div>
-            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Сейчас ищут</p>
+            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{t.stats.searching}</p>
             <p className="text-lg sm:text-2xl font-semibold text-gray-900 dark:text-white">{stats.searching}</p>
           </div>
         </div>
@@ -26,7 +28,7 @@ export function StatisticsPanel({ stats }: StatisticsProps) {
             <CheckCircle className="w-4 h-4 sm:w-6 sm:h-6 text-blue-600" />
           </div>
           <div>
-            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Найдено</p>
+            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{t.stats.found}</p>
             <p className="text-lg sm:text-2xl font-semibold text-gray-900 dark:text-white">{stats.found}</p>
           </div>
         </div>
@@ -38,7 +40,7 @@ export function StatisticsPanel({ stats }: StatisticsProps) {
             <Home className="w-4 h-4 sm:w-6 sm:h-6 text-purple-600" />
           </div>
           <div>
-            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">На передержке</p>
+            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{t.stats.fostering}</p>
             <p className="text-lg sm:text-2xl font-semibold text-gray-900 dark:text-white">{stats.fostering}</p>
           </div>
         </div>

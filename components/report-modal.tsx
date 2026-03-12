@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X, AlertTriangle } from 'lucide-react';
-import { ReportReason, reportReasonLabels } from '../types/admin';
+import { ReportReason } from '../types/admin';
+import { useI18n } from '../context/I18nContext';
 import { useScrollLock } from './ui/use-scroll-lock';
 
 interface ReportModalProps {
@@ -10,6 +11,7 @@ interface ReportModalProps {
 
 export function ReportModal({ onClose, onSubmit }: ReportModalProps) {
   useScrollLock(true);
+  const { t } = useI18n();
   const [reason, setReason] = useState<ReportReason>('spam');
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -35,7 +37,7 @@ export function ReportModal({ onClose, onSubmit }: ReportModalProps) {
             <div className="p-2 bg-orange-100 rounded-lg">
               <AlertTriangle className="w-5 h-5 text-orange-600" />
             </div>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Пожаловаться на объявление</h2>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{t.report.title}</h2>
           </div>
           <button
             onClick={onClose}
@@ -49,7 +51,7 @@ export function ReportModal({ onClose, onSubmit }: ReportModalProps) {
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Причина жалобы *
+              {t.report.reasonLabel}
             </label>
             <select
               value={reason}
@@ -57,9 +59,9 @@ export function ReportModal({ onClose, onSubmit }: ReportModalProps) {
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
               required
             >
-              {(Object.keys(reportReasonLabels) as ReportReason[]).map((key) => (
+              {(Object.keys(t.report.reasons) as ReportReason[]).map((key) => (
                 <option key={key} value={key}>
-                  {reportReasonLabels[key]}
+                  {t.report.reasons[key]}
                 </option>
               ))}
             </select>
@@ -67,24 +69,24 @@ export function ReportModal({ onClose, onSubmit }: ReportModalProps) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Подробное описание *
+              {t.report.descLabel}
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Опишите подробно, почему вы считаете это объявление нарушающим правила..."
+              placeholder={t.report.descPlaceholder}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white min-h-[120px] resize-none"
               required
               maxLength={500}
             />
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              {description.length}/500 символов
+              {description.length}/500 {t.common.characters}
             </p>
           </div>
 
           <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
             <p className="text-sm text-orange-800">
-              <strong>Обратите внимание:</strong> Ложные жалобы могут привести к блокировке вашего аккаунта.
+              <strong>{t.report.warningNote}</strong> {t.report.warning}
             </p>
           </div>
 
@@ -96,14 +98,14 @@ export function ReportModal({ onClose, onSubmit }: ReportModalProps) {
               className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               disabled={isSubmitting}
             >
-              Отмена
+              {t.common.cancel}
             </button>
             <button
               type="submit"
               disabled={isSubmitting || !description.trim()}
               className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? 'Отправка...' : 'Отправить жалобу'}
+              {isSubmitting ? t.report.submitting : t.report.submit}
             </button>
           </div>
         </form>

@@ -1,5 +1,6 @@
 import { X } from 'lucide-react';
 import { useState } from 'react';
+import { useI18n } from '../context/I18nContext';
 import { useScrollLock } from './ui/use-scroll-lock';
 
 interface DeleteReasonModalProps {
@@ -8,17 +9,18 @@ interface DeleteReasonModalProps {
   petDescription?: string;
 }
 
-const deleteReasons = [
-  { id: 'returned', label: 'Питомец вернулся домой / найден хозяин' },
-  { id: 'adopted', label: 'Питомец пристроен в новую семью' },
-  { id: 'transferred', label: 'Питомец передан в приют' },
-  { id: 'mistake', label: 'Объявление создано по ошибке' },
-  { id: 'duplicate', label: 'Дубликат объявления' },
-  { id: 'other', label: 'Другая причина' },
-];
-
 export function DeleteReasonModal({ onClose, onConfirm, petDescription }: DeleteReasonModalProps) {
   useScrollLock(true);
+  const { t } = useI18n();
+
+  const deleteReasons = [
+    { id: 'returned', label: t.deleteReason.reasons.returned },
+    { id: 'adopted', label: t.deleteReason.reasons.adopted },
+    { id: 'transferred', label: t.deleteReason.reasons.transferred },
+    { id: 'mistake', label: t.deleteReason.reasons.mistake },
+    { id: 'duplicate', label: t.deleteReason.reasons.duplicate },
+    { id: 'other', label: t.deleteReason.reasons.other },
+  ];
   const [selectedReason, setSelectedReason] = useState<string>('');
   const [customReason, setCustomReason] = useState<string>('');
 
@@ -46,7 +48,7 @@ export function DeleteReasonModal({ onClose, onConfirm, petDescription }: Delete
         <div className="border-b border-gray-200 dark:border-gray-700 p-4 flex items-center justify-between">
           <div>
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Удаление объявления
+              {t.deleteReason.title}
             </h2>
             {petDescription && (
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{petDescription}</p>
@@ -62,12 +64,12 @@ export function DeleteReasonModal({ onClose, onConfirm, petDescription }: Delete
 
         <div className="p-6">
           <p className="text-sm text-gray-700 dark:text-gray-300 mb-4">
-            Пожалуйста, укажите причину:
+            {t.deleteReason.prompt}
           </p>
           
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
             <p className="text-xs text-blue-800">
-              <strong>Хорошие новости?</strong> Объявления с позитивным исходом (питомец вернулся домой, пристроен или передан в приют) будут перемещены в архив. Технические причины приведут к полному удалению.
+              <strong>{t.deleteReason.goodNews}</strong> {t.deleteReason.goodNewsHint}
             </p>
           </div>
 
@@ -99,7 +101,7 @@ export function DeleteReasonModal({ onClose, onConfirm, petDescription }: Delete
               <textarea
                 value={customReason}
                 onChange={(e) => setCustomReason(e.target.value)}
-                placeholder="Опишите причину удаления..."
+                placeholder={t.deleteReason.descPlaceholder}
                 rows={3}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                 autoFocus
@@ -113,14 +115,14 @@ export function DeleteReasonModal({ onClose, onConfirm, petDescription }: Delete
             onClick={onClose}
             className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
           >
-            Отмена
+            {t.common.cancel}
           </button>
           <button
             onClick={handleConfirm}
             disabled={!canConfirm}
             className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Удалить объявление
+            {t.deleteReason.deleteAd}
           </button>
         </div>
       </div>

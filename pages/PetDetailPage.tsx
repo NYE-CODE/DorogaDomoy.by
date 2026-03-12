@@ -2,11 +2,12 @@ import { useParams } from 'react-router';
 import { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, MapPin, Phone, MessageCircle, Calendar, Share2, Printer, Home, Heart, Building2, AlertTriangle, ChevronLeft, ChevronRight, User, Copy, Check, X } from 'lucide-react';
 import { Pet } from '../types/pet';
-import { animalTypeLabels, colorLabels, genderLabels, formatDate } from '../utils/pet-helpers';
+import { formatDate } from '../utils/pet-helpers';
 import { toast, Toaster } from 'sonner';
 import { petsApi, reportsApi } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useI18n } from '../context/I18nContext';
 import { ReportModal } from '../components/report-modal';
 import { ReportReason } from '../types/admin';
 import L from 'leaflet';
@@ -142,6 +143,7 @@ export default function PetDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { user: currentUser, isAuthenticated, openAuthModal } = useAuth();
   const { theme } = useTheme();
+  const { t } = useI18n();
   const [pet, setPet] = useState<Pet | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -187,7 +189,7 @@ export default function PetDetailPage() {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
-          <p className="text-gray-600 dark:text-gray-400">Загрузка объявления...</p>
+          <p className="text-gray-600 dark:text-gray-400">{t.petDetail.loading}</p>
         </div>
       </div>
     );
@@ -196,13 +198,13 @@ export default function PetDetailPage() {
   if (error || !pet) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col items-center justify-center gap-4 p-4">
-        <p className="text-gray-600 dark:text-gray-400 text-lg">Объявление не найдено</p>
+        <p className="text-gray-600 dark:text-gray-400 text-lg">{t.petDetail.notFound}</p>
         <a
           href="/"
           className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          На главную
+          {t.petDetail.toMain}
         </a>
       </div>
     );
@@ -241,7 +243,7 @@ export default function PetDetailPage() {
 
   const getShareUrl = () => window.location.href;
   const getShareText = () => {
-    const animal = animalTypeLabels[pet.animalType];
+    const animal = t.pet.animalType[pet.animalType];
     const status = pet.status === 'searching' ? 'Потерян' : 'Найден';
     const breed = pet.breed ? ` (${pet.breed})` : '';
     return `${status}: ${animal}${breed} — ${pet.city}. ${pet.description?.slice(0, 120) || ''}`;
@@ -321,17 +323,17 @@ export default function PetDetailPage() {
 
   const flyerHeaderBody = `
     <div class="header">
-      <h1 class="title">${pet.status === 'searching' ? 'ПРОПАЛ ПИТОМЕЦ' : 'НАЙДЕН ПИТОМЕЦ'}</h1>
-      <div class="subtitle">${pet.city} · ${animalTypeLabels[pet.animalType]}</div>
+      <h1 class="title">${pet.status === 'searching' ? t.petDetail.lostPet : t.petDetail.foundPet}</h1>
+      <div class="subtitle">${pet.city} · ${t.pet.animalType[pet.animalType]}</div>
     </div>
     <div class="photo-container">
       <img src="${pet.photos[0]}" class="photo" />
     </div>
     <div class="info-grid">
-      <div><div class="label">Порода</div><div class="value">${pet.breed || 'Не указана'}</div></div>
-      <div><div class="label">Окрас</div><div class="value">${pet.colors.map(c => colorLabels[c]).join(', ')}</div></div>
-      <div><div class="label">Пол</div><div class="value">${genderLabels[pet.gender]}</div></div>
-      ${pet.approximateAge ? `<div><div class="label">Возраст</div><div class="value">${pet.approximateAge}</div></div>` : ''}
+      <div><div class="label">${t.pet.breedLabel}</div><div class="value">${pet.breed || t.pet.notSpecified}</div></div>
+      <div><div class="label">${t.pet.colorLabel}</div><div class="value">${pet.colors.map(c => t.pet.color[c]).join(', ')}</div></div>
+      <div><div class="label">${t.pet.genderLabel}</div><div class="value">${t.pet.gender[pet.gender]}</div></div>
+      ${pet.approximateAge ? `<div><div class="label">${t.pet.ageLabel}</div><div class="value">${pet.approximateAge}</div></div>` : ''}
     </div>
     <div class="description">${pet.description}</div>
   `;
@@ -348,8 +350,8 @@ export default function PetDetailPage() {
     openFlyer(`<!DOCTYPE html><html><head><title>Листовка</title><style>${flyerCommonStyles}</style></head><body>
       ${flyerHeaderBody}
       <div class="contact-box">
-        <div class="contact-label">Звоните в любое время</div>
-        <div class="phone">${pet.contacts.phone || 'СМ. КОНТАКТЫ'}</div>
+        <div class="contact-label">${t.petDetail.callAnytime}</div>
+        <div class="phone">${pet.contacts.phone || t.petDetail.seeContacts}</div>
         <div class="value">${pet.authorName}</div>
       </div>
       <div class="footer">DorogaDomoy.by</div>
@@ -369,13 +371,13 @@ export default function PetDetailPage() {
       ${flyerHeaderBody}
       <div class="contact-qr">
         <div class="left">
-          <div class="contact-label">Звоните в любое время</div>
-          <div class="phone">${pet.contacts.phone || 'СМ. КОНТАКТЫ'}</div>
+          <div class="contact-label">${t.petDetail.callAnytime}</div>
+          <div class="phone">${pet.contacts.phone || t.petDetail.seeContacts}</div>
           <div class="value">${pet.authorName}</div>
         </div>
         <div class="qr">
           <img src="${qrUrl}" alt="QR" />
-          <div class="qr-label">Подробнее на сайте</div>
+          <div class="qr-label">${t.petDetail.moreOnSite}</div>
         </div>
       </div>
       <div class="footer">DorogaDomoy.by</div>
@@ -423,11 +425,11 @@ export default function PetDetailPage() {
             className="flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
-            <span className="hidden sm:inline">На главную</span>
+            <span className="hidden sm:inline">{t.petDetail.toMain}</span>
           </a>
 
           <h1 className="text-lg text-gray-900 dark:text-white truncate px-4">
-            {animalTypeLabels[pet.animalType]} {pet.breed && `· ${pet.breed}`}
+            {t.pet.animalType[pet.animalType]} {pet.breed && `· ${pet.breed}`}
           </h1>
         </div>
       </div>
@@ -442,7 +444,7 @@ export default function PetDetailPage() {
         </div>
 
         {/* Image carousel */}
-        <ImageCarousel photos={pet.photos} alt={animalTypeLabels[pet.animalType]} />
+        <ImageCarousel photos={pet.photos} alt={t.pet.animalType[pet.animalType]} />
 
         {/* Action buttons */}
         <div className="flex flex-wrap gap-3 mt-6">
@@ -452,13 +454,13 @@ export default function PetDetailPage() {
               className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
             >
               <Share2 className="w-5 h-5" />
-              Поделиться
+              {t.petDetail.share}
             </button>
 
             {showShareMenu && (
               <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-xl z-50 overflow-hidden">
                 <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
-                  <span className="text-sm font-semibold text-gray-900 dark:text-white">Поделиться</span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white">{t.petDetail.share}</span>
                   <button onClick={() => setShowShareMenu(false)} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"><X className="w-4 h-4 text-gray-400 dark:text-gray-500" /></button>
                 </div>
 
@@ -554,13 +556,13 @@ export default function PetDetailPage() {
           {/* Left column: details */}
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 space-y-5">
             <h2 className="text-xl text-gray-900 dark:text-white pb-3 border-b border-gray-100 dark:border-gray-700">
-              Информация
+              {t.pet.information}
             </h2>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Тип животного</p>
-                <p className="text-gray-900 dark:text-white">{animalTypeLabels[pet.animalType]}</p>
+                <p className="text-gray-900 dark:text-white">{t.pet.animalType[pet.animalType]}</p>
               </div>
               {pet.breed && (
                 <div>
@@ -573,11 +575,11 @@ export default function PetDetailPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Цвет</p>
-                <p className="text-gray-900 dark:text-white">{pet.colors.map(c => colorLabels[c]).join(', ')}</p>
+                <p className="text-gray-900 dark:text-white">{pet.colors.map(c => t.pet.color[c]).join(', ')}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Пол</p>
-                <p className="text-gray-900 dark:text-white">{genderLabels[pet.gender]}</p>
+                <p className="text-gray-900 dark:text-white">{t.pet.gender[pet.gender]}</p>
               </div>
             </div>
 
@@ -605,7 +607,7 @@ export default function PetDetailPage() {
             {/* Description */}
             <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
               <h2 className="text-xl text-gray-900 dark:text-white pb-3 border-b border-gray-100 dark:border-gray-700 mb-4">
-                Описание
+                {t.pet.description}
               </h2>
               <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">{pet.description}</p>
             </div>
@@ -614,7 +616,7 @@ export default function PetDetailPage() {
             {!pet.isArchived && (
               <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
                 <h2 className="text-xl text-gray-900 dark:text-white pb-3 border-b border-gray-100 dark:border-gray-700 mb-4">
-                  Контакты
+                  {t.pet.contacts}
                 </h2>
 
                 <div className="flex items-center gap-2 mb-4">
@@ -647,7 +649,7 @@ export default function PetDetailPage() {
                       className="flex items-center gap-3 px-4 py-3 bg-sky-500 text-white rounded-xl hover:bg-sky-600 transition-colors"
                     >
                       <MessageCircle className="w-5 h-5" />
-                      <span>Telegram</span>
+                      <span>{t.profile.telegram}</span>
                     </button>
                   )}
                   {pet.contacts.viber && (
@@ -656,7 +658,7 @@ export default function PetDetailPage() {
                       className="flex items-center gap-3 px-4 py-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors"
                     >
                       <MessageCircle className="w-5 h-5" />
-                      <span>Viber</span>
+                      <span>{t.profile.viber}</span>
                     </button>
                   )}
                 </div>
@@ -667,7 +669,7 @@ export default function PetDetailPage() {
             {pet.isArchived && (
               <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
                 <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg text-center">
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">Это архивное объявление. Контакты скрыты.</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{t.petDetail.contactsHiddenArchived}</p>
                   {archiveBadge && (
                     <div className="flex justify-center">
                       <div className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border ${archiveBadge.bgColor} ${archiveBadge.borderColor} ${archiveBadge.textColor}`}>
@@ -687,7 +689,7 @@ export default function PetDetailPage() {
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center gap-2">
               <MapPin className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-              <h2 className="text-xl text-gray-900 dark:text-white">Местоположение</h2>
+              <h2 className="text-xl text-gray-900 dark:text-white">{t.pet.location}</h2>
               <span className="text-sm text-gray-500 dark:text-gray-400 ml-auto">{pet.city}</span>
             </div>
             <div className="h-[300px] md:h-[400px]">
@@ -704,7 +706,7 @@ export default function PetDetailPage() {
               className="inline-flex items-center gap-2 px-4 py-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors text-sm"
             >
               <AlertTriangle className="w-4 h-4" />
-              Пожаловаться на объявление
+              {t.petDetail.report}
             </button>
           </div>
         )}

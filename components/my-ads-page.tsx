@@ -3,6 +3,7 @@ import { ArrowLeft, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Pet } from '../types/pet';
 import { PetCard } from './pet-card';
 import { useAuth } from '../context/AuthContext';
+import { useI18n } from '../context/I18nContext';
 
 interface MyAdsPageProps {
   pets: Pet[];
@@ -14,6 +15,7 @@ interface MyAdsPageProps {
 
 export function MyAdsPage({ pets, onBack, onCreateClick, onEditPet, onDeletePet }: MyAdsPageProps) {
   const { user } = useAuth();
+  const { t } = useI18n();
   const [page, setPage] = useState(1);
   const perPage = 12;
   
@@ -39,9 +41,9 @@ export function MyAdsPage({ pets, onBack, onCreateClick, onEditPet, onDeletePet 
                 <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
               </button>
               <div>
-                <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Мои объявления</h1>
+                <h1 className="text-xl font-semibold text-gray-900 dark:text-white">{t.myAds.title}</h1>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Всего объявлений: {myAds.length}
+                  {t.myAds.totalAds}: {myAds.length}
                 </p>
               </div>
             </div>
@@ -51,8 +53,8 @@ export function MyAdsPage({ pets, onBack, onCreateClick, onEditPet, onDeletePet 
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               <Plus className="w-4 h-4" />
-              <span className="hidden sm:inline">Создать новое</span>
-              <span className="sm:hidden">Создать</span>
+              <span className="hidden sm:inline">{t.myAds.createNew}</span>
+              <span className="sm:hidden">{t.myAds.createShort}</span>
             </button>
           </div>
         </div>
@@ -64,7 +66,7 @@ export function MyAdsPage({ pets, onBack, onCreateClick, onEditPet, onDeletePet 
             <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
               <Plus className="w-8 h-8 text-gray-400" />
             </div>
-            <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-2">У вас пока нет объявлений</h2>
+            <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-2">{t.myAds.noAds}</h2>
             <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto">
               Если вы потеряли питомца или нашли чужого, создайте объявление, чтобы помочь ему вернуться домой.
             </p>
@@ -73,7 +75,7 @@ export function MyAdsPage({ pets, onBack, onCreateClick, onEditPet, onDeletePet 
               className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               <Plus className="w-4 h-4" />
-              Создать первое объявление
+              {t.myAds.createFirst}
             </button>
           </div>
         ) : (
@@ -99,7 +101,7 @@ export function MyAdsPage({ pets, onBack, onCreateClick, onEditPet, onDeletePet 
                   className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   <ChevronLeft className="w-4 h-4" />
-                  Назад
+                  {t.common.back}
                 </button>
                 
                 <span className="text-sm text-gray-700 dark:text-gray-300">{page} / {totalPages}</span>
@@ -109,7 +111,7 @@ export function MyAdsPage({ pets, onBack, onCreateClick, onEditPet, onDeletePet 
                   disabled={page === totalPages}
                   className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  Вперед
+                  {t.common.forward}
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>

@@ -1,5 +1,6 @@
 import { MapPin } from 'lucide-react';
 import { useScrollLock } from './ui/use-scroll-lock';
+import { useI18n } from '../context/I18nContext';
 
 interface CityDetectPopupProps {
   open: boolean;
@@ -9,6 +10,7 @@ interface CityDetectPopupProps {
 }
 
 export function CityDetectPopup({ open, detectedCity, onConfirm, onReject }: CityDetectPopupProps) {
+  const { t } = useI18n();
   useScrollLock(open);
 
   if (!open) return null;
@@ -23,10 +25,10 @@ export function CityDetectPopup({ open, detectedCity, onConfirm, onReject }: Cit
         </div>
 
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
-          Ваш город — {detectedCity}?
+          {t.cityDetect.yourCity} {detectedCity}{t.cityDetect.question}
         </h2>
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-          Мы покажем объявления из вашего города
+          {t.cityDetect.showAds}
         </p>
 
         <div className="flex gap-3">
@@ -34,13 +36,13 @@ export function CityDetectPopup({ open, detectedCity, onConfirm, onReject }: Cit
             onClick={onReject}
             className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl transition-colors"
           >
-            Нет, другой
+            {t.cityDetect.no}
           </button>
           <button
             onClick={onConfirm}
             className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors"
           >
-            Да, верно
+            {t.cityDetect.yes}
           </button>
         </div>
       </div>

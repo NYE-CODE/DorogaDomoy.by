@@ -5,13 +5,14 @@ import { User } from '../context/AuthContext';
 import { PetCard } from '../components/pet-card';
 import { Pet } from '../types/pet';
 import { usersApi, petsApi } from '../api/client';
+import { useI18n } from '../context/I18nContext';
 
-const getRoleName = (role: User['role']): string => {
+const getRoleName = (role: User['role'], t: any): string => {
   const roleNames = {
-    user: 'Пользователь',
-    volunteer: 'Волонтёр',
-    shelter: 'Приют / САХ',
-    admin: 'Администратор'
+    user: t.userProfile.user,
+    volunteer: t.userProfile.volunteer,
+    shelter: t.userProfile.shelter,
+    admin: t.userProfile.admin
   };
   return roleNames[role];
 };
@@ -38,6 +39,7 @@ const getRoleIcon = (role: User['role']): string => {
 
 export default function UserProfilePage() {
   const { id } = useParams<{ id: string }>();
+  const { t } = useI18n();
   const [user, setUser] = useState<User | null>(null);
   const [userPets, setUserPets] = useState<Pet[]>([]);
   const [loading, setLoading] = useState(true);
@@ -72,7 +74,7 @@ export default function UserProfilePage() {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
-          <p className="text-gray-600 dark:text-gray-400">Загрузка профиля...</p>
+          <p className="text-gray-600 dark:text-gray-400">{t.userProfile.loading}</p>
         </div>
       </div>
     );
@@ -84,13 +86,13 @@ export default function UserProfilePage() {
         <div className="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">
           <UserIcon className="w-8 h-8 text-gray-400 dark:text-gray-500" />
         </div>
-        <p className="text-gray-600 dark:text-gray-400 text-lg">Пользователь не найден</p>
+        <p className="text-gray-600 dark:text-gray-400 text-lg">{t.userProfile.notFound}</p>
         <a
           href="/"
           className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          На главную
+          {t.userProfile.toMain}
         </a>
       </div>
     );
@@ -106,11 +108,11 @@ export default function UserProfilePage() {
             className="flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
-            <span className="hidden sm:inline">На главную</span>
+            <span className="hidden sm:inline">{t.userProfile.toMain}</span>
           </a>
 
           <h1 className="text-lg text-gray-900 dark:text-white truncate px-4">
-            Профиль пользователя
+            {t.userProfile.profileTitle}
           </h1>
 
           <div className="w-16" />
@@ -147,13 +149,13 @@ export default function UserProfilePage() {
                   <h1 className="text-2xl text-gray-900 dark:text-white">{user.name}</h1>
                   <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-sm rounded-full border ${getRoleColor(user.role)}`}>
                     <span>{getRoleIcon(user.role)}</span>
-                    {getRoleName(user.role)}
+                    {getRoleName(user.role, t)}
                   </span>
                 </div>
 
                 {user.isBlocked && (
                   <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800 rounded-lg text-sm mb-3">
-                    🚫 Заблокирован{user.blockedReason && `: ${user.blockedReason}`}
+                    🚫 {t.userProfile.blocked}{user.blockedReason && `: ${user.blockedReason}`}
                   </div>
                 )}
               </div>
@@ -174,7 +176,7 @@ export default function UserProfilePage() {
             {/* Contacts */}
             {(user.contacts?.phone || user.contacts?.telegram || user.contacts?.viber) && (
               <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-700">
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Контактная информация</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">{t.userProfile.contactInfo}</p>
                 <div className="flex flex-wrap gap-3">
                   {user.contacts.phone && (
                     <a
@@ -193,7 +195,7 @@ export default function UserProfilePage() {
                       className="inline-flex items-center gap-2 px-4 py-2.5 bg-sky-500 text-white rounded-xl hover:bg-sky-600 transition-colors text-sm"
                     >
                       <MessageCircle className="w-4 h-4" />
-                      Telegram
+                      {t.profile.telegram}
                     </a>
                   )}
                   {user.contacts.viber && (
@@ -202,7 +204,7 @@ export default function UserProfilePage() {
                       className="inline-flex items-center gap-2 px-4 py-2.5 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors text-sm"
                     >
                       <MessageCircle className="w-4 h-4" />
-                      Viber
+                      {t.profile.viber}
                     </a>
                   )}
                 </div>
@@ -215,15 +217,15 @@ export default function UserProfilePage() {
         <div className="grid grid-cols-3 gap-4 mt-6">
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 text-center">
             <p className="text-2xl text-gray-900 dark:text-white">{userPets.length}</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Всего объявлений</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t.userProfile.totalAds}</p>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 text-center">
             <p className="text-2xl text-blue-600">{activePets.length}</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Активных</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t.userProfile.active}</p>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 text-center">
             <p className="text-2xl text-green-600">{archivedPets.length}</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">В архиве</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t.userProfile.archived}</p>
           </div>
         </div>
 
@@ -255,7 +257,7 @@ export default function UserProfilePage() {
         {archivedPets.length > 0 && (
           <div className="mt-8 mb-8">
             <h2 className="text-xl text-gray-900 dark:text-white mb-4">
-              Архив
+              {t.userProfile.archive}
               <span className="text-gray-400 dark:text-gray-500 ml-2">({archivedPets.length})</span>
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 opacity-70">

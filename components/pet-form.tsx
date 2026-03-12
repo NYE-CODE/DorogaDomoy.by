@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react';
 import { X, Search, ChevronRight, ChevronLeft, ImagePlus } from 'lucide-react';
 import { AnimalType, PetStatus, PetColor, Gender, Pet } from '../types/pet';
 import { useScrollLock } from './ui/use-scroll-lock';
-import { colorLabels, genderLabels } from '../utils/pet-helpers';
 import { BreedCombobox } from './breed-combobox';
 import { CAT_BREEDS, DOG_BREEDS } from '../utils/breeds';
 import { useAuth } from '../context/AuthContext';
+import { useI18n } from '../context/I18nContext';
 import { LocationPicker } from './location-picker';
 import { DEFAULT_CITY } from '../utils/cities';
 import { geocode } from '../utils/geocode';
@@ -72,25 +72,26 @@ function formDataFromPet(pet: Pet): PetFormData {
   };
 }
 
-const statusOptions: { value: PetStatus; label: string; icon: string; color: string; activeColor: string }[] = [
-  { value: 'searching', label: 'Ищут', icon: '🔍', color: 'text-gray-600', activeColor: 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800 shadow-sm' },
-  { value: 'found', label: 'Найден', icon: '📍', color: 'text-gray-600', activeColor: 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800 shadow-sm' },
+const statusOptions: { value: PetStatus; icon: string; color: string; activeColor: string }[] = [
+  { value: 'searching', icon: '🔍', color: 'text-gray-600', activeColor: 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800 shadow-sm' },
+  { value: 'found', icon: '📍', color: 'text-gray-600', activeColor: 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800 shadow-sm' },
 ];
 
-const animalTypeOptions: { value: AnimalType; label: string; icon: string }[] = [
-  { value: 'cat', label: 'Кот', icon: '🐱' },
-  { value: 'dog', label: 'Собака', icon: '🐕' },
-  { value: 'other', label: 'Другое', icon: '🦔' },
+const animalTypeOptions: { value: AnimalType; icon: string }[] = [
+  { value: 'cat', icon: '🐱' },
+  { value: 'dog', icon: '🐕' },
+  { value: 'other', icon: '🦔' },
 ];
 
-const genderOptions: { value: Gender; label: string }[] = [
-  { value: 'unknown', label: genderLabels.unknown },
-  { value: 'male', label: genderLabels.male },
-  { value: 'female', label: genderLabels.female },
+const genderOptions: { value: Gender }[] = [
+  { value: 'unknown' },
+  { value: 'male' },
+  { value: 'female' },
 ];
 
 export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: PetFormProps) {
   const { user } = useAuth();
+  const { t } = useI18n();
   useScrollLock(true);
 
   const [formData, setFormData] = useState<PetFormData>(() =>
@@ -140,7 +141,7 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
         resolve(canvas.toDataURL('image/jpeg', quality));
         URL.revokeObjectURL(img.src);
       };
-      img.onerror = () => { URL.revokeObjectURL(img.src); reject(new Error('Не удалось загрузить изображение')); };
+      img.onerror = () => { URL.revokeObjectURL(img.src); reject(new Error(t.petForm.uploadFailed)); };
       img.src = URL.createObjectURL(file);
     });
 
@@ -150,11 +151,11 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
 
     for (const file of Array.from(files)) {
       if (!file.type.startsWith('image/')) {
-        toast.error('Загружайте только изображения (JPEG, PNG, WebP)');
+        toast.error(t.petForm.onlyImages);
         continue;
       }
       if (file.size > 15 * 1024 * 1024) {
-        toast.error('Файл слишком большой. Максимум 15 МБ');
+        toast.error(t.petForm.maxSize);
         continue;
       }
       try {
@@ -182,18 +183,18 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
 
   const step1Errors = () => {
     const errs: Record<string, string> = {};
-    if (!formData.status) errs.status = 'Выберите статус';
-    if (!formData.animalType) errs.animalType = 'Выберите тип животного';
-    if (formData.colors.length === 0) errs.colors = 'Выберите хотя бы один окрас';
+    if (!formData.status) errs.status = t.petForm.selectStatus;
+    if (!formData.animalType) errs.animalType = t.petForm.selectAnimalType;
+    if (formData.colors.length === 0) errs.colors = t.petForm.selectColor;
     return errs;
   };
 
   const step2Errors = () => {
     const errs: Record<string, string> = {};
-    if (!formData.description?.trim()) errs.description = 'Введите описание';
+    if (!formData.description?.trim()) errs.description = t.petForm.enterDescription;
     else if (formData.description.length > MAX_DESCRIPTION) errs.description = `Макс. ${MAX_DESCRIPTION} символов`;
-    if (!formData.city?.trim()) errs.city = 'Укажите адрес';
-    if (formData.photos.length === 0) errs.photos = 'Загрузите хотя бы одно фото';
+    if (!formData.city?.trim()) errs.city = t.petForm.specifyAddress;
+    if (formData.photos.length === 0) errs.photos = t.petForm.uploadPhoto;
     return errs;
   };
 
@@ -235,14 +236,14 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
         <div className="sticky top-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-b border-gray-100 dark:border-gray-700 px-6 py-4 flex items-center justify-between z-10 rounded-t-2xl">
           <div>
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              {isEditing ? 'Редактирование' : 'Новое объявление'}
+              {isEditing ? t.petForm.editTitle : t.petForm.createTitle}
             </h2>
             <div className="flex items-center gap-2 mt-1.5">
               <div className="flex gap-1">
                 <div className={`h-1 w-8 rounded-full transition-colors ${step >= 1 ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600'}`} />
                 <div className={`h-1 w-8 rounded-full transition-colors ${step >= 2 ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600'}`} />
               </div>
-              <span className="text-xs text-gray-400 dark:text-gray-500">Шаг {step} из 2</span>
+              <span className="text-xs text-gray-400 dark:text-gray-500">{t.petForm.step} {step} {t.petForm.of} 2</span>
             </div>
           </div>
           <button
@@ -259,7 +260,7 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
             <div className="space-y-4">
               {/* Status */}
               <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide shrink-0">Статус *</span>
+                <span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide shrink-0">{t.petForm.statusLabel}</span>
                 <div className="flex gap-1.5">
                   {statusOptions.map((opt) => (
                     <button
@@ -272,7 +273,7 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
                           : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-500'
                       }`}
                     >
-                      {opt.label}
+                      {t.pet.status[opt.value]}
                     </button>
                   ))}
                 </div>
@@ -282,7 +283,7 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
               {/* Animal type + Breed */}
               <div className="flex flex-col sm:flex-row sm:items-end gap-3">
                 <div className="shrink-0">
-                  <span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">Тип животного *</span>
+                  <span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">{t.petForm.animalTypeLabel}</span>
                   <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-0.5 mt-1.5 w-fit">
                     {animalTypeOptions.map((opt) => (
                       <button
@@ -296,14 +297,14 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
                         }`}
                       >
                         <span className="text-base leading-none">{opt.icon}</span>
-                        {opt.label}
+                        {t.pet.animalType[opt.value]}
                       </button>
                     ))}
                   </div>
                   {errors.animalType && <p className="text-xs text-red-500 mt-1">{errors.animalType}</p>}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">Порода</span>
+                  <span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">{t.petForm.breedLabel}</span>
                   <div className="mt-1.5">
                     {formData.animalType === 'other' ? (
                       <input
@@ -328,9 +329,9 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
 
               {/* Colors */}
               <div>
-                <span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">Окрас *</span>
+                <span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">{t.petForm.colorLabel}</span>
                 <div className={`flex flex-wrap gap-1.5 mt-1.5 ${errors.colors ? 'ring-2 ring-red-300 bg-red-50/50 dark:bg-red-900/20 p-2 rounded-xl' : ''}`}>
-                  {(Object.keys(colorLabels) as PetColor[]).map((color) => (
+                  {(Object.keys(t.pet.color) as PetColor[]).map((color) => (
                     <button
                       key={color}
                       type="button"
@@ -341,7 +342,7 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
                           : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-500'
                       }`}
                     >
-                      {colorLabels[color]}
+                      {t.pet.color[color]}
                     </button>
                   ))}
                 </div>
@@ -351,7 +352,7 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
               {/* Gender + Age */}
               <div className="flex flex-col sm:flex-row sm:items-end gap-3">
                 <div className="shrink-0">
-                  <span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">Пол</span>
+                  <span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">{t.petForm.genderLabel}</span>
                   <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-0.5 mt-1.5 w-fit">
                     {genderOptions.map((opt) => (
                       <button
@@ -364,13 +365,13 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
                             : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                         }`}
                       >
-                        {opt.label}
+                        {t.pet.gender[opt.value]}
                       </button>
                     ))}
                   </div>
                 </div>
                 <div>
-                  <span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">Возраст</span>
+                  <span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">{t.petForm.ageLabel}</span>
                   <input
                     type="text"
                     value={formData.approximateAge}
@@ -389,7 +390,7 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
               {/* Description */}
               <div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">Описание *</span>
+                  <span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">{t.petForm.descriptionLabel}</span>
                   <span className={`text-xs ${formData.description.length > MAX_DESCRIPTION ? 'text-red-500 font-medium' : 'text-gray-400 dark:text-gray-500'}`}>
                     {formData.description.length} / {MAX_DESCRIPTION}
                   </span>
@@ -401,7 +402,7 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
                       setFormData({ ...formData, description: e.target.value });
                     }
                   }}
-                  placeholder="Опишите питомца, особые приметы, обстоятельства..."
+                  placeholder={t.petForm.descriptionPlaceholder}
                   rows={4}
                   maxLength={MAX_DESCRIPTION}
                   className={`w-full mt-2 px-3 py-2.5 text-sm border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none ${errors.description ? 'border-red-300' : 'border-gray-200 dark:border-gray-600'}`}
@@ -413,7 +414,7 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
               {/* Photos */}
               <div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">Фото *</span>
+                  <span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">{t.petForm.photosLabel}</span>
                   <span className={`text-xs ${formData.photos.length === 0 && errors.photos ? 'text-red-500 font-medium' : 'text-gray-400 dark:text-gray-500'}`}>
                     {formData.photos.length} из {maxPhotos}
                   </span>
@@ -470,7 +471,7 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
 
               {/* Address */}
               <div>
-                <span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">Адрес *</span>
+                <span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">{t.petForm.addressLabel}</span>
                 <div className="flex gap-2 mt-2">
                   <input
                     type="text"
@@ -500,7 +501,7 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
                     title="Показать на карте"
                   >
                     <Search className="w-4 h-4" />
-                    На карте
+                    {t.pet.onMap}
                   </button>
                 </div>
                 {errors.city
@@ -534,7 +535,7 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
                 className="flex items-center gap-1.5 px-4 py-2.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors"
               >
                 <ChevronLeft className="w-4 h-4" />
-                Назад
+                {t.common.back}
               </button>
             ) : (
               <div />
@@ -551,7 +552,7 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
                 }}
                 className="flex items-center gap-1.5 px-6 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-colors"
               >
-                Далее
+                {t.common.next}
                 <ChevronRight className="w-4 h-4" />
               </button>
             ) : (
@@ -559,7 +560,7 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
                 type="submit"
                 className="px-6 py-2.5 bg-green-600 text-white text-sm font-medium rounded-xl hover:bg-green-700 transition-colors"
               >
-                {isEditing ? 'Сохранить' : 'Создать объявление'}
+                {isEditing ? t.common.save : t.petForm.createAd}
               </button>
             )}
           </div>

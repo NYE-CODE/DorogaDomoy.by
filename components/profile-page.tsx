@@ -1,12 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router';
 import { ArrowLeft, User, Mail, Phone, MessageCircle, Save, AlertCircle, Lock, Edit2, Shield, Link2, Unlink, Bell, BellOff, Copy, Check, ExternalLink } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useI18n } from '../context/I18nContext';
 import { telegramApi, notificationsApi, type NotificationSettingsData } from '../api/client';
 import { toast } from 'sonner';
-
-interface ProfilePageProps {
-  onBack: () => void;
-}
 
 const roleLabels: Record<string, string> = {
   user: 'Пользователь',
@@ -22,8 +20,10 @@ const roleColors: Record<string, string> = {
   admin: 'bg-red-100 text-red-700'
 };
 
-export function ProfilePage({ onBack }: ProfilePageProps) {
+export default function ProfilePage() {
+  const navigate = useNavigate();
   const { user, updateContacts, updateProfile, refreshUser } = useAuth();
+  const { t } = useI18n();
   
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -93,15 +93,15 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (name.trim().length < 2) {
-      toast.error('Имя должно содержать минимум 2 символа');
+      toast.error(t.auth.nameMinLength);
       return;
     }
     setIsSavingProfile(true);
     try {
       await updateProfile(name, email);
-      toast.success('Профиль обновлен!');
+      toast.success(t.profile.profileUpdated);
     } catch {
-      toast.error('Не удалось обновить профиль. Попробуйте снова.');
+      toast.error(t.profile.profileUpdateError);
     } finally {
       setIsSavingProfile(false);
     }
@@ -109,28 +109,29 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
 
   const handleSavePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newPassword !== confirmPassword) { toast.error('Пароли не совпадают'); return; }
-    if (newPassword.length < 6) { toast.error('Пароль должен содержать минимум 6 символов'); return; }
+    if (newPassword !== confirmPassword) { toast.error(t.profile.passwordsNotMatch); return; }
+    if (newPassword.length < 6) { toast.error(t.auth.passwordMinLength); return; }
     setIsSavingPassword(true);
     await new Promise(resolve => setTimeout(resolve, 500));
     setCurrentPassword(''); setNewPassword(''); setConfirmPassword('');
     setIsSavingPassword(false);
-    toast.success('Пароль изменен!');
+    toast.success(t.profile.passwordChanged);
   };
 
   const handleSaveContacts = async (e: React.FormEvent) => {
     e.preventDefault();
     const tgContact = isTelegramLinked ? `@${user?.telegramUsername}` : undefined;
-    if (!phone && !tgContact && !viber) { toast.error('Укажите хотя бы один способ связи'); return; }
+    if (!phone && !tgContact && !viber) { toast.error(t.profile.atLeastOneContact); return; }
     setIsSavingContacts(true);
     try {
       await updateContacts({ phone: phone || undefined, telegram: tgContact, viber: viber || undefined });
-      toast.success('Контакты обновлены!');
-    } catch { toast.error('Ошибка'); }
+      toast.success(t.profile.contactsUpdated);
+    } catch { toast.error(t.common.error); }
     finally { setIsSavingContacts(false); }
   };
 
-  const handleRequestLink = async () => {
+  const handleRequestLink = async (e?: React.MouseEvent) => {
+    if (e) { e.preventDefault(); e.stopPropagation(); }
     cleanupLinking();
     setIsLinking(true);
     try {
@@ -150,24 +151,24 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
           if (status.linked) {
             cleanupLinking(); setLinkCode(null); setIsLinking(false);
             await refreshUser();
-            toast.success('Telegram успешно привязан!');
+            toast.success(t.profile.telegramLinked);
           }
         } catch {}
       }, 3000);
-    } catch (e: any) {
-      toast.error(e.message || 'Ошибка при запросе кода');
+    } catch (err: any) {
+      toast.error(err.message || t.profile.linkCodeError);
       setIsLinking(false);
     }
   };
 
   const handleUnlink = async () => {
-    if (!confirm('Отвязать Telegram? Уведомления будут отключены.')) return;
+    if (!confirm(t.profile.unlinkConfirm)) return;
     try {
       await telegramApi.unlink();
       await refreshUser();
       setNotifSettings(null);
-      toast.success('Telegram отвязан');
-    } catch (e: any) { toast.error(e.message || 'Ошибка при отвязке'); }
+      toast.success(t.profile.telegramUnlinked);
+    } catch (e: any) { toast.error(e.message || t.profile.unlinkError); }
   };
 
   const handleCopyCode = () => {
@@ -182,8 +183,8 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
     try {
       const updated = await notificationsApi.updateSettings({ notifications_enabled: enabled });
       setNotifSettings(updated);
-      toast.success(enabled ? 'Уведомления включены' : 'Уведомления выключены');
-    } catch (e: any) { toast.error(e.message || 'Ошибка'); }
+      toast.success(enabled ? t.notifications.enabled : t.notifications.disabled);
+    } catch (e: any) { toast.error(e.message || t.common.error); }
     finally { setNotifSaving(false); }
   };
 
@@ -192,8 +193,8 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
     try {
       const updated = await notificationsApi.updateSettings({ notification_radius_km: localRadius });
       setNotifSettings(updated);
-      toast.success('Настройки уведомлений сохранены');
-    } catch (e: any) { toast.error(e.message || 'Ошибка'); }
+      toast.success(t.notifications.settingsSaved);
+    } catch (e: any) { toast.error(e.message || t.common.error); }
     finally { setNotifSaving(false); }
   };
 
@@ -206,12 +207,12 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
       <div className="bg-white dark:bg-gray-800 border-b dark:border-gray-700 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center gap-4">
-            <button onClick={onBack} className="p-2 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+            <button onClick={() => navigate('/')} className="p-2 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div>
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white">Профиль</h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Управление личными данными</p>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t.profile.title}</h1>
+              <p className="text-sm text-gray-600 dark:text-gray-400">{t.profile.subtitle}</p>
             </div>
           </div>
         </div>
@@ -233,51 +234,52 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
               {user?.role && (
                 <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full mt-2 ${roleColors[user.role]}`}>
                   <Shield className="w-3 h-3" />
-                  {roleLabels[user.role]}
+                  {t.profile.roles[user.role as keyof typeof t.profile.roles]}
                 </span>
               )}
             </div>
           </div>
           <form onSubmit={handleSaveProfile} className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2"><Edit2 className="w-5 h-5" /> Личная информация</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2"><Edit2 className="w-5 h-5" /> {t.profile.personalInfo}</h3>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Имя *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t.profile.nameLabel}</label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
-                <input type="text" required value={name} onChange={e => setName(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-500 dark:placeholder-gray-400" placeholder="Ваше имя" />
+                <input type="text" required value={name} onChange={e => setName(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-500 dark:placeholder-gray-400" placeholder={t.profile.namePlaceholder} />
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t.profile.emailLabel}</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
                 <input type="email" required value={email} onChange={e => setEmail(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-500 dark:placeholder-gray-400" placeholder="email@example.by" />
               </div>
             </div>
             <button type="submit" disabled={isSavingProfile} className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 active:scale-[0.98] transition-all font-medium disabled:opacity-70">
-              {isSavingProfile ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <><Save className="w-4 h-4" /> Сохранить изменения</>}
+              {isSavingProfile ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <><Save className="w-4 h-4" /> {t.profile.saveChanges}</>}
             </button>
           </form>
         </div>
 
         {/* Password */}
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2"><Lock className="w-5 h-5" /> Изменить пароль</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2"><Lock className="w-5 h-5" /> {t.profile.changePassword}</h3>
           <form onSubmit={handleSavePassword} className="space-y-4">
+            <input type="hidden" autoComplete="username" value={user?.email || ''} readOnly />
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Текущий пароль</label>
-              <div className="relative"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" /><input type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-500 dark:placeholder-gray-400" placeholder="••••••••" /></div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t.profile.currentPassword}</label>
+              <div className="relative"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" /><input type="password" autoComplete="current-password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-500 dark:placeholder-gray-400" placeholder="••••••••" /></div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Новый пароль</label>
-              <div className="relative"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" /><input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-500 dark:placeholder-gray-400" placeholder="••••••••" /></div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t.profile.newPassword}</label>
+              <div className="relative"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" /><input type="password" autoComplete="new-password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-500 dark:placeholder-gray-400" placeholder="••••••••" /></div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Подтвердите новый пароль</label>
-              <div className="relative"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" /><input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-500 dark:placeholder-gray-400" placeholder="••••••••" /></div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t.profile.confirmPassword}</label>
+              <div className="relative"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" /><input type="password" autoComplete="new-password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-500 dark:placeholder-gray-400" placeholder="••••••••" /></div>
             </div>
             <button type="submit" disabled={isSavingPassword || !currentPassword || !newPassword || !confirmPassword} className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 active:scale-[0.98] transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed">
-              {isSavingPassword ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <><Save className="w-4 h-4" /> Изменить пароль</>}
+              {isSavingPassword ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <><Save className="w-4 h-4" /> {t.profile.changePassword}</>}
             </button>
           </form>
         </div>
@@ -287,25 +289,35 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
           <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
             <div>
-              <h3 className="font-medium text-amber-900 dark:text-amber-300 mb-1">Добавьте контакты</h3>
-              <p className="text-sm text-amber-800 dark:text-amber-400">Укажите хотя бы один способ связи, чтобы иметь возможность создавать объявления.</p>
+              <h3 className="font-medium text-amber-900 dark:text-amber-300 mb-1">{t.profile.addContacts}</h3>
+              <p className="text-sm text-amber-800 dark:text-amber-400">{t.profile.addContactsDescription}</p>
             </div>
           </div>
         )}
 
         {/* Contacts */}
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Контакты для связи</h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">Эти данные будут отображаться в ваших объявлениях. Укажите хотя бы один способ связи.</p>
-          <form onSubmit={handleSaveContacts} className="space-y-5">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Телефон</label>
-              <div className="relative"><Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" /><input type="tel" value={phone} onChange={e => setPhone(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-500 dark:placeholder-gray-400" placeholder="+375291234567" /></div>
-            </div>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">{t.profile.contacts}</h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">{t.profile.contactsDescription}</p>
+          <div className="space-y-5">
+            <form onSubmit={handleSaveContacts} className="space-y-5">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t.profile.phone}</label>
+                <div className="relative"><Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" /><input type="tel" value={phone} onChange={e => setPhone(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-500 dark:placeholder-gray-400" placeholder="+375291234567" /></div>
+              </div>
 
-            {/* Telegram — linking inline */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t.profile.viber}</label>
+                <div className="relative"><MessageCircle className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" /><input type="tel" value={viber} onChange={e => setViber(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-500 dark:placeholder-gray-400" placeholder="+375291234567" /></div>
+              </div>
+              <button type="submit" disabled={isSavingContacts} className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 active:scale-[0.98] transition-all font-medium disabled:opacity-70">
+                {isSavingContacts ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <><Save className="w-4 h-4" /> {t.profile.saveContacts}</>}
+              </button>
+            </form>
+
+            {/* Telegram — linking (outside form to prevent accidental form submission) */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Telegram</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t.profile.telegram}</label>
               {isTelegramLinked ? (
                 <div className="flex items-center justify-between gap-3 px-4 py-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                   <div className="flex items-center gap-3 min-w-0">
@@ -313,22 +325,22 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-medium text-gray-900 dark:text-white">@{user?.telegramUsername}</span>
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs rounded-full"><Check className="w-3 h-3" /> Привязан</span>
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs rounded-full"><Check className="w-3 h-3" /> {t.profile.linked}</span>
                       </div>
                       {user?.telegramLinkedAt && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{new Date(user.telegramLinkedAt).toLocaleDateString('ru-RU')}</p>}
                     </div>
                   </div>
                   <button type="button" onClick={handleUnlink} className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-sm text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
-                    <Unlink className="w-3.5 h-3.5" /> Отвязать
+                    <Unlink className="w-3.5 h-3.5" /> {t.profile.unlink}
                   </button>
                 </div>
               ) : linkCode ? (
                 <div className="space-y-4 border border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-900/10 rounded-lg p-4">
                   <div>
                     <p className="text-sm text-blue-800 dark:text-blue-300 mb-2">
-                      <span className="font-semibold">1.</span> Откройте бота: <a href={botUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-blue-700 underline inline-flex items-center gap-1">@{botUrl.split('/').pop()} <ExternalLink className="w-3 h-3" /></a>
+                      <span className="font-semibold">1.</span> {t.profile.openBot} <a href={botUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-blue-700 underline inline-flex items-center gap-1">@{botUrl.split('/').pop()} <ExternalLink className="w-3 h-3" /></a>
                     </p>
-                    <p className="text-sm text-blue-800 dark:text-blue-300"><span className="font-semibold">2.</span> Отправьте команду:</p>
+                    <p className="text-sm text-blue-800 dark:text-blue-300"><span className="font-semibold">2.</span> {t.profile.sendCommand}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <code className="flex-1 bg-white dark:bg-gray-800 border border-blue-200 dark:border-blue-800 rounded-lg px-4 py-2.5 text-base font-mono font-bold text-blue-900 dark:text-blue-300 text-center tracking-wider">/link {linkCode}</code>
@@ -338,7 +350,7 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
                   </div>
                   <div>
                     <div className="flex items-center justify-between text-xs mb-1.5">
-                      <span className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400"><span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-pulse inline-block" /> Ожидание...</span>
+                      <span className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400"><span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-pulse inline-block" /> {t.profile.waiting}</span>
                       <span className="text-gray-500 dark:text-gray-400 font-mono">{formatTime(timeLeft)}</span>
                     </div>
                     <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-1">
@@ -346,41 +358,33 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <button type="button" onClick={() => { cleanupLinking(); setLinkCode(null); setIsLinking(false); }} className="flex-1 px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">Отмена</button>
-                    <button type="button" onClick={handleRequestLink} className="flex-1 px-3 py-1.5 text-sm text-blue-700 dark:text-blue-400 border border-blue-300 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">Новый код</button>
+                    <button type="button" onClick={() => { cleanupLinking(); setLinkCode(null); setIsLinking(false); }} className="flex-1 px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">{t.common.cancel}</button>
+                    <button type="button" onClick={handleRequestLink} className="flex-1 px-3 py-1.5 text-sm text-blue-700 dark:text-blue-400 border border-blue-300 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">{t.profile.newCode}</button>
                   </div>
                 </div>
               ) : (
                 <button type="button" onClick={handleRequestLink} disabled={isLinking} className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-400 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors disabled:opacity-70">
-                  <Link2 className="w-4 h-4" /> Привязать Telegram
+                  <Link2 className="w-4 h-4" /> {t.profile.linkTelegram}
                 </button>
               )}
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Viber</label>
-              <div className="relative"><MessageCircle className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" /><input type="tel" value={viber} onChange={e => setViber(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-500 dark:placeholder-gray-400" placeholder="+375291234567" /></div>
-            </div>
-            <button type="submit" disabled={isSavingContacts} className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 active:scale-[0.98] transition-all font-medium disabled:opacity-70">
-              {isSavingContacts ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <><Save className="w-4 h-4" /> Сохранить контакты</>}
-            </button>
-          </form>
+          </div>
         </div>
 
         {/* Notifications */}
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1 flex items-center gap-2">
             <Bell className="w-5 h-5 text-amber-500" />
-            Уведомления
+            {t.notifications.title}
           </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-5">Уведомления приходят, когда рядом с одним из ваших объявлений появляется новое</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-5">{t.notifications.description}</p>
 
           {!isTelegramLinked ? (
             <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 flex items-start gap-3">
               <BellOff className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
               <div>
-                <h4 className="font-medium text-amber-900 dark:text-amber-300 mb-1">Telegram не привязан</h4>
-                <p className="text-sm text-amber-800 dark:text-amber-400">Привяжите Telegram в разделе «Контакты для связи», чтобы получать уведомления.</p>
+                <h4 className="font-medium text-amber-900 dark:text-amber-300 mb-1">{t.notifications.telegramNotLinked}</h4>
+                <p className="text-sm text-amber-800 dark:text-amber-400">{t.notifications.telegramNotLinkedHint}</p>
               </div>
             </div>
           ) : notifLoading ? (
@@ -390,10 +394,10 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
               {/* Toggle */}
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="font-medium text-gray-900 dark:text-white">Уведомления в Telegram</h4>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">О новых объявлениях рядом с вашими</p>
+                  <h4 className="font-medium text-gray-900 dark:text-white">{t.notifications.telegramNotifications}</h4>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{t.notifications.aboutNearby}</p>
                 </div>
-                <button onClick={() => handleToggleNotifications(!notifSettings?.notifications_enabled)} disabled={notifSaving}
+                <button type="button" onClick={() => handleToggleNotifications(!notifSettings?.notifications_enabled)} disabled={notifSaving}
                   className={`relative w-14 h-7 rounded-full transition-colors duration-200 ${notifSettings?.notifications_enabled ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'}`}>
                   <div className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white dark:bg-gray-800 rounded-full shadow transition-transform duration-200 ${notifSettings?.notifications_enabled ? 'translate-x-7' : ''}`} />
                 </button>
@@ -402,16 +406,16 @@ export function ProfilePage({ onBack }: ProfilePageProps) {
               {/* Radius */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-medium text-gray-900 dark:text-white">Радиус уведомлений</h4>
-                  <span className="text-sm font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-3 py-1 rounded-full">{localRadius} км</span>
+                  <h4 className="font-medium text-gray-900 dark:text-white">{t.notifications.radius}</h4>
+                  <span className="text-sm font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-3 py-1 rounded-full">{localRadius} {t.notifications.km}</span>
                 </div>
                 <input type="range" min={1} max={10} step={0.5} value={localRadius} onChange={e => setLocalRadius(parseFloat(e.target.value))} className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-600" />
-                <div className="flex justify-between text-xs text-gray-400 dark:text-gray-500 mt-1"><span>1 км</span><span>5 км</span><span>10 км</span></div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">Радиус считается от каждого вашего активного объявления</p>
+                <div className="flex justify-between text-xs text-gray-400 dark:text-gray-500 mt-1"><span>1 {t.notifications.km}</span><span>5 {t.notifications.km}</span><span>10 {t.notifications.km}</span></div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{t.notifications.radiusHint}</p>
               </div>
 
-              <button onClick={handleSaveNotifSettings} disabled={notifSaving} className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 active:scale-[0.98] transition-all font-medium disabled:opacity-70">
-                {notifSaving ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <><Save className="w-4 h-4" /> Сохранить настройки уведомлений</>}
+              <button type="button" onClick={handleSaveNotifSettings} disabled={notifSaving} className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 active:scale-[0.98] transition-all font-medium disabled:opacity-70">
+                {notifSaving ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <><Save className="w-4 h-4" /> {t.notifications.saveSettings}</>}
               </button>
             </div>
           )}

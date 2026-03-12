@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X, Mail, Lock, User, ArrowRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useI18n } from '../../context/I18nContext';
 import { toast } from 'sonner';
 import { useScrollLock } from '../ui/use-scroll-lock';
 
@@ -11,6 +12,7 @@ interface AuthModalProps {
 export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
   const { isAuthModalOpen, closeAuthModal, login, register } = useAuth();
   useScrollLock(isAuthModalOpen);
+  const { t } = useI18n();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -25,17 +27,17 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
     
     // Validation
     if (mode === 'register' && name.trim().length < 2) {
-      toast.error('Имя должно содержать минимум 2 символа');
+      toast.error(t.auth.nameMinLength);
       return;
     }
 
     if (password.length < 6) {
-      toast.error('Пароль должен содержать минимум 6 символов');
+      toast.error(t.auth.passwordMinLength);
       return;
     }
 
     if (mode === 'register' && !agreedToTerms) {
-      toast.error('Пожалуйста, согласитесь с условиями использования');
+      toast.error(t.auth.agreeRequired);
       return;
     }
 
@@ -44,13 +46,13 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
     try {
       if (mode === 'login') {
         await login(email, password);
-        toast.success('С возвращением!');
+        toast.success(t.auth.welcomeBack);
       } else {
         await register(email, name, password, {});
-        toast.success('Регистрация успешна! Заполните контакты в профиле.');
+        toast.success(t.auth.registerSuccess);
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Произошла ошибка. Попробуйте снова.');
+      toast.error(err instanceof Error ? err.message : t.auth.genericError);
     } finally {
       setIsLoading(false);
     }
@@ -75,12 +77,12 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
           </button>
           <div className="text-center text-white">
             <h2 className="text-2xl font-bold mb-1">
-              {mode === 'login' ? 'Вход в аккаунт' : 'Регистрация'}
+              {mode === 'login' ? t.auth.loginTitle : t.auth.registerTitle}
             </h2>
             <p className="text-blue-100 text-sm">
               {mode === 'login' 
-                ? 'Войдите, чтобы управлять объявлениями' 
-                : 'Присоединяйтесь к сообществу помощи питомцам'}
+                ? t.auth.loginSubtitle 
+                : t.auth.registerSubtitle}
             </p>
           </div>
         </div>
@@ -90,7 +92,7 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
           <form onSubmit={handleSubmit} className="space-y-5">
             {mode === 'register' && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Ваше имя</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t.auth.yourName}</label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
                   <input
@@ -99,7 +101,7 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
                     value={name}
                     onChange={e => setName(e.target.value)}
                     className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all dark:bg-gray-700 dark:text-white"
-                    placeholder="Иван Иванов"
+                    placeholder={t.auth.namePlaceholder}
                   />
                 </div>
               </div>
@@ -111,6 +113,7 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
                 <input
                   type="email"
+                  autoComplete="username"
                   required
                   value={email}
                   onChange={e => setEmail(e.target.value)}
@@ -121,11 +124,12 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Пароль</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t.auth.password}</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
                 <input
                   type="password"
+                  autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
                   required
                   value={password}
                   onChange={e => setPassword(e.target.value)}
@@ -144,7 +148,7 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
                   className="w-4 h-4 text-blue-600 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500 focus:ring-2"
                 />
                 <label className="ml-2 text-sm text-gray-700 dark:text-gray-300">
-                  Я согласен с{' '}
+                  {t.auth.agreeWith}{' '}
                   <a 
                     href="#" 
                     className="text-blue-600 font-semibold hover:text-blue-700 transition-colors"
@@ -153,7 +157,7 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
                       onNavigateToTerms?.();
                     }}
                   >
-                    условиями использования
+                    {t.auth.terms}
                   </a>
                 </label>
               </div>
@@ -168,7 +172,7 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
                 <>
-                  {mode === 'login' ? 'Войти' : 'Зарегистрироваться'}
+                  {mode === 'login' ? t.auth.login : t.auth.register}
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
@@ -177,13 +181,13 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
 
           <div className="mt-6 text-center">
             <p className="text-gray-600 dark:text-gray-400 text-sm">
-              {mode === 'login' ? 'Нет аккаунта?' : 'Уже есть аккаунт?'}
+              {mode === 'login' ? t.auth.noAccount : t.auth.hasAccount}
               <button 
                 type="button"
                 onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
                 className="ml-2 text-blue-600 font-semibold hover:text-blue-700 transition-colors"
               >
-                {mode === 'login' ? 'Зарегистрироваться' : 'Войти'}
+                {mode === 'login' ? t.auth.register : t.auth.login}
               </button>
             </p>
           </div>

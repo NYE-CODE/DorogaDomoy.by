@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Search, SlidersHorizontal, ChevronDown, ChevronUp, RotateCcw } from 'lucide-react';
 import { AnimalType, PetStatus, PetColor } from '../types/pet';
-import { animalTypeLabels, statusLabels, colorLabels, activeStatuses } from '../utils/pet-helpers';
+import { activeStatuses, colorLabels } from '../utils/pet-helpers';
 import { useIsMobile } from './ui/use-mobile';
+import { useI18n } from '../context/I18nContext';
 import { BreedCombobox } from './breed-combobox';
 import { CAT_BREEDS, DOG_BREEDS } from '../utils/breeds';
 
@@ -20,23 +21,24 @@ interface FiltersProps {
   onFiltersChange: (filters: FilterState) => void;
 }
 
-const animalTypeOptions: { value: AnimalType | 'all'; label: string; icon: string }[] = [
-  { value: 'all', label: 'Все', icon: '🐾' },
-  { value: 'cat', label: animalTypeLabels.cat, icon: '🐱' },
-  { value: 'dog', label: animalTypeLabels.dog, icon: '🐕' },
-  { value: 'other', label: animalTypeLabels.other, icon: '🦔' },
-];
-
-const periodOptions: { value: number | 'all'; label: string }[] = [
-  { value: 'all', label: 'Все' },
-  { value: 7, label: '7 дней' },
-  { value: 30, label: '30 дней' },
-  { value: 90, label: '90 дней' },
-];
-
 export function Filters({ filters, onFiltersChange }: FiltersProps) {
   const isMobile = useIsMobile();
+  const { t } = useI18n();
   const [isOpen, setIsOpen] = useState(!isMobile);
+
+  const animalTypeOptions: { value: AnimalType | 'all'; label: string; icon: string }[] = [
+    { value: 'all', label: t.common.all, icon: '🐾' },
+    { value: 'cat', label: t.pet.animalType.cat, icon: '🐱' },
+    { value: 'dog', label: t.pet.animalType.dog, icon: '🐕' },
+    { value: 'other', label: t.pet.animalType.other, icon: '🦔' },
+  ];
+
+  const periodOptions: { value: number | 'all'; label: string }[] = [
+    { value: 'all', label: t.common.all },
+    { value: 7, label: t.filters.days7 },
+    { value: 30, label: t.filters.days30 },
+    { value: 90, label: t.filters.days90 },
+  ];
 
   const handleReset = () => {
     onFiltersChange({
@@ -80,7 +82,7 @@ export function Filters({ filters, onFiltersChange }: FiltersProps) {
           type="text"
           value={filters.searchQuery}
           onChange={(e) => onFiltersChange({ ...filters, searchQuery: e.target.value })}
-          placeholder="Поиск по кличке, описанию, приметам..."
+          placeholder={t.filters.searchPlaceholder}
           className="w-full pl-11 pr-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow shadow-sm"
         />
       </div>
@@ -94,7 +96,7 @@ export function Filters({ filters, onFiltersChange }: FiltersProps) {
         >
           <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
             <SlidersHorizontal className="w-4 h-4" />
-            <span>Фильтры</span>
+            <span>{t.filters.filters}</span>
             {activeFilterCount > 0 && (
               <span className="min-w-[20px] h-5 px-1.5 flex items-center justify-center bg-blue-600 text-white text-xs font-semibold rounded-full">
                 {activeFilterCount}
@@ -109,7 +111,7 @@ export function Filters({ filters, onFiltersChange }: FiltersProps) {
                 className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors px-2 py-1 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                 <RotateCcw className="w-3 h-3" />
-                Сбросить
+                {t.filters.reset}
               </button>
             )}
             {isOpen
@@ -146,14 +148,14 @@ export function Filters({ filters, onFiltersChange }: FiltersProps) {
                     breeds={filters.animalType === 'cat' ? CAT_BREEDS : DOG_BREEDS}
                     value={filters.breed}
                     onChange={(breed) => onFiltersChange({ ...filters, breed })}
-                    placeholder="Порода..."
+                    placeholder={t.filters.breedPlaceholder}
                   />
                 ) : (
                   <input
                     type="text"
                     value={filters.breed}
                     onChange={(e) => onFiltersChange({ ...filters, breed: e.target.value })}
-                    placeholder="Порода..."
+                    placeholder={t.filters.breedPlaceholder}
                     className="w-full px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800"
                   />
                 )}
@@ -178,7 +180,7 @@ export function Filters({ filters, onFiltersChange }: FiltersProps) {
                           : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-500'
                       }`}
                     >
-                      {statusLabels[status]}
+                      {(t.pet.status as any)[status]}
                     </button>
                   ))}
                 </div>
@@ -219,7 +221,7 @@ export function Filters({ filters, onFiltersChange }: FiltersProps) {
                       : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-500'
                   }`}
                 >
-                  {colorLabels[color]}
+                  {(t.pet.color as any)[color]}
                 </button>
               ))}
             </div>

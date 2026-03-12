@@ -1,12 +1,13 @@
 import { Plus, User as UserIcon, LogOut, Settings, Shield, MapPin, ChevronDown } from 'lucide-react';
+import { useNavigate } from 'react-router';
 import { useAuth } from '../../context/AuthContext';
 import { useI18n } from '../../context/I18nContext';
 import { useState, useRef, useEffect } from 'react';
 
 interface HeaderProps {
-  onViewChange: (view: 'main' | 'my-ads' | 'profile' | 'admin' | 'settings') => void;
+  onViewChange: (view: 'main' | 'settings') => void;
   onCreateClick: () => void;
-  currentView: 'main' | 'my-ads' | 'profile' | 'admin' | 'settings';
+  currentView: 'main' | 'settings';
   selectedCity: string;
   onCityClick: () => void;
 }
@@ -14,6 +15,7 @@ interface HeaderProps {
 export function Header({ onViewChange, onCreateClick, currentView, selectedCity, onCityClick }: HeaderProps) {
   const { user, isAuthenticated, openAuthModal, logout } = useAuth();
   const { t } = useI18n();
+  const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -39,7 +41,7 @@ export function Header({ onViewChange, onCreateClick, currentView, selectedCity,
     if (!isAuthenticated) {
       openAuthModal();
     } else {
-      onViewChange('my-ads');
+      navigate('/my-ads');
       setIsMenuOpen(false);
     }
   };
@@ -48,7 +50,7 @@ export function Header({ onViewChange, onCreateClick, currentView, selectedCity,
     if (!isAuthenticated) {
       openAuthModal();
     } else {
-      onViewChange('profile');
+      navigate('/profile');
       setIsMenuOpen(false);
     }
   };
@@ -162,7 +164,7 @@ export function Header({ onViewChange, onCreateClick, currentView, selectedCity,
                       <div className="border-t border-gray-100 dark:border-gray-600 my-1"></div>
                       <button
                         onClick={() => {
-                          onViewChange('admin');
+                          navigate('/admin');
                           setIsMenuOpen(false);
                         }}
                         className="w-full text-left px-4 py-2 text-sm text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 flex items-center gap-2 font-medium"

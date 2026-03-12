@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { X, Search, MapPin } from 'lucide-react';
 import { oblasts, City, searchCities } from '../utils/cities';
 import { useScrollLock } from './ui/use-scroll-lock';
+import { useI18n } from '../context/I18nContext';
 
 interface CitySelectModalProps {
   open: boolean;
@@ -13,6 +14,7 @@ interface CitySelectModalProps {
 type OblastTab = string | 'all';
 
 export function CitySelectModal({ open, onClose, onSelect, currentCity }: CitySelectModalProps) {
+  const { t } = useI18n();
   useScrollLock(open);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<OblastTab>('all');
@@ -55,7 +57,7 @@ export function CitySelectModal({ open, onClose, onSelect, currentCity }: CitySe
       <div className="relative bg-white dark:bg-gray-800 rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
         <div className="flex items-center justify-between p-5 pb-4 border-b border-gray-100 dark:border-gray-700">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Выбор города</h2>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{t.citySelect.title}</h2>
           <button
             onClick={handleClose}
             className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors text-gray-500 dark:text-gray-400"
@@ -72,7 +74,7 @@ export function CitySelectModal({ open, onClose, onSelect, currentCity }: CitySe
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Введите город..."
+              placeholder={t.citySelect.searchPlaceholder}
               className="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 dark:bg-gray-700 dark:text-white text-sm"
               autoFocus
             />
@@ -113,7 +115,7 @@ export function CitySelectModal({ open, onClose, onSelect, currentCity }: CitySe
               }`}
             >
               <MapPin className="w-5 h-5" />
-              <span className="font-medium">Вся Беларусь</span>
+              <span className="font-medium">{t.citySelect.allBelarus}</span>
             </button>
           )}
 
@@ -169,8 +171,8 @@ export function CitySelectModal({ open, onClose, onSelect, currentCity }: CitySe
               </div>
             ) : (
               <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                <p>Город не найден</p>
-                <p className="text-sm mt-1">Попробуйте изменить запрос</p>
+                <p>{t.citySelect.notFound}</p>
+                <p className="text-sm mt-1">{t.citySelect.tryAnother}</p>
               </div>
             )
           )}

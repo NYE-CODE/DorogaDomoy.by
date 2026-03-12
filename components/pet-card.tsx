@@ -1,7 +1,8 @@
 import { MapPin, Phone, MessageCircle, Edit2, Trash2, Home, Heart, Building2, Clock, CheckCircle2, XCircle } from 'lucide-react';
 import { Pet } from '../types/pet';
-import { statusLabels, statusColors, animalTypeLabels, colorLabels, genderLabels, formatDate } from '../utils/pet-helpers';
+import { statusColors, formatDate } from '../utils/pet-helpers';
 import { useAuth } from '../context/AuthContext';
+import { useI18n } from '../context/I18nContext';
 
 interface PetCardProps {
   pet: Pet;
@@ -13,6 +14,7 @@ interface PetCardProps {
 
 export function PetCard({ pet, onClick, compact = false, onEdit, onDelete }: PetCardProps) {
   const { user } = useAuth();
+  const { t } = useI18n();
   
   // Check if current user is the author
   // We use 'current-user' check for mock data compatibility
@@ -28,7 +30,7 @@ export function PetCard({ pet, onClick, compact = false, onEdit, onDelete }: Pet
       case 'pending':
         return {
           icon: <Clock className="w-3.5 h-3.5" />,
-          text: 'На проверке',
+          text: t.moderation.onReview,
           bgColor: 'bg-amber-50 dark:bg-amber-900/20',
           textColor: 'text-amber-700 dark:text-amber-400',
           borderColor: 'border-amber-200 dark:border-amber-800'
@@ -36,7 +38,7 @@ export function PetCard({ pet, onClick, compact = false, onEdit, onDelete }: Pet
       case 'approved':
         return {
           icon: <CheckCircle2 className="w-3.5 h-3.5" />,
-          text: 'Опубликовано',
+          text: t.moderation.approved,
           bgColor: 'bg-green-50 dark:bg-green-900/20',
           textColor: 'text-green-700 dark:text-green-400',
           borderColor: 'border-green-200 dark:border-green-800'
@@ -44,7 +46,7 @@ export function PetCard({ pet, onClick, compact = false, onEdit, onDelete }: Pet
       case 'rejected':
         return {
           icon: <XCircle className="w-3.5 h-3.5" />,
-          text: 'Отклонено',
+          text: t.moderation.rejected,
           bgColor: 'bg-red-50 dark:bg-red-900/20',
           textColor: 'text-red-700 dark:text-red-400',
           borderColor: 'border-red-200 dark:border-red-800'
@@ -110,19 +112,19 @@ export function PetCard({ pet, onClick, compact = false, onEdit, onDelete }: Pet
         <div className="flex gap-3">
           <img 
             src={pet.photos[0]} 
-            alt={animalTypeLabels[pet.animalType]}
+            alt={t.pet.animalType[pet.animalType]}
             className="w-20 h-20 object-cover rounded-lg"
           />
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2 mb-1">
               <h3 className="font-medium text-gray-900 dark:text-white truncate">
-                {animalTypeLabels[pet.animalType]} {pet.breed && `· ${pet.breed}`}
+                {t.pet.animalType[pet.animalType]} {pet.breed && `· ${pet.breed}`}
               </h3>
               <span className={`text-xs px-2 py-1 rounded border whitespace-nowrap ${statusColors[pet.status]}`}>
-                {statusLabels[pet.status]}
+                {t.pet.status[pet.status]}
               </span>
             </div>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{pet.colors.map(c => colorLabels[c]).join(', ')}</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{pet.colors.map(c => t.pet.color[c as keyof typeof t.pet.color]).join(', ')}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
               <MapPin className="w-3 h-3" />
               {pet.city} · {formatDate(pet.publishedAt)}
@@ -141,11 +143,11 @@ export function PetCard({ pet, onClick, compact = false, onEdit, onDelete }: Pet
       <div className="relative">
         <img 
           src={pet.photos[0]} 
-          alt={animalTypeLabels[pet.animalType]}
+          alt={t.pet.animalType[pet.animalType]}
           className="w-full h-48 object-cover"
         />
         <div className={`absolute top-3 right-3 px-3 py-1.5 rounded-lg border ${statusColors[pet.status]} backdrop-blur-sm`}>
-          {statusLabels[pet.status]}
+          {t.pet.status[pet.status]}
         </div>
         
         {/* Owner or Admin Actions */}
@@ -155,7 +157,7 @@ export function PetCard({ pet, onClick, compact = false, onEdit, onDelete }: Pet
               <button 
                 onClick={handleEdit}
                 className="p-1.5 bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg shadow-sm transition-colors"
-                title="Редактировать"
+                title={t.common.edit}
               >
                 <Edit2 className="w-4 h-4" />
               </button>
@@ -164,7 +166,7 @@ export function PetCard({ pet, onClick, compact = false, onEdit, onDelete }: Pet
               <button 
                 onClick={handleDelete}
                 className="p-1.5 bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-800 text-red-600 rounded-lg shadow-sm transition-colors"
-                title="Удалить"
+                title={t.common.delete}
               >
                 <Trash2 className="w-4 h-4" />
               </button>
@@ -177,13 +179,13 @@ export function PetCard({ pet, onClick, compact = false, onEdit, onDelete }: Pet
         <div className="mb-3">
           <div className="flex items-start justify-between gap-2 mb-2">
             <h3 className="font-semibold text-lg text-gray-900 dark:text-white">
-              {animalTypeLabels[pet.animalType]} {pet.breed && `· ${pet.breed}`}
+              {t.pet.animalType[pet.animalType]} {pet.breed && `· ${pet.breed}`}
             </h3>
           </div>
           
           <div className="flex flex-wrap gap-2 text-sm text-gray-600 dark:text-gray-400 mb-2">
-            <span>Цвет: {pet.colors.map(c => colorLabels[c]).join(', ')}</span>
-            {pet.gender && <span>· {genderLabels[pet.gender]}</span>}
+            <span>Цвет: {pet.colors.map(c => t.pet.color[c as keyof typeof t.pet.color]).join(', ')}</span>
+            {pet.gender && <span>· {t.pet.gender[pet.gender]}</span>}
             {pet.approximateAge && <span>· {pet.approximateAge}</span>}
           </div>
 
@@ -209,7 +211,7 @@ export function PetCard({ pet, onClick, compact = false, onEdit, onDelete }: Pet
           {/* Rejection Reason */}
           {isOwner && pet.moderationStatus === 'rejected' && pet.moderationReason && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-2 text-xs text-red-700 mb-2">
-              <strong>Причина:</strong> {pet.moderationReason}
+              <strong>{t.moderation.reason}:</strong> {pet.moderationReason}
             </div>
           )}
           
@@ -224,7 +226,7 @@ export function PetCard({ pet, onClick, compact = false, onEdit, onDelete }: Pet
 
         <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
           <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-            Контакты:{' '}
+            {t.pet.contacts}:{' '}
             <a
               href={`/user/${pet.authorId}`}
               target="_blank"
@@ -238,7 +240,7 @@ export function PetCard({ pet, onClick, compact = false, onEdit, onDelete }: Pet
           
           {pet.isArchived ? (
             <div className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg p-3 text-center">
-              <p className="text-sm text-gray-600 dark:text-gray-400">Контакты скрыты для архивных объявлений</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">{t.petDetail.contactsHiddenArchived}</p>
             </div>
           ) : (
             <div className="flex flex-wrap gap-2">
@@ -248,7 +250,7 @@ export function PetCard({ pet, onClick, compact = false, onEdit, onDelete }: Pet
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors text-sm"
                 >
                   <Phone className="w-4 h-4" />
-                  Телефон
+                  {t.profile.phone}
                 </button>
               )}
               {pet.contacts.telegram && (
@@ -257,7 +259,7 @@ export function PetCard({ pet, onClick, compact = false, onEdit, onDelete }: Pet
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-sky-50 text-sky-700 rounded-lg hover:bg-sky-100 transition-colors text-sm"
                 >
                   <MessageCircle className="w-4 h-4" />
-                  Telegram
+                  {t.profile.telegram}
                 </button>
               )}
               {pet.contacts.viber && (
@@ -266,7 +268,7 @@ export function PetCard({ pet, onClick, compact = false, onEdit, onDelete }: Pet
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors text-sm"
                 >
                   <MessageCircle className="w-4 h-4" />
-                  Viber
+                  {t.profile.viber}
                 </button>
               )}
             </div>
