@@ -152,7 +152,7 @@ export function LocationPicker({ initialLocation, onLocationSelect, onAddressCha
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-xs text-gray-500 flex items-center gap-1">
+        <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
           <MapPin className="w-3.5 h-3.5 shrink-0" />
           Нажмите на карту, перетащите маркер или укажите текущее местоположение
         </p>
@@ -166,7 +166,7 @@ export function LocationPicker({ initialLocation, onLocationSelect, onAddressCha
           {locating ? 'Определение…' : 'Моё местоположение'}
         </button>
       </div>
-      <div ref={mapContainerRef} className="h-48 w-full rounded-lg border border-gray-200 overflow-hidden z-0" />
+      <div ref={mapContainerRef} className="h-48 w-full rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden z-0" />
     </div>
   );
 }

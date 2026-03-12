@@ -62,7 +62,7 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
       onClick={closeAuthModal}
     >
       <div 
-        className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl transform transition-all"
+        className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl transform transition-all"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -90,15 +90,15 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
           <form onSubmit={handleSubmit} className="space-y-5">
             {mode === 'register' && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Ваше имя</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Ваше имя</label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
                   <input
                     type="text"
                     required
                     value={name}
                     onChange={e => setName(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all dark:bg-gray-700 dark:text-white"
                     placeholder="Иван Иванов"
                   />
                 </div>
@@ -106,30 +106,30 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Email</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all dark:bg-gray-700 dark:text-white"
                   placeholder="name@example.by"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Пароль</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Пароль</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
                 <input
                   type="password"
                   required
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all dark:bg-gray-700 dark:text-white"
                   placeholder="••••••••"
                 />
               </div>
@@ -141,9 +141,9 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
                   type="checkbox"
                   checked={agreedToTerms}
                   onChange={e => setAgreedToTerms(e.target.checked)}
-                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                  className="w-4 h-4 text-blue-600 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500 focus:ring-2"
                 />
-                <label className="ml-2 text-sm text-gray-700">
+                <label className="ml-2 text-sm text-gray-700 dark:text-gray-300">
                   Я согласен с{' '}
                   <a 
                     href="#" 
@@ -176,7 +176,7 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-gray-600 text-sm">
+            <p className="text-gray-600 dark:text-gray-400 text-sm">
               {mode === 'login' ? 'Нет аккаунта?' : 'Уже есть аккаунт?'}
               <button 
                 type="button"

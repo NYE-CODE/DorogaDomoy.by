@@ -6,27 +6,27 @@ interface TermsPageProps {
 
 export function TermsPage({ onBack }: TermsPageProps) {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
         <div className="max-w-4xl mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center gap-4">
             <button
               onClick={onBack}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
             >
-              <ArrowLeft className="w-5 h-5 text-gray-600" />
+              <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
             </button>
-            <h1 className="text-xl font-semibold text-gray-900">Условия использования</h1>
+            <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Условия использования</h1>
           </div>
         </div>
       </header>
 
       <main className="max-w-4xl mx-auto px-4 md:px-6 py-8">
-        <div className="bg-white rounded-lg border border-gray-200 p-6 md:p-8 space-y-8">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 md:p-8 space-y-8">
           
           {/* Introduction */}
           <section>
-            <p className="text-gray-700 leading-relaxed">
+            <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
               Добро пожаловать на платформу поиска пропавших домашних животных. Используя наш сервис, 
               вы соглашаетесь соблюдать настоящие условия использования. Пожалуйста, внимательно 
               ознакомьтесь с ними перед регистрацией.
@@ -35,8 +35,8 @@ export function TermsPage({ onBack }: TermsPageProps) {
 
           {/* 1. Общие положения */}
           <section>
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">1. Общие положения</h2>
-            <div className="space-y-3 text-gray-700 leading-relaxed">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">1. Общие положения</h2>
+            <div className="space-y-3 text-gray-700 dark:text-gray-300 leading-relaxed">
               <p>
                 1.1. Платформа предназначена исключительно для помощи в поиске пропавших домашних 
                 животных и воссоединения их с владельцами.
@@ -54,8 +54,8 @@ export function TermsPage({ onBack }: TermsPageProps) {
 
           {/* 2. Правила публикации объявлений */}
           <section>
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">2. Правила публикации объявлений</h2>
-            <div className="space-y-3 text-gray-700 leading-relaxed">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">2. Правила публикации объявлений</h2>
+            <div className="space-y-3 text-gray-700 dark:text-gray-300 leading-relaxed">
               <p>
                 2.1. Объявления должны содержать только актуальную и достоверную информацию о 
                 пропавших или найденных животных.
@@ -79,8 +79,8 @@ export function TermsPage({ onBack }: TermsPageProps) {
 
           {/* 3. Ответственность пользователей */}
           <section>
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">3. Ответственность пользователей</h2>
-            <div className="space-y-3 text-gray-700 leading-relaxed">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">3. Ответственность пользователей</h2>
+            <div className="space-y-3 text-gray-700 dark:text-gray-300 leading-relaxed">
               <p>
                 3.1. Вы несёте полную ответственность за содержание своих объявлений и за общение 
                 с другими пользователями.
@@ -102,8 +102,8 @@ export function TermsPage({ onBack }: TermsPageProps) {
 
           {/* 4. Модерация и удаление контента */}
           <section>
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">4. Модерация и удаление контента</h2>
-            <div className="space-y-3 text-gray-700 leading-relaxed">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">4. Модерация и удаление контента</h2>
+            <div className="space-y-3 text-gray-700 dark:text-gray-300 leading-relaxed">
               <p>
                 4.1. Все объявления проходят модерацию перед публикацией.
               </p>
@@ -123,8 +123,8 @@ export function TermsPage({ onBack }: TermsPageProps) {
 
           {/* 5. Конфиденциальность */}
           <section>
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">5. Конфиденциальность</h2>
-            <div className="space-y-3 text-gray-700 leading-relaxed">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">5. Конфиденциальность</h2>
+            <div className="space-y-3 text-gray-700 dark:text-gray-300 leading-relaxed">
               <p>
                 5.1. Ваши персональные данные обрабатываются в соответствии с нашей Политикой 
                 конфиденциальности.
@@ -146,8 +146,8 @@ export function TermsPage({ onBack }: TermsPageProps) {
 
           {/* 6. Ограничение ответственности */}
           <section>
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">6. Ограничение ответственности</h2>
-            <div className="space-y-3 text-gray-700 leading-relaxed">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">6. Ограничение ответственности</h2>
+            <div className="space-y-3 text-gray-700 dark:text-gray-300 leading-relaxed">
               <p>
                 6.1. Платформа предоставляется «как есть» без каких-либо гарантий.
               </p>
@@ -167,8 +167,8 @@ export function TermsPage({ onBack }: TermsPageProps) {
 
           {/* 7. Запрещённые действия */}
           <section>
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">7. Запрещённые действия</h2>
-            <div className="space-y-3 text-gray-700 leading-relaxed">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">7. Запрещённые действия</h2>
+            <div className="space-y-3 text-gray-700 dark:text-gray-300 leading-relaxed">
               <p>
                 Запрещается:
               </p>
@@ -186,8 +186,8 @@ export function TermsPage({ onBack }: TermsPageProps) {
 
           {/* 8. Изменение условий */}
           <section>
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">8. Изменение условий</h2>
-            <div className="space-y-3 text-gray-700 leading-relaxed">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">8. Изменение условий</h2>
+            <div className="space-y-3 text-gray-700 dark:text-gray-300 leading-relaxed">
               <p>
                 8.1. Мы оставляем за собой право изменять настоящие условия использования в любое время.
               </p>
@@ -202,8 +202,8 @@ export function TermsPage({ onBack }: TermsPageProps) {
 
           {/* 9. Контакты */}
           <section>
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">9. Контакты</h2>
-            <div className="space-y-3 text-gray-700 leading-relaxed">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">9. Контакты</h2>
+            <div className="space-y-3 text-gray-700 dark:text-gray-300 leading-relaxed">
               <p>
                 По всем вопросам, связанным с условиями использования, вы можете связаться с 
                 администрацией платформы через форму обратной связи или по адресу электронной почты: 
@@ -215,8 +215,8 @@ export function TermsPage({ onBack }: TermsPageProps) {
           </section>
 
           {/* Footer */}
-          <section className="pt-6 border-t border-gray-200">
-            <p className="text-sm text-gray-600">
+          <section className="pt-6 border-t border-gray-200 dark:border-gray-700">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               Дата последнего обновления: 28 февраля 2026 г.
             </p>
           </section>

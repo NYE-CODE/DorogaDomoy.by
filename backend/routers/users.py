@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from database import get_db
-from models import User
+from models import User, Pet, Notification, NotificationSettings
 from schemas import UserResponse, UserUpdate
 from auth import require_admin
 from utils import user_to_response
@@ -77,3 +77,29 @@ def update_user(
         logging.exception("Ошибка при обновлении пользователя %s: %s", user_id, e)
         raise HTTPException(status_code=500, detail=f"Не удалось обновить пользователя: {type(e).__name__}") from e
     return user_to_response(user)
+
+
+@router.delete("/{user_id}", status_code=204)
+def delete_user(
+    user_id: str,
+    db: Session = Depends(get_db),
+    current: User = Depends(require_admin),
+):
+    if current.id == user_id:
+        raise HTTPException(status_code=400, detail="Нельзя удалить самого себя")
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+    try:
+        db.query(Notification).filter(Notification.user_id == user_id).delete()
+        db.query(NotificationSettings).filter(NotificationSettings.user_id == user_id).delete()
+        from models import TelegramLinkCode, Report
+        db.query(Report).filter(Report.reporter_id == user_id).delete()
+        db.query(TelegramLinkCode).filter(TelegramLinkCode.user_id == user_id).delete()
+        db.query(Pet).filter(Pet.author_id == user_id).delete()
+        db.delete(user)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        logging.exception("Ошибка при удалении пользователя %s: %s", user_id, e)
+        raise HTTPException(status_code=500, detail=f"Не удалось удалить: {type(e).__name__}") from e

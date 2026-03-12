@@ -73,8 +73,8 @@ function formDataFromPet(pet: Pet): PetFormData {
 }
 
 const statusOptions: { value: PetStatus; label: string; icon: string; color: string; activeColor: string }[] = [
-  { value: 'searching', label: 'Ищут', icon: '🔍', color: 'text-gray-600', activeColor: 'bg-red-50 text-red-700 border-red-200 shadow-sm' },
-  { value: 'found', label: 'Найден', icon: '📍', color: 'text-gray-600', activeColor: 'bg-blue-50 text-blue-700 border-blue-200 shadow-sm' },
+  { value: 'searching', label: 'Ищут', icon: '🔍', color: 'text-gray-600', activeColor: 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800 shadow-sm' },
+  { value: 'found', label: 'Найден', icon: '📍', color: 'text-gray-600', activeColor: 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800 shadow-sm' },
 ];
 
 const animalTypeOptions: { value: AnimalType; label: string; icon: string }[] = [
@@ -228,28 +228,28 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
       onClick={onClose}
     >
       <div 
-        className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+        className="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="sticky top-0 bg-white/95 backdrop-blur-sm border-b border-gray-100 px-6 py-4 flex items-center justify-between z-10 rounded-t-2xl">
+        <div className="sticky top-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-b border-gray-100 dark:border-gray-700 px-6 py-4 flex items-center justify-between z-10 rounded-t-2xl">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
               {isEditing ? 'Редактирование' : 'Новое объявление'}
             </h2>
             <div className="flex items-center gap-2 mt-1.5">
               <div className="flex gap-1">
-                <div className={`h-1 w-8 rounded-full transition-colors ${step >= 1 ? 'bg-blue-600' : 'bg-gray-200'}`} />
-                <div className={`h-1 w-8 rounded-full transition-colors ${step >= 2 ? 'bg-blue-600' : 'bg-gray-200'}`} />
+                <div className={`h-1 w-8 rounded-full transition-colors ${step >= 1 ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600'}`} />
+                <div className={`h-1 w-8 rounded-full transition-colors ${step >= 2 ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600'}`} />
               </div>
-              <span className="text-xs text-gray-400">Шаг {step} из 2</span>
+              <span className="text-xs text-gray-400 dark:text-gray-500">Шаг {step} из 2</span>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
           </button>
         </div>
 
@@ -259,7 +259,7 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
             <div className="space-y-4">
               {/* Status */}
               <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-gray-400 uppercase tracking-wide shrink-0">Статус *</span>
+                <span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide shrink-0">Статус *</span>
                 <div className="flex gap-1.5">
                   {statusOptions.map((opt) => (
                     <button
@@ -269,7 +269,7 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
                       className={`px-3 py-1 text-sm rounded-lg border transition-all ${
                         formData.status === opt.value
                           ? opt.activeColor
-                          : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+                          : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-500'
                       }`}
                     >
                       {opt.label}
@@ -282,8 +282,8 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
               {/* Animal type + Breed */}
               <div className="flex flex-col sm:flex-row sm:items-end gap-3">
                 <div className="shrink-0">
-                  <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">Тип животного *</span>
-                  <div className="flex bg-gray-100 rounded-lg p-0.5 mt-1.5 w-fit">
+                  <span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">Тип животного *</span>
+                  <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-0.5 mt-1.5 w-fit">
                     {animalTypeOptions.map((opt) => (
                       <button
                         key={opt.value}
@@ -291,8 +291,8 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
                         onClick={() => setFormData({ ...formData, animalType: opt.value, breed: '' })}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
                           formData.animalType === opt.value
-                            ? 'bg-white text-gray-900 shadow-sm'
-                            : 'text-gray-500 hover:text-gray-700'
+                            ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
+                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                         }`}
                       >
                         <span className="text-base leading-none">{opt.icon}</span>
@@ -303,7 +303,7 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
                   {errors.animalType && <p className="text-xs text-red-500 mt-1">{errors.animalType}</p>}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">Порода</span>
+                  <span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">Порода</span>
                   <div className="mt-1.5">
                     {formData.animalType === 'other' ? (
                       <input
@@ -312,7 +312,7 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
                         onChange={(e) => setFormData({ ...formData, breed: e.target.value.slice(0, 80) })}
                         placeholder="Введите породу (необязательно)"
                         maxLength={80}
-                        className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     ) : (
                       <BreedCombobox
@@ -328,8 +328,8 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
 
               {/* Colors */}
               <div>
-                <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">Окрас *</span>
-                <div className={`flex flex-wrap gap-1.5 mt-1.5 ${errors.colors ? 'ring-2 ring-red-300 bg-red-50/50 p-2 rounded-xl' : ''}`}>
+                <span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">Окрас *</span>
+                <div className={`flex flex-wrap gap-1.5 mt-1.5 ${errors.colors ? 'ring-2 ring-red-300 bg-red-50/50 dark:bg-red-900/20 p-2 rounded-xl' : ''}`}>
                   {(Object.keys(colorLabels) as PetColor[]).map((color) => (
                     <button
                       key={color}
@@ -337,8 +337,8 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
                       onClick={() => toggleColor(color)}
                       className={`px-2.5 py-1 text-sm rounded-lg border transition-all ${
                         formData.colors.includes(color)
-                          ? 'bg-blue-50 text-blue-700 border-blue-200'
-                          : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+                          ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800'
+                          : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-500'
                       }`}
                     >
                       {colorLabels[color]}
@@ -351,8 +351,8 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
               {/* Gender + Age */}
               <div className="flex flex-col sm:flex-row sm:items-end gap-3">
                 <div className="shrink-0">
-                  <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">Пол</span>
-                  <div className="flex bg-gray-100 rounded-lg p-0.5 mt-1.5 w-fit">
+                  <span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">Пол</span>
+                  <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-0.5 mt-1.5 w-fit">
                     {genderOptions.map((opt) => (
                       <button
                         key={opt.value}
@@ -360,8 +360,8 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
                         onClick={() => setFormData({ ...formData, gender: opt.value })}
                         className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
                           formData.gender === opt.value
-                            ? 'bg-white text-gray-900 shadow-sm'
-                            : 'text-gray-500 hover:text-gray-700'
+                            ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
+                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                         }`}
                       >
                         {opt.label}
@@ -370,13 +370,13 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
                   </div>
                 </div>
                 <div>
-                  <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">Возраст</span>
+                  <span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">Возраст</span>
                   <input
                     type="text"
                     value={formData.approximateAge}
                     onChange={(e) => setFormData({ ...formData, approximateAge: e.target.value })}
                     placeholder="Напр.: 2 года"
-                    className="block mt-1.5 px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="block mt-1.5 px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
               </div>
@@ -389,8 +389,8 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
               {/* Description */}
               <div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">Описание *</span>
-                  <span className={`text-xs ${formData.description.length > MAX_DESCRIPTION ? 'text-red-500 font-medium' : 'text-gray-400'}`}>
+                  <span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">Описание *</span>
+                  <span className={`text-xs ${formData.description.length > MAX_DESCRIPTION ? 'text-red-500 font-medium' : 'text-gray-400 dark:text-gray-500'}`}>
                     {formData.description.length} / {MAX_DESCRIPTION}
                   </span>
                 </div>
@@ -404,7 +404,7 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
                   placeholder="Опишите питомца, особые приметы, обстоятельства..."
                   rows={4}
                   maxLength={MAX_DESCRIPTION}
-                  className={`w-full mt-2 px-3 py-2.5 text-sm border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none ${errors.description ? 'border-red-300' : 'border-gray-200'}`}
+                  className={`w-full mt-2 px-3 py-2.5 text-sm border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none ${errors.description ? 'border-red-300' : 'border-gray-200 dark:border-gray-600'}`}
                   required
                 />
                 {errors.description && <p className="text-xs text-red-500 mt-1">{errors.description}</p>}
@@ -413,8 +413,8 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
               {/* Photos */}
               <div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">Фото *</span>
-                  <span className={`text-xs ${formData.photos.length === 0 && errors.photos ? 'text-red-500 font-medium' : 'text-gray-400'}`}>
+                  <span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">Фото *</span>
+                  <span className={`text-xs ${formData.photos.length === 0 && errors.photos ? 'text-red-500 font-medium' : 'text-gray-400 dark:text-gray-500'}`}>
                     {formData.photos.length} из {maxPhotos}
                   </span>
                 </div>
@@ -434,7 +434,7 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
                         </div>
                       ))}
                       {formData.photos.length < maxPhotos && (
-                        <label className="aspect-square rounded-xl border-2 border-dashed border-gray-200 hover:border-blue-400 flex flex-col items-center justify-center cursor-pointer transition-colors text-gray-400 hover:text-blue-500">
+                        <label className="aspect-square rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-600 hover:border-blue-400 flex flex-col items-center justify-center cursor-pointer transition-colors text-gray-400 dark:text-gray-500 hover:text-blue-500">
                           <ImagePlus className="w-6 h-6" />
                           <input
                             type="file"
@@ -449,7 +449,7 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
                   )}
                   {formData.photos.length === 0 && (
                     <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                      <label className={`aspect-square rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-colors ${errors.photos ? 'border-red-300 bg-red-50/50 text-red-400' : 'border-gray-200 hover:border-blue-400 text-gray-400 hover:text-blue-500'}`}>
+                      <label className={`aspect-square rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-colors ${errors.photos ? 'border-red-300 bg-red-50/50 dark:bg-red-900/20 text-red-400' : 'border-gray-200 dark:border-gray-600 hover:border-blue-400 text-gray-400 dark:text-gray-500 hover:text-blue-500'}`}>
                         <ImagePlus className="w-6 h-6" />
                         <input
                           type="file"
@@ -462,7 +462,7 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
                     </div>
                   )}
                   {formData.photos.length >= maxPhotos && (
-                    <p className="text-xs text-gray-400 text-center py-1">Загружено максимальное количество фото</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 text-center py-1">Загружено максимальное количество фото</p>
                   )}
                 </div>
                 {errors.photos && <p className="text-xs text-red-500 mt-1">{errors.photos}</p>}
@@ -470,14 +470,14 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
 
               {/* Address */}
               <div>
-                <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">Адрес *</span>
+                <span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">Адрес *</span>
                 <div className="flex gap-2 mt-2">
                   <input
                     type="text"
                     value={formData.city}
                     onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                     placeholder="Минск, ул. Примерная, 1"
-                    className={`flex-1 px-3 py-2 text-sm border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.city ? 'border-red-300' : 'border-gray-200'}`}
+                    className={`flex-1 px-3 py-2 text-sm border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.city ? 'border-red-300' : 'border-gray-200 dark:border-gray-600'}`}
                     required
                   />
                   <button
@@ -505,14 +505,14 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
                 </div>
                 {errors.city
                   ? <p className="text-xs text-red-500 mt-1">{errors.city}</p>
-                  : <p className="text-xs text-gray-400 mt-1">Введите адрес и нажмите «На карте» или выберите точку на карте</p>
+                  : <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Введите адрес и нажмите «На карте» или выберите точку на карте</p>
                 }
               </div>
 
               {/* Map */}
               <div>
-                <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">Точка на карте *</span>
-                <div className="mt-2 rounded-xl overflow-hidden border border-gray-200">
+                <span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">Точка на карте *</span>
+                <div className="mt-2 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-600">
                   <LocationPicker
                     initialLocation={formData.location}
                     onLocationSelect={(newLocation) => setFormData((prev) => ({ ...prev, location: newLocation }))}
@@ -526,12 +526,12 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false }: P
           )}
 
           {/* Navigation */}
-          <div className="flex items-center justify-between mt-8 pt-5 border-t border-gray-100">
+          <div className="flex items-center justify-between mt-8 pt-5 border-t border-gray-100 dark:border-gray-700">
             {step > 1 ? (
               <button
                 type="button"
                 onClick={() => setStep(step - 1)}
-                className="flex items-center gap-1.5 px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
+                className="flex items-center gap-1.5 px-4 py-2.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors"
               >
                 <ChevronLeft className="w-4 h-4" />
                 Назад

@@ -17,7 +17,7 @@ export function ContactRequiredModal({ open, onClose, onGoToProfile }: ContactRe
       onClick={onClose}
     >
       <div 
-        className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl transform transition-all animate-in fade-in zoom-in-95 duration-200"
+        className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl transform transition-all animate-in fade-in zoom-in-95 duration-200"
         onClick={e => e.stopPropagation()}
       >
         {/* Header with icon */}
@@ -35,10 +35,10 @@ export function ContactRequiredModal({ open, onClose, onGoToProfile }: ContactRe
 
         {/* Content */}
         <div className="p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-3 text-center">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3 text-center">
             Добавьте контакты
           </h2>
-          <p className="text-gray-600 text-center mb-6">
+          <p className="text-gray-600 dark:text-gray-400 text-center mb-6">
             Чтобы создавать объявления, необходимо указать хотя бы один способ связи в профиле. 
             Это позволит людям связаться с вами по поводу найденного питомца.
           </p>
@@ -55,7 +55,7 @@ export function ContactRequiredModal({ open, onClose, onGoToProfile }: ContactRe
             
             <button
               onClick={onClose}
-              className="w-full py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors font-medium"
+              className="w-full py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors font-medium"
             >
               Отмена
             </button>

@@ -52,13 +52,13 @@ export function CitySelectModal({ open, onClose, onSelect, currentCity }: CitySe
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50" onClick={handleClose} />
 
-      <div className="relative bg-white rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+      <div className="relative bg-white dark:bg-gray-800 rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="flex items-center justify-between p-5 pb-4 border-b border-gray-100">
-          <h2 className="text-xl font-semibold text-gray-900">Выбор города</h2>
+        <div className="flex items-center justify-between p-5 pb-4 border-b border-gray-100 dark:border-gray-700">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Выбор города</h2>
           <button
             onClick={handleClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500"
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors text-gray-500 dark:text-gray-400"
           >
             <X className="w-5 h-5" />
           </button>
@@ -67,13 +67,13 @@ export function CitySelectModal({ open, onClose, onSelect, currentCity }: CitySe
         {/* Search */}
         <div className="px-5 pt-4 pb-3">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Введите город..."
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 text-sm"
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 dark:bg-gray-700 dark:text-white text-sm"
               autoFocus
             />
           </div>
@@ -89,8 +89,8 @@ export function CitySelectModal({ open, onClose, onSelect, currentCity }: CitySe
                   onClick={() => setActiveTab(activeTab === oblast.name ? 'all' : oblast.name)}
                   className={`px-3 py-1.5 text-sm rounded-lg border transition-colors whitespace-nowrap ${
                     activeTab === oblast.name
-                      ? 'bg-gray-900 text-white border-gray-900'
-                      : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                      ? 'bg-gray-900 dark:bg-blue-600 text-white border-gray-900 dark:border-blue-600'
+                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
                 >
                   {oblast.name}
@@ -108,8 +108,8 @@ export function CitySelectModal({ open, onClose, onSelect, currentCity }: CitySe
               onClick={handleSelectAll}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl mb-4 transition-colors border ${
                 !currentCity
-                  ? 'bg-blue-50 border-blue-200 text-blue-700'
-                  : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'
+                  ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-400'
+                  : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
               }`}
             >
               <MapPin className="w-5 h-5" />
@@ -122,7 +122,7 @@ export function CitySelectModal({ open, onClose, onSelect, currentCity }: CitySe
             <div className="space-y-5">
               {oblasts.map((oblast) => (
                 <div key={oblast.name}>
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                  <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
                     {oblast.name}
                   </p>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
@@ -168,7 +168,7 @@ export function CitySelectModal({ open, onClose, onSelect, currentCity }: CitySe
                 ))}
               </div>
             ) : (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                 <p>Город не найден</p>
                 <p className="text-sm mt-1">Попробуйте изменить запрос</p>
               </div>
@@ -186,8 +186,8 @@ function CityButton({ city, isActive, onClick }: { city: City; isActive: boolean
       onClick={onClick}
       className={`text-left px-3 py-2 rounded-lg text-sm transition-colors ${
         isActive
-          ? 'bg-blue-50 text-blue-700 font-medium'
-          : 'text-gray-700 hover:bg-gray-50'
+          ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 font-medium'
+          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
       }`}
     >
       {city.name}

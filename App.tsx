@@ -4,6 +4,7 @@ import { ProfilePage } from './components/profile-page';
 import { SettingsPage } from './components/settings-page';
 import { TermsPage } from './components/terms-page';
 import { useAuth, User } from './context/AuthContext';
+import { useTheme } from './context/ThemeContext';
 import { Header } from './components/layout/Header';
 import { Footer } from './components/layout/Footer';
 import { AuthModal } from './components/auth/AuthModal';
@@ -32,6 +33,7 @@ import type { LatLngBounds } from 'leaflet';
 type View = 'main' | 'my-ads' | 'profile' | 'settings' | 'admin' | 'terms';
 function MainApp() {
   const { user, isAuthenticated, openAuthModal, closeAuthModal, isLoading } = useAuth();
+  const { theme } = useTheme();
   const [view, setView] = useState<View>('main');
   const [allPets, setAllPets] = useState<Pet[]>([]);
   const [mapPets, setMapPets] = useState<Pet[]>([]);
@@ -378,10 +380,10 @@ function MainApp() {
   // Show loading state while auth or data is initializing
   if (isLoading || dataLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
-          <p className="text-gray-600">Загрузка...</p>
+          <p className="text-gray-600 dark:text-gray-400">Загрузка...</p>
         </div>
       </div>
     );
@@ -553,6 +555,8 @@ function MainApp() {
           onUpdateUser={async (updatedUser) => {
             try {
               const u = await usersApi.update(updatedUser.id, {
+                name: updatedUser.name,
+                email: updatedUser.email,
                 role: updatedUser.role,
                 is_blocked: updatedUser.isBlocked,
                 blocked_reason: updatedUser.blockedReason,
@@ -563,6 +567,15 @@ function MainApp() {
               return;
             }
             toast.success('Пользователь обновлён');
+          }}
+          onDeleteUser={async (userId) => {
+            try {
+              await usersApi.delete(userId);
+              setUsers((prev) => prev.filter((u) => u.id !== userId));
+              toast.success('Пользователь удалён');
+            } catch (err) {
+              toast.error(err instanceof Error ? err.message : 'Ошибка при удалении');
+            }
           }}
           onUpdateReport={async (updatedReport) => {
             try {
@@ -636,7 +649,7 @@ function MainApp() {
               className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors ${
                 mobileView === 'list'
                   ? 'bg-blue-600 text-white'
-                  : 'bg-white text-gray-700 border border-gray-200'
+                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600'
               }`}
             >
               <List className="w-4 h-4" />
@@ -647,7 +660,7 @@ function MainApp() {
               className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors ${
                 mobileView === 'map'
                   ? 'bg-blue-600 text-white'
-                  : 'bg-white text-gray-700 border border-gray-200'
+                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600'
               }`}
             >
               <MapIcon className="w-4 h-4" />
@@ -668,16 +681,16 @@ function MainApp() {
         <div className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-6 min-h-0">
           {/* Left Sidebar - List */}
           <div className={`md:col-span-5 lg:col-span-4 flex flex-col ${mobileView === 'map' ? 'hidden md:flex' : 'flex'} md:h-[700px]`}>
-            <div className="bg-white border border-gray-200 rounded-lg flex flex-col h-full max-h-full">
-              <div className="p-4 border-b shrink-0">
-                <h3 className="font-semibold text-gray-900">
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg flex flex-col h-full max-h-full">
+              <div className="p-4 border-b border-gray-200 dark:border-gray-700 shrink-0">
+                <h3 className="font-semibold text-gray-900 dark:text-white">
                   {selectedCity.trim()
                     ? `${selectedCity}: ${listDisplayPets.length}`
                     : `Найдено: ${listDisplayPets.length}`
                   }
                 </h3>
                 {selectedCity.trim() && listDisplayPets.length === 0 && mapDisplayPets.length > 0 && (
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     На карте есть объявления из других городов
                   </p>
                 )}
@@ -686,13 +699,13 @@ function MainApp() {
               <div className="p-4 space-y-3 overflow-y-auto flex-1">
                 {listDisplayPets.length === 0 ? (
                   <div className="text-center py-8">
-                      <p className="text-gray-600">
+                      <p className="text-gray-600 dark:text-gray-400">
                         {selectedCity.trim()
                           ? `В городе «${selectedCity}» объявлений не найдено`
                           : 'Питомцы не найдены'
                         }
                       </p>
-                      <p className="text-sm text-gray-500 mt-1">
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                         {selectedCity.trim()
                           ? 'Переместите карту к нужному городу или измените город в шапке'
                           : 'Попробуйте изменить масштаб карты или фильтры'
@@ -717,9 +730,9 @@ function MainApp() {
           <div className={`md:col-span-7 lg:col-span-8 h-[500px] md:h-[700px] ${mobileView === 'list' ? 'max-h-0 overflow-hidden md:max-h-none md:overflow-visible' : 'block'}`}>
             {(!isMobile || mobileView === 'map') ? (
               <Suspense fallback={
-                <div className="h-full w-full rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center">
-                  <div className="text-center text-gray-500">
-                    <div className="w-8 h-8 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin mx-auto mb-2" />
+                <div className="h-full w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center justify-center">
+                  <div className="text-center text-gray-500 dark:text-gray-400">
+                    <div className="w-8 h-8 border-2 border-gray-300 dark:border-gray-600 border-t-blue-600 rounded-full animate-spin mx-auto mb-2" />
                     <p className="text-sm">Загрузка карты...</p>
                   </div>
                 </div>
@@ -733,8 +746,8 @@ function MainApp() {
                 />
               </Suspense>
             ) : (
-              <div className="h-full w-full rounded-lg border border-gray-200 bg-gray-100 flex items-center justify-center">
-                <p className="text-sm text-gray-500">Переключитесь на карту</p>
+              <div className="h-full w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                <p className="text-sm text-gray-500 dark:text-gray-400">Переключитесь на карту</p>
               </div>
             )}
           </div>
@@ -744,7 +757,7 @@ function MainApp() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
       {/* Header */}
       {view === 'main' && (
         <Header 
@@ -809,7 +822,7 @@ function MainApp() {
         onReject={handleCityDetectReject}
       />
 
-      <Toaster />
+      <Toaster theme={theme} />
     </div>
   );
 }
