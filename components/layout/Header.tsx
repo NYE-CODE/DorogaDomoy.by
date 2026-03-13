@@ -1,18 +1,16 @@
-import { Plus, User as UserIcon, LogOut, Settings, Shield, MapPin, ChevronDown } from 'lucide-react';
+import { User as UserIcon, LogOut, Settings, Shield, MapPin, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { useAuth } from '../../context/AuthContext';
 import { useI18n } from '../../context/I18nContext';
 import { useState, useRef, useEffect } from 'react';
 
 interface HeaderProps {
-  onViewChange: (view: 'main' | 'settings') => void;
-  onCreateClick: () => void;
-  currentView: 'main' | 'settings';
+  onViewChange: (view: 'main') => void;
   selectedCity: string;
   onCityClick: () => void;
 }
 
-export function Header({ onViewChange, onCreateClick, currentView, selectedCity, onCityClick }: HeaderProps) {
+export function Header({ onViewChange, selectedCity, onCityClick }: HeaderProps) {
   const { user, isAuthenticated, openAuthModal, logout } = useAuth();
   const { t } = useI18n();
   const navigate = useNavigate();
@@ -28,14 +26,6 @@ export function Header({ onViewChange, onCreateClick, currentView, selectedCity,
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  const handleCreateClick = () => {
-    if (!isAuthenticated) {
-      openAuthModal();
-    } else {
-      onCreateClick();
-    }
-  };
 
   const handleMyAdsClick = () => {
     if (!isAuthenticated) {
@@ -89,15 +79,6 @@ export function Header({ onViewChange, onCreateClick, currentView, selectedCity,
               <ChevronDown className="w-3.5 h-3.5 text-gray-400 shrink-0" />
             </button>
 
-            <button
-              onClick={handleCreateClick}
-              className="flex items-center justify-center gap-2 px-2.5 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm hover:shadow shrink-0"
-              title={t.header.createAd}
-            >
-              <Plus className="w-4 h-4" />
-              <span className="hidden sm:inline">{t.header.createAd}</span>
-            </button>
-
             {/* User Menu */}
             <div className="relative" ref={menuRef}>
               {isAuthenticated && user ? (
@@ -105,11 +86,13 @@ export function Header({ onViewChange, onCreateClick, currentView, selectedCity,
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
                   className="flex items-center gap-2 p-1 sm:pl-2 sm:pr-1 rounded-full border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                 >
-                  <img 
-                    src={user.avatar} 
-                    alt={user.name} 
-                    className="w-8 h-8 rounded-full bg-gray-200 object-cover border border-white"
-                  />
+                  <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 flex items-center justify-center bg-gradient-to-br from-blue-600 to-indigo-600 border border-white">
+                    {user.avatar ? (
+                      <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                    ) : (
+                      <UserIcon className="w-4 h-4 text-white" />
+                    )}
+                  </div>
                   <span className="hidden sm:block text-sm font-medium text-gray-700 dark:text-gray-200 max-w-[100px] truncate">
                     {user.name}
                   </span>
@@ -150,7 +133,7 @@ export function Header({ onViewChange, onCreateClick, currentView, selectedCity,
 
                   <button
                     onClick={() => {
-                      onViewChange('settings');
+                      navigate('/settings');
                       setIsMenuOpen(false);
                     }}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"

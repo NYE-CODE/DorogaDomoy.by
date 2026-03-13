@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router';
-import { SettingsPage } from './components/settings-page';
 import { TermsPage } from './components/terms-page';
 import { useAuth } from './context/AuthContext';
 import { useTheme } from './context/ThemeContext';
@@ -24,11 +23,10 @@ import { PetForm } from './components/pet-form';
 import { Filters } from './components/filters';
 import { useIsMobile } from './components/ui/use-mobile';
 const MapView = lazy(() => import('./components/map-view'));
-import { StatisticsPanel } from './components/statistics';
 import { Map as MapIcon, List } from 'lucide-react';
 import type { LatLngBounds } from 'leaflet';
 
-type View = 'main' | 'settings' | 'terms';
+type View = 'main' | 'terms';
 function MainApp() {
   const { user, isAuthenticated, openAuthModal, closeAuthModal, isLoading } = useAuth();
   const { theme } = useTheme();
@@ -37,7 +35,7 @@ function MainApp() {
   const [view, setViewRaw] = useState<View>(() => {
     try {
       const saved = sessionStorage.getItem('pet_finder_view');
-      if (saved && ['main', 'settings', 'terms'].includes(saved)) {
+      if (saved && ['main', 'terms'].includes(saved)) {
         return saved as View;
       }
     } catch {}
@@ -484,21 +482,22 @@ function MainApp() {
   };
 
   const renderContent = () => {
-    if (view === 'settings') {
-      return <SettingsPage onBack={() => setView('main')} />;
-    }
-
     if (view === 'terms') {
       return <TermsPage onBack={() => setView('main')} />;
     }
 
     return (
       <div className="flex-1 max-w-[1920px] mx-auto w-full px-4 md:px-6 py-6 flex flex-col gap-6">
-        {/* Statistics & Filters Area */}
+        {/* Filters Area */}
         <div className="shrink-0 space-y-6">
-          <StatisticsPanel stats={statistics} />
-          
-          {/* Mobile View Toggle */}
+          {/* Filters - First on mobile */}
+          <Filters 
+            filters={filters} 
+            onFiltersChange={setFilters} 
+            onCreateClick={handleCreateClick}
+          />
+
+          {/* Mobile View Toggle - under filters */}
           <div className="md:hidden flex gap-2">
             <button
               onClick={() => setMobileView('list')}
@@ -523,14 +522,6 @@ function MainApp() {
               {t.app.map}
             </button>
           </div>
-
-          {/* Filters - Now at the top */}
-          <div className={mobileView === 'map' ? 'hidden md:block' : ''}>
-            <Filters 
-              filters={filters} 
-              onFiltersChange={setFilters} 
-            />
-          </div>
         </div>
 
         {/* Main Content Area */}
@@ -545,6 +536,9 @@ function MainApp() {
                     : `${t.app.found} ${listDisplayPets.length}`
                   }
                 </h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  {t.stats.searching}: {statistics.searching} · {t.stats.found}: {statistics.found} · {t.stats.fostering}: {statistics.fostering}
+                </p>
                 {selectedCity.trim() && listDisplayPets.length === 0 && mapDisplayPets.length > 0 && (
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     {t.app.mapHasOtherCities}
@@ -614,12 +608,10 @@ function MainApp() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
-      {/* Header */}
+      {/* Header — shown for main */}
       {view === 'main' && (
         <Header 
-          onViewChange={setView as (view: 'main' | 'settings') => void} 
-          onCreateClick={handleCreateClick}
-          currentView={view as 'main' | 'settings'}
+          onViewChange={setView}
           selectedCity={selectedCity}
           onCityClick={() => setShowCityModal(true)}
         />

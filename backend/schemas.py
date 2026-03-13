@@ -206,3 +206,28 @@ class StatisticsResponse(BaseModel):
     searching: int
     found: int
     fostering: int = 0
+
+
+# --- Sightings ---
+class SightingCreate(BaseModel):
+    pet_id: str
+    location_lat: float
+    location_lng: float
+    seen_at: datetime
+    comment: Optional[str] = Field(None, max_length=500)
+    contact: Optional[str] = Field(None, max_length=100)
+
+
+class SightingResponse(BaseModel):
+    id: str
+    pet_id: str
+    location_lat: float
+    location_lng: float
+    seen_at: datetime
+    comment: Optional[str] = None
+    has_contact: bool = False  # True if contact was provided (value hidden for privacy)
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+        # SightingResponse is built manually in sighting_to_response, not from ORM

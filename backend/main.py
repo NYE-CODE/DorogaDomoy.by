@@ -13,7 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from database import init_db, check_db_writable
-from routers import auth, pets, users, reports, settings, telegram, notifications
+from routers import auth, pets, users, reports, settings, telegram, notifications, sightings
 from telegram_bot import BOT_TOKEN, process_telegram_update
 
 logging.basicConfig(
@@ -124,6 +124,7 @@ app.include_router(reports.router)
 app.include_router(settings.router)
 app.include_router(telegram.router)
 app.include_router(notifications.router)
+app.include_router(sightings.router)
 
 
 @app.get("/")

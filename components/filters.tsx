@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, SlidersHorizontal, ChevronDown, ChevronUp, RotateCcw } from 'lucide-react';
+import { Search, SlidersHorizontal, ChevronDown, ChevronUp, RotateCcw, Plus } from 'lucide-react';
 import { AnimalType, PetStatus, PetColor } from '../types/pet';
 import { activeStatuses, colorLabels } from '../utils/pet-helpers';
 import { useIsMobile } from './ui/use-mobile';
@@ -19,9 +19,10 @@ export interface FilterState {
 interface FiltersProps {
   filters: FilterState;
   onFiltersChange: (filters: FilterState) => void;
+  onCreateClick?: () => void;
 }
 
-export function Filters({ filters, onFiltersChange }: FiltersProps) {
+export function Filters({ filters, onFiltersChange, onCreateClick }: FiltersProps) {
   const isMobile = useIsMobile();
   const { t } = useI18n();
   const [isOpen, setIsOpen] = useState(!isMobile);
@@ -75,16 +76,29 @@ export function Filters({ filters, onFiltersChange }: FiltersProps) {
 
   return (
     <div className="space-y-3">
-      {/* Search — always visible */}
-      <div className="relative">
-        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500 pointer-events-none" />
-        <input
-          type="text"
-          value={filters.searchQuery}
-          onChange={(e) => onFiltersChange({ ...filters, searchQuery: e.target.value })}
-          placeholder={t.filters.searchPlaceholder}
-          className="w-full pl-11 pr-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow shadow-sm"
-        />
+      {/* Search + Create — one row */}
+      <div className="flex gap-2">
+        <div className="relative flex-1 min-w-0">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500 pointer-events-none" />
+          <input
+            type="text"
+            value={filters.searchQuery}
+            onChange={(e) => onFiltersChange({ ...filters, searchQuery: e.target.value })}
+            placeholder={t.filters.searchPlaceholder}
+            className="w-full pl-11 pr-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow shadow-sm"
+          />
+        </div>
+        {onCreateClick && (
+          <button
+            type="button"
+            onClick={onCreateClick}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors shadow-sm shrink-0 font-medium text-sm"
+            title={t.header.createAd}
+          >
+            <Plus className="w-4 h-4" />
+            <span className="hidden sm:inline">{t.header.createAd}</span>
+          </button>
+        )}
       </div>
 
       {/* Collapsible filters */}

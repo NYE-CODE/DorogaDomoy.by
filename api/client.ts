@@ -30,7 +30,9 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
   const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
   if (res.status === 401) {
     clearToken();
-    throw new Error('Сессия истекла');
+    const err = await res.json().catch(() => ({}));
+    const msg = typeof err?.detail === 'string' ? err.detail : 'Сессия истекла';
+    throw new Error(msg);
   }
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
@@ -418,4 +420,30 @@ export const notificationsApi = {
 
   markRead: (id: string) =>
     api<{ detail: string }>(`/notifications/${id}/read`, { method: 'PATCH' }),
+};
+
+// --- Sightings (видения «видел похожее») ---
+export interface SightingItem {
+  id: string;
+  pet_id: string;
+  location_lat: number;
+  location_lng: number;
+  seen_at: string;
+  comment: string | null;
+  has_contact: boolean;
+  created_at: string;
+}
+
+export const sightingsApi = {
+  create: (data: { pet_id: string; location_lat: number; location_lng: number; seen_at: string; comment?: string; contact?: string }) =>
+    api<SightingItem>('/sightings', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  listByPet: (petId: string, days = 7) =>
+    api<SightingItem[]>(`/sightings/pet/${petId}?days=${days}`),
+
+  getCounts: (petIds: string[]) =>
+    api<Record<string, number>>(`/sightings/counts?pet_ids=${petIds.join(',')}`),
 };

@@ -10,7 +10,7 @@ import httpx
 from sqlalchemy.orm import Session
 
 from database import SessionLocal
-from models import User, Pet, TelegramLinkCode, NotificationSettings, Notification
+from models import User, Pet, Sighting, TelegramLinkCode, NotificationSettings, Notification
 
 logger = logging.getLogger(__name__)
 
@@ -24,15 +24,51 @@ STATUS_LABELS = {"searching": "Потерян", "found": "Найден"}
 OPPOSITE_STATUS = {"searching": "found", "found": "searching"}
 
 
-async def send_telegram_message(chat_id: int, text: str, parse_mode: str = "HTML") -> bool:
+def _send_telegram_message_sync(
+    chat_id: int,
+    text: str,
+    parse_mode: str = "HTML",
+    reply_markup: Optional[dict] = None,
+) -> bool:
+    """Sync version for background tasks (Starlette runs them in threadpool)."""
     if not BOT_TOKEN:
         logger.warning("TELEGRAM_BOT_TOKEN not configured, skipping message")
         return False
     try:
+        payload: dict = {"chat_id": chat_id, "text": text, "parse_mode": parse_mode}
+        if reply_markup:
+            payload["reply_markup"] = reply_markup
+        with httpx.Client(timeout=10) as client:
+            resp = client.post(
+                f"{TELEGRAM_API}/sendMessage",
+                json=payload,
+            )
+            if resp.status_code != 200:
+                logger.error("Telegram sendMessage failed: %s %s", resp.status_code, resp.text)
+                return False
+            return True
+    except Exception as e:
+        logger.exception("Failed to send Telegram message to %s: %s", chat_id, e)
+        return False
+
+
+async def send_telegram_message(
+    chat_id: int,
+    text: str,
+    parse_mode: str = "HTML",
+    reply_markup: Optional[dict] = None,
+) -> bool:
+    if not BOT_TOKEN:
+        logger.warning("TELEGRAM_BOT_TOKEN not configured, skipping message")
+        return False
+    try:
+        payload: dict = {"chat_id": chat_id, "text": text, "parse_mode": parse_mode}
+        if reply_markup:
+            payload["reply_markup"] = reply_markup
         async with httpx.AsyncClient(timeout=10) as client:
             resp = await client.post(
                 f"{TELEGRAM_API}/sendMessage",
-                json={"chat_id": chat_id, "text": text, "parse_mode": parse_mode},
+                json=payload,
             )
             if resp.status_code != 200:
                 logger.error("Telegram sendMessage failed: %s %s", resp.status_code, resp.text)
@@ -201,10 +237,10 @@ async def send_notifications_for_pet(pet: Pet, db: Session):
         )
         if pet.colors:
             message += f"🎨 Цвет: {', '.join(pet.colors)}\n"
-        message += f"\n{desc_short}\n\n"
-        message += f"🔗 <a href=\"{SITE_URL}/pet/{pet.id}\">Подробнее</a>"
+        message += f"\n{desc_short}"
 
-        sent = await send_telegram_message(user.telegram_id, message)
+        keyboard = {"inline_keyboard": [[{"text": "Подробнее", "url": f"{SITE_URL}/pet/{pet.id}"}]]}
+        sent = await send_telegram_message(user.telegram_id, message, reply_markup=keyboard)
 
         notification = Notification(
             id=f"notif-{uuid.uuid4().hex[:12]}",
@@ -222,6 +258,39 @@ async def send_notifications_for_pet(pet: Pet, db: Session):
     except Exception as e:
         db.rollback()
         logger.exception("Failed to save notifications: %s", e)
+
+
+def send_sighting_notification_sync(sighting_id: str, pet_id: str) -> None:
+    """Синхронная отправка уведомления владельцу (для BackgroundTasks, т.к. они выполняются в threadpool)."""
+    if not BOT_TOKEN:
+        logger.info("TELEGRAM_BOT_TOKEN not configured, skipping sighting notification")
+        return
+    db = SessionLocal()
+    try:
+        pet = db.query(Pet).filter(Pet.id == pet_id).first()
+        if not pet:
+            return
+        author = db.query(User).filter(User.id == pet.author_id).first()
+        if not author or not author.telegram_id:
+            return
+        sighting = db.query(Sighting).filter(Sighting.id == sighting_id).first()
+        if not sighting:
+            return
+
+        animal = ANIMAL_TYPE_LABELS.get(pet.animal_type, pet.animal_type)
+        seen_str = sighting.seen_at.strftime("%d.%m.%Y %H:%M") if sighting.seen_at else ""
+        comment_line = f"\n💬 {sighting.comment[:80]}..." if sighting.comment and len(sighting.comment) > 80 else (f"\n💬 {sighting.comment}" if sighting.comment else "")
+        msg = (
+            f"👁 <b>Новое видение!</b>\n\n"
+            f"Кто-то видел похожее животное ({animal}) рядом с вашим объявлением.\n"
+            f"📍 Когда: {seen_str}{comment_line}"
+        )
+        keyboard = {"inline_keyboard": [[{"text": "Смотреть на карте", "url": f"{SITE_URL}/pet/{pet.id}"}]]}
+        _send_telegram_message_sync(author.telegram_id, msg, reply_markup=keyboard)
+    except Exception as e:
+        logger.exception("send_sighting_notification error: %s", e)
+    finally:
+        db.close()
 
 
 async def process_telegram_update(update: dict):

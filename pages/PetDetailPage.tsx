@@ -1,75 +1,78 @@
 import { useParams } from 'react-router';
 import { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, MapPin, Phone, MessageCircle, Calendar, Share2, Printer, Home, Heart, Building2, AlertTriangle, ChevronLeft, ChevronRight, User, Copy, Check, X } from 'lucide-react';
+import { ArrowLeft, MapPin, Phone, MessageCircle, Calendar, Share2, Printer, Home, Heart, Building2, AlertTriangle, ChevronLeft, ChevronRight, User, Copy, Check, X, Eye } from 'lucide-react';
 import { Pet } from '../types/pet';
 import { formatDate } from '../utils/pet-helpers';
 import { toast, Toaster } from 'sonner';
-import { petsApi, reportsApi } from '../api/client';
+import { petsApi, reportsApi, sightingsApi, type SightingItem } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useI18n } from '../context/I18nContext';
 import { ReportModal } from '../components/report-modal';
+import { SightingForm } from '../components/SightingForm';
 import { ReportReason } from '../types/admin';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-function SinglePetMap({ pet }: { pet: Pet }) {
+function SinglePetMap({ pet, sightings = [], seenLabel }: { pet: Pet; sightings?: SightingItem[]; seenLabel: string }) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
+  const markersLayerRef = useRef<L.LayerGroup | null>(null);
 
   useEffect(() => {
-    if (mapContainerRef.current && !mapInstanceRef.current) {
-      const map = L.map(mapContainerRef.current, {
-        scrollWheelZoom: false,
-        dragging: true,
-        zoomControl: true,
-      }).setView([pet.location.lat, pet.location.lng], 15);
+    if (!mapContainerRef.current) return;
+    const map = L.map(mapContainerRef.current, {
+      scrollWheelZoom: false,
+      dragging: true,
+      zoomControl: true,
+    }).setView([pet.location.lat, pet.location.lng], 15);
 
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-      }).addTo(map);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(map);
 
-      const colors: Record<string, string> = {
-        searching: '#ef4444',
-        found: '#3b82f6',
-      };
-      const color = colors[pet.status] || '#6b7280';
-      const symbol = pet.animalType === 'cat' ? '🐱' : pet.animalType === 'dog' ? '🐕' : '🐾';
+    const colors: Record<string, string> = {
+      searching: '#ef4444',
+      found: '#3b82f6',
+    };
+    const color = colors[pet.status] || '#6b7280';
+    const symbol = pet.animalType === 'cat' ? '🐱' : pet.animalType === 'dog' ? '🐕' : '🐾';
 
-      const icon = L.divIcon({
-        html: `
-          <div style="
-            background-color: ${color};
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 3px solid white;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-            font-size: 20px;
-          ">
-            ${symbol}
-          </div>
-        `,
-        className: 'custom-marker-icon',
-        iconSize: [40, 40],
-        iconAnchor: [20, 20],
-      });
+    const petIcon = L.divIcon({
+      html: `<div style="background-color:${color};width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);font-size:20px">${symbol}</div>`,
+      className: 'custom-marker-icon',
+      iconSize: [40, 40],
+      iconAnchor: [20, 20],
+    });
 
-      L.marker([pet.location.lat, pet.location.lng], { icon }).addTo(map);
-      mapInstanceRef.current = map;
-      setTimeout(() => map.invalidateSize(), 100);
-    }
+    L.marker([pet.location.lat, pet.location.lng], { icon: petIcon }).addTo(map);
+    markersLayerRef.current = L.layerGroup().addTo(map);
+    mapInstanceRef.current = map;
+    setTimeout(() => map.invalidateSize(), 100);
 
     return () => {
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
-      }
+      map.remove();
+      mapInstanceRef.current = null;
+      markersLayerRef.current = null;
     };
   }, [pet]);
+
+  useEffect(() => {
+    if (!markersLayerRef.current) return;
+    markersLayerRef.current.clearLayers();
+    sightings.forEach((s) => {
+      const icon = L.divIcon({
+        html: `<div style="background:#f59e0b;width:28px;height:28px;border-radius:50%;border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;font-size:12px">👁</div>`,
+        className: 'custom-marker-icon',
+        iconSize: [28, 28],
+        iconAnchor: [14, 14],
+      });
+      const m = L.marker([s.location_lat, s.location_lng], { icon }).addTo(markersLayerRef.current!);
+      const d = new Date(s.seen_at);
+      const popup = `<div class="text-sm"><strong>${seenLabel}</strong> ${d.toLocaleDateString('ru-RU')} ${d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}${s.comment ? `<br/>${s.comment.slice(0, 80)}${s.comment.length > 80 ? '…' : ''}` : ''}</div>`;
+      m.bindPopup(popup);
+    });
+  }, [sightings, seenLabel]);
 
   return (
     <div ref={mapContainerRef} className="h-full w-full z-0" />
@@ -153,6 +156,8 @@ export default function PetDetailPage() {
   const shareMenuRef = useRef<HTMLDivElement>(null);
   const [showFlyerMenu, setShowFlyerMenu] = useState(false);
   const flyerMenuRef = useRef<HTMLDivElement>(null);
+  const [sightings, setSightings] = useState<SightingItem[]>([]);
+  const [showSightingForm, setShowSightingForm] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -183,6 +188,11 @@ export default function PetDetailPage() {
     document.addEventListener('mousedown', close);
     return () => document.removeEventListener('mousedown', close);
   }, [showFlyerMenu]);
+
+  useEffect(() => {
+    if (!pet || pet.isArchived || pet.status !== 'searching') return;
+    sightingsApi.listByPet(pet.id).then(setSightings).catch(() => setSightings([]));
+  }, [pet?.id, pet?.isArchived, pet?.status]);
 
   if (loading) {
     return (
@@ -415,6 +425,9 @@ export default function PetDetailPage() {
     ? 'text-red-700'
     : 'text-blue-700';
 
+  const canAddSighting = pet.status === 'searching' && !pet.isArchived
+    && !(currentUser && (pet.authorId === currentUser.id || (currentUser.id === 'user-demo' && pet.authorId === 'current-user')));
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Top bar */}
@@ -439,7 +452,7 @@ export default function PetDetailPage() {
         <div className={`mb-6 px-4 py-3 rounded-xl border ${statusBg} flex items-center gap-3`}>
           <div className={`w-3 h-3 rounded-full ${pet.status === 'searching' ? 'bg-red-500 animate-pulse' : 'bg-blue-500'}`} />
           <span className={`${statusText}`}>
-            {pet.status === 'searching' ? 'Этого питомца ищут — помогите найти!' : 'Этот питомец найден — ищем хозяина!'}
+            {pet.status === 'searching' ? t.petDetail.helpFind : t.petDetail.helpFindOwner}
           </span>
         </div>
 
@@ -687,13 +700,37 @@ export default function PetDetailPage() {
         {/* Map section */}
         <div className="mt-8">
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center gap-2">
-              <MapPin className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-              <h2 className="text-xl text-gray-900 dark:text-white">{t.pet.location}</h2>
-              <span className="text-sm text-gray-500 dark:text-gray-400 ml-auto">{pet.city}</span>
+            <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-gray-600 dark:text-gray-400 shrink-0" />
+                <h2 className="text-xl text-gray-900 dark:text-white hidden sm:block">{t.pet.location}</h2>
+                <span className="text-sm text-gray-500 dark:text-gray-400">{pet.city}</span>
+              </div>
+              {canAddSighting && (
+                <button
+                  onClick={() => setShowSightingForm(true)}
+                  className="flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors text-sm font-medium shrink-0"
+                >
+                  <Eye className="w-4 h-4" />
+                  {t.petDetail.sawSimilar}
+                </button>
+              )}
             </div>
+            {pet.status === 'searching' && !pet.isArchived && (
+              <div className={`px-6 py-3 text-sm ${canAddSighting ? 'bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800/50' : 'bg-gray-50 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-700'}`}>
+                {canAddSighting ? (
+                  <p className="text-amber-800 dark:text-amber-200">
+                    {t.petDetail.sightingHintForVisitors.replace(/^\s*\u{1F441}\s*/u, '')}
+                  </p>
+                ) : (
+                  <p className="text-gray-600 dark:text-gray-400">
+                    {t.petDetail.sightingHintForAuthor}
+                  </p>
+                )}
+              </div>
+            )}
             <div className="h-[300px] md:h-[400px]">
-              <SinglePetMap pet={pet} />
+              <SinglePetMap pet={pet} sightings={sightings} seenLabel={t.sightings.seenLabel} />
             </div>
           </div>
         </div>
@@ -716,6 +753,17 @@ export default function PetDetailPage() {
         <ReportModal
           onClose={() => setReportingPetId(null)}
           onSubmit={handleSubmitReport}
+        />
+      )}
+
+      {showSightingForm && pet && (
+        <SightingForm
+          pet={pet}
+          onClose={() => setShowSightingForm(false)}
+          onSuccess={() => {
+            sightingsApi.listByPet(pet.id, 7).then(setSightings).catch(() => {});
+            toast.success(t.petDetail.sightingSuccess);
+          }}
         />
       )}
 

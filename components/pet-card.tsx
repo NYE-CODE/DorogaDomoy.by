@@ -1,4 +1,5 @@
-import { MapPin, Phone, MessageCircle, Edit2, Trash2, Home, Heart, Building2, Clock, CheckCircle2, XCircle } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { MapPin, Phone, MessageCircle, Edit2, Trash2, Home, Heart, Building2, Clock, CheckCircle2, XCircle, Eye, MoreVertical } from 'lucide-react';
 import { Pet } from '../types/pet';
 import { statusColors, formatDate } from '../utils/pet-helpers';
 import { useAuth } from '../context/AuthContext';
@@ -10,11 +11,27 @@ interface PetCardProps {
   compact?: boolean;
   onEdit?: (pet: Pet) => void;
   onDelete?: (pet: Pet) => void;
+  /** Количество видений (показывается только для status=searching) */
+  sightingCount?: number;
+  /** Скрыть статус (ищу/найден) и бейдж модерации — например в «Мои объявления» со вкладками */
+  hideStatusBadge?: boolean;
 }
 
-export function PetCard({ pet, onClick, compact = false, onEdit, onDelete }: PetCardProps) {
+export function PetCard({ pet, onClick, compact = false, onEdit, onDelete, sightingCount, hideStatusBadge }: PetCardProps) {
   const { user } = useAuth();
   const { t } = useI18n();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
   
   // Check if current user is the author
   // We use 'current-user' check for mock data compatibility
@@ -146,30 +163,43 @@ export function PetCard({ pet, onClick, compact = false, onEdit, onDelete }: Pet
           alt={t.pet.animalType[pet.animalType]}
           className="w-full h-48 object-cover"
         />
-        <div className={`absolute top-3 right-3 px-3 py-1.5 rounded-lg border ${statusColors[pet.status]} backdrop-blur-sm`}>
-          {t.pet.status[pet.status]}
-        </div>
+        {!hideStatusBadge && (
+          <div className={`absolute top-3 left-3 px-3 py-1.5 rounded-lg border ${statusColors[pet.status]} backdrop-blur-sm`}>
+            {t.pet.status[pet.status]}
+          </div>
+        )}
         
-        {/* Owner or Admin Actions */}
+        {/* Owner or Admin Actions — three-dots menu on the right */}
         {canEditDelete && (onEdit || onDelete) && (
-          <div className="absolute top-3 left-3 flex gap-2">
-            {onEdit && (
-              <button 
-                onClick={handleEdit}
-                className="p-1.5 bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg shadow-sm transition-colors"
-                title={t.common.edit}
-              >
-                <Edit2 className="w-4 h-4" />
-              </button>
-            )}
-            {onDelete && (
-              <button 
-                onClick={handleDelete}
-                className="p-1.5 bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-800 text-red-600 rounded-lg shadow-sm transition-colors"
-                title={t.common.delete}
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
+          <div className="absolute top-3 right-3" ref={menuRef}>
+            <button
+              onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v); }}
+              className="p-1.5 bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg shadow-sm transition-colors"
+              title={t.common.options}
+            >
+              <MoreVertical className="w-4 h-4" />
+            </button>
+            {menuOpen && (
+              <div className="absolute right-0 top-full mt-2 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 py-1 z-50 animate-in fade-in zoom-in-95 duration-200">
+                {onEdit && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleEdit(e); setMenuOpen(false); }}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                    {t.common.edit}
+                  </button>
+                )}
+                {onDelete && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleDelete(e); setMenuOpen(false); }}
+                    className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    {t.common.delete}
+                  </button>
+                )}
+              </div>
             )}
           </div>
         )}
@@ -181,6 +211,12 @@ export function PetCard({ pet, onClick, compact = false, onEdit, onDelete }: Pet
             <h3 className="font-semibold text-lg text-gray-900 dark:text-white">
               {t.pet.animalType[pet.animalType]} {pet.breed && `· ${pet.breed}`}
             </h3>
+            {sightingCount != null && sightingCount > 0 && pet.status === 'searching' && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 rounded-md text-xs font-medium shrink-0">
+                <Eye className="w-3.5 h-3.5" />
+                {sightingCount}
+              </span>
+            )}
           </div>
           
           <div className="flex flex-wrap gap-2 text-sm text-gray-600 dark:text-gray-400 mb-2">
@@ -200,8 +236,8 @@ export function PetCard({ pet, onClick, compact = false, onEdit, onDelete }: Pet
             <span>{formatDate(pet.publishedAt)}</span>
           </div>
           
-          {/* Moderation Status Badge (shown to owner) */}
-          {moderationBadge && (
+          {/* Moderation Status Badge (shown to owner, hidden when hideStatusBadge e.g. in My Ads) */}
+          {!hideStatusBadge && moderationBadge && (
             <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm ${moderationBadge.bgColor} ${moderationBadge.textColor} ${moderationBadge.borderColor} mb-2`}>
               {moderationBadge.icon}
               <span>{moderationBadge.text}</span>

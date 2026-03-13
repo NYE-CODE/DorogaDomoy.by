@@ -1,32 +1,14 @@
-import { ArrowLeft, Palette, Languages, Moon, Sun } from 'lucide-react';
+import { Palette, Languages, Moon, Sun } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useI18n } from '../context/I18nContext';
 
-interface SettingsPageProps {
-  onBack: () => void;
-}
-
-export function SettingsPage({ onBack }: SettingsPageProps) {
+export function SettingsContent() {
   const { theme, setTheme } = useTheme();
   const { locale, setLocale, t } = useI18n();
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
-        <div className="max-w-4xl mx-auto px-4 md:px-6 py-4">
-          <div className="flex items-center gap-4">
-            <button onClick={onBack} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors">
-              <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-            </button>
-            <div>
-              <h1 className="text-xl font-semibold text-gray-900 dark:text-white">{t.settings.title}</h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{t.settings.subtitle}</p>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-4xl mx-auto px-4 md:px-6 py-8 space-y-6">
+    <div className="flex-1 flex flex-col min-h-0">
+      <main className="flex-1 max-w-4xl mx-auto w-full px-4 md:px-6 py-8 space-y-6">
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 space-y-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">

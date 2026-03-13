@@ -66,6 +66,20 @@ NEW_TABLES = {
             sent_at DATETIME
         )
     """,
+    "sightings": """
+        CREATE TABLE sightings (
+            id VARCHAR PRIMARY KEY,
+            pet_id VARCHAR NOT NULL REFERENCES pets(id) ON DELETE CASCADE,
+            location_lat REAL NOT NULL,
+            location_lng REAL NOT NULL,
+            seen_at DATETIME NOT NULL,
+            comment TEXT,
+            contact VARCHAR,
+            reporter_id VARCHAR REFERENCES users(id) ON DELETE SET NULL,
+            ip_hash VARCHAR,
+            created_at DATETIME
+        )
+    """,
 }
 
 
