@@ -62,6 +62,7 @@ class Pet(Base):
         foreign_keys="Report.pet_id",
         cascade="all, delete-orphan",
     )
+    sightings = relationship("Sighting", back_populates="pet", foreign_keys="Sighting.pet_id", cascade="all, delete-orphan")
 
 
 class PlatformSettings(Base):
@@ -117,6 +118,24 @@ class NotificationSettings(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     user = relationship("User", back_populates="notification_settings")
+
+
+class Sighting(Base):
+    """Видения: отметки «видел похожее животное» на карте объявления."""
+    __tablename__ = "sightings"
+
+    id = Column(String, primary_key=True, index=True)
+    pet_id = Column(String, ForeignKey("pets.id", ondelete="CASCADE"), nullable=False, index=True)
+    location_lat = Column(Float, nullable=False)
+    location_lng = Column(Float, nullable=False)
+    seen_at = Column(DateTime, nullable=False)  # когда видели
+    comment = Column(Text, nullable=True)
+    contact = Column(String, nullable=True)  # телефон или @telegram
+    reporter_id = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    ip_hash = Column(String, nullable=True, index=True)  # для rate limit анонимов
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    pet = relationship("Pet", back_populates="sightings", foreign_keys=[pet_id])
 
 
 class Notification(Base):

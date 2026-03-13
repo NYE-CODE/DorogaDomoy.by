@@ -1,11 +1,12 @@
 import { useParams } from 'react-router';
 import { useState, useEffect, useMemo } from 'react';
-import { ArrowLeft, User as UserIcon, Mail, Phone, MessageCircle } from 'lucide-react';
-import { User } from '../context/AuthContext';
+import { ArrowLeft, User as UserIcon, Mail, Phone, MessageCircle, ShieldBan, ShieldCheck } from 'lucide-react';
+import { User, useAuth } from '../context/AuthContext';
 import { PetCard } from '../components/pet-card';
 import { Pet } from '../types/pet';
 import { usersApi, petsApi } from '../api/client';
 import { useI18n } from '../context/I18nContext';
+import { toast } from 'sonner';
 
 const getRoleName = (role: User['role'], t: any): string => {
   const roleNames = {
@@ -40,10 +41,12 @@ const getRoleIcon = (role: User['role']): string => {
 export default function UserProfilePage() {
   const { id } = useParams<{ id: string }>();
   const { t } = useI18n();
+  const { user: currentUser } = useAuth();
   const [user, setUser] = useState<User | null>(null);
   const [userPets, setUserPets] = useState<Pet[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [blocking, setBlocking] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -63,10 +66,25 @@ export default function UserProfilePage() {
   }, [id]);
 
   const activePets = useMemo(() => userPets.filter(p => !p.isArchived), [userPets]);
-  const archivedPets = useMemo(() => userPets.filter(p => p.isArchived), [userPets]);
 
   const handlePetClick = (pet: Pet) => {
     window.open(`/pet/${pet.id}`, '_blank');
+  };
+
+  const handleToggleBlock = async () => {
+    if (!user || !currentUser || currentUser.role !== 'admin') return;
+    const newBlocked = !user.isBlocked;
+    if (newBlocked && !window.confirm(t.userProfile.blockConfirm)) return;
+    setBlocking(true);
+    try {
+      const updated = await usersApi.update(user.id, { is_blocked: newBlocked });
+      setUser(updated);
+      toast.success(newBlocked ? t.userProfile.blockedSuccess : t.userProfile.unblockedSuccess);
+    } catch {
+      toast.error(t.common.error);
+    } finally {
+      setBlocking(false);
+    }
   };
 
   if (loading) {
@@ -115,7 +133,27 @@ export default function UserProfilePage() {
             {t.userProfile.profileTitle}
           </h1>
 
-          <div className="w-16" />
+          {currentUser?.role === 'admin' && currentUser.id !== user?.id && (
+            <button
+              onClick={handleToggleBlock}
+              disabled={blocking}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 ${
+                user?.isBlocked
+                  ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50'
+                  : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50'
+              }`}
+              title={user?.isBlocked ? t.userProfile.unblock : t.userProfile.block}
+            >
+              {blocking ? (
+                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              ) : user?.isBlocked ? (
+                <><ShieldCheck className="w-4 h-4" /> {t.userProfile.unblock}</>
+              ) : (
+                <><ShieldBan className="w-4 h-4" /> {t.userProfile.block}</>
+              )}
+            </button>
+          )}
+          {(!currentUser || currentUser.role !== 'admin' || currentUser.id === user?.id) && <div className="w-16" />}
         </div>
       </div>
 
@@ -213,32 +251,16 @@ export default function UserProfilePage() {
           </div>
         </div>
 
-        {/* Stats Row */}
-        <div className="grid grid-cols-3 gap-4 mt-6">
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 text-center">
-            <p className="text-2xl text-gray-900 dark:text-white">{userPets.length}</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t.userProfile.totalAds}</p>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 text-center">
-            <p className="text-2xl text-blue-600">{activePets.length}</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t.userProfile.active}</p>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 text-center">
-            <p className="text-2xl text-green-600">{archivedPets.length}</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t.userProfile.archived}</p>
-          </div>
-        </div>
-
         {/* Active Pets */}
         <div className="mt-8">
           <h2 className="text-xl text-gray-900 dark:text-white mb-4">
-            Активные объявления
+            {t.userProfile.activeAds}
             <span className="text-gray-400 dark:text-gray-500 ml-2">({activePets.length})</span>
           </h2>
 
           {activePets.length === 0 ? (
             <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-8 text-center">
-              <p className="text-gray-500 dark:text-gray-400">У пользователя нет активных объявлений</p>
+              <p className="text-gray-500 dark:text-gray-400">{t.userProfile.noActiveAds}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -252,25 +274,6 @@ export default function UserProfilePage() {
             </div>
           )}
         </div>
-
-        {/* Archived Pets */}
-        {archivedPets.length > 0 && (
-          <div className="mt-8 mb-8">
-            <h2 className="text-xl text-gray-900 dark:text-white mb-4">
-              {t.userProfile.archive}
-              <span className="text-gray-400 dark:text-gray-500 ml-2">({archivedPets.length})</span>
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 opacity-70">
-              {archivedPets.map(pet => (
-                <PetCard
-                  key={pet.id}
-                  pet={pet}
-                  onClick={() => handlePetClick(pet)}
-                />
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

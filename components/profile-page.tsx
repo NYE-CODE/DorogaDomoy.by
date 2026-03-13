@@ -1,10 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router';
-import { ArrowLeft, User, Mail, Phone, MessageCircle, Save, AlertCircle, Lock, Edit2, Shield, Link2, Unlink, Bell, BellOff, Copy, Check, ExternalLink } from 'lucide-react';
+import { User, Mail, Phone, MessageCircle, Save, AlertCircle, Lock, Edit2, Shield, Link2, Unlink, Bell, BellOff, Copy, Check, ExternalLink } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useI18n } from '../context/I18nContext';
 import { telegramApi, notificationsApi, type NotificationSettingsData } from '../api/client';
 import { toast } from 'sonner';
+import { Header } from './layout/Header';
+import { CitySelectModal } from './city-select-modal';
+import type { City } from '../utils/cities';
 
 const roleLabels: Record<string, string> = {
   user: 'Пользователь',
@@ -54,7 +57,39 @@ export default function ProfilePage() {
   const [notifSaving, setNotifSaving] = useState(false);
   const [localRadius, setLocalRadius] = useState(1);
 
+  const [selectedCity, setSelectedCity] = useState(() => {
+    try {
+      const saved = localStorage.getItem('pet_finder_user_location');
+      if (saved) {
+        const data = JSON.parse(saved);
+        return (data.city || '').trim();
+      }
+    } catch {}
+    return '';
+  });
+  const [showCityModal, setShowCityModal] = useState(false);
+
   const isTelegramLinked = !!user?.telegramId;
+
+  const saveUserLocation = useCallback((loc: { lat: number; lng: number }, city?: string) => {
+    try {
+      const toSave: { lat: number; lng: number; city?: string } = { lat: loc.lat, lng: loc.lng };
+      if (city) toSave.city = city;
+      localStorage.setItem('pet_finder_user_location', JSON.stringify(toSave));
+    } catch {}
+  }, []);
+
+  const handleCityModalSelect = useCallback((city: City | null) => {
+    if (city) {
+      setSelectedCity(city.name);
+      saveUserLocation({ lat: city.coordinates[0], lng: city.coordinates[1] }, city.name);
+    } else {
+      setSelectedCity('');
+      try { localStorage.removeItem('pet_finder_user_location'); } catch {}
+    }
+    try { localStorage.setItem('pet_finder_city_confirmed', 'true'); } catch {}
+    setShowCityModal(false);
+  }, [saveUserLocation]);
 
   useEffect(() => {
     if (user) {
@@ -203,27 +238,23 @@ export default function ProfilePage() {
   const hasAnyContact = phone || viber || isTelegramLinked || telegram;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="bg-white dark:bg-gray-800 border-b dark:border-gray-700 sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 md:px-6 py-4">
-          <div className="flex items-center gap-4">
-            <button onClick={() => navigate('/')} className="p-2 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-            <div>
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t.profile.title}</h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400">{t.profile.subtitle}</p>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
+      <Header
+        onViewChange={() => navigate('/')}
+        selectedCity={selectedCity}
+        onCityClick={() => setShowCityModal(true)}
+      />
 
-      <div className="max-w-2xl mx-auto px-4 md:px-6 py-8 space-y-6">
+      <div className="flex-1 max-w-2xl mx-auto w-full px-4 md:px-6 py-8 space-y-6">
         {/* Profile Info */}
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-start gap-4 mb-6">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shrink-0">
-              <User className="w-8 h-8 text-white" />
+            <div className="w-16 h-16 rounded-full overflow-hidden shrink-0 flex items-center justify-center bg-gradient-to-br from-blue-600 to-indigo-600">
+              {user?.avatar ? (
+                <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              ) : (
+                <User className="w-8 h-8 text-white" />
+              )}
             </div>
             <div className="flex-1">
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{user?.name}</h2>
@@ -325,7 +356,6 @@ export default function ProfilePage() {
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-medium text-gray-900 dark:text-white">@{user?.telegramUsername}</span>
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs rounded-full"><Check className="w-3 h-3" /> {t.profile.linked}</span>
                       </div>
                       {user?.telegramLinkedAt && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{new Date(user.telegramLinkedAt).toLocaleDateString('ru-RU')}</p>}
                     </div>
@@ -373,8 +403,8 @@ export default function ProfilePage() {
 
         {/* Notifications */}
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1 flex items-center gap-2">
-            <Bell className="w-5 h-5 text-amber-500" />
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1 flex items-center gap-2">
+            <Bell className="w-5 h-5 text-gray-600 dark:text-gray-400" />
             {t.notifications.title}
           </h3>
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-5">{t.notifications.description}</p>
@@ -421,6 +451,13 @@ export default function ProfilePage() {
           )}
         </div>
       </div>
+
+      <CitySelectModal
+        open={showCityModal}
+        onClose={() => setShowCityModal(false)}
+        onSelect={handleCityModalSelect}
+        currentCity={selectedCity}
+      />
     </div>
   );
 }
