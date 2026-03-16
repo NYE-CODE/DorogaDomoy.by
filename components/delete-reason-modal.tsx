@@ -42,7 +42,7 @@ export function DeleteReasonModal({ onClose, onConfirm, petDescription }: Delete
       onClick={onClose}
     >
       <div 
-        className="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full"
+        className="bg-card rounded-xl max-w-md w-full"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="border-b border-gray-200 dark:border-gray-700 p-4 flex items-center justify-between">
@@ -56,7 +56,7 @@ export function DeleteReasonModal({ onClose, onConfirm, petDescription }: Delete
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            className="p-2 hover:bg-accent dark:hover:bg-accent rounded-lg transition-colors"
           >
             <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
           </button>
@@ -67,8 +67,8 @@ export function DeleteReasonModal({ onClose, onConfirm, petDescription }: Delete
             {t.deleteReason.prompt}
           </p>
           
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-            <p className="text-xs text-blue-800">
+          <div className="bg-muted border border-border rounded-lg p-3 mb-4">
+            <p className="text-xs text-foreground">
               <strong>{t.deleteReason.goodNews}</strong> {t.deleteReason.goodNewsHint}
             </p>
           </div>
@@ -79,8 +79,8 @@ export function DeleteReasonModal({ onClose, onConfirm, petDescription }: Delete
                 key={reason.id}
                 className={`flex items-start gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
                   selectedReason === reason.id
-                    ? 'bg-blue-50 border-blue-300'
-                    : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    ? 'bg-primary/10 border-primary/30'
+                    : 'bg-card border-gray-200 dark:border-gray-700 hover:bg-accent dark:hover:bg-accent'
                 }`}
               >
                 <input
@@ -89,7 +89,7 @@ export function DeleteReasonModal({ onClose, onConfirm, petDescription }: Delete
                   value={reason.id}
                   checked={selectedReason === reason.id}
                   onChange={(e) => setSelectedReason(e.target.value)}
-                  className="mt-0.5 w-4 h-4 text-blue-600 focus:ring-blue-500"
+                  className="mt-0.5 w-4 h-4 text-primary focus:ring-primary"
                 />
                 <span className="text-sm text-gray-900 dark:text-white">{reason.label}</span>
               </label>
@@ -103,7 +103,7 @@ export function DeleteReasonModal({ onClose, onConfirm, petDescription }: Delete
                 onChange={(e) => setCustomReason(e.target.value)}
                 placeholder={t.deleteReason.descPlaceholder}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white"
                 autoFocus
               />
             </div>
@@ -113,14 +113,14 @@ export function DeleteReasonModal({ onClose, onConfirm, petDescription }: Delete
         <div className="border-t border-gray-200 dark:border-gray-700 p-4 flex items-center justify-end gap-3">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            className="px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-accent dark:hover:bg-accent rounded-lg transition-colors"
           >
             {t.common.cancel}
           </button>
           <button
             onClick={handleConfirm}
             disabled={!canConfirm}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t.deleteReason.deleteAd}
           </button>

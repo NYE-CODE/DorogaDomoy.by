@@ -20,10 +20,10 @@ const getRoleName = (role: User['role'], t: any): string => {
 
 const getRoleColor = (role: User['role']): string => {
   const roleColors = {
-    user: 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800',
-    volunteer: 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800',
-    shelter: 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800',
-    admin: 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800'
+    user: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600',
+    volunteer: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600',
+    shelter: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600',
+    admin: 'bg-primary/10 dark:bg-primary/20 text-primary border-primary/20 dark:border-primary/30'
   };
   return roleColors[role];
 };
@@ -89,9 +89,9 @@ export default function UserProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-background dark:bg-gray-900 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+          <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
           <p className="text-gray-600 dark:text-gray-400">{t.userProfile.loading}</p>
         </div>
       </div>
@@ -100,14 +100,14 @@ export default function UserProfilePage() {
 
   if (error || !user) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col items-center justify-center gap-4 p-4">
+      <div className="min-h-screen bg-background dark:bg-gray-900 flex flex-col items-center justify-center gap-4 p-4">
         <div className="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">
           <UserIcon className="w-8 h-8 text-gray-400 dark:text-gray-500" />
         </div>
         <p className="text-gray-600 dark:text-gray-400 text-lg">{t.userProfile.notFound}</p>
         <a
-          href="/"
-          className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          href="/search"
+          className="flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           {t.userProfile.toMain}
@@ -117,12 +117,12 @@ export default function UserProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-background dark:bg-gray-900">
       {/* Top bar */}
       <div className="sticky top-0 z-30 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
           <a
-            href="/"
+            href="/search"
             className="flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -137,7 +137,7 @@ export default function UserProfilePage() {
             <button
               onClick={handleToggleBlock}
               disabled={blocking}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 ${
+              className={`flex items-center gap-2 px-3 py-3 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 ${
                 user?.isBlocked
                   ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50'
                   : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50'
@@ -159,9 +159,9 @@ export default function UserProfilePage() {
 
       <div className="max-w-4xl mx-auto px-4 py-6 md:py-8">
         {/* Profile Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="bg-card rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
           {/* Banner */}
-          <div className="h-24 md:h-32 bg-gradient-to-r from-blue-500 via-blue-400 to-sky-400" />
+          <div className="h-24 md:h-32 bg-gradient-to-r from-primary via-primary/90 to-primary/80" />
 
           {/* Avatar & Info */}
           <div className="px-6 pb-6">
@@ -219,7 +219,7 @@ export default function UserProfilePage() {
                   {user.contacts.phone && (
                     <a
                       href={`tel:${user.contacts.phone}`}
-                      className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors text-sm"
+                      className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm"
                     >
                       <Phone className="w-4 h-4" />
                       {user.contacts.phone}
@@ -230,7 +230,7 @@ export default function UserProfilePage() {
                       href={`https://t.me/${user.contacts.telegram.replace('@', '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2.5 bg-sky-500 text-white rounded-xl hover:bg-sky-600 transition-colors text-sm"
+                      className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm"
                     >
                       <MessageCircle className="w-4 h-4" />
                       {t.profile.telegram}
@@ -239,7 +239,7 @@ export default function UserProfilePage() {
                   {user.contacts.viber && (
                     <a
                       href={`viber://chat?number=${user.contacts.viber.replace(/\D/g, '')}`}
-                      className="inline-flex items-center gap-2 px-4 py-2.5 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors text-sm"
+                      className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm"
                     >
                       <MessageCircle className="w-4 h-4" />
                       {t.profile.viber}
@@ -259,7 +259,7 @@ export default function UserProfilePage() {
           </h2>
 
           {activePets.length === 0 ? (
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-8 text-center">
+            <div className="bg-card rounded-xl border border-gray-200 dark:border-gray-700 p-8 text-center">
               <p className="text-gray-500 dark:text-gray-400">{t.userProfile.noActiveAds}</p>
             </div>
           ) : (

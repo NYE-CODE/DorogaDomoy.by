@@ -160,7 +160,7 @@ export function LocationPicker({ initialLocation, onLocationSelect, onAddressCha
           type="button"
           onClick={handleMyLocation}
           disabled={locating}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed shrink-0"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-primary bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed shrink-0"
         >
           <Navigation className={`w-4 h-4 ${locating ? 'animate-pulse' : ''}`} />
           {locating ? 'Определение…' : 'Моё местоположение'}

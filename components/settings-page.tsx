@@ -9,7 +9,7 @@ export function SettingsContent() {
   return (
     <div className="flex-1 flex flex-col min-h-0">
       <main className="flex-1 max-w-4xl mx-auto w-full px-4 md:px-6 py-8 space-y-6">
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 space-y-6">
+        <div className="bg-card rounded-xl border border-gray-200 dark:border-gray-700 p-6 space-y-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
@@ -23,10 +23,10 @@ export function SettingsContent() {
             <div className="flex rounded-lg border border-gray-200 dark:border-gray-600 overflow-hidden">
               <button
                 onClick={() => setTheme('light')}
-                className={`flex items-center gap-2 px-4 py-2 text-sm transition-colors ${
+                className={`flex items-center gap-2 px-4 py-3 text-sm transition-colors ${
                   theme === 'light'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted dark:bg-accent text-gray-600 dark:text-gray-400 hover:bg-accent dark:hover:bg-accent'
                 }`}
               >
                 <Sun className="w-4 h-4" />
@@ -34,10 +34,10 @@ export function SettingsContent() {
               </button>
               <button
                 onClick={() => setTheme('dark')}
-                className={`flex items-center gap-2 px-4 py-2 text-sm transition-colors ${
+                className={`flex items-center gap-2 px-4 py-3 text-sm transition-colors ${
                   theme === 'dark'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted dark:bg-accent text-gray-600 dark:text-gray-400 hover:bg-accent dark:hover:bg-accent'
                 }`}
               >
                 <Moon className="w-4 h-4" />
@@ -55,29 +55,41 @@ export function SettingsContent() {
               </div>
               <div>
                 <h2 className="font-semibold text-gray-900 dark:text-white">{t.settings.language}</h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400">{locale === 'ru' ? t.settings.langRu : t.settings.langBe}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {locale === 'ru' ? t.settings.langRu : locale === 'be' ? t.settings.langBe : t.settings.langEn}
+                </p>
               </div>
             </div>
             <div className="flex rounded-lg border border-gray-200 dark:border-gray-600 overflow-hidden">
               <button
                 onClick={() => setLocale('ru')}
-                className={`px-4 py-2 text-sm transition-colors ${
+                className={`flex-1 min-w-0 px-3 py-3 text-sm transition-colors ${
                   locale === 'ru'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted dark:bg-accent text-gray-600 dark:text-gray-400 hover:bg-accent dark:hover:bg-accent'
                 }`}
               >
                 {t.settings.langRu}
               </button>
               <button
                 onClick={() => setLocale('be')}
-                className={`px-4 py-2 text-sm transition-colors ${
+                className={`flex-1 min-w-0 px-3 py-3 text-sm transition-colors ${
                   locale === 'be'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted dark:bg-accent text-gray-600 dark:text-gray-400 hover:bg-accent dark:hover:bg-accent'
                 }`}
               >
                 {t.settings.langBe}
+              </button>
+              <button
+                onClick={() => setLocale('en')}
+                className={`flex-1 min-w-0 px-3 py-3 text-sm transition-colors ${
+                  locale === 'en'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted dark:bg-accent text-gray-600 dark:text-gray-400 hover:bg-accent dark:hover:bg-accent'
+                }`}
+              >
+                {t.settings.langEn}
               </button>
             </div>
           </div>

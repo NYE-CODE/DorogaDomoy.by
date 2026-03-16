@@ -30,7 +30,7 @@ export function ReportModal({ onClose, onSubmit }: ReportModalProps) {
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full shadow-xl">
+      <div className="bg-card rounded-xl max-w-md w-full shadow-xl">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-3">
@@ -41,7 +41,7 @@ export function ReportModal({ onClose, onSubmit }: ReportModalProps) {
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            className="p-2 hover:bg-accent dark:hover:bg-accent rounded-lg transition-colors"
           >
             <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
           </button>
@@ -56,7 +56,7 @@ export function ReportModal({ onClose, onSubmit }: ReportModalProps) {
             <select
               value={reason}
               onChange={(e) => setReason(e.target.value as ReportReason)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+              className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white"
               required
             >
               {(Object.keys(t.report.reasons) as ReportReason[]).map((key) => (
@@ -75,7 +75,7 @@ export function ReportModal({ onClose, onSubmit }: ReportModalProps) {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder={t.report.descPlaceholder}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white min-h-[120px] resize-none"
+              className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white min-h-[120px] resize-none"
               required
               maxLength={500}
             />
@@ -95,7 +95,7 @@ export function ReportModal({ onClose, onSubmit }: ReportModalProps) {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-accent dark:hover:bg-accent transition-colors"
               disabled={isSubmitting}
             >
               {t.common.cancel}
@@ -103,7 +103,7 @@ export function ReportModal({ onClose, onSubmit }: ReportModalProps) {
             <button
               type="submit"
               disabled={isSubmitting || !description.trim()}
-              className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-4 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? t.report.submitting : t.report.submit}
             </button>

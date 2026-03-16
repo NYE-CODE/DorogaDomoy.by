@@ -6,13 +6,13 @@ interface TermsPageProps {
 
 export function TermsPage({ onBack }: TermsPageProps) {
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
+    <div className="min-h-screen bg-background dark:bg-gray-900">
+      <header className="bg-card border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
         <div className="max-w-4xl mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center gap-4">
             <button
               onClick={onBack}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+              className="p-2 hover:bg-accent dark:hover:bg-accent rounded-full transition-colors"
             >
               <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
             </button>
@@ -22,7 +22,7 @@ export function TermsPage({ onBack }: TermsPageProps) {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 md:px-6 py-8">
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 md:p-8 space-y-8">
+        <div className="bg-card rounded-lg border border-gray-200 dark:border-gray-700 p-6 md:p-8 space-y-8">
           
           {/* Introduction */}
           <section>
@@ -207,7 +207,7 @@ export function TermsPage({ onBack }: TermsPageProps) {
               <p>
                 По всем вопросам, связанным с условиями использования, вы можете связаться с 
                 администрацией платформы через форму обратной связи или по адресу электронной почты: 
-                <a href="mailto:support@dorogadomoy.by" className="text-blue-600 hover:text-blue-700 font-medium ml-1">
+                <a href="mailto:support@dorogadomoy.by" className="text-primary hover:text-primary/90 font-medium ml-1">
                   support@dorogadomoy.by
                 </a>
               </p>

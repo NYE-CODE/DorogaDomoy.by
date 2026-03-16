@@ -1,5 +1,5 @@
-import { User as UserIcon, LogOut, Settings, Shield, MapPin, ChevronDown } from 'lucide-react';
-import { useNavigate } from 'react-router';
+import { User as UserIcon, LogOut, Settings, Shield, MapPin, ChevronDown, Plus } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router';
 import { useAuth } from '../../context/AuthContext';
 import { useI18n } from '../../context/I18nContext';
 import { useState, useRef, useEffect } from 'react';
@@ -8,12 +8,14 @@ interface HeaderProps {
   onViewChange: (view: 'main') => void;
   selectedCity: string;
   onCityClick: () => void;
+  onCreateClick?: () => void;
 }
 
-export function Header({ onViewChange, selectedCity, onCityClick }: HeaderProps) {
+export function Header({ onViewChange, selectedCity, onCityClick, onCreateClick }: HeaderProps) {
   const { user, isAuthenticated, openAuthModal, logout } = useAuth();
   const { t } = useI18n();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -46,13 +48,20 @@ export function Header({ onViewChange, selectedCity, onCityClick }: HeaderProps)
   };
 
   return (
-    <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40 shrink-0">
+    <header className="bg-card border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40 shrink-0">
       <div className="max-w-[1920px] mx-auto px-4 md:px-6 py-3 md:py-4">
         {/* Main row */}
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <button 
-            onClick={() => onViewChange('main')}
+          <button
+            type="button"
+            onClick={() => {
+              if (location.pathname === '/search') {
+                onViewChange('main');
+              } else {
+                navigate('/search');
+              }
+            }}
             className="flex items-center gap-3 hover:opacity-80 transition-opacity min-w-0"
           >
             <img
@@ -67,12 +76,23 @@ export function Header({ onViewChange, selectedCity, onCityClick }: HeaderProps)
           </button>
           
           <div className="flex items-center gap-2 sm:gap-3">
+            {onCreateClick && (
+              <button
+                type="button"
+                onClick={onCreateClick}
+                className="flex items-center gap-2 px-3 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium shrink-0"
+                title={t.header.createAd}
+              >
+                <Plus className="w-4 h-4" />
+                <span className="hidden sm:inline">{t.header.createAd}</span>
+              </button>
+            )}
             {/* City button — desktop only */}
             <button
               onClick={onCityClick}
-              className="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm"
+              className="hidden md:flex items-center gap-1.5 px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-accent dark:hover:bg-accent transition-colors text-sm"
             >
-              <MapPin className="w-4 h-4 text-blue-600 shrink-0" />
+              <MapPin className="w-4 h-4 text-primary shrink-0" />
               <span className="max-w-[140px] truncate text-gray-800 dark:text-gray-200">
                 {selectedCity || t.header.allBelarus}
               </span>
@@ -84,9 +104,9 @@ export function Header({ onViewChange, selectedCity, onCityClick }: HeaderProps)
               {isAuthenticated && user ? (
                 <button
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className="flex items-center gap-2 p-1 sm:pl-2 sm:pr-1 rounded-full border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  className="flex items-center gap-2 p-1 sm:pl-2 sm:pr-1 rounded-full border border-gray-200 dark:border-gray-600 hover:bg-accent dark:hover:bg-accent transition-colors"
                 >
-                  <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 flex items-center justify-center bg-gradient-to-br from-blue-600 to-indigo-600 border border-white">
+                  <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 flex items-center justify-center bg-gradient-to-br from-primary to-primary/80 border border-white">
                     {user.avatar ? (
                       <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                     ) : (
@@ -100,7 +120,7 @@ export function Header({ onViewChange, selectedCity, onCityClick }: HeaderProps)
               ) : (
                 <button
                   onClick={openAuthModal}
-                  className="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-accent dark:hover:bg-accent rounded-lg transition-colors"
                 >
                   <UserIcon className="w-5 h-5" />
                   <span className="hidden sm:inline">{t.header.login}</span>
@@ -109,7 +129,7 @@ export function Header({ onViewChange, selectedCity, onCityClick }: HeaderProps)
 
               {/* Dropdown */}
               {isMenuOpen && isAuthenticated && (
-                <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-600 py-2 animate-in fade-in zoom-in-95 duration-200">
+                <div className="absolute right-0 top-full mt-2 w-56 bg-card rounded-xl shadow-lg border border-gray-100 dark:border-gray-600 py-2 animate-in fade-in zoom-in-95 duration-200">
                   <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-600 mb-1">
                     <p className="font-medium text-gray-900 dark:text-white truncate">{user?.name}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
@@ -117,7 +137,7 @@ export function Header({ onViewChange, selectedCity, onCityClick }: HeaderProps)
                   
                   <button
                     onClick={handleProfileClick}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"
+                    className="w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-accent dark:hover:bg-accent flex items-center gap-2"
                   >
                     <UserIcon className="w-4 h-4" />
                     {t.header.profile}
@@ -125,7 +145,7 @@ export function Header({ onViewChange, selectedCity, onCityClick }: HeaderProps)
 
                   <button
                     onClick={handleMyAdsClick}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"
+                    className="w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-accent dark:hover:bg-accent flex items-center gap-2"
                   >
                     <UserIcon className="w-4 h-4" />
                     {t.header.myAds}
@@ -136,7 +156,7 @@ export function Header({ onViewChange, selectedCity, onCityClick }: HeaderProps)
                       navigate('/settings');
                       setIsMenuOpen(false);
                     }}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"
+                    className="w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-accent dark:hover:bg-accent flex items-center gap-2"
                   >
                     <Settings className="w-4 h-4" />
                     {t.header.settings}
@@ -150,7 +170,7 @@ export function Header({ onViewChange, selectedCity, onCityClick }: HeaderProps)
                           navigate('/admin');
                           setIsMenuOpen(false);
                         }}
-                        className="w-full text-left px-4 py-2 text-sm text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 flex items-center gap-2 font-medium"
+                        className="w-full text-left px-4 py-2.5 text-sm text-primary font-medium hover:bg-accent dark:hover:bg-accent flex items-center gap-2"
                       >
                         <Shield className="w-4 h-4" />
                         {t.header.adminPanel}
@@ -166,7 +186,7 @@ export function Header({ onViewChange, selectedCity, onCityClick }: HeaderProps)
                       setIsMenuOpen(false);
                       onViewChange('main');
                     }}
-                    className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
+                    className="w-full text-left px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-accent dark:hover:bg-accent flex items-center gap-2"
                   >
                     <LogOut className="w-4 h-4" />
                     {t.header.logout}
@@ -180,9 +200,9 @@ export function Header({ onViewChange, selectedCity, onCityClick }: HeaderProps)
         {/* City row — mobile only */}
         <button
           onClick={onCityClick}
-          className="md:hidden flex items-center gap-2 w-full mt-2.5 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm"
+          className="md:hidden flex items-center gap-2 w-full mt-2.5 px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-accent dark:hover:bg-accent transition-colors text-sm"
         >
-          <MapPin className="w-4 h-4 text-blue-600 shrink-0" />
+          <MapPin className="w-4 h-4 text-primary shrink-0" />
           <span className="text-gray-800 dark:text-gray-200 truncate">
             {selectedCity || t.header.allBelarus}
           </span>

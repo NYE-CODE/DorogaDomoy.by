@@ -179,6 +179,8 @@ export interface PetCreateInput {
   city: string;
   location: { lat: number; lng: number };
   contacts: Record<string, string>;
+  /** Имя для отображения в объявлении (при «другие контакты») */
+  author_name?: string;
 }
 
 export interface StatisticsResponse {
@@ -211,23 +213,25 @@ export const petsApi = {
 
   get: (id: string) => api<PetResponse>(`/pets/${id}`).then(toPet),
 
-  create: (data: PetCreateInput) =>
-    api<PetResponse>('/pets', {
-      method: 'POST',
-      body: JSON.stringify({
-        photos: data.photos,
-        animal_type: data.animalType,
-        breed: data.breed,
-        colors: data.colors,
-        gender: data.gender,
-        approximate_age: data.approximateAge,
-        status: data.status,
-        description: data.description,
-        city: data.city,
-        location: data.location,
-        contacts: data.contacts,
-      }),
-    }).then(toPet),
+  create: (data: PetCreateInput) => {
+    const body: Record<string, unknown> = {
+      photos: data.photos,
+      animal_type: data.animalType,
+      breed: data.breed,
+      colors: data.colors,
+      gender: data.gender,
+      approximate_age: data.approximateAge,
+      status: data.status,
+      description: data.description,
+      city: data.city,
+      location: data.location,
+      contacts: data.contacts,
+    };
+    if (data.author_name != null && data.author_name.trim() !== '') {
+      body.author_name = data.author_name.trim();
+    }
+    return api<PetResponse>('/pets', { method: 'POST', body: JSON.stringify(body) }).then(toPet);
+  },
 
   update: (
     id: string,
@@ -273,7 +277,7 @@ export const usersApi = {
     return api<UserResponse[]>(`/users?${q}`).then((arr) => arr.map(toUser));
   },
 
-  update: (userId: string, data: Partial<{ name: string; email: string; role: string; is_blocked: boolean; blocked_reason: string }>) =>
+  update: (userId: string, data: Partial<{ name: string; email: string; role: string; is_blocked: boolean; blocked_reason: string; contacts: { phone?: string; telegram?: string; viber?: string } }>) =>
     api<UserResponse>(`/users/${userId}`, {
       method: 'PATCH',
       body: JSON.stringify(data),

@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Search, SlidersHorizontal, ChevronDown, ChevronUp, RotateCcw, Plus } from 'lucide-react';
+import { Search, SlidersHorizontal, ChevronDown, ChevronUp, RotateCcw, Plus, X } from 'lucide-react';
 import { AnimalType, PetStatus, PetColor } from '../types/pet';
 import { activeStatuses, colorLabels } from '../utils/pet-helpers';
 import { useIsMobile } from './ui/use-mobile';
 import { useI18n } from '../context/I18nContext';
 import { BreedCombobox } from './breed-combobox';
 import { CAT_BREEDS, DOG_BREEDS } from '../utils/breeds';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 export interface FilterState {
   animalType: AnimalType | 'all';
@@ -20,9 +21,12 @@ interface FiltersProps {
   filters: FilterState;
   onFiltersChange: (filters: FilterState) => void;
   onCreateClick?: () => void;
+  /** Встроенный режим: только панель фильтров без обёртки, с кнопкой закрытия */
+  embedded?: boolean;
+  onClose?: () => void;
 }
 
-export function Filters({ filters, onFiltersChange, onCreateClick }: FiltersProps) {
+export function Filters({ filters, onFiltersChange, onCreateClick, embedded, onClose }: FiltersProps) {
   const isMobile = useIsMobile();
   const { t } = useI18n();
   const [isOpen, setIsOpen] = useState(!isMobile);
@@ -74,6 +78,139 @@ export function Filters({ filters, onFiltersChange, onCreateClick }: FiltersProp
     onFiltersChange({ ...filters, colors: newColors });
   };
 
+  const filterPanelBody = (
+    <>
+      <div className="flex flex-col sm:flex-row sm:items-center gap-x-6 gap-y-3">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide shrink-0">Статус</span>
+          <div className="flex gap-1.5">
+            {activeStatuses.map((status) => (
+              <button
+                key={status}
+                type="button"
+                onClick={() => toggleStatus(status)}
+                className={`px-3 py-1 text-sm rounded-lg border transition-all ${
+                  filters.statuses.includes(status)
+                    ? status === 'searching'
+                      ? 'bg-primary/10 text-primary border-primary/30 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800'
+                      : 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800'
+                  : 'bg-card text-foreground border-border hover:bg-muted hover:border-border'
+                }`}
+              >
+                {(t.pet.status as any)[status]}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide shrink-0">Период</span>
+          <Select
+            value={filters.days === 'all' ? 'all' : String(filters.days)}
+            onValueChange={(v) => onFiltersChange({ ...filters, days: v === 'all' ? 'all' : Number(v) })}
+          >
+            <SelectTrigger className="flex-1 min-w-0">
+              <SelectValue placeholder={t.common.all} />
+            </SelectTrigger>
+            <SelectContent>
+              {periodOptions.map((opt) => (
+                <SelectItem key={String(opt.value)} value={opt.value === 'all' ? 'all' : String(opt.value)}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex bg-muted rounded-lg p-0.5 shrink-0">
+          {animalTypeOptions.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => onFiltersChange({ ...filters, animalType: opt.value })}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                filters.animalType === opt.value
+                  ? 'bg-card text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+              }`}
+            >
+              <span className="text-base leading-none">{opt.icon}</span>
+              <span>{opt.label}</span>
+            </button>
+          ))}
+        </div>
+        <div className="flex-1 min-w-0">
+          {filters.animalType === 'cat' || filters.animalType === 'dog' ? (
+            <BreedCombobox
+              breeds={filters.animalType === 'cat' ? CAT_BREEDS : DOG_BREEDS}
+              value={filters.breed}
+              onChange={(breed) => onFiltersChange({ ...filters, breed })}
+              placeholder={t.filters.breedPlaceholder}
+            />
+          ) : (
+            <input
+              type="text"
+              value={filters.breed}
+              onChange={(e) => onFiltersChange({ ...filters, breed: e.target.value })}
+              placeholder={t.filters.breedPlaceholder}
+              className="w-full px-3 py-2.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-card"
+            />
+          )}
+        </div>
+      </div>
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide shrink-0">Окрас</span>
+        {(Object.keys(colorLabels) as PetColor[]).map((color) => (
+          <button
+            key={color}
+            type="button"
+            onClick={() => toggleColor(color)}
+            className={`px-2.5 py-1 text-sm rounded-lg border transition-all ${
+              filters.colors.includes(color)
+                ? 'bg-muted text-muted-foreground border-border'
+                : 'bg-card text-foreground border-border hover:bg-muted hover:border-border'
+            }`}
+          >
+            {(t.pet.color as any)[color]}
+          </button>
+        ))}
+      </div>
+    </>
+  );
+
+  if (embedded) {
+    return (
+      <div className="space-y-4 pb-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between gap-2">
+          <div className="relative flex-1 min-w-0">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none" />
+            <input
+              type="text"
+              value={filters.searchQuery}
+              onChange={(e) => onFiltersChange({ ...filters, searchQuery: e.target.value })}
+              placeholder={t.filters.searchPlaceholder}
+              className="w-full pl-9 pr-4 py-2.5 bg-card border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+            />
+          </div>
+          {onClose && (
+            <button type="button" onClick={onClose} className="p-2 rounded-lg hover:bg-accent dark:hover:bg-accent text-gray-500 dark:text-gray-400" aria-label={t.common.close}>
+              <X className="w-5 h-5" />
+            </button>
+          )}
+        </div>
+        {activeFilterCount > 0 && (
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={handleReset} className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-primary">
+              <RotateCcw className="w-3 h-3" />
+              {t.filters.reset}
+            </button>
+          </div>
+        )}
+        <div className="space-y-4">{filterPanelBody}</div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3">
       {/* Search + Create — one row */}
@@ -85,14 +222,14 @@ export function Filters({ filters, onFiltersChange, onCreateClick }: FiltersProp
             value={filters.searchQuery}
             onChange={(e) => onFiltersChange({ ...filters, searchQuery: e.target.value })}
             placeholder={t.filters.searchPlaceholder}
-            className="w-full pl-11 pr-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow shadow-sm"
+            className="w-full pl-11 pr-4 py-2.5 bg-card border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-shadow shadow-sm"
           />
         </div>
         {onCreateClick && (
           <button
             type="button"
             onClick={onCreateClick}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors shadow-sm shrink-0 font-medium text-sm"
+            className="flex items-center justify-center gap-2 px-4 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors shadow-sm shrink-0 font-medium text-sm"
             title={t.header.createAd}
           >
             <Plus className="w-4 h-4" />
@@ -102,7 +239,7 @@ export function Filters({ filters, onFiltersChange, onCreateClick }: FiltersProp
       </div>
 
       {/* Collapsible filters */}
-      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm">
+      <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm">
         <button
           type="button"
           className="w-full px-4 py-2.5 flex items-center justify-between"
@@ -112,7 +249,7 @@ export function Filters({ filters, onFiltersChange, onCreateClick }: FiltersProp
             <SlidersHorizontal className="w-4 h-4" />
             <span>{t.filters.filters}</span>
             {activeFilterCount > 0 && (
-              <span className="min-w-[20px] h-5 px-1.5 flex items-center justify-center bg-blue-600 text-white text-xs font-semibold rounded-full">
+              <span className="min-w-[20px] h-5 px-1.5 flex items-center justify-center bg-primary text-primary-foreground text-xs font-semibold rounded-full">
                 {activeFilterCount}
               </span>
             )}
@@ -122,7 +259,7 @@ export function Filters({ filters, onFiltersChange, onCreateClick }: FiltersProp
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); handleReset(); }}
-                className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors px-2 py-1 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
+                className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-primary transition-colors px-2 py-1 rounded-lg hover:bg-accent dark:hover:bg-accent"
               >
                 <RotateCcw className="w-3 h-3" />
                 {t.filters.reset}
@@ -137,108 +274,7 @@ export function Filters({ filters, onFiltersChange, onCreateClick }: FiltersProp
 
         {isOpen && (
           <div className="px-4 pb-4 space-y-4 border-t border-gray-100 dark:border-gray-700 pt-3">
-            {/* Row 1: Animal type segments + Breed input */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-0.5 shrink-0">
-                {animalTypeOptions.map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => onFiltersChange({ ...filters, animalType: opt.value })}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                      filters.animalType === opt.value
-                        ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
-                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-                    }`}
-                  >
-                    <span className="text-base leading-none">{opt.icon}</span>
-                    <span>{opt.label}</span>
-                  </button>
-                ))}
-              </div>
-              <div className="flex-1 min-w-0">
-                {filters.animalType === 'cat' || filters.animalType === 'dog' ? (
-                  <BreedCombobox
-                    breeds={filters.animalType === 'cat' ? CAT_BREEDS : DOG_BREEDS}
-                    value={filters.breed}
-                    onChange={(breed) => onFiltersChange({ ...filters, breed })}
-                    placeholder={t.filters.breedPlaceholder}
-                  />
-                ) : (
-                  <input
-                    type="text"
-                    value={filters.breed}
-                    onChange={(e) => onFiltersChange({ ...filters, breed: e.target.value })}
-                    placeholder={t.filters.breedPlaceholder}
-                    className="w-full px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800"
-                  />
-                )}
-              </div>
-            </div>
-
-            {/* Row 2: Status chips + Period chips */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-x-6 gap-y-3">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide shrink-0">Статус</span>
-                <div className="flex gap-1.5">
-                  {activeStatuses.map((status) => (
-                    <button
-                      key={status}
-                      type="button"
-                      onClick={() => toggleStatus(status)}
-                      className={`px-3 py-1 text-sm rounded-lg border transition-all ${
-                        filters.statuses.includes(status)
-                          ? status === 'searching'
-                            ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800'
-                            : 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800'
-                          : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-500'
-                      }`}
-                    >
-                      {(t.pet.status as any)[status]}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide shrink-0">Период</span>
-                <div className="flex gap-1.5">
-                  {periodOptions.map((opt) => (
-                    <button
-                      key={String(opt.value)}
-                      type="button"
-                      onClick={() => onFiltersChange({ ...filters, days: opt.value })}
-                      className={`px-3 py-1 text-sm rounded-lg border transition-all ${
-                        filters.days === opt.value
-                          ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800'
-                          : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-500'
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Row 3: Colors */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide shrink-0">Окрас</span>
-              {(Object.keys(colorLabels) as PetColor[]).map((color) => (
-                <button
-                  key={color}
-                  type="button"
-                  onClick={() => toggleColor(color)}
-                  className={`px-2.5 py-1 text-sm rounded-lg border transition-all ${
-                    filters.colors.includes(color)
-                      ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800'
-                      : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-500'
-                  }`}
-                >
-                  {(t.pet.color as any)[color]}
-                </button>
-              ))}
-            </div>
+            {filterPanelBody}
           </div>
         )}
       </div>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ChevronLeft, ChevronRight, Home, Heart, Building2, Archive } from 'lucide-react';
 import { Pet } from '../types/pet';
 import { formatDate, statusLabels } from '../utils/pet-helpers';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 interface PetsAdminPanelProps {
   pets: Pet[];
@@ -16,8 +17,8 @@ function getArchiveReasonStyle(reason: string | undefined) {
   if (reason.includes('пристроен'))
     return { label: reason, className: 'bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-400', icon: Heart };
   if (reason.includes('приют'))
-    return { label: reason, className: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400', icon: Building2 };
-  return { label: reason, className: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300', icon: Archive };
+    return { label: reason, className: 'bg-muted text-muted-foreground', icon: Building2 };
+  return { label: reason, className: 'bg-muted dark:bg-accent text-gray-700 dark:text-gray-300', icon: Archive };
 }
 
 export function PetsAdminPanel({ pets, onDeletePet, onOpenPet }: PetsAdminPanelProps) {
@@ -63,7 +64,7 @@ export function PetsAdminPanel({ pets, onDeletePet, onOpenPet }: PetsAdminPanelP
       <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Управление объявлениями</h2>
       
       {/* Filters Panel */}
-      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+      <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-4">
         <div className="flex flex-wrap gap-4 items-center">
           <div className="w-full sm:w-auto">
             <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Статус архивации</label>
@@ -75,8 +76,8 @@ export function PetsAdminPanel({ pets, onDeletePet, onOpenPet }: PetsAdminPanelP
                 }}
                 className={`px-3 py-2 text-sm rounded-lg transition-colors whitespace-nowrap ${
                   petsFilter === 'all' 
-                    ? 'bg-blue-600 text-white' 
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'bg-muted dark:bg-accent text-gray-700 dark:text-gray-300 hover:bg-accent dark:hover:bg-accent'
                 }`}
               >
                 Все ({pets.length})
@@ -88,8 +89,8 @@ export function PetsAdminPanel({ pets, onDeletePet, onOpenPet }: PetsAdminPanelP
                 }}
                 className={`px-3 py-2 text-sm rounded-lg transition-colors whitespace-nowrap ${
                   petsFilter === 'active' 
-                    ? 'bg-blue-600 text-white' 
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'bg-muted dark:bg-accent text-gray-700 dark:text-gray-300 hover:bg-accent dark:hover:bg-accent'
                 }`}
               >
                 Активные ({pets.filter(p => !p.isArchived).length})
@@ -101,8 +102,8 @@ export function PetsAdminPanel({ pets, onDeletePet, onOpenPet }: PetsAdminPanelP
                 }}
                 className={`px-3 py-2 text-sm rounded-lg transition-colors whitespace-nowrap ${
                   petsFilter === 'archived' 
-                    ? 'bg-blue-600 text-white' 
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'bg-muted dark:bg-accent text-gray-700 dark:text-gray-300 hover:bg-accent dark:hover:bg-accent'
                 }`}
               >
                 Архив ({pets.filter(p => p.isArchived).length})
@@ -112,68 +113,60 @@ export function PetsAdminPanel({ pets, onDeletePet, onOpenPet }: PetsAdminPanelP
 
           <div className="flex-1 min-w-[200px]">
             <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Тип животного</label>
-            <select
-              value={petsAnimalType}
-              onChange={(e) => {
-                setPetsAnimalType(e.target.value);
-                setPetsPage(1);
-              }}
-              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="all">Все животные</option>
-              <option value="cat">Коты</option>
-              <option value="dog">Собаки</option>
-              <option value="other">Другие</option>
-            </select>
+            <Select value={petsAnimalType} onValueChange={(v) => { setPetsAnimalType(v); setPetsPage(1); }}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Все животные" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Все животные</SelectItem>
+                <SelectItem value="cat">Коты</SelectItem>
+                <SelectItem value="dog">Собаки</SelectItem>
+                <SelectItem value="other">Другие</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="flex-1 min-w-[200px]">
             <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Статус объявления</label>
-            <select
-              value={petsStatus}
-              onChange={(e) => {
-                setPetsStatus(e.target.value);
-                setPetsPage(1);
-              }}
-              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="all">Все статусы</option>
-              <option value="searching">Ищут</option>
-              <option value="found">Найден</option>
-            </select>
+            <Select value={petsStatus} onValueChange={(v) => { setPetsStatus(v); setPetsPage(1); }}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Все статусы" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Все статусы</SelectItem>
+                <SelectItem value="searching">Ищут</SelectItem>
+                <SelectItem value="found">Найден</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="flex-1 min-w-[200px]">
             <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Модерация</label>
-            <select
-              value={petsModerationFilter}
-              onChange={(e) => {
-                setPetsModerationFilter(e.target.value);
-                setPetsPage(1);
-              }}
-              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="all">Все</option>
-              <option value="pending">На модерации</option>
-              <option value="approved">Опубликовано</option>
-              <option value="rejected">Отклонено</option>
-            </select>
+            <Select value={petsModerationFilter} onValueChange={(v) => { setPetsModerationFilter(v); setPetsPage(1); }}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Все" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Все</SelectItem>
+                <SelectItem value="pending">На модерации</SelectItem>
+                <SelectItem value="approved">Опубликовано</SelectItem>
+                <SelectItem value="rejected">Отклонено</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="flex-1 min-w-[200px]">
             <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Дата публикации</label>
-            <select
-              value={petsDateFilter}
-              onChange={(e) => {
-                setPetsDateFilter(e.target.value);
-                setPetsPage(1);
-              }}
-              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="all">Все даты</option>
-              <option value="last7">За последние 7 дней</option>
-              <option value="last30">За последние 30 дней</option>
-            </select>
+            <Select value={petsDateFilter} onValueChange={(v) => { setPetsDateFilter(v); setPetsPage(1); }}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Все даты" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Все даты</SelectItem>
+                <SelectItem value="last7">За последние 7 дней</SelectItem>
+                <SelectItem value="last30">За последние 30 дней</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="text-sm text-gray-600 dark:text-gray-400 ml-auto">
@@ -182,9 +175,9 @@ export function PetsAdminPanel({ pets, onDeletePet, onOpenPet }: PetsAdminPanelP
         </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-x-auto">
+      <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg overflow-x-auto">
         <table className="w-full min-w-[700px]">
-          <thead className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+          <thead className="bg-muted dark:bg-accent border-b border-gray-200 dark:border-gray-600">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Фото</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Информация</th>
@@ -207,7 +200,7 @@ export function PetsAdminPanel({ pets, onDeletePet, onOpenPet }: PetsAdminPanelP
               </tr>
             ) : (
               paginatedPets.map(pet => (
-                <tr key={pet.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer" onClick={() => onOpenPet?.(pet.id)}>
+                <tr key={pet.id} className="hover:bg-accent dark:hover:bg-accent cursor-pointer" onClick={() => onOpenPet?.(pet.id)}>
                   <td className="px-6 py-4">
                     <img src={pet.photos[0]} alt="" className="w-16 h-16 object-cover rounded-lg" />
                   </td>
@@ -219,7 +212,7 @@ export function PetsAdminPanel({ pets, onDeletePet, onOpenPet }: PetsAdminPanelP
                     <p className="text-sm text-gray-900 dark:text-white">{pet.authorName}</p>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="inline-flex px-2 py-1 text-xs rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">
+                    <span className="inline-flex px-2 py-1 text-xs rounded-full bg-muted text-muted-foreground">
                       {statusLabels[pet.status]}
                     </span>
                   </td>
@@ -276,7 +269,7 @@ export function PetsAdminPanel({ pets, onDeletePet, onOpenPet }: PetsAdminPanelP
           <button
             onClick={() => setPetsPage(Math.max(1, petsPage - 1))}
             disabled={petsPage === 1}
-            className="flex items-center gap-2 px-4 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-4 py-3 text-sm bg-card border border-gray-200 dark:border-gray-700 dark:text-gray-300 rounded-lg hover:bg-accent dark:hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <ChevronLeft className="w-4 h-4" />
             Назад
@@ -292,7 +285,7 @@ export function PetsAdminPanel({ pets, onDeletePet, onOpenPet }: PetsAdminPanelP
           <button
             onClick={() => setPetsPage(Math.min(totalPages, petsPage + 1))}
             disabled={petsPage >= totalPages}
-            className="flex items-center gap-2 px-4 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-4 py-3 text-sm bg-card border border-gray-200 dark:border-gray-700 dark:text-gray-300 rounded-lg hover:bg-accent dark:hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Вперед
             <ChevronRight className="w-4 h-4" />

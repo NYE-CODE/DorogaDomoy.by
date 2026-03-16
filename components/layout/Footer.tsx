@@ -4,7 +4,7 @@ import { useI18n } from '../../context/I18nContext';
 export function Footer() {
   const { t } = useI18n();
   return (
-    <footer className="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 mt-auto">
+    <footer className="bg-card border-t border-gray-200 dark:border-gray-700 mt-auto">
       <div className="max-w-[1920px] mx-auto px-4 md:px-6 py-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* О проекте */}
@@ -25,7 +25,7 @@ export function Footer() {
               <li>
                 <a
                   href="mailto:contact@dorogadomoy.by"
-                  className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-500 transition-colors"
+                  className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
                 >
                   <Mail className="w-4 h-4 shrink-0" />
                   contact@dorogadomoy.by
@@ -36,7 +36,7 @@ export function Footer() {
                   href="https://t.me/dorogadomoy_by"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-500 transition-colors"
+                  className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
                 >
                   <MessageCircle className="w-4 h-4 shrink-0" />
                   {t.footer.telegramGroup}
@@ -47,7 +47,7 @@ export function Footer() {
                   href="https://t.me/dorogadomoy_support_bot"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-500 transition-colors"
+                  className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
                 >
                   <Bot className="w-4 h-4 shrink-0" />
                   {t.footer.supportBot}
@@ -61,12 +61,12 @@ export function Footer() {
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider mb-3">{t.footer.info}</h3>
             <ul className="space-y-2">
               <li>
-                <button className="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-500 transition-colors">
+                <button className="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors">
                   {t.footer.howItWorks}
                 </button>
               </li>
               <li>
-                <button className="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-500 transition-colors">
+                <button className="text-sm text-gray-600 dark:text-gray-400 hover:text-primary transition-colors">
                   {t.footer.rules}
                 </button>
               </li>

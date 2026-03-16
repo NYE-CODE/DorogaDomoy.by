@@ -10,7 +10,7 @@ export function StatisticsPanel({ stats }: StatisticsProps) {
   const { t } = useI18n();
   return (
     <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6">
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3 sm:p-6 ">
+      <div className="bg-card rounded-lg border border-gray-200 dark:border-gray-700 p-3 sm:p-6 ">
         <div className="flex flex-col items-center text-center sm:flex-row sm:text-left sm:items-center gap-1.5 sm:gap-3">
           <div className="p-2 sm:p-3 bg-red-50 rounded-lg">
             <Search className="w-4 h-4 sm:w-6 sm:h-6 text-red-600" />
@@ -22,10 +22,10 @@ export function StatisticsPanel({ stats }: StatisticsProps) {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3 sm:p-6 ">
+      <div className="bg-card rounded-lg border border-gray-200 dark:border-gray-700 p-3 sm:p-6 ">
         <div className="flex flex-col items-center text-center sm:flex-row sm:text-left sm:items-center gap-1.5 sm:gap-3">
-          <div className="p-2 sm:p-3 bg-blue-50 rounded-lg">
-            <CheckCircle className="w-4 h-4 sm:w-6 sm:h-6 text-blue-600" />
+          <div className="p-2 sm:p-3 bg-muted rounded-lg">
+            <CheckCircle className="w-4 h-4 sm:w-6 sm:h-6 text-primary" />
           </div>
           <div>
             <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{t.stats.found}</p>
@@ -34,7 +34,7 @@ export function StatisticsPanel({ stats }: StatisticsProps) {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3 sm:p-6 ">
+      <div className="bg-card rounded-lg border border-gray-200 dark:border-gray-700 p-3 sm:p-6 ">
         <div className="flex flex-col items-center text-center sm:flex-row sm:text-left sm:items-center gap-1.5 sm:gap-3">
           <div className="p-2 sm:p-3 bg-purple-50 rounded-lg">
             <Home className="w-4 h-4 sm:w-6 sm:h-6 text-purple-600" />

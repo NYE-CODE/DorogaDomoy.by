@@ -19,9 +19,9 @@ export function CityDetectPopup({ open, detectedCity, onConfirm, onReject }: Cit
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
 
-      <div className="relative bg-white dark:bg-gray-800 rounded-2xl w-full max-w-sm shadow-2xl p-6 text-center animate-in fade-in zoom-in-95 duration-200">
-        <div className="w-14 h-14 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
-          <MapPin className="w-7 h-7 text-blue-600" />
+      <div className="relative bg-card rounded-2xl w-full max-w-sm shadow-2xl p-6 text-center animate-in fade-in zoom-in-95 duration-200">
+        <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+          <MapPin className="w-7 h-7 text-primary" />
         </div>
 
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
@@ -34,13 +34,13 @@ export function CityDetectPopup({ open, detectedCity, onConfirm, onReject }: Cit
         <div className="flex gap-3">
           <button
             onClick={onReject}
-            className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl transition-colors"
+            className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-accent dark:hover:bg-accent rounded-lg transition-colors"
           >
             {t.cityDetect.no}
           </button>
           <button
             onClick={onConfirm}
-            className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors"
+            className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-primary hover:bg-primary/90 rounded-lg transition-colors"
           >
             {t.cityDetect.yes}
           </button>

@@ -41,9 +41,9 @@ export default function SettingsPageRoute() {
   }, [saveUserLocation]);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
+    <div className="min-h-screen bg-background dark:bg-gray-900 flex flex-col">
       <Header
-        onViewChange={() => navigate('/')}
+        onViewChange={() => navigate('/search')}
         selectedCity={selectedCity}
         onCityClick={() => setShowCityModal(true)}
       />

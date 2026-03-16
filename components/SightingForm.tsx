@@ -118,15 +118,15 @@ export function SightingForm({ pet, onClose, onSuccess }: SightingFormProps) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={onClose}>
       <div
-        className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] flex flex-col"
+        className="bg-card rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="shrink-0 sticky top-0 z-10 bg-white dark:bg-gray-800 rounded-t-xl px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+        <div className="shrink-0 sticky top-0 z-10 bg-card rounded-t-xl px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
             <MapPin className="w-5 h-5 text-amber-500" />
             {t.sightings.title}
           </h3>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+          <button onClick={onClose} className="p-2 hover:bg-accent dark:hover:bg-accent rounded-lg transition-colors">
             <X className="w-5 h-5 text-gray-500" />
           </button>
         </div>
@@ -140,7 +140,7 @@ export function SightingForm({ pet, onClose, onSuccess }: SightingFormProps) {
             <button
               type="button"
               onClick={handleUseMyLocation}
-              className="mt-2 text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400"
+              className="mt-2 text-sm text-primary hover:text-primary/90"
             >
               {t.sightings.useMyLocation}
             </button>
@@ -155,7 +155,7 @@ export function SightingForm({ pet, onClose, onSuccess }: SightingFormProps) {
               type="datetime-local"
               value={seenAt}
               onChange={(e) => setSeenAt(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             />
           </div>
 
@@ -169,7 +169,7 @@ export function SightingForm({ pet, onClose, onSuccess }: SightingFormProps) {
               placeholder={t.sightings.commentPlaceholder}
               rows={2}
               maxLength={COMMENT_MAX}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400"
+              className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400"
             />
             <p className={`mt-1 text-xs tabular-nums ${comment.length >= COMMENT_MAX ? 'text-amber-600 dark:text-amber-400' : 'text-gray-500 dark:text-gray-400'}`}>
               {comment.length} / {COMMENT_MAX} {t.common.characters}
@@ -186,7 +186,7 @@ export function SightingForm({ pet, onClose, onSuccess }: SightingFormProps) {
               onChange={(e) => setContact(e.target.value.slice(0, CONTACT_MAX))}
               placeholder={t.sightings.contactPlaceholder}
               maxLength={CONTACT_MAX}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400"
+              className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400"
             />
             <p className={`mt-1 text-xs tabular-nums ${contact.length >= CONTACT_MAX ? 'text-amber-600 dark:text-amber-400' : 'text-gray-500 dark:text-gray-400'}`}>
               {contact.length} / {CONTACT_MAX} {t.common.characters}
@@ -197,14 +197,14 @@ export function SightingForm({ pet, onClose, onSuccess }: SightingFormProps) {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-accent dark:hover:bg-accent transition-colors"
             >
               {t.common.cancel}
             </button>
             <button
               type="submit"
               disabled={!location || submitting}
-              className="flex-1 px-4 py-2.5 bg-amber-500 text-white rounded-lg hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="flex-1 px-4 py-3 bg-amber-500 text-white rounded-lg hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {submitting ? t.sightings.submitting : t.sightings.submit}
             </button>

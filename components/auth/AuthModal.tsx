@@ -64,11 +64,11 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
       onClick={closeAuthModal}
     >
       <div 
-        className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl transform transition-all"
+        className="bg-card rounded-2xl w-full max-w-md overflow-hidden shadow-2xl transform transition-all"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="relative h-32 bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center">
+        <div className="relative h-32 bg-gradient-to-r from-primary to-primary/80 flex items-center justify-center">
           <button 
             onClick={closeAuthModal}
             className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
@@ -79,7 +79,7 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
             <h2 className="text-2xl font-bold mb-1">
               {mode === 'login' ? t.auth.loginTitle : t.auth.registerTitle}
             </h2>
-            <p className="text-blue-100 text-sm">
+            <p className="text-primary-foreground/90 text-sm">
               {mode === 'login' 
                 ? t.auth.loginSubtitle 
                 : t.auth.registerSubtitle}
@@ -100,7 +100,7 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
                     required
                     value={name}
                     onChange={e => setName(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all dark:bg-gray-700 dark:text-white"
+                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all dark:bg-gray-700 dark:text-white"
                     placeholder={t.auth.namePlaceholder}
                   />
                 </div>
@@ -117,7 +117,7 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
                   required
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all dark:bg-gray-700 dark:text-white"
+                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all dark:bg-gray-700 dark:text-white"
                   placeholder="name@example.by"
                 />
               </div>
@@ -133,7 +133,7 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
                   required
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all dark:bg-gray-700 dark:text-white"
+                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all dark:bg-gray-700 dark:text-white"
                   placeholder="••••••••"
                 />
               </div>
@@ -145,13 +145,13 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
                   type="checkbox"
                   checked={agreedToTerms}
                   onChange={e => setAgreedToTerms(e.target.checked)}
-                  className="w-4 h-4 text-blue-600 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500 focus:ring-2"
+                  className="w-4 h-4 text-primary bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-primary focus:ring-2"
                 />
                 <label className="ml-2 text-sm text-gray-700 dark:text-gray-300">
                   {t.auth.agreeWith}{' '}
                   <a 
                     href="#" 
-                    className="text-blue-600 font-semibold hover:text-blue-700 transition-colors"
+                    className="text-primary font-semibold hover:text-primary/90 transition-colors"
                     onClick={(e) => {
                       e.preventDefault();
                       onNavigateToTerms?.();
@@ -166,7 +166,7 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 active:scale-[0.98] transition-all font-medium disabled:opacity-70"
+              className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground py-3 rounded-lg hover:bg-primary/90 active:scale-[0.98] transition-all font-medium disabled:opacity-70"
             >
               {isLoading ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -185,7 +185,7 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
               <button 
                 type="button"
                 onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
-                className="ml-2 text-blue-600 font-semibold hover:text-blue-700 transition-colors"
+                className="ml-2 text-primary font-semibold hover:text-primary/90 transition-colors"
               >
                 {mode === 'login' ? t.auth.register : t.auth.login}
               </button>

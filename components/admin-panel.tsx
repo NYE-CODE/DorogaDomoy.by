@@ -27,6 +27,7 @@ import { formatDate, statusLabels } from '../utils/pet-helpers';
 import { settingsApi } from '../api/client';
 import { ModerationPanel } from './moderation-panel';
 import { PetsAdminPanel } from './pets-admin-panel';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 type AdminTab = 'dashboard' | 'moderation' | 'pets' | 'users' | 'reports' | 'settings';
 
@@ -62,6 +63,8 @@ export function AdminPanel({
   const [editName, setEditName] = useState('');
   const [editEmail, setEditEmail] = useState('');
   const [editRole, setEditRole] = useState<User['role']>('user');
+  const [editPhone, setEditPhone] = useState('');
+  const [editViber, setEditViber] = useState('');
 
   // Users filters and pagination
   const [usersSearch, setUsersSearch] = useState('');
@@ -142,14 +145,14 @@ export function AdminPanel({
       
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+        <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">Всего объявлений</p>
               <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{stats.totalPets}</p>
             </div>
-            <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-              <FileText className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+            <div className="p-3 bg-accent dark:bg-accent rounded-lg">
+              <FileText className="w-6 h-6 text-muted-foreground" />
             </div>
           </div>
           <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
@@ -157,14 +160,14 @@ export function AdminPanel({
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+        <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">Пользователи</p>
               <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{stats.totalUsers}</p>
             </div>
-            <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-lg">
-              <Users className="w-6 h-6 text-green-600 dark:text-green-400" />
+            <div className="p-3 bg-accent dark:bg-accent rounded-lg">
+              <Users className="w-6 h-6 text-muted-foreground" />
             </div>
           </div>
           <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
@@ -172,14 +175,14 @@ export function AdminPanel({
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+        <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">Жалобы</p>
               <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{stats.pendingReports}</p>
             </div>
-            <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
-              <AlertTriangle className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+            <div className="p-3 bg-accent dark:bg-accent rounded-lg">
+              <AlertTriangle className="w-6 h-6 text-muted-foreground" />
             </div>
           </div>
           <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
@@ -187,14 +190,14 @@ export function AdminPanel({
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+        <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">Успешность</p>
               <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{stats.successRate.toFixed(1)}%</p>
             </div>
-            <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-              <TrendingUp className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+            <div className="p-3 bg-accent dark:bg-accent rounded-lg">
+              <TrendingUp className="w-6 h-6 text-muted-foreground" />
             </div>
           </div>
           <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
@@ -204,29 +207,29 @@ export function AdminPanel({
       </div>
 
       {/* Activity Chart */}
-      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+      <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-6">
         <div className="flex items-center gap-2 mb-4">
           <Calendar className="w-5 h-5 text-gray-600 dark:text-gray-400" />
           <h3 className="font-semibold text-gray-900 dark:text-white">Активность</h3>
         </div>
         <div className="grid grid-cols-2 gap-4">
-          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+          <div className="p-4 bg-accent dark:bg-accent rounded-lg">
             <p className="text-sm text-gray-600 dark:text-gray-400">За последние 7 дней</p>
-            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-1">{stats.petsLast7Days}</p>
+            <p className="text-2xl font-bold text-foreground mt-1">{stats.petsLast7Days}</p>
           </div>
-          <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+          <div className="p-4 bg-accent dark:bg-accent rounded-lg">
             <p className="text-sm text-gray-600 dark:text-gray-400">За последние 30 дней</p>
-            <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">{stats.petsLast30Days}</p>
+            <p className="text-2xl font-bold text-foreground mt-1">{stats.petsLast30Days}</p>
           </div>
         </div>
       </div>
 
       {/* Recent Activity */}
-      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+      <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-6">
         <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Последние объявления</h3>
         <div className="space-y-3">
           {pets.slice(0, 5).map(pet => (
-            <div key={pet.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+            <div key={pet.id} className="flex items-center justify-between p-3 bg-accent dark:bg-accent rounded-lg">
               <div className="flex items-center gap-3">
                 <img src={pet.photos[0]} alt="" className="w-12 h-12 object-cover rounded-lg" />
                 <div>
@@ -249,11 +252,23 @@ export function AdminPanel({
     setEditName(u.name);
     setEditEmail(u.email);
     setEditRole(u.role);
+    setEditPhone(u.contacts?.phone ?? '');
+    setEditViber(u.contacts?.viber ?? '');
   };
 
   const handleSaveEditUser = () => {
     if (!editingUser) return;
-    onUpdateUser({ ...editingUser, name: editName, email: editEmail, role: editRole });
+    onUpdateUser({
+      ...editingUser,
+      name: editName,
+      email: editEmail,
+      role: editRole,
+      contacts: {
+        ...editingUser.contacts,
+        phone: editPhone.trim() || undefined,
+        viber: editViber.trim() || undefined,
+      },
+    });
     setEditingUser(null);
   };
 
@@ -281,7 +296,7 @@ export function AdminPanel({
         <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Управление пользователями</h2>
         
         {/* Filters Panel */}
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+        <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-4">
           <div className="flex flex-wrap gap-4 items-end">
             <div className="flex-1 min-w-[250px]">
               <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Поиск</label>
@@ -293,42 +308,38 @@ export function AdminPanel({
                   setUsersSearch(e.target.value);
                   setUsersPage(1);
                 }}
-                className="w-full px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               />
             </div>
 
             <div className="min-w-[180px]">
               <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Роль</label>
-              <select
-                value={usersRoleFilter}
-                onChange={(e) => {
-                  setUsersRoleFilter(e.target.value);
-                  setUsersPage(1);
-                }}
-                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="all">Все роли</option>
-                <option value="user">Пользователи</option>
-                <option value="volunteer">Волонтёры</option>
-                <option value="shelter">Приюты</option>
-                <option value="admin">Администраторы</option>
-              </select>
+              <Select value={usersRoleFilter} onValueChange={(v) => { setUsersRoleFilter(v); setUsersPage(1); }}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Все роли" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Все роли</SelectItem>
+                  <SelectItem value="user">Пользователи</SelectItem>
+                  <SelectItem value="volunteer">Волонтёры</SelectItem>
+                  <SelectItem value="shelter">Приюты</SelectItem>
+                  <SelectItem value="admin">Администраторы</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="min-w-[180px]">
               <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Статус</label>
-              <select
-                value={usersStatusFilter}
-                onChange={(e) => {
-                  setUsersStatusFilter(e.target.value);
-                  setUsersPage(1);
-                }}
-                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="all">Все статусы</option>
-                <option value="active">Активные</option>
-                <option value="blocked">Заблокированные</option>
-              </select>
+              <Select value={usersStatusFilter} onValueChange={(v) => { setUsersStatusFilter(v); setUsersPage(1); }}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Все статусы" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Все статусы</SelectItem>
+                  <SelectItem value="active">Активные</SelectItem>
+                  <SelectItem value="blocked">Заблокированные</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="text-sm text-gray-600 dark:text-gray-400 ml-auto">
@@ -337,13 +348,14 @@ export function AdminPanel({
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-x-auto">
+        <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg overflow-x-auto">
           <table className="w-full min-w-[700px]">
-            <thead className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+            <thead className="bg-muted dark:bg-accent border-b border-gray-200 dark:border-gray-600">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Пользователь</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Email</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Роль</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Интеграция</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Контакты</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Статус</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Действия</th>
@@ -352,13 +364,13 @@ export function AdminPanel({
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {paginatedUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                  <td colSpan={7} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                     Пользователи не найдены
                   </td>
                 </tr>
               ) : (
                 paginatedUsers.map(user => (
-                  <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                  <tr key={user.id} className="hover:bg-accent dark:hover:bg-accent">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         {user.avatar && (
@@ -368,7 +380,7 @@ export function AdminPanel({
                           href={`/user/${user.id}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="font-medium text-blue-600 hover:text-blue-800 hover:underline text-sm truncate max-w-[120px]"
+                          className="font-medium text-primary hover:text-primary/90 hover:underline text-sm truncate max-w-[120px]"
                           title="Открыть профиль"
                         >
                           {user.name}
@@ -378,16 +390,19 @@ export function AdminPanel({
                     <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 truncate max-w-[180px]">{user.email}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex px-2 py-1 text-xs rounded-full ${
-                        user.role === 'admin' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400' :
-                        user.role === 'shelter' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400' :
-                        user.role === 'volunteer' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' :
+                        user.role === 'admin' ? 'bg-primary/10 dark:bg-primary/20 text-primary' :
                         'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
                       }`}>
                         {{ user: 'Пользователь', volunteer: 'Волонтёр', shelter: 'Приют', admin: 'Админ' }[user.role]}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 truncate max-w-[140px]">
-                      {user.contacts.phone || user.contacts.telegram || user.contacts.viber || 'Нет'}
+                      {user.telegramUsername
+                        ? `@${String(user.telegramUsername).replace(/^@/, '')}`
+                        : 'Отсутствует'}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 truncate max-w-[140px]">
+                      {user.contacts.phone || user.contacts.viber || '—'}
                     </td>
                     <td className="px-4 py-3">
                       {user.isBlocked ? (
@@ -404,7 +419,7 @@ export function AdminPanel({
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => openEditUser(user)}
-                          className="p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
+                          className="p-1.5 text-primary hover:bg-primary/10 dark:hover:bg-primary/20 rounded transition-colors"
                           title="Редактировать"
                         >
                           <Edit2 className="w-4 h-4" />
@@ -439,33 +454,46 @@ export function AdminPanel({
         {/* Edit User Modal */}
         {editingUser && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setEditingUser(null)}>
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-card rounded-xl shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center justify-between px-6 py-4 border-b dark:border-gray-700">
                 <h3 className="font-semibold text-gray-900 dark:text-white">Редактировать пользователя</h3>
-                <button onClick={() => setEditingUser(null)} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"><X className="w-5 h-5 dark:text-gray-400" /></button>
+                <button onClick={() => setEditingUser(null)} className="p-1 hover:bg-accent dark:hover:bg-accent rounded"><X className="w-5 h-5 dark:text-gray-400" /></button>
               </div>
               <div className="px-6 py-4 space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Имя</label>
-                  <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                  <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
-                  <input type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                  <input type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Роль</label>
-                  <select value={editRole} onChange={(e) => setEditRole(e.target.value as User['role'])} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    <option value="user">Пользователь</option>
-                    <option value="volunteer">Волонтёр</option>
-                    <option value="shelter">Приют</option>
-                    <option value="admin">Админ</option>
-                  </select>
+                  <Select value={editRole} onValueChange={(v) => setEditRole(v as User['role'])}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Роль" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="user">Пользователь</SelectItem>
+                      <SelectItem value="volunteer">Волонтёр</SelectItem>
+                      <SelectItem value="shelter">Приют</SelectItem>
+                      <SelectItem value="admin">Админ</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Телефон</label>
+                  <input type="tel" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} placeholder="+375..." className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Вайбер</label>
+                  <input type="text" value={editViber} onChange={(e) => setEditViber(e.target.value)} placeholder="Номер или ник" className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
                 </div>
               </div>
               <div className="flex justify-end gap-3 px-6 py-4 border-t dark:border-gray-700">
-                <button onClick={() => setEditingUser(null)} className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">Отмена</button>
-                <button onClick={handleSaveEditUser} className="flex items-center gap-2 px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"><Save className="w-4 h-4" /> Сохранить</button>
+                <button onClick={() => setEditingUser(null)} className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-accent dark:hover:bg-accent">Отмена</button>
+                <button onClick={handleSaveEditUser} className="flex items-center gap-2 px-4 py-3 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"><Save className="w-4 h-4" /> Сохранить</button>
               </div>
             </div>
           </div>
@@ -477,7 +505,7 @@ export function AdminPanel({
             <button
               onClick={() => setUsersPage(Math.max(1, usersPage - 1))}
               disabled={usersPage === 1}
-              className="flex items-center gap-2 px-4 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-4 py-3 text-sm bg-card border border-gray-200 dark:border-gray-700 dark:text-gray-300 rounded-lg hover:bg-accent dark:hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ChevronLeft className="w-4 h-4" />
               Назад
@@ -493,7 +521,7 @@ export function AdminPanel({
             <button
               onClick={() => setUsersPage(Math.min(totalPages, usersPage + 1))}
               disabled={usersPage >= totalPages}
-              className="flex items-center gap-2 px-4 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-4 py-3 text-sm bg-card border border-gray-200 dark:border-gray-700 dark:text-gray-300 rounded-lg hover:bg-accent dark:hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Вперед
               <ChevronRight className="w-4 h-4" />
@@ -524,7 +552,7 @@ export function AdminPanel({
         <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Жалобы</h2>
         
         {/* Filters Panel */}
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+        <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-4">
           <div className="flex flex-wrap gap-4 items-end">
             <div className="flex-1 min-w-[200px]">
               <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Статус жалобы</label>
@@ -534,7 +562,7 @@ export function AdminPanel({
                   setReportsStatusFilter(e.target.value);
                   setReportsPage(1);
                 }}
-                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2.5 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               >
                 <option value="all">Все статусы</option>
                 <option value="pending">Новые</option>
@@ -552,7 +580,7 @@ export function AdminPanel({
                   setReportsReasonFilter(e.target.value);
                   setReportsPage(1);
                 }}
-                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2.5 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               >
                 <option value="all">Все причины</option>
                 <option value="spam">Спам / Реклама</option>
@@ -572,14 +600,14 @@ export function AdminPanel({
 
       <div className="space-y-4">
         {paginatedReports.length === 0 ? (
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-12 text-center">
+          <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-12 text-center">
             <p className="text-gray-500 dark:text-gray-400">Жалобы не найдены</p>
           </div>
         ) : (
           paginatedReports.map(report => {
             const pet = pets.find(p => p.id === report.petId);
             return (
-              <div key={report.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 sm:p-6">
+              <div key={report.id} className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-4 sm:p-6">
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2 mb-2">
@@ -587,7 +615,7 @@ export function AdminPanel({
                         report.status === 'pending' ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400' :
                         report.status === 'resolved' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' :
                         report.status === 'dismissed' ? 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300' :
-                        'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
+                        'bg-muted text-muted-foreground'
                       }`}>
                         {report.status === 'pending' ? 'Новая' : 
                          report.status === 'resolved' ? 'Решена' : 
@@ -597,7 +625,7 @@ export function AdminPanel({
                     </div>
                     
                     <p className="font-medium text-gray-900 dark:text-white mb-1">
-                      От: <a href={`/user/${report.reporterId}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 hover:underline">{report.reporterName}</a>
+                      От: <a href={`/user/${report.reporterId}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/90 hover:underline">{report.reporterName}</a>
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{report.description}</p>
                     
@@ -606,14 +634,14 @@ export function AdminPanel({
                         href={`/pet/${pet.id}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors group"
+                        className="flex items-center gap-3 p-3 bg-muted dark:bg-accent rounded-lg hover:bg-accent dark:hover:bg-accent transition-colors group"
                       >
                         <img src={pet.photos[0]} alt="" className="w-12 h-12 object-cover rounded-lg" />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-blue-600">{pet.breed || 'Без породы'}</p>
                           <p className="text-xs text-gray-600 dark:text-gray-400">{pet.city} · {pet.authorName}</p>
                         </div>
-                        <ExternalLink className="w-4 h-4 text-gray-400 dark:text-gray-500 group-hover:text-blue-500 shrink-0" />
+                        <ExternalLink className="w-4 h-4 text-gray-400 dark:text-gray-500 group-hover:text-primary shrink-0" />
                       </a>
                     )}
                     
@@ -634,7 +662,7 @@ export function AdminPanel({
                         </button>
                         <button
                           onClick={() => onUpdateReport({ ...report, status: 'dismissed', reviewedAt: new Date() })}
-                          className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                          className="p-2 text-gray-600 dark:text-gray-400 hover:bg-accent dark:hover:bg-accent rounded-lg transition-colors"
                           title="Отклонить"
                         >
                           <XCircle className="w-5 h-5" />
@@ -666,7 +694,7 @@ export function AdminPanel({
           <button
             onClick={() => setReportsPage(Math.max(1, reportsPage - 1))}
             disabled={reportsPage === 1}
-            className="flex items-center gap-2 px-4 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-4 py-3 text-sm bg-card border border-gray-200 dark:border-gray-700 dark:text-gray-300 rounded-lg hover:bg-accent dark:hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <ChevronLeft className="w-4 h-4" />
             Назад
@@ -682,7 +710,7 @@ export function AdminPanel({
           <button
             onClick={() => setReportsPage(Math.min(totalPages, reportsPage + 1))}
             disabled={reportsPage >= totalPages}
-            className="flex items-center gap-2 px-4 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-4 py-3 text-sm bg-card border border-gray-200 dark:border-gray-700 dark:text-gray-300 rounded-lg hover:bg-accent dark:hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Вперед
             <ChevronRight className="w-4 h-4" />
@@ -697,21 +725,22 @@ export function AdminPanel({
     <div className="space-y-6">
       <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Настройки платформы</h2>
       
-      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+      <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-6">
         <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Общие настройки</h3>
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Требуется ли модерация новых объявлений
             </label>
-            <select
-              value={settings.requireModeration ? 'yes' : 'no'}
-              onChange={(e) => setSettings(s => ({ ...s, requireModeration: e.target.value === 'yes' }))}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
-            >
-              <option value="yes">Да, требуется проверка</option>
-              <option value="no">Нет, публиковать сразу</option>
-            </select>
+            <Select value={settings.requireModeration ? 'yes' : 'no'} onValueChange={(v) => setSettings(s => ({ ...s, requireModeration: v === 'yes' }))}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Модерация" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="yes">Да, требуется проверка</SelectItem>
+                <SelectItem value="no">Нет, публиковать сразу</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           
           <div>
@@ -724,7 +753,7 @@ export function AdminPanel({
               max={365}
               value={settings.autoArchiveDays}
               onChange={(e) => setSettings(s => ({ ...s, autoArchiveDays: Math.max(1, parseInt(e.target.value) || 90) }))}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
+              className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
             />
           </div>
 
@@ -738,13 +767,13 @@ export function AdminPanel({
               max={20}
               value={settings.maxPhotos}
               onChange={(e) => setSettings(s => ({ ...s, maxPhotos: Math.max(1, Math.min(20, parseInt(e.target.value) || 5)) }))}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
+              className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
             />
           </div>
         </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+      <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-6">
         <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Управление городами</h3>
         <p className="text-sm text-gray-600 dark:text-gray-400">
           Список городов настраивается в файле /utils/cities.ts
@@ -754,7 +783,7 @@ export function AdminPanel({
       <div className="flex justify-end">
         <button
           onClick={handleSaveSettings}
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
         >
           Сохранить настройки
         </button>
@@ -763,15 +792,15 @@ export function AdminPanel({
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-background dark:bg-gray-900">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div className="bg-card border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-[1920px] mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button
                 onClick={onBack}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                className="p-2 hover:bg-accent dark:hover:bg-accent rounded-lg transition-colors"
               >
                 <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
               </button>
@@ -780,16 +809,12 @@ export function AdminPanel({
                 <p className="text-sm text-gray-600 dark:text-gray-400 hidden sm:block">Управление платформой</p>
               </div>
             </div>
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg text-sm">
-              <Settings className="w-4 h-4 shrink-0" />
-              Режим администратора
-            </div>
           </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div className="bg-card border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-[1920px] mx-auto px-4 md:px-6 overflow-x-auto scrollbar-hide">
           <div className="flex gap-1 min-w-max">
             {tabs.map(tab => {
@@ -800,7 +825,7 @@ export function AdminPanel({
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors whitespace-nowrap text-sm ${
                     activeTab === tab.id
-                      ? 'border-blue-600 text-blue-600'
+                      ? 'border-primary text-primary'
                       : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                   }`}
                 >
