@@ -42,8 +42,8 @@ export default function AdminPage() {
 
   if (isLoading || dataLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-background dark:bg-gray-900">
+        <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
       </div>
     );
   }
@@ -90,6 +90,7 @@ export default function AdminPage() {
         role: updatedUser.role,
         is_blocked: updatedUser.isBlocked,
         blocked_reason: updatedUser.blockedReason,
+        contacts: updatedUser.contacts,
       });
       setUsers((prev) => prev.map((x) => (x.id === u.id ? u : x)));
     } catch (err) {
@@ -169,7 +170,7 @@ export default function AdminPage() {
         pets={pets}
         users={users}
         reports={reports}
-        onBack={() => navigate('/')}
+        onBack={() => navigate('/search')}
         onUpdatePet={handleUpdatePet}
         onDeletePet={handleDeletePet}
         onUpdateUser={handleUpdateUser}

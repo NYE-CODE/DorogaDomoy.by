@@ -19,7 +19,7 @@ export function ContactRequiredModal({ open, onClose, onGoToProfile }: ContactRe
       onClick={onClose}
     >
       <div 
-        className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl transform transition-all animate-in fade-in zoom-in-95 duration-200"
+        className="bg-card rounded-2xl w-full max-w-md overflow-hidden shadow-2xl transform transition-all animate-in fade-in zoom-in-95 duration-200"
         onClick={e => e.stopPropagation()}
       >
         {/* Header with icon */}
@@ -48,7 +48,7 @@ export function ContactRequiredModal({ open, onClose, onGoToProfile }: ContactRe
           <div className="space-y-3">
             <button
               onClick={onGoToProfile}
-              className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 active:scale-[0.98] transition-all font-medium"
+              className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground py-3 rounded-lg hover:bg-primary/90 active:scale-[0.98] transition-all font-medium"
             >
               <User className="w-4 h-4" />
               {t.contactRequired.goToProfile}
@@ -56,7 +56,7 @@ export function ContactRequiredModal({ open, onClose, onGoToProfile }: ContactRe
             
             <button
               onClick={onClose}
-              className="w-full py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors font-medium"
+              className="w-full py-3 text-gray-700 dark:text-gray-300 hover:bg-accent dark:hover:bg-accent rounded-lg transition-colors font-medium"
             >
               {t.common.cancel}
             </button>

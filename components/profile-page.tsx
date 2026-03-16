@@ -18,9 +18,9 @@ const roleLabels: Record<string, string> = {
 
 const roleColors: Record<string, string> = {
   user: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
-  volunteer: 'bg-blue-100 text-blue-700',
+  volunteer: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
   shelter: 'bg-purple-100 text-purple-700',
-  admin: 'bg-red-100 text-red-700'
+  admin: 'bg-primary/10 dark:bg-primary/20 text-primary'
 };
 
 export default function ProfilePage() {
@@ -238,16 +238,16 @@ export default function ProfilePage() {
   const hasAnyContact = phone || viber || isTelegramLinked || telegram;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
+    <div className="min-h-screen bg-background dark:bg-gray-900 flex flex-col">
       <Header
-        onViewChange={() => navigate('/')}
+        onViewChange={() => navigate('/search')}
         selectedCity={selectedCity}
         onCityClick={() => setShowCityModal(true)}
       />
 
       <div className="flex-1 max-w-2xl mx-auto w-full px-4 md:px-6 py-8 space-y-6">
         {/* Profile Info */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div className="bg-card rounded-xl border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-start gap-4 mb-6">
             <div className="w-16 h-16 rounded-full overflow-hidden shrink-0 flex items-center justify-center bg-gradient-to-br from-blue-600 to-indigo-600">
               {user?.avatar ? (
@@ -276,40 +276,40 @@ export default function ProfilePage() {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t.profile.nameLabel}</label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
-                <input type="text" required value={name} onChange={e => setName(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-500 dark:placeholder-gray-400" placeholder={t.profile.namePlaceholder} />
+                <input type="text" required value={name} onChange={e => setName(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-card text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all placeholder-gray-500 dark:placeholder-gray-400" placeholder={t.profile.namePlaceholder} />
               </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t.profile.emailLabel}</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
-                <input type="email" required value={email} onChange={e => setEmail(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-500 dark:placeholder-gray-400" placeholder="email@example.by" />
+                <input type="email" required value={email} onChange={e => setEmail(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-card text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all placeholder-gray-500 dark:placeholder-gray-400" placeholder="email@example.by" />
               </div>
             </div>
-            <button type="submit" disabled={isSavingProfile} className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 active:scale-[0.98] transition-all font-medium disabled:opacity-70">
+            <button type="submit" disabled={isSavingProfile} className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground py-3 rounded-lg hover:bg-primary/90 active:scale-[0.98] transition-all font-medium disabled:opacity-70">
               {isSavingProfile ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <><Save className="w-4 h-4" /> {t.profile.saveChanges}</>}
             </button>
           </form>
         </div>
 
         {/* Password */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div className="bg-card rounded-xl border border-gray-200 dark:border-gray-700 p-6">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2"><Lock className="w-5 h-5" /> {t.profile.changePassword}</h3>
           <form onSubmit={handleSavePassword} className="space-y-4">
             <input type="hidden" autoComplete="username" value={user?.email || ''} readOnly />
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t.profile.currentPassword}</label>
-              <div className="relative"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" /><input type="password" autoComplete="current-password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-500 dark:placeholder-gray-400" placeholder="••••••••" /></div>
+              <div className="relative"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" /><input type="password" autoComplete="current-password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-card text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all placeholder-gray-500 dark:placeholder-gray-400" placeholder="••••••••" /></div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t.profile.newPassword}</label>
-              <div className="relative"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" /><input type="password" autoComplete="new-password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-500 dark:placeholder-gray-400" placeholder="••••••••" /></div>
+              <div className="relative"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" /><input type="password" autoComplete="new-password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-card text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all placeholder-gray-500 dark:placeholder-gray-400" placeholder="••••••••" /></div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t.profile.confirmPassword}</label>
-              <div className="relative"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" /><input type="password" autoComplete="new-password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-500 dark:placeholder-gray-400" placeholder="••••••••" /></div>
+              <div className="relative"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" /><input type="password" autoComplete="new-password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-card text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all placeholder-gray-500 dark:placeholder-gray-400" placeholder="••••••••" /></div>
             </div>
-            <button type="submit" disabled={isSavingPassword || !currentPassword || !newPassword || !confirmPassword} className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 active:scale-[0.98] transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed">
+            <button type="submit" disabled={isSavingPassword || !currentPassword || !newPassword || !confirmPassword} className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground py-3 rounded-lg hover:bg-primary/90 active:scale-[0.98] transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed">
               {isSavingPassword ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <><Save className="w-4 h-4" /> {t.profile.changePassword}</>}
             </button>
           </form>
@@ -327,21 +327,21 @@ export default function ProfilePage() {
         )}
 
         {/* Contacts */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div className="bg-card rounded-xl border border-gray-200 dark:border-gray-700 p-6">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">{t.profile.contacts}</h3>
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">{t.profile.contactsDescription}</p>
           <div className="space-y-5">
             <form onSubmit={handleSaveContacts} className="space-y-5">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t.profile.phone}</label>
-                <div className="relative"><Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" /><input type="tel" value={phone} onChange={e => setPhone(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-500 dark:placeholder-gray-400" placeholder="+375291234567" /></div>
+                <div className="relative"><Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" /><input type="tel" value={phone} onChange={e => setPhone(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-card text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all placeholder-gray-500 dark:placeholder-gray-400" placeholder="+375291234567" /></div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t.profile.viber}</label>
-                <div className="relative"><MessageCircle className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" /><input type="tel" value={viber} onChange={e => setViber(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder-gray-500 dark:placeholder-gray-400" placeholder="+375291234567" /></div>
+                <div className="relative"><MessageCircle className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" /><input type="tel" value={viber} onChange={e => setViber(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-card text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all placeholder-gray-500 dark:placeholder-gray-400" placeholder="+375291234567" /></div>
               </div>
-              <button type="submit" disabled={isSavingContacts} className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 active:scale-[0.98] transition-all font-medium disabled:opacity-70">
+              <button type="submit" disabled={isSavingContacts} className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground py-3 rounded-lg hover:bg-primary/90 active:scale-[0.98] transition-all font-medium disabled:opacity-70">
                 {isSavingContacts ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <><Save className="w-4 h-4" /> {t.profile.saveContacts}</>}
               </button>
             </form>
@@ -350,9 +350,9 @@ export default function ProfilePage() {
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t.profile.telegram}</label>
               {isTelegramLinked ? (
-                <div className="flex items-center justify-between gap-3 px-4 py-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <div className="flex items-center justify-between gap-3 px-4 py-3 bg-primary/10 border border-primary/20 rounded-lg">
                   <div className="flex items-center gap-3 min-w-0">
-                    <MessageCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0" />
+                    <MessageCircle className="w-5 h-5 text-primary shrink-0" />
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-medium text-gray-900 dark:text-white">@{user?.telegramUsername}</span>
@@ -360,22 +360,22 @@ export default function ProfilePage() {
                       {user?.telegramLinkedAt && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{new Date(user.telegramLinkedAt).toLocaleDateString('ru-RU')}</p>}
                     </div>
                   </div>
-                  <button type="button" onClick={handleUnlink} className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-sm text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                  <button type="button" onClick={handleUnlink} className="shrink-0 flex items-center gap-1.5 px-3 py-2.5 text-sm text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
                     <Unlink className="w-3.5 h-3.5" /> {t.profile.unlink}
                   </button>
                 </div>
               ) : linkCode ? (
-                <div className="space-y-4 border border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-900/10 rounded-lg p-4">
+                <div className="space-y-4 border border-primary/20 bg-blue-50/50 dark:bg-blue-900/10 rounded-lg p-4">
                   <div>
-                    <p className="text-sm text-blue-800 dark:text-blue-300 mb-2">
-                      <span className="font-semibold">1.</span> {t.profile.openBot} <a href={botUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-blue-700 underline inline-flex items-center gap-1">@{botUrl.split('/').pop()} <ExternalLink className="w-3 h-3" /></a>
+                    <p className="text-sm text-foreground mb-2">
+                      <span className="font-semibold">1.</span> {t.profile.openBot} <a href={botUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-primary underline inline-flex items-center gap-1">@{botUrl.split('/').pop()} <ExternalLink className="w-3 h-3" /></a>
                     </p>
-                    <p className="text-sm text-blue-800 dark:text-blue-300"><span className="font-semibold">2.</span> {t.profile.sendCommand}</p>
+                    <p className="text-sm text-foreground"><span className="font-semibold">2.</span> {t.profile.sendCommand}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <code className="flex-1 bg-white dark:bg-gray-800 border border-blue-200 dark:border-blue-800 rounded-lg px-4 py-2.5 text-base font-mono font-bold text-blue-900 dark:text-blue-300 text-center tracking-wider">/link {linkCode}</code>
-                    <button type="button" onClick={handleCopyCode} className="shrink-0 p-2.5 bg-white dark:bg-gray-800 border border-blue-200 dark:border-blue-800 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors" title="Копировать">
-                      {codeCopied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4 text-blue-600" />}
+                    <code className="flex-1 bg-card border border-primary/20 rounded-lg px-4 py-2.5 text-base font-mono font-bold text-foreground text-center tracking-wider">/link {linkCode}</code>
+                    <button type="button" onClick={handleCopyCode} className="shrink-0 p-2.5 bg-card border border-primary/20 rounded-lg hover:bg-primary/10 transition-colors" title="Копировать">
+                      {codeCopied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4 text-primary" />}
                     </button>
                   </div>
                   <div>
@@ -384,16 +384,16 @@ export default function ProfilePage() {
                       <span className="text-gray-500 dark:text-gray-400 font-mono">{formatTime(timeLeft)}</span>
                     </div>
                     <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-1">
-                      <div className="bg-blue-500 h-1 rounded-full transition-all duration-1000" style={{ width: `${(timeLeft / 300) * 100}%` }} />
+                      <div className="bg-primary h-1 rounded-full transition-all duration-1000" style={{ width: `${(timeLeft / 300) * 100}%` }} />
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <button type="button" onClick={() => { cleanupLinking(); setLinkCode(null); setIsLinking(false); }} className="flex-1 px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">{t.common.cancel}</button>
-                    <button type="button" onClick={handleRequestLink} className="flex-1 px-3 py-1.5 text-sm text-blue-700 dark:text-blue-400 border border-blue-300 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">{t.profile.newCode}</button>
+                    <button type="button" onClick={() => { cleanupLinking(); setLinkCode(null); setIsLinking(false); }} className="flex-1 px-3 py-3 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-accent dark:hover:bg-accent transition-colors">{t.common.cancel}</button>
+                    <button type="button" onClick={handleRequestLink} className="flex-1 px-3 py-3 text-sm text-primary border border-primary/40 dark:border-primary/50 rounded-lg hover:bg-primary/10 transition-colors">{t.profile.newCode}</button>
                   </div>
                 </div>
               ) : (
-                <button type="button" onClick={handleRequestLink} disabled={isLinking} className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-400 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors disabled:opacity-70">
+                <button type="button" onClick={handleRequestLink} disabled={isLinking} className="w-full flex items-center justify-center gap-2 px-4 py-3 border border-primary text-primary rounded-lg hover:bg-primary/10 transition-colors disabled:opacity-70">
                   <Link2 className="w-4 h-4" /> {t.profile.linkTelegram}
                 </button>
               )}
@@ -402,7 +402,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Notifications */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div className="bg-card rounded-xl border border-gray-200 dark:border-gray-700 p-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1 flex items-center gap-2">
             <Bell className="w-5 h-5 text-gray-600 dark:text-gray-400" />
             {t.notifications.title}
@@ -410,15 +410,15 @@ export default function ProfilePage() {
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-5">{t.notifications.description}</p>
 
           {!isTelegramLinked ? (
-            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 flex items-start gap-3">
-              <BellOff className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+            <div className="bg-primary/10 dark:bg-primary/20 border border-primary/20 dark:border-primary/30 rounded-xl p-4 flex items-start gap-3">
+              <BellOff className="w-5 h-5 text-primary shrink-0 mt-0.5" />
               <div>
-                <h4 className="font-medium text-amber-900 dark:text-amber-300 mb-1">{t.notifications.telegramNotLinked}</h4>
-                <p className="text-sm text-amber-800 dark:text-amber-400">{t.notifications.telegramNotLinkedHint}</p>
+                <h4 className="font-medium text-primary dark:text-primary mb-1">{t.notifications.telegramNotLinked}</h4>
+                <p className="text-sm text-gray-700 dark:text-gray-300">{t.notifications.telegramNotLinkedHint}</p>
               </div>
             </div>
           ) : notifLoading ? (
-            <div className="flex items-center justify-center py-8"><div className="w-6 h-6 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin" /></div>
+            <div className="flex items-center justify-center py-8"><div className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin" /></div>
           ) : (
             <div className="space-y-6">
               {/* Toggle */}
@@ -428,8 +428,8 @@ export default function ProfilePage() {
                   <p className="text-sm text-gray-500 dark:text-gray-400">{t.notifications.aboutNearby}</p>
                 </div>
                 <button type="button" onClick={() => handleToggleNotifications(!notifSettings?.notifications_enabled)} disabled={notifSaving}
-                  className={`relative w-14 h-7 rounded-full transition-colors duration-200 ${notifSettings?.notifications_enabled ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'}`}>
-                  <div className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white dark:bg-gray-800 rounded-full shadow transition-transform duration-200 ${notifSettings?.notifications_enabled ? 'translate-x-7' : ''}`} />
+                  className={`relative w-14 h-7 rounded-full transition-colors duration-200 ${notifSettings?.notifications_enabled ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-600'}`}>
+                  <div className={`absolute top-0.5 left-0.5 w-6 h-6 bg-card rounded-full shadow transition-transform duration-200 ${notifSettings?.notifications_enabled ? 'translate-x-7' : ''}`} />
                 </button>
               </div>
 
@@ -437,14 +437,14 @@ export default function ProfilePage() {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="font-medium text-gray-900 dark:text-white">{t.notifications.radius}</h4>
-                  <span className="text-sm font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-3 py-1 rounded-full">{localRadius} {t.notifications.km}</span>
+                  <span className="text-sm font-semibold text-primary bg-primary/10 dark:bg-primary/20 px-3 py-1 rounded-full">{localRadius} {t.notifications.km}</span>
                 </div>
-                <input type="range" min={1} max={10} step={0.5} value={localRadius} onChange={e => setLocalRadius(parseFloat(e.target.value))} className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-600" />
+                <input type="range" min={1} max={10} step={0.5} value={localRadius} onChange={e => setLocalRadius(parseFloat(e.target.value))} className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer [accent-color:var(--primary)]" />
                 <div className="flex justify-between text-xs text-gray-400 dark:text-gray-500 mt-1"><span>1 {t.notifications.km}</span><span>5 {t.notifications.km}</span><span>10 {t.notifications.km}</span></div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{t.notifications.radiusHint}</p>
               </div>
 
-              <button type="button" onClick={handleSaveNotifSettings} disabled={notifSaving} className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 active:scale-[0.98] transition-all font-medium disabled:opacity-70">
+              <button type="button" onClick={handleSaveNotifSettings} disabled={notifSaving} className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground py-3 rounded-lg hover:bg-primary/90 active:scale-[0.98] transition-all font-medium disabled:opacity-70">
                 {notifSaving ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <><Save className="w-4 h-4" /> {t.notifications.saveSettings}</>}
               </button>
             </div>

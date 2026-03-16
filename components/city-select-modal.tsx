@@ -54,13 +54,13 @@ export function CitySelectModal({ open, onClose, onSelect, currentCity }: CitySe
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50" onClick={handleClose} />
 
-      <div className="relative bg-white dark:bg-gray-800 rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+      <div className="relative bg-card rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
         <div className="flex items-center justify-between p-5 pb-4 border-b border-gray-100 dark:border-gray-700">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{t.citySelect.title}</h2>
           <button
             onClick={handleClose}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors text-gray-500 dark:text-gray-400"
+            className="p-2 hover:bg-accent dark:hover:bg-accent rounded-lg transition-colors text-gray-500 dark:text-gray-400"
           >
             <X className="w-5 h-5" />
           </button>
@@ -75,7 +75,7 @@ export function CitySelectModal({ open, onClose, onSelect, currentCity }: CitySe
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t.citySelect.searchPlaceholder}
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 dark:bg-gray-700 dark:text-white text-sm"
+              className="w-full pl-10 pr-4 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-card text-foreground text-sm placeholder:text-muted-foreground"
               autoFocus
             />
           </div>
@@ -89,10 +89,10 @@ export function CitySelectModal({ open, onClose, onSelect, currentCity }: CitySe
                 <button
                   key={oblast.name}
                   onClick={() => setActiveTab(activeTab === oblast.name ? 'all' : oblast.name)}
-                  className={`px-3 py-1.5 text-sm rounded-lg border transition-colors whitespace-nowrap ${
+                  className={`px-3 py-2.5 text-sm rounded-lg border transition-colors whitespace-nowrap ${
                     activeTab === oblast.name
-                      ? 'bg-gray-900 dark:bg-blue-600 text-white border-gray-900 dark:border-blue-600'
-                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-card text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-accent dark:hover:bg-accent'
                   }`}
                 >
                   {oblast.name}
@@ -108,10 +108,10 @@ export function CitySelectModal({ open, onClose, onSelect, currentCity }: CitySe
           {!searchQuery && activeTab === 'all' && (
             <button
               onClick={handleSelectAll}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl mb-4 transition-colors border ${
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg mb-4 transition-colors border ${
                 !currentCity
-                  ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-400'
-                  : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  ? 'bg-primary/10 border-primary/20 text-primary'
+                  : 'bg-card border-border text-foreground hover:bg-accent dark:hover:bg-accent'
               }`}
             >
               <MapPin className="w-5 h-5" />
@@ -186,10 +186,10 @@ function CityButton({ city, isActive, onClick }: { city: City; isActive: boolean
   return (
     <button
       onClick={onClick}
-      className={`text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+      className={`text-left px-3 py-2.5 rounded-lg text-sm transition-colors ${
         isActive
-          ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 font-medium'
-          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+          ? 'bg-primary/10 text-primary font-medium'
+          : 'text-gray-700 dark:text-gray-300 hover:bg-accent dark:hover:bg-accent'
       }`}
     >
       {city.name}

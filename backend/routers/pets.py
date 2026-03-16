@@ -205,6 +205,7 @@ async def create_pet(
     initial_status = "approved" if skip_moderation else "pending"
 
     pet_id = "pet-" + str(uuid.uuid4())[:8]
+    author_name = (data.author_name and data.author_name.strip()) or user.name or "Пользователь"
     pet = Pet(
         id=pet_id,
         photos=photo_urls,
@@ -219,7 +220,7 @@ async def create_pet(
         location_lat=data.location.lat,
         location_lng=data.location.lng,
         author_id=user.id,
-        author_name=user.name or "Пользователь",
+        author_name=author_name,
         contacts=_contacts_to_dict(data.contacts),
         moderation_status=initial_status,
     )

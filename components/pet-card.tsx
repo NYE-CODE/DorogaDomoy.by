@@ -94,9 +94,9 @@ export function PetCard({ pet, onClick, compact = false, onEdit, onDelete, sight
       borderColor = 'border-pink-200 dark:border-pink-800';
     } else if (pet.archiveReason.includes('приют')) {
       icon = <Building2 className="w-3.5 h-3.5" />;
-      bgColor = 'bg-blue-50 dark:bg-blue-900/20';
-      textColor = 'text-blue-700 dark:text-blue-400';
-      borderColor = 'border-blue-200 dark:border-blue-800';
+      bgColor = 'bg-gray-100 dark:bg-gray-700';
+      textColor = 'text-gray-700 dark:text-gray-300';
+      borderColor = 'border-gray-200 dark:border-gray-600';
     }
     
     return { icon, bgColor, textColor, borderColor };
@@ -123,7 +123,7 @@ export function PetCard({ pet, onClick, compact = false, onEdit, onDelete, sight
   if (compact) {
     return (
       <div 
-        className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 cursor-pointer hover:shadow-md transition-shadow relative group"
+        className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-3 cursor-pointer hover:shadow-md transition-shadow relative group"
         onClick={onClick}
       >
         <div className="flex gap-3">
@@ -154,7 +154,7 @@ export function PetCard({ pet, onClick, compact = false, onEdit, onDelete, sight
 
   return (
     <div 
-      className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+      className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer"
       onClick={onClick}
     >
       <div className="relative">
@@ -174,17 +174,17 @@ export function PetCard({ pet, onClick, compact = false, onEdit, onDelete, sight
           <div className="absolute top-3 right-3" ref={menuRef}>
             <button
               onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v); }}
-              className="p-1.5 bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg shadow-sm transition-colors"
+              className="p-1.5 bg-white/90 dark:bg-gray-800/90 hover:bg-card dark:hover:bg-card text-gray-700 dark:text-gray-300 rounded-lg shadow-sm transition-colors"
               title={t.common.options}
             >
               <MoreVertical className="w-4 h-4" />
             </button>
             {menuOpen && (
-              <div className="absolute right-0 top-full mt-2 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 py-1 z-50 animate-in fade-in zoom-in-95 duration-200">
+              <div className="absolute right-0 top-full mt-2 w-40 bg-card rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 py-1 z-50 animate-in fade-in zoom-in-95 duration-200">
                 {onEdit && (
                   <button
                     onClick={(e) => { e.stopPropagation(); handleEdit(e); setMenuOpen(false); }}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"
+                    className="w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-accent dark:hover:bg-accent flex items-center gap-2"
                   >
                     <Edit2 className="w-4 h-4" />
                     {t.common.edit}
@@ -193,7 +193,7 @@ export function PetCard({ pet, onClick, compact = false, onEdit, onDelete, sight
                 {onDelete && (
                   <button
                     onClick={(e) => { e.stopPropagation(); handleDelete(e); setMenuOpen(false); }}
-                    className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
+                    className="w-full text-left px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-accent dark:hover:bg-accent flex items-center gap-2"
                   >
                     <Trash2 className="w-4 h-4" />
                     {t.common.delete}
@@ -268,7 +268,7 @@ export function PetCard({ pet, onClick, compact = false, onEdit, onDelete, sight
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
-              className="text-blue-600 hover:text-blue-700 hover:underline"
+              className="text-primary hover:text-primary/90 hover:underline"
             >
               {pet.authorName}
             </a>
@@ -283,7 +283,7 @@ export function PetCard({ pet, onClick, compact = false, onEdit, onDelete, sight
               {pet.contacts.phone && (
                 <button
                   onClick={(e) => handleContactClick(e, `tel:${pet.contacts.phone}`)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors text-sm"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-muted text-muted-foreground rounded-lg hover:bg-accent transition-colors text-sm"
                 >
                   <Phone className="w-4 h-4" />
                   {t.profile.phone}
@@ -292,7 +292,7 @@ export function PetCard({ pet, onClick, compact = false, onEdit, onDelete, sight
               {pet.contacts.telegram && (
                 <button
                   onClick={(e) => handleContactClick(e, `https://t.me/${(pet.contacts.telegram ?? '').replace('@', '')}`)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-sky-50 text-sky-700 rounded-lg hover:bg-sky-100 transition-colors text-sm"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors text-sm"
                 >
                   <MessageCircle className="w-4 h-4" />
                   {t.profile.telegram}

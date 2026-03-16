@@ -103,7 +103,7 @@ export function MyAdsPage({ pets, onBack, onCreateClick, onEditPet, onDeletePet 
   const tabLabel = (key: string) => t.moderation[key as keyof typeof t.moderation] ?? key;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
+    <div className="min-h-screen bg-background dark:bg-gray-900 flex flex-col">
       <Header
         onViewChange={onBack}
         selectedCity={selectedCity}
@@ -112,7 +112,7 @@ export function MyAdsPage({ pets, onBack, onCreateClick, onEditPet, onDeletePet 
 
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 md:px-6 py-8">
         {myAds.length === 0 ? (
-          <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div className="text-center py-16 bg-card rounded-lg border border-gray-200 dark:border-gray-700">
             <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
               <Plus className="w-8 h-8 text-gray-400" />
             </div>
@@ -122,7 +122,7 @@ export function MyAdsPage({ pets, onBack, onCreateClick, onEditPet, onDeletePet 
             </p>
             <button
               onClick={onCreateClick}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
             >
               <Plus className="w-4 h-4" />
               {t.myAds.createFirst}
@@ -137,7 +137,7 @@ export function MyAdsPage({ pets, onBack, onCreateClick, onEditPet, onDeletePet 
               </h2>
               <button
                 onClick={onCreateClick}
-                className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors shadow-sm font-medium text-sm"
+                className="flex items-center gap-2 px-4 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors shadow-sm font-medium text-sm"
               >
                 <Plus className="w-4 h-4" />
                 {t.myAds.createNew}
@@ -145,7 +145,7 @@ export function MyAdsPage({ pets, onBack, onCreateClick, onEditPet, onDeletePet 
             </div>
 
             {/* Status tabs — styled like filters */}
-            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm mb-6">
+            <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm mb-6">
               <div className="flex gap-2 p-2 overflow-x-auto">
                 {STATUS_TABS.map((tab) => {
                   const count = myAds.filter((p) => p.moderationStatus === tab.value).length;
@@ -155,8 +155,8 @@ export function MyAdsPage({ pets, onBack, onCreateClick, onEditPet, onDeletePet 
                       onClick={() => setStatusTab(tab.value)}
                       className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
                         statusTab === tab.value
-                          ? 'bg-blue-600 text-white shadow-sm'
-                          : 'bg-gray-100 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 border border-transparent hover:bg-gray-200 dark:hover:bg-gray-700'
+                          ? 'bg-primary text-primary-foreground shadow-sm'
+                          : 'bg-muted dark:bg-accent/50 text-gray-700 dark:text-gray-300 border border-transparent hover:bg-accent dark:hover:bg-accent'
                       }`}
                     >
                       {tabLabel(tab.labelKey)}
@@ -174,7 +174,7 @@ export function MyAdsPage({ pets, onBack, onCreateClick, onEditPet, onDeletePet 
             </div>
 
             {filteredAds.length === 0 ? (
-              <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+              <div className="text-center py-12 bg-card rounded-lg border border-gray-200 dark:border-gray-700">
                 <h3 className="text-base font-medium text-gray-900 dark:text-white mb-2">{t.myAds.noAdsInTab}</h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                   {statusTab === 'approved' && t.myAds.createFirst}
@@ -184,7 +184,7 @@ export function MyAdsPage({ pets, onBack, onCreateClick, onEditPet, onDeletePet 
                 {statusTab === 'approved' && (
                   <button
                     onClick={onCreateClick}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    className="inline-flex items-center gap-2 px-4 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
                   >
                     <Plus className="w-4 h-4" />
                     {t.myAds.createFirst}
@@ -213,7 +213,7 @@ export function MyAdsPage({ pets, onBack, onCreateClick, onEditPet, onDeletePet 
                     <button
                       onClick={() => setPage(page - 1)}
                       disabled={page === 1}
-                      className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 bg-card border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-accent dark:hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       <ChevronLeft className="w-4 h-4" />
                       {t.common.back}
@@ -222,7 +222,7 @@ export function MyAdsPage({ pets, onBack, onCreateClick, onEditPet, onDeletePet 
                     <button
                       onClick={() => setPage(page + 1)}
                       disabled={page === totalPages}
-                      className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 bg-card border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-accent dark:hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       {t.common.forward}
                       <ChevronRight className="w-4 h-4" />

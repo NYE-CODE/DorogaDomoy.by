@@ -17,13 +17,13 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>(() => {
     if (typeof window === 'undefined') return 'ru';
     const stored = localStorage.getItem(STORAGE_KEY) as Locale | null;
-    if (stored === 'ru' || stored === 'be') return stored;
+    if (stored === 'ru' || stored === 'be' || stored === 'en') return stored;
     return 'ru';
   });
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, locale);
-    document.documentElement.lang = locale === 'be' ? 'be' : 'ru';
+    document.documentElement.lang = locale === 'be' ? 'be' : locale === 'en' ? 'en' : 'ru';
   }, [locale]);
 
   const setLocale = (l: Locale) => setLocaleState(l);

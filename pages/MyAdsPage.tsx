@@ -41,8 +41,8 @@ export default function MyAdsPageRoute() {
 
   if (isLoading || dataLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-background dark:bg-gray-900">
+        <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
       </div>
     );
   }
@@ -55,38 +55,7 @@ export default function MyAdsPageRoute() {
       setShowContactRequiredModal(true);
       return;
     }
-    setEditingPet(null);
-    setShowForm(true);
-  };
-
-  const handleCreatePet = async (formData: PetFormData) => {
-    if (!user) return;
-    try {
-      const newPet = await petsApi.create({
-        photos: formData.photos,
-        animalType: formData.animalType,
-        breed: formData.breed,
-        colors: formData.colors,
-        gender: formData.gender,
-        approximateAge: formData.approximateAge,
-        status: formData.status,
-        description: formData.description,
-        city: formData.city,
-        location: formData.location,
-        contacts: formData.contacts,
-      });
-      setPets((prev) => [newPet, ...prev]);
-      setShowForm(false);
-      if (newPet.moderationStatus === 'approved') {
-        toast.success(t.app.adPublished);
-      } else {
-        toast.success(t.app.adSentModeration, {
-          description: 'После проверки оно появится на карте',
-        });
-      }
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t.common.error);
-    }
+    navigate('/create');
   };
 
   const handleUpdatePet = async (formData: PetFormData) => {
@@ -149,7 +118,7 @@ export default function MyAdsPageRoute() {
     <>
       <MyAdsList
         pets={pets}
-        onBack={() => navigate('/')}
+        onBack={() => navigate('/search')}
         onCreateClick={handleCreateClick}
         onEditPet={(pet) => {
           setEditingPet(pet);
@@ -158,15 +127,15 @@ export default function MyAdsPageRoute() {
         onDeletePet={setDeletingPet}
       />
 
-      {showForm && (
+      {showForm && editingPet && (
         <PetForm
           onClose={() => {
             setShowForm(false);
             setEditingPet(null);
           }}
-          onSubmit={editingPet ? handleUpdatePet : handleCreatePet}
-          initialData={editingPet || undefined}
-          isEditing={!!editingPet}
+          onSubmit={handleUpdatePet}
+          initialData={editingPet}
+          isEditing
         />
       )}
 

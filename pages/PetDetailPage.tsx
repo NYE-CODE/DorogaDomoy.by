@@ -110,13 +110,13 @@ function ImageCarousel({ photos, alt }: { photos: string[]; alt: string }) {
 
       <button
         onClick={() => goTo(current - 1)}
-        className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+        className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 dark:bg-gray-800/80 hover:bg-card dark:hover:bg-card rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
       >
         <ChevronLeft className="w-5 h-5 text-gray-800 dark:text-gray-200" />
       </button>
       <button
         onClick={() => goTo(current + 1)}
-        className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+        className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 dark:bg-gray-800/80 hover:bg-card dark:hover:bg-card rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
       >
         <ChevronRight className="w-5 h-5 text-gray-800 dark:text-gray-200" />
       </button>
@@ -128,8 +128,8 @@ function ImageCarousel({ photos, alt }: { photos: string[]; alt: string }) {
             onClick={() => setCurrent(i)}
             className={`w-2.5 h-2.5 rounded-full transition-all ${
               i === current
-                ? 'bg-white dark:bg-gray-800 scale-110 shadow-md'
-                : 'bg-white/50 dark:bg-gray-800/50 hover:bg-white/75 dark:hover:bg-gray-800/75'
+                ? 'bg-card scale-110 shadow-md'
+                : 'bg-white/50 dark:bg-gray-800/50 hover:bg-card/90 dark:hover:bg-card/90'
             }`}
           />
         ))}
@@ -196,9 +196,9 @@ export default function PetDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-background dark:bg-gray-900 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+          <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
           <p className="text-gray-600 dark:text-gray-400">{t.petDetail.loading}</p>
         </div>
       </div>
@@ -207,11 +207,11 @@ export default function PetDetailPage() {
 
   if (error || !pet) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col items-center justify-center gap-4 p-4">
+      <div className="min-h-screen bg-background dark:bg-gray-900 flex flex-col items-center justify-center gap-4 p-4">
         <p className="text-gray-600 dark:text-gray-400 text-lg">{t.petDetail.notFound}</p>
         <a
-          href="/"
-          className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          href="/search"
+          className="flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           {t.petDetail.toMain}
@@ -237,9 +237,9 @@ export default function PetDetailPage() {
       borderColor = 'border-pink-200 dark:border-pink-800';
     } else if (pet.archiveReason.includes('приют')) {
       icon = <Building2 className="w-4 h-4" />;
-      bgColor = 'bg-blue-50 dark:bg-blue-900/20';
-      textColor = 'text-blue-700 dark:text-blue-400';
-      borderColor = 'border-blue-200 dark:border-blue-800';
+      bgColor = 'bg-green-50 dark:bg-green-900/20';
+      textColor = 'text-green-700 dark:text-green-400';
+      borderColor = 'border-gray-200 dark:border-gray-700';
     }
 
     return { icon, bgColor, textColor, borderColor };
@@ -418,23 +418,23 @@ export default function PetDetailPage() {
   };
 
   const statusBg = pet.status === 'searching'
-    ? 'bg-red-50 border-red-200'
-    : 'bg-blue-50 border-blue-200';
+    ? 'bg-primary/10 border-primary/30 dark:bg-red-900/20 dark:border-red-800'
+    : 'bg-green-100 border-green-200';
 
   const statusText = pet.status === 'searching'
-    ? 'text-red-700'
-    : 'text-blue-700';
+    ? 'text-primary font-medium dark:text-red-400'
+    : 'text-green-700 font-medium';
 
   const canAddSighting = pet.status === 'searching' && !pet.isArchived
     && !(currentUser && (pet.authorId === currentUser.id || (currentUser.id === 'user-demo' && pet.authorId === 'current-user')));
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-background dark:bg-gray-900">
       {/* Top bar */}
       <div className="sticky top-0 z-30 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
           <a
-            href="/"
+            href="/search"
             className="flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -450,7 +450,7 @@ export default function PetDetailPage() {
       <div className="max-w-4xl mx-auto px-4 py-6 md:py-8">
         {/* Status banner */}
         <div className={`mb-6 px-4 py-3 rounded-xl border ${statusBg} flex items-center gap-3`}>
-          <div className={`w-3 h-3 rounded-full ${pet.status === 'searching' ? 'bg-red-500 animate-pulse' : 'bg-blue-500'}`} />
+          <div className={`w-3 h-3 rounded-full ${pet.status === 'searching' ? 'bg-primary dark:bg-red-500 animate-pulse' : 'bg-green-500'}`} />
           <span className={`${statusText}`}>
             {pet.status === 'searching' ? t.petDetail.helpFind : t.petDetail.helpFindOwner}
           </span>
@@ -464,28 +464,28 @@ export default function PetDetailPage() {
           <div className="relative flex-1 min-w-[180px]" ref={shareMenuRef}>
             <button
               onClick={() => setShowShareMenu(!showShareMenu)}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
             >
               <Share2 className="w-5 h-5" />
               {t.petDetail.share}
             </button>
 
             {showShareMenu && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-xl z-50 overflow-hidden">
+              <div className="absolute top-full left-0 right-0 mt-2 bg-card rounded-xl border border-gray-200 dark:border-gray-700 shadow-xl z-50 overflow-hidden">
                 <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
                   <span className="text-sm font-semibold text-gray-900 dark:text-white">{t.petDetail.share}</span>
-                  <button onClick={() => setShowShareMenu(false)} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"><X className="w-4 h-4 text-gray-400 dark:text-gray-500" /></button>
+                  <button onClick={() => setShowShareMenu(false)} className="p-1 hover:bg-accent dark:hover:bg-accent rounded-lg"><X className="w-4 h-4 text-gray-400 dark:text-gray-500" /></button>
                 </div>
 
                 <div className="py-1">
-                  <button onClick={handleShareTelegram} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                  <button onClick={handleShareTelegram} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent dark:hover:bg-accent transition-colors">
                     <span className="w-8 h-8 flex items-center justify-center rounded-full bg-[#2AABEE]/10">
                       <svg viewBox="0 0 24 24" className="w-4.5 h-4.5 text-[#2AABEE]" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
                     </span>
                     <span className="text-sm text-gray-700 dark:text-gray-300">Telegram</span>
                   </button>
 
-                  <button onClick={handleShareX} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                  <button onClick={handleShareX} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent dark:hover:bg-accent transition-colors">
                     <span className="w-8 h-8 flex items-center justify-center rounded-full bg-black/5 dark:bg-white/10">
                       <svg viewBox="0 0 24 24" className="w-4 h-4 text-gray-900 dark:text-white" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
                     </span>
@@ -495,21 +495,21 @@ export default function PetDetailPage() {
                   <div className="border-t border-gray-100 dark:border-gray-700 my-1" />
                   <div className="px-4 py-1.5"><span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">Instagram</span></div>
 
-                  <button onClick={handleShareInstagramPost} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                  <button onClick={handleShareInstagramPost} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent dark:hover:bg-accent transition-colors">
                     <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 text-white">
                       <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
                     </span>
                     <span className="text-sm text-gray-700 dark:text-gray-300">Пост</span>
                   </button>
 
-                  <button onClick={handleShareInstagramStory} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                  <button onClick={handleShareInstagramStory} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent dark:hover:bg-accent transition-colors">
                     <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 text-white">
                       <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/></svg>
                     </span>
                     <span className="text-sm text-gray-700 dark:text-gray-300">Stories</span>
                   </button>
 
-                  <button onClick={handleShareInstagramDM} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                  <button onClick={handleShareInstagramDM} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent dark:hover:bg-accent transition-colors">
                     <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 text-white">
                       <MessageCircle className="w-4 h-4" />
                     </span>
@@ -518,7 +518,7 @@ export default function PetDetailPage() {
 
                   <div className="border-t border-gray-100 dark:border-gray-700 my-1" />
 
-                  <button onClick={() => { handleCopyLink(); setShowShareMenu(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                  <button onClick={() => { handleCopyLink(); setShowShareMenu(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent dark:hover:bg-accent transition-colors">
                     <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700">
                       {linkCopied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4 text-gray-600 dark:text-gray-400" />}
                     </span>
@@ -531,17 +531,17 @@ export default function PetDetailPage() {
           <div className="relative flex-1 min-w-[180px]" ref={flyerMenuRef}>
             <button
               onClick={() => setShowFlyerMenu(!showFlyerMenu)}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white dark:bg-gray-800 border-2 border-gray-900 dark:border-gray-100 text-gray-900 dark:text-white rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-card border-2 border-primary text-primary rounded-lg hover:bg-primary/5 dark:hover:bg-primary/10 transition-colors"
             >
               <Printer className="w-5 h-5" />
               Скачать листовку
             </button>
             {showFlyerMenu && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-xl z-50 overflow-hidden">
+              <div className="absolute top-full left-0 right-0 mt-2 bg-card rounded-xl border border-gray-200 dark:border-gray-700 shadow-xl z-50 overflow-hidden">
                 <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700">
                   <span className="text-sm font-semibold text-gray-900 dark:text-white">Выберите шаблон</span>
                 </div>
-                <button onClick={handleFlyerClassic} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                <button onClick={handleFlyerClassic} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent dark:hover:bg-accent transition-colors">
                   <span className="w-10 h-10 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700 shrink-0">
                     <Printer className="w-5 h-5 text-gray-700 dark:text-gray-300" />
                   </span>
@@ -550,7 +550,7 @@ export default function PetDetailPage() {
                     <p className="text-xs text-gray-500 dark:text-gray-400">Фото, описание, контакты</p>
                   </div>
                 </button>
-                <button onClick={handleFlyerQR} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-t border-gray-100 dark:border-gray-700">
+                <button onClick={handleFlyerQR} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent dark:hover:bg-accent transition-colors border-t border-gray-100 dark:border-gray-700">
                   <span className="w-10 h-10 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700 shrink-0">
                     <svg viewBox="0 0 24 24" className="w-5 h-5 text-gray-700 dark:text-gray-300" fill="currentColor"><path d="M3 11h2v2H3v-2zm0-4h2v2H3V7zm4 4h2v2H7v-2zm0-4h2v2H7V7zm-4-4h6v6H3V3zm2 4h2V5H5v2zm8-4h6v6h-6V3zm2 4h2V5h-2v2zM3 13h6v6H3v-6zm2 4h2v-2H5v2zm8 0h2v2h-2v-2zm0-4h2v2h-2v-2zm4 4h2v2h-2v-2zm0-4h2v2h-2v-2zm4 0h2v2h-2v-2zm0 4h2v2h-2v-2zm-4-8h2v2h-2V9zm4 0h2v2h-2V9z"/></svg>
                   </span>
@@ -567,7 +567,7 @@ export default function PetDetailPage() {
         {/* Main info grid */}
         <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Left column: details */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 space-y-5">
+          <div className="bg-card rounded-xl border border-gray-200 dark:border-gray-700 p-6 space-y-5">
             <h2 className="text-xl text-gray-900 dark:text-white pb-3 border-b border-gray-100 dark:border-gray-700">
               {t.pet.information}
             </h2>
@@ -618,7 +618,7 @@ export default function PetDetailPage() {
           {/* Right column: description + contacts */}
           <div className="space-y-6">
             {/* Description */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+            <div className="bg-card rounded-xl border border-gray-200 dark:border-gray-700 p-6">
               <h2 className="text-xl text-gray-900 dark:text-white pb-3 border-b border-gray-100 dark:border-gray-700 mb-4">
                 {t.pet.description}
               </h2>
@@ -627,7 +627,7 @@ export default function PetDetailPage() {
 
             {/* Contacts */}
             {!pet.isArchived && (
-              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+              <div className="bg-card rounded-xl border border-gray-200 dark:border-gray-700 p-6">
                 <h2 className="text-xl text-gray-900 dark:text-white pb-3 border-b border-gray-100 dark:border-gray-700 mb-4">
                   {t.pet.contacts}
                 </h2>
@@ -640,7 +640,7 @@ export default function PetDetailPage() {
                     href={`/user/${pet.authorId}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-blue-700 hover:underline transition-colors"
+                    className="text-primary hover:text-primary/90 hover:underline transition-colors"
                   >
                     {pet.authorName}
                   </a>
@@ -650,7 +650,7 @@ export default function PetDetailPage() {
                   {pet.contacts.phone && (
                     <button
                       onClick={() => handleContactClick(`tel:${pet.contacts.phone}`)}
-                      className="flex items-center gap-3 px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
+                      className="flex items-center gap-3 px-4 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
                     >
                       <Phone className="w-5 h-5" />
                       <span>{pet.contacts.phone}</span>
@@ -659,7 +659,7 @@ export default function PetDetailPage() {
                   {pet.contacts.telegram && (
                     <button
                       onClick={() => handleContactClick(`https://t.me/${pet.contacts.telegram!.replace('@', '')}`)}
-                      className="flex items-center gap-3 px-4 py-3 bg-sky-500 text-white rounded-xl hover:bg-sky-600 transition-colors"
+                      className="flex items-center gap-3 px-4 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
                     >
                       <MessageCircle className="w-5 h-5" />
                       <span>{t.profile.telegram}</span>
@@ -668,7 +668,7 @@ export default function PetDetailPage() {
                   {pet.contacts.viber && (
                     <button
                       onClick={() => handleContactClick(`viber://chat?number=${pet.contacts.viber!.replace('+', '')}`)}
-                      className="flex items-center gap-3 px-4 py-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors"
+                      className="flex items-center gap-3 px-4 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
                     >
                       <MessageCircle className="w-5 h-5" />
                       <span>{t.profile.viber}</span>
@@ -680,7 +680,7 @@ export default function PetDetailPage() {
 
             {/* Archived notice */}
             {pet.isArchived && (
-              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+              <div className="bg-card rounded-xl border border-gray-200 dark:border-gray-700 p-6">
                 <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg text-center">
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{t.petDetail.contactsHiddenArchived}</p>
                   {archiveBadge && (
@@ -699,7 +699,7 @@ export default function PetDetailPage() {
 
         {/* Map section */}
         <div className="mt-8">
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="bg-card rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div className="flex items-center gap-2">
                 <MapPin className="w-5 h-5 text-gray-600 dark:text-gray-400 shrink-0" />
@@ -709,7 +709,7 @@ export default function PetDetailPage() {
               {canAddSighting && (
                 <button
                   onClick={() => setShowSightingForm(true)}
-                  className="flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors text-sm font-medium shrink-0"
+                  className="flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium shrink-0"
                 >
                   <Eye className="w-4 h-4" />
                   {t.petDetail.sawSimilar}
@@ -717,9 +717,9 @@ export default function PetDetailPage() {
               )}
             </div>
             {pet.status === 'searching' && !pet.isArchived && (
-              <div className={`px-6 py-3 text-sm ${canAddSighting ? 'bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800/50' : 'bg-gray-50 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-700'}`}>
+              <div className={`px-6 py-3 text-sm ${canAddSighting ? 'bg-primary/10 dark:bg-primary/20 border-b border-primary/20 dark:border-primary/30' : 'bg-gray-50 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-700'}`}>
                 {canAddSighting ? (
-                  <p className="text-amber-800 dark:text-amber-200">
+                  <p className="text-foreground">
                     {t.petDetail.sightingHintForVisitors.replace(/^\s*\u{1F441}\s*/u, '')}
                   </p>
                 ) : (
@@ -740,7 +740,7 @@ export default function PetDetailPage() {
           <div className="mt-6 mb-8 text-center">
             <button
               onClick={handleReportPet}
-              className="inline-flex items-center gap-2 px-4 py-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors text-sm"
+              className="inline-flex items-center gap-2 px-4 py-3 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-accent dark:hover:bg-accent rounded-lg transition-colors text-sm"
             >
               <AlertTriangle className="w-4 h-4" />
               {t.petDetail.report}

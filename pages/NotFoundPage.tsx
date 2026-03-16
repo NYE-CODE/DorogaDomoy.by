@@ -4,7 +4,7 @@ import { useI18n } from '../context/I18nContext';
 export default function NotFoundPage() {
   const { t } = useI18n();
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-background dark:bg-gray-900 flex items-center justify-center px-4">
       <div className="text-center max-w-md">
         <div className="relative mx-auto w-40 h-40 mb-6">
           <div className="absolute inset-0 flex items-center justify-center text-8xl">
@@ -22,8 +22,8 @@ export default function NotFoundPage() {
         </p>
 
         <a
-          href="/"
-          className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors shadow-sm"
+          href="/search"
+          className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors shadow-sm"
         >
           <ArrowLeft className="w-4 h-4" />
           {t.notFoundPage.toMain}

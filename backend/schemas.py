@@ -82,7 +82,7 @@ class PetBase(BaseModel):
 
 
 class PetCreate(PetBase):
-    pass
+    author_name: Optional[str] = None  # для отображения в объявлении при «другие контакты»
 
 
 class PetUpdate(BaseModel):
