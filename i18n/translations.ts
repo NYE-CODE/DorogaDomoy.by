@@ -1,4 +1,4 @@
-﻿export type Locale = 'ru' | 'be' | 'en';
+export type Locale = 'ru' | 'be' | 'en';
 
 export const translations = {
   ru: {
@@ -112,6 +112,8 @@ export const translations = {
       contactsUpdated: 'Контакты обновлены!',
       passwordChanged: 'Пароль изменен!',
       passwordsNotMatch: 'Пароли не совпадают',
+      wrongPassword: 'Неверный текущий пароль',
+      avatarUploaded: 'Фото загружено',
       linked: 'Привязан',
       unlink: 'Отвязать',
       linkTelegram: 'Привязать Telegram',
@@ -694,6 +696,8 @@ export const translations = {
       contactsUpdated: 'Кантакты абноўлены!',
       passwordChanged: 'Пароль зменены!',
       passwordsNotMatch: 'Паролі не супадаюць',
+      wrongPassword: 'Няправільны бягучы пароль',
+      avatarUploaded: 'Фота загружана',
       linked: 'Прывязаны',
       unlink: 'Адвязаць',
       linkTelegram: 'Прывязаць Telegram',
@@ -1271,6 +1275,8 @@ export const translations = {
       contactsUpdated: 'Contacts updated!',
       passwordChanged: 'Password changed!',
       passwordsNotMatch: 'Passwords do not match',
+      wrongPassword: 'Incorrect current password',
+      avatarUploaded: 'Photo uploaded',
       linked: 'Linked',
       unlink: 'Unlink',
       linkTelegram: 'Link Telegram',
