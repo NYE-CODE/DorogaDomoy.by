@@ -11,7 +11,7 @@ import { Footer } from "./components/footer";
 import { useFeatureFlags } from "../../context/FeatureFlagsContext";
 
 export default function App() {
-  const { ff_landing_show_help } = useFeatureFlags();
+  const { ff_landing_show_help, ff_landing_show_stats } = useFeatureFlags();
   return (
     <div className="min-h-screen">
       <Header />
@@ -22,7 +22,7 @@ export default function App() {
       <Media />
       <Partners />
       <FAQ />
-      {ff_landing_show_help && <Help />}
+      {(ff_landing_show_help || ff_landing_show_stats) && <Help />}
       <Footer />
     </div>
   );

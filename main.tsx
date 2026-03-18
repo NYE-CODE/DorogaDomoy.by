@@ -14,7 +14,8 @@ import CreateAdPage from './pages/CreateAdPage.tsx'
 import EditAdPage from './pages/EditAdPage.tsx'
 import SettingsPageRoute from './pages/SettingsPage.tsx'
 import { TermsPage } from './components/terms-page'
-import { AuthProvider } from './context/AuthContext.tsx'
+import { AuthModal } from './components/auth/AuthModal'
+import { AuthProvider, useAuth } from './context/AuthContext.tsx'
 import { ThemeProvider, useTheme } from './context/ThemeContext.tsx'
 import { I18nProvider } from './context/I18nContext.tsx'
 import './styles/globals.css';
@@ -43,6 +44,16 @@ function TermsRoute() {
   return <TermsPage onBack={() => navigate(-1)} />;
 }
 
+function AuthModalGlobal() {
+  const navigate = useNavigate();
+  const { closeAuthModal } = useAuth();
+  const handleNavigateToTerms = () => {
+    closeAuthModal();
+    navigate('/search');
+  };
+  return <AuthModal onNavigateToTerms={handleNavigateToTerms} />;
+}
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ThemeProvider>
@@ -51,6 +62,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <MetrikaTracker />
           <GlobalToaster />
           <AuthProvider>
+            <AuthModalGlobal />
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/search" element={<SearchPage />} />

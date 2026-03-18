@@ -28,6 +28,8 @@ interface AuthContextType {
   logout: () => void;
   updateContacts: (contacts: User['contacts']) => Promise<void>;
   updateProfile: (name: string, email: string) => Promise<void>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+  uploadAvatar: (file: File) => Promise<void>;
   refreshUser: () => Promise<void>;
   openAuthModal: () => void;
   closeAuthModal: () => void;
@@ -81,6 +83,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(u);
   };
 
+  const changePassword = async (currentPassword: string, newPassword: string) => {
+    await authApi.changePassword(currentPassword, newPassword);
+  };
+
+  const uploadAvatar = async (file: File) => {
+    if (!user) return;
+    await authApi.uploadAvatar(file);
+    const u = await authApi.me();
+    setUser(u);
+  };
+
   const refreshUser = async () => {
     try {
       const u = await authApi.me();
@@ -104,6 +117,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         logout,
         updateContacts,
         updateProfile,
+        changePassword,
+        uploadAvatar,
         refreshUser,
         openAuthModal,
         closeAuthModal,

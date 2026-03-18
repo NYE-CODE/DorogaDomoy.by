@@ -3,7 +3,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { MapPin, Calendar, Phone, Mail, MessageCircle, Share2, Clock, ShieldBan, ShieldCheck } from 'lucide-react';
 import { User, useAuth } from '../context/AuthContext';
 import { Pet } from '../types/pet';
-import { usersApi, petsApi } from '../api/client';
+import { API_BASE, usersApi, petsApi } from '../api/client';
 import { useI18n } from '../context/I18nContext';
 import { toast } from 'sonner';
 import { Header } from '../components/layout/Header';
@@ -174,8 +174,10 @@ export default function UserProfilePage() {
   }
 
   const avatarUrl =
-    user.avatar ||
-    'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop';
+    (user.avatar && (user.avatar.startsWith('http') || user.avatar.startsWith('data:')
+      ? user.avatar
+      : `${API_BASE}${user.avatar}`))
+    || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop';
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-background flex flex-col">

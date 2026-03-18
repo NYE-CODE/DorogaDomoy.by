@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router';
 import { User, Mail, Phone, MessageCircle, Save, Lock, Link2, Unlink, Bell, BellOff, Copy, Check, ExternalLink, Camera, Send, X, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useI18n } from '../context/I18nContext';
-import { telegramApi, notificationsApi, type NotificationSettingsData } from '../api/client';
+import { API_BASE, telegramApi, notificationsApi, type NotificationSettingsData } from '../api/client';
 import { toast } from 'sonner';
 import { Header } from './layout/Header';
 import { CitySelectModal } from './city-select-modal';
@@ -25,7 +25,7 @@ const roleColors: Record<string, string> = {
 
 export default function ProfilePage() {
   const navigate = useNavigate();
-  const { user, updateContacts, updateProfile, refreshUser } = useAuth();
+  const { user, updateContacts, updateProfile, changePassword, uploadAvatar, refreshUser } = useAuth();
   const { t } = useI18n();
   
   const [name, setName] = useState('');
@@ -41,6 +41,7 @@ export default function ProfilePage() {
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isSavingPassword, setIsSavingPassword] = useState(false);
   const [isSavingContacts, setIsSavingContacts] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
   const [showCurrentPw, setShowCurrentPw] = useState(false);
   const [showNewPw, setShowNewPw] = useState(false);
@@ -151,13 +152,22 @@ export default function ProfilePage() {
 
   const handleSavePassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!currentPassword.trim()) {
+      toast.error((t.profile as { wrongPassword?: string }).wrongPassword ?? 'Введите текущий пароль');
+      return;
+    }
     if (newPassword !== confirmPassword) { toast.error(t.profile.passwordsNotMatch); return; }
     if (newPassword.length < 6) { toast.error(t.auth.passwordMinLength); return; }
     setIsSavingPassword(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
-    setCurrentPassword(''); setNewPassword(''); setConfirmPassword('');
-    setIsSavingPassword(false);
-    toast.success(t.profile.passwordChanged);
+    try {
+      await changePassword(currentPassword, newPassword);
+      setCurrentPassword(''); setNewPassword(''); setConfirmPassword('');
+      toast.success(t.profile.passwordChanged);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : (t.profile as { wrongPassword?: string }).wrongPassword ?? 'Неверный текущий пароль');
+    } finally {
+      setIsSavingPassword(false);
+    }
   };
 
   const handleSaveContacts = async (e: React.FormEvent) => {
@@ -225,6 +235,27 @@ export default function ProfilePage() {
       toast.error(err.message || t.profile.linkCodeError);
       setIsLinking(false);
     }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !file.type.startsWith('image/')) return;
+    e.target.value = '';
+    setIsUploadingAvatar(true);
+    try {
+      await uploadAvatar(file);
+      toast.success((t.profile as { avatarUploaded?: string }).avatarUploaded ?? 'Фото загружено');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Не удалось загрузить фото');
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
+  const resolveAvatarUrl = (avatar?: string) => {
+    if (!avatar) return '';
+    if (avatar.startsWith('http') || avatar.startsWith('data:')) return avatar;
+    return `${API_BASE}${avatar}`;
   };
 
   const handleUnlink = async () => {
@@ -335,14 +366,14 @@ export default function ProfilePage() {
                     <div className="relative">
                       <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-gray-200 dark:border-gray-600 flex items-center justify-center bg-gradient-to-br from-[#FF9800]/20 to-orange-100 dark:from-orange-950/30 dark:to-gray-800">
                         {user?.avatar ? (
-                          <img src={user.avatar} alt={user.name || 'Avatar'} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                          <img src={resolveAvatarUrl(user.avatar)} alt={user.name || 'Avatar'} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                         ) : (
                           <User className="w-12 h-12 text-gray-400 dark:text-gray-500" />
                         )}
                       </div>
                       <label htmlFor="avatar-upload" className="absolute bottom-0 right-0 w-10 h-10 bg-[#FF9800] rounded-full flex items-center justify-center cursor-pointer hover:bg-[#F57C00] transition-colors shadow-lg">
                         <Camera className="w-5 h-5 text-white" />
-                        <input id="avatar-upload" type="file" accept="image/*" className="hidden" />
+                        <input id="avatar-upload" type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
                       </label>
                     </div>
                     <div className="text-center sm:text-left flex-1">
@@ -355,7 +386,7 @@ export default function ProfilePage() {
                       <label htmlFor="avatar-upload-btn" className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium cursor-pointer dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600">
                         <Camera className="w-[18px] h-[18px]" />
                         {(t.profile as { uploadPhoto?: string }).uploadPhoto ?? 'Загрузить фото'}
-                        <input id="avatar-upload-btn" type="file" accept="image/*" className="hidden" />
+                        <input id="avatar-upload-btn" type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
                       </label>
                     </div>
                   </div>

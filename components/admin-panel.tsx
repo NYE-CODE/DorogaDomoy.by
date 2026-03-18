@@ -437,7 +437,7 @@ export function AdminPanel({
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         {user.avatar && (
-                          <img src={user.avatar} alt="" className="w-8 h-8 rounded-full shrink-0" />
+                          <img src={user.avatar.startsWith('http') || user.avatar.startsWith('data:') ? user.avatar : `${API_BASE}${user.avatar}`} alt="" className="w-8 h-8 rounded-full shrink-0" />
                         )}
                         <a
                           href={`/user/${user.id}`}

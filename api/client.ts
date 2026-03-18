@@ -100,11 +100,38 @@ export const authApi = {
 
   me: () => api<UserResponse>('/auth/me').then(toUser),
 
-  updateProfile: (data: { name?: string; email?: string; contacts?: User['contacts'] }) =>
+  updateProfile: (data: { name?: string; email?: string; contacts?: User['contacts']; avatar?: string }) =>
     api<UserResponse>('/auth/me', {
       method: 'PATCH',
       body: JSON.stringify(data),
     }).then(toUser),
+
+  changePassword: (currentPassword: string, newPassword: string) =>
+    api<{ detail: string }>('/auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+    }),
+
+  uploadAvatar: async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const token = getToken();
+    const res = await fetch(`${API_BASE}/auth/avatar-upload`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: formData,
+    });
+    if (res.status === 401) {
+      clearToken();
+      throw new Error('Сессия истекла');
+    }
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: res.statusText }));
+      throw new Error(typeof err.detail === 'string' ? err.detail : JSON.stringify(err));
+    }
+    const data = await res.json();
+    return data.avatar as string;
+  },
 
   logout: () => clearToken(),
 };
