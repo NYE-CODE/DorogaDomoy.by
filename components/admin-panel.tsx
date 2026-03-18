@@ -5,6 +5,7 @@ import {
   Users, 
   AlertTriangle, 
   Settings, 
+  Flag,
   ArrowLeft,
   TrendingUp,
   Calendar,
@@ -17,24 +18,31 @@ import {
   Edit2,
   ExternalLink,
   X,
-  Save
+  Save,
+  Newspaper,
+  Plus,
+  Handshake
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Pet } from '../types/pet';
 import { User } from '../context/AuthContext';
 import { Report, AdminStats, reportReasonLabels } from '../types/admin';
 import { formatDate, statusLabels } from '../utils/pet-helpers';
-import { settingsApi } from '../api/client';
+import { settingsApi, featureFlagsApi, API_BASE } from '../api/client';
+import type { MediaArticle, Partner } from '../api/client';
 import { ModerationPanel } from './moderation-panel';
 import { PetsAdminPanel } from './pets-admin-panel';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Switch } from './ui/switch';
 
-type AdminTab = 'dashboard' | 'moderation' | 'pets' | 'users' | 'reports' | 'settings';
+type AdminTab = 'dashboard' | 'moderation' | 'pets' | 'users' | 'reports' | 'media' | 'partners' | 'featureFlags' | 'settings';
 
 interface AdminPanelProps {
   pets: Pet[];
   users: User[];
   reports: Report[];
+  mediaArticles: MediaArticle[];
+  partners: Partner[];
   onBack: () => void;
   onUpdatePet: (pet: Pet) => void;
   onDeletePet: (petId: string) => void;
@@ -42,19 +50,33 @@ interface AdminPanelProps {
   onDeleteUser: (userId: string) => void;
   onUpdateReport: (report: Report) => void;
   onDeleteReport: (reportId: string) => void;
+  onMediaCreate: (data: { logo_url?: string; title: string; published_at: string; link?: string }) => void;
+  onMediaUpdate: (id: string, data: Partial<{ logo_url: string; title: string; published_at: string; link: string }>) => void;
+  onMediaDelete: (id: string) => void;
+  onPartnerCreate: (data: { logo_url?: string; name: string; link?: string }) => void;
+  onPartnerUpdate: (id: string, data: Partial<{ logo_url: string; name: string; link: string }>) => void;
+  onPartnerDelete: (id: string) => void;
 }
 
 export function AdminPanel({ 
   pets, 
   users, 
-  reports, 
+  reports,
+  mediaArticles,
+  partners,
   onBack,
   onUpdatePet,
   onDeletePet,
   onUpdateUser,
   onDeleteUser,
   onUpdateReport,
-  onDeleteReport
+  onDeleteReport,
+  onMediaCreate,
+  onMediaUpdate,
+  onMediaDelete,
+  onPartnerCreate,
+  onPartnerUpdate,
+  onPartnerDelete,
 }: AdminPanelProps) {
   const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
 
@@ -79,11 +101,29 @@ export function AdminPanel({
   const [reportsPage, setReportsPage] = useState(1);
   const reportsPerPage = 10;
 
+  // Media article modal (create/edit)
+  const [editingMedia, setEditingMedia] = useState<MediaArticle | 'create' | null>(null);
+  const [editLogoUrl, setEditLogoUrl] = useState('');
+  const [editTitle, setEditTitle] = useState('');
+  const [editPublishedAt, setEditPublishedAt] = useState('');
+  const [editLink, setEditLink] = useState('');
+
+  // Partner modal (create/edit)
+  const [editingPartner, setEditingPartner] = useState<Partner | 'create' | null>(null);
+  const [editPartnerLogoUrl, setEditPartnerLogoUrl] = useState('');
+  const [editPartnerName, setEditPartnerName] = useState('');
+  const [editPartnerLink, setEditPartnerLink] = useState('');
+
   // Platform settings (stored on backend)
   const [settings, setSettings] = useState({
     requireModeration: true,
     autoArchiveDays: 90,
     maxPhotos: 5,
+  });
+
+  const [featureFlags, setFeatureFlags] = useState({
+    ff_landing_show_stats: true,
+    ff_landing_show_help: true,
   });
 
   useEffect(() => {
@@ -92,6 +132,15 @@ export function AdminPanel({
         requireModeration: s.require_moderation === 'true',
         autoArchiveDays: parseInt(s.auto_archive_days, 10) || 90,
         maxPhotos: parseInt(s.max_photos, 10) || 5,
+      });
+    }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    featureFlagsApi.get().then((ff) => {
+      setFeatureFlags({
+        ff_landing_show_stats: ff.ff_landing_show_stats === 'true',
+        ff_landing_show_help: ff.ff_landing_show_help === 'true',
       });
     }).catch(() => {});
   }, []);
@@ -105,6 +154,17 @@ export function AdminPanel({
       toast.success('Настройки сохранены');
     }).catch(() => {
       toast.error('Не удалось сохранить настройки');
+    });
+  };
+
+  const handleSaveFeatureFlags = () => {
+    featureFlagsApi.update({
+      ff_landing_show_stats: featureFlags.ff_landing_show_stats,
+      ff_landing_show_help: featureFlags.ff_landing_show_help,
+    }).then(() => {
+      toast.success('Фича-флаги сохранены');
+    }).catch(() => {
+      toast.error('Не удалось сохранить фича-флаги');
     });
   };
 
@@ -136,6 +196,9 @@ export function AdminPanel({
     { id: 'pets' as const, label: 'Объявления', icon: FileText },
     { id: 'users' as const, label: 'Пользователи', icon: Users },
     { id: 'reports' as const, label: 'Жалобы', icon: AlertTriangle },
+    { id: 'media' as const, label: 'СМИ о нас', icon: Newspaper },
+    { id: 'partners' as const, label: 'Партнеры', icon: Handshake },
+    { id: 'featureFlags' as const, label: 'Feature flags', icon: Flag },
     { id: 'settings' as const, label: 'Настройки', icon: Settings },
   ];
 
@@ -721,6 +784,353 @@ export function AdminPanel({
   );
   };
 
+  const openMediaCreate = () => {
+    setEditingMedia('create');
+    setEditLogoUrl('');
+    setEditTitle('');
+    setEditPublishedAt(new Date().toISOString().slice(0, 10));
+    setEditLink('');
+  };
+
+  const openMediaEdit = (m: MediaArticle) => {
+    setEditingMedia(m);
+    setEditLogoUrl(m.logo_url || '');
+    setEditTitle(m.title);
+    setEditPublishedAt(m.published_at ? m.published_at.slice(0, 10) : new Date().toISOString().slice(0, 10));
+    setEditLink(m.link || '');
+  };
+
+  const handleSaveMedia = () => {
+    const dateVal = editPublishedAt ? new Date(editPublishedAt + 'T12:00:00').toISOString() : new Date().toISOString();
+    if (editingMedia === 'create') {
+      onMediaCreate({
+        logo_url: editLogoUrl.trim() || undefined,
+        title: editTitle.trim(),
+        published_at: dateVal,
+        link: editLink.trim() || undefined,
+      });
+    } else if (editingMedia && editingMedia !== 'create') {
+      onMediaUpdate(editingMedia.id, {
+        logo_url: editLogoUrl.trim() || undefined,
+        title: editTitle.trim(),
+        published_at: dateVal,
+        link: editLink.trim() || undefined,
+      });
+    }
+    setEditingMedia(null);
+  };
+
+  const renderMedia = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">СМИ о нас</h2>
+        <button
+          onClick={openMediaCreate}
+          className="flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 text-sm"
+        >
+          <Plus className="w-4 h-4" /> Добавить публикацию
+        </button>
+      </div>
+
+      <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg overflow-x-auto">
+        <table className="w-full min-w-[600px]">
+          <thead className="bg-muted dark:bg-accent border-b border-gray-200 dark:border-gray-600">
+            <tr>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Лого</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Заголовок</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Дата</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Ссылка</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Действия</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+            {mediaArticles.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                  Публикаций пока нет. Добавьте первую.
+                </td>
+              </tr>
+            ) : (
+              mediaArticles.map((m) => (
+                <tr key={m.id} className="hover:bg-accent dark:hover:bg-accent">
+                  <td className="px-4 py-3">
+                    {m.logo_url ? (
+                      <img src={m.logo_url.startsWith('http') || m.logo_url.startsWith('data:') ? m.logo_url : `${API_BASE}${m.logo_url}`} alt="" className="h-8 object-contain max-w-[80px]" />
+                    ) : (
+                      <span className="text-gray-400 text-sm">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-white max-w-[200px] truncate">{m.title}</td>
+                  <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{m.published_at ? new Date(m.published_at).toLocaleDateString('ru-RU') : '—'}</td>
+                  <td className="px-4 py-3">
+                    {m.link ? (
+                      <a href={m.link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-sm truncate max-w-[150px] block">
+                        {m.link}
+                      </a>
+                    ) : (
+                      <span className="text-gray-400 text-sm">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => openMediaEdit(m)}
+                        className="p-1.5 text-primary hover:bg-primary/10 dark:hover:bg-primary/20 rounded transition-colors"
+                        title="Редактировать"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (window.confirm('Удалить эту публикацию?')) onMediaDelete(m.id);
+                        }}
+                        className="p-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                        title="Удалить"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Media Create/Edit Modal */}
+      {editingMedia && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setEditingMedia(null)}>
+          <div className="bg-card rounded-xl shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 py-4 border-b dark:border-gray-700">
+              <h3 className="font-semibold text-gray-900 dark:text-white">
+                {editingMedia === 'create' ? 'Добавить публикацию' : 'Редактировать публикацию'}
+              </h3>
+              <button onClick={() => setEditingMedia(null)} className="p-1 hover:bg-accent dark:hover:bg-accent rounded"><X className="w-5 h-5 dark:text-gray-400" /></button>
+            </div>
+            <div className="px-6 py-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">URL логотипа</label>
+                <input type="text" value={editLogoUrl} onChange={(e) => setEditLogoUrl(e.target.value)} placeholder="https://..." className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Заголовок *</label>
+                <input
+                  type="text"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value.slice(0, 100))}
+                  maxLength={100}
+                  placeholder="Заголовок публикации (макс. 100 символов)"
+                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{editTitle.length}/100</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Дата публикации *</label>
+                <input type="date" value={editPublishedAt} onChange={(e) => setEditPublishedAt(e.target.value)} className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ссылка на статью</label>
+                <input type="url" value={editLink} onChange={(e) => setEditLink(e.target.value)} placeholder="https://..." className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 px-6 py-4 border-t dark:border-gray-700">
+              <button onClick={() => setEditingMedia(null)} className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-accent dark:hover:bg-accent">Отмена</button>
+              <button onClick={handleSaveMedia} disabled={!editTitle.trim() || editTitle.length > 100} className="flex items-center gap-2 px-4 py-3 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"><Save className="w-4 h-4" /> Сохранить</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  const openPartnerCreate = () => {
+    setEditingPartner('create');
+    setEditPartnerLogoUrl('');
+    setEditPartnerName('');
+    setEditPartnerLink('');
+  };
+
+  const openPartnerEdit = (p: Partner) => {
+    setEditingPartner(p);
+    setEditPartnerLogoUrl(p.logo_url || '');
+    setEditPartnerName(p.name);
+    setEditPartnerLink(p.link || '');
+  };
+
+  const handleSavePartner = () => {
+    if (editingPartner === 'create') {
+      onPartnerCreate({
+        logo_url: editPartnerLogoUrl.trim() || undefined,
+        name: editPartnerName.trim(),
+        link: editPartnerLink.trim() || undefined,
+      });
+    } else if (editingPartner && editingPartner !== 'create') {
+      onPartnerUpdate(editingPartner.id, {
+        logo_url: editPartnerLogoUrl.trim() || undefined,
+        name: editPartnerName.trim(),
+        link: editPartnerLink.trim() || undefined,
+      });
+    }
+    setEditingPartner(null);
+  };
+
+  const renderPartners = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Наши партнеры</h2>
+        <button
+          onClick={openPartnerCreate}
+          className="flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 text-sm"
+        >
+          <Plus className="w-4 h-4" /> Добавить партнёра
+        </button>
+      </div>
+
+      <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg overflow-x-auto">
+        <table className="w-full min-w-[600px]">
+          <thead className="bg-muted dark:bg-accent border-b border-gray-200 dark:border-gray-600">
+            <tr>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Лого</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Название</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Ссылка</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Действия</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+            {partners.length === 0 ? (
+              <tr>
+                <td colSpan={4} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                  Партнёров пока нет. Добавьте первого.
+                </td>
+              </tr>
+            ) : (
+              partners.map((p) => (
+                <tr key={p.id} className="hover:bg-accent dark:hover:bg-accent">
+                  <td className="px-4 py-3">
+                    {p.logo_url ? (
+                      <img src={p.logo_url.startsWith('http') || p.logo_url.startsWith('data:') ? p.logo_url : `${API_BASE}${p.logo_url}`} alt="" className="h-8 object-contain max-w-[80px]" />
+                    ) : (
+                      <span className="text-gray-400 text-sm">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-white font-medium">{p.name}</td>
+                  <td className="px-4 py-3">
+                    {p.link ? (
+                      <a href={p.link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-sm truncate max-w-[200px] block">
+                        {p.link}
+                      </a>
+                    ) : (
+                      <span className="text-gray-400 text-sm">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => openPartnerEdit(p)}
+                        className="p-1.5 text-primary hover:bg-primary/10 dark:hover:bg-primary/20 rounded transition-colors"
+                        title="Редактировать"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (window.confirm('Удалить этого партнёра?')) onPartnerDelete(p.id);
+                        }}
+                        className="p-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                        title="Удалить"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {editingPartner && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setEditingPartner(null)}>
+          <div className="bg-card rounded-xl shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 py-4 border-b dark:border-gray-700">
+              <h3 className="font-semibold text-gray-900 dark:text-white">
+                {editingPartner === 'create' ? 'Добавить партнёра' : 'Редактировать партнёра'}
+              </h3>
+              <button onClick={() => setEditingPartner(null)} className="p-1 hover:bg-accent dark:hover:bg-accent rounded"><X className="w-5 h-5 dark:text-gray-400" /></button>
+            </div>
+            <div className="px-6 py-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">URL логотипа</label>
+                <input type="text" value={editPartnerLogoUrl} onChange={(e) => setEditPartnerLogoUrl(e.target.value)} placeholder="https://..." className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Название компании *</label>
+                <input type="text" value={editPartnerName} onChange={(e) => setEditPartnerName(e.target.value.slice(0, 100))} maxLength={100} placeholder="Название партнёра" className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{editPartnerName.length}/100</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ссылка</label>
+                <input type="url" value={editPartnerLink} onChange={(e) => setEditPartnerLink(e.target.value)} placeholder="https://..." className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 px-6 py-4 border-t dark:border-gray-700">
+              <button onClick={() => setEditingPartner(null)} className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-accent dark:hover:bg-accent">Отмена</button>
+              <button onClick={handleSavePartner} disabled={!editPartnerName.trim()} className="flex items-center gap-2 px-4 py-3 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"><Save className="w-4 h-4" /> Сохранить</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  const renderFeatureFlags = () => (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Feature flags</h2>
+
+      <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+        <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Лендинг</h3>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Показывать секцию статистики</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Hero и блок «Как помочь» с цифрами (найденные питомцы, пользователи и т.д.)</p>
+            </div>
+            <Switch
+              checked={featureFlags.ff_landing_show_stats}
+              onCheckedChange={(v) => setFeatureFlags((f) => ({ ...f, ff_landing_show_stats: v }))}
+            />
+          </div>
+          <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+            <div>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Показывать секцию «Как нам помочь»</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Секция на лендинге и ссылка в навигации футера</p>
+            </div>
+            <Switch
+              checked={featureFlags.ff_landing_show_help}
+              onCheckedChange={(v) => setFeatureFlags((f) => ({ ...f, ff_landing_show_help: v }))}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+        <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Основной сайт поиска</h3>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Пока пусто. Фича-флаги для поиска появятся здесь.</p>
+      </div>
+
+      <div className="flex justify-end">
+        <button
+          onClick={handleSaveFeatureFlags}
+          className="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+        >
+          Сохранить
+        </button>
+      </div>
+    </div>
+  );
+
   const renderSettings = () => (
     <div className="space-y-6">
       <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Настройки платформы</h2>
@@ -795,7 +1205,7 @@ export function AdminPanel({
     <div className="min-h-screen bg-background dark:bg-gray-900">
       {/* Header */}
       <div className="bg-card border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-[1920px] mx-auto px-4 md:px-6 py-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button
@@ -815,7 +1225,7 @@ export function AdminPanel({
 
       {/* Tabs */}
       <div className="bg-card border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-[1920px] mx-auto px-4 md:px-6 overflow-x-auto scrollbar-hide">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 overflow-x-auto scrollbar-hide">
           <div className="flex gap-1 min-w-max">
             {tabs.map(tab => {
               const Icon = tab.icon;
@@ -850,7 +1260,7 @@ export function AdminPanel({
       </div>
 
       {/* Content */}
-      <div className="max-w-[1920px] mx-auto px-4 md:px-6 py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {activeTab === 'dashboard' && renderDashboard()}
         {activeTab === 'moderation' && (
           <ModerationPanel
@@ -879,6 +1289,9 @@ export function AdminPanel({
         {activeTab === 'pets' && <PetsAdminPanel pets={pets} onDeletePet={onDeletePet} onOpenPet={(petId) => window.open(`/pet/${petId}`, '_blank')} />}
         {activeTab === 'users' && renderUsers()}
         {activeTab === 'reports' && renderReports()}
+        {activeTab === 'media' && renderMedia()}
+        {activeTab === 'partners' && renderPartners()}
+        {activeTab === 'featureFlags' && renderFeatureFlags()}
         {activeTab === 'settings' && renderSettings()}
       </div>
     </div>

@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react'
 import ReactDOM from 'react-dom/client'
-import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router'
+import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router'
+import { Toaster } from 'sonner'
+import LandingPage from './pages/LandingPage.tsx'
 import SearchPage from './pages/SearchPage.tsx'
 import ProfilePage from './components/profile-page.tsx'
 import PetDetailPage from './pages/PetDetailPage.tsx'
@@ -9,11 +11,20 @@ import NotFoundPage from './pages/NotFoundPage.tsx'
 import AdminPage from './pages/AdminPage.tsx'
 import MyAdsPageRoute from './pages/MyAdsPage.tsx'
 import CreateAdPage from './pages/CreateAdPage.tsx'
+import EditAdPage from './pages/EditAdPage.tsx'
 import SettingsPageRoute from './pages/SettingsPage.tsx'
+import { TermsPage } from './components/terms-page'
 import { AuthProvider } from './context/AuthContext.tsx'
-import { ThemeProvider } from './context/ThemeContext.tsx'
+import { ThemeProvider, useTheme } from './context/ThemeContext.tsx'
 import { I18nProvider } from './context/I18nContext.tsx'
-import './styles/globals.css'
+import './styles/globals.css';
+// Стили лендинга (шрифты и т.п.) — theme-scoped подключается в LandingPage
+import './landing/styles/fonts.css'
+
+function GlobalToaster() {
+  const { theme } = useTheme();
+  return <Toaster position="top-center" richColors theme={theme} />;
+}
 
 const YM_ID = 107705476;
 
@@ -27,23 +38,31 @@ function MetrikaTracker() {
   return null;
 }
 
+function TermsRoute() {
+  const navigate = useNavigate();
+  return <TermsPage onBack={() => navigate(-1)} />;
+}
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ThemeProvider>
       <I18nProvider>
         <BrowserRouter>
           <MetrikaTracker />
+          <GlobalToaster />
           <AuthProvider>
             <Routes>
-              <Route path="/" element={<Navigate to="/search" replace />} />
+              <Route path="/" element={<LandingPage />} />
               <Route path="/search" element={<SearchPage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/pet/:id" element={<PetDetailPage />} />
               <Route path="/user/:id" element={<UserProfilePage />} />
               <Route path="/my-ads" element={<MyAdsPageRoute />} />
               <Route path="/create" element={<CreateAdPage />} />
+              <Route path="/edit/:id" element={<EditAdPage />} />
               <Route path="/settings" element={<SettingsPageRoute />} />
               <Route path="/admin" element={<AdminPage />} />
+              <Route path="/terms" element={<TermsRoute />} />
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </AuthProvider>

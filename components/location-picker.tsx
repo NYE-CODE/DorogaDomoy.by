@@ -10,9 +10,11 @@ interface LocationPickerProps {
   onLocationSelect: (location: { lat: number; lng: number }) => void;
   onAddressChange?: (address: string) => void;
   onLocationWithAddress?: (location: { lat: number; lng: number }, address: string) => void;
+  /** Высота карты (по умолчанию h-48) */
+  mapHeight?: string;
 }
 
-export function LocationPicker({ initialLocation, onLocationSelect, onAddressChange, onLocationWithAddress }: LocationPickerProps) {
+export function LocationPicker({ initialLocation, onLocationSelect, onAddressChange, onLocationWithAddress, mapHeight = 'h-48' }: LocationPickerProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
@@ -166,7 +168,7 @@ export function LocationPicker({ initialLocation, onLocationSelect, onAddressCha
           {locating ? 'Определение…' : 'Моё местоположение'}
         </button>
       </div>
-      <div ref={mapContainerRef} className="h-48 w-full rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden z-0" />
+      <div ref={mapContainerRef} className={`${mapHeight} w-full rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden z-0`} />
     </div>
   );
 }

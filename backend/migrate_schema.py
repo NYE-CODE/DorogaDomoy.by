@@ -80,6 +80,24 @@ NEW_TABLES = {
             created_at DATETIME
         )
     """,
+    "media_articles": """
+        CREATE TABLE media_articles (
+            id VARCHAR PRIMARY KEY,
+            logo_url VARCHAR,
+            title VARCHAR NOT NULL,
+            published_at DATETIME NOT NULL,
+            link VARCHAR,
+            sort_order VARCHAR DEFAULT '0'
+        )
+    """,
+    "partners": """
+        CREATE TABLE partners (
+            id VARCHAR PRIMARY KEY,
+            logo_url VARCHAR,
+            name VARCHAR NOT NULL,
+            link VARCHAR
+        )
+    """,
 }
 
 
@@ -138,6 +156,8 @@ def ensure_platform_settings(conn):
         ("require_moderation", "true"),
         ("max_photos", "10"),
         ("auto_archive_days", "365"),
+        ("ff_landing_show_stats", "true"),
+        ("ff_landing_show_help", "true"),
     ]
     for key, value in defaults:
         cur = conn.execute("SELECT 1 FROM platform_settings WHERE key = ?", (key,))

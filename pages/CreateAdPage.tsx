@@ -1,36 +1,23 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
-import { Search, MapPin } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import '../landing/styles/theme-scoped.css';
 import { useI18n } from '../context/I18nContext';
 import { Header } from '../components/layout/Header';
-import { PetForm, PetFormData } from '../components/pet-form';
+import { Footer } from '../components/layout/Footer';
+import { PetForm, PetFormData, PetFormStepInfo } from '../components/pet-form';
+import { ChevronLeft } from 'lucide-react';
 import { ContactRequiredModal } from '../components/contact-required-modal';
-import { CitySelectModal } from '../components/city-select-modal';
 import { petsApi } from '../api/client';
-import { toast, Toaster } from 'sonner';
-import type { PetStatus } from '../types/pet';
-import type { City } from '../utils/cities';
+import { toast } from 'sonner';
 
 export default function CreateAdPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const { t } = useI18n();
   const navigate = useNavigate();
 
-  const [view, setView] = useState<'choice' | 'form'>('choice');
-  const [chosenStatus, setChosenStatus] = useState<PetStatus | null>(null);
   const [showContactRequired, setShowContactRequired] = useState(false);
-  const [selectedCity, setSelectedCity] = useState(() => {
-    try {
-      const saved = localStorage.getItem('pet_finder_user_location');
-      if (saved) {
-        const data = JSON.parse(saved);
-        return (data.city || '').trim();
-      }
-    } catch {}
-    return '';
-  });
-  const [showCityModal, setShowCityModal] = useState(false);
+  const [stepInfo, setStepInfo] = useState<PetFormStepInfo | null>(null);
 
   useEffect(() => {
     if (isLoading) return;
@@ -40,20 +27,14 @@ export default function CreateAdPage() {
     }
   }, [isLoading, isAuthenticated, navigate]);
 
-  const handleChoose = (status: PetStatus) => {
-    const hasContacts = user?.contacts?.phone || user?.contacts?.telegram || user?.contacts?.viber;
-    if (!hasContacts) {
-      setShowContactRequired(true);
-      return;
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      const hasContacts = user.contacts?.phone || user.contacts?.telegram || user.contacts?.viber;
+      if (!hasContacts) setShowContactRequired(true);
     }
-    setChosenStatus(status);
-    setView('form');
-  };
+  }, [isAuthenticated, user]);
 
-  const handleCloseForm = () => {
-    setView('choice');
-    setChosenStatus(null);
-  };
+  const handleCloseForm = () => navigate('/');
 
   const handleSubmit = async (formData: PetFormData) => {
     if (!user) return;
@@ -81,7 +62,10 @@ export default function CreateAdPage() {
       } else {
         toast.success(t.app.adSentModeration, { description: 'После проверки оно появится на карте' });
       }
-      navigate('/my-ads');
+      // Микро-задержка, чтобы тост успел отрендериться до смены страницы
+      requestAnimationFrame(() => {
+        navigate('/my-ads', { replace: true, state: { fromCreate: true } });
+      });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t.common.error);
     }
@@ -89,73 +73,63 @@ export default function CreateAdPage() {
 
   if (isLoading || !isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background dark:bg-gray-900">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background dark:bg-gray-900 flex flex-col">
-      <Header
-        onViewChange={() => navigate('/search')}
-        selectedCity={selectedCity}
-        onCityClick={() => setShowCityModal(true)}
-      />
+    <div className="landing-theme min-h-screen bg-gray-50 dark:bg-background flex flex-col">
+      <Header />
 
-      <main className="flex-1 max-w-[1920px] w-full mx-auto px-4 md:px-6 py-6">
-        {view === 'choice' && (
-          <div className="max-w-md mx-auto">
-            <div className="bg-card rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-              <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
-                {t.petForm.placeAdTitle}
-              </h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 mb-6">
-                {t.petForm.placeAdSubtitle}
-              </p>
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">
-                {t.petForm.whatHappened}
-              </p>
-              <div className="space-y-3">
-                <button
-                  type="button"
-                  onClick={() => handleChoose('searching')}
-                  className="w-full flex items-center gap-4 p-4 rounded-lg border border-gray-200 dark:border-gray-600 bg-card text-left hover:bg-accent dark:hover:bg-accent/80 transition-colors"
-                >
-                  <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center shrink-0">
-                    <Search className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                  </div>
-                  <span className="font-medium text-gray-900 dark:text-white">
-                    {t.petForm.myPetLost}
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleChoose('found')}
-                  className="w-full flex items-center gap-4 p-4 rounded-lg border border-gray-200 dark:border-gray-600 bg-card text-left hover:bg-accent dark:hover:bg-accent/80 transition-colors"
-                >
-                  <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center shrink-0">
-                    <MapPin className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                  </div>
-                  <span className="font-medium text-gray-900 dark:text-white">
-                    {t.petForm.iFoundPet}
-                  </span>
-                </button>
+      {/* Секция шага — сразу под хедером, отдельно от формы */}
+      {stepInfo && (
+        <section className="bg-white dark:bg-card border-b border-gray-200 dark:border-border px-4 sm:px-6 lg:px-8">
+          <div className="max-w-[736px] mx-auto py-4">
+            <div className="flex items-center gap-4 mb-4">
+              <button
+                type="button"
+                onClick={stepInfo.onBack}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-muted rounded-lg transition-colors"
+                aria-label={t.common.back}
+              >
+                <ChevronLeft className="w-6 h-6 text-gray-600 dark:text-muted-foreground" />
+              </button>
+              <div className="flex-1 min-w-0">
+                <h1 className="text-2xl font-bold text-black dark:text-foreground truncate">{stepInfo.pageTitle}</h1>
+                <p className="text-sm text-gray-600 dark:text-muted-foreground mt-1">
+                  {t.petForm.step} {stepInfo.step} {t.petForm.of} {stepInfo.totalSteps}: {stepInfo.stepTitle}
+                </p>
               </div>
+              <button
+                type="button"
+                onClick={handleCloseForm}
+                className="text-gray-600 hover:text-black dark:text-muted-foreground dark:hover:text-foreground whitespace-nowrap transition-colors"
+              >
+                {t.petForm.close}
+              </button>
+            </div>
+            <div className="w-full bg-gray-200 dark:bg-muted rounded-full h-2">
+              <div
+                className="bg-gradient-to-r from-[#FDB913] to-[#FF9800] h-2 rounded-full transition-all duration-300"
+                style={{ width: `${(stepInfo.step / stepInfo.totalSteps) * 100}%` }}
+              />
             </div>
           </div>
-        )}
+        </section>
+      )}
 
-        {view === 'form' && chosenStatus && (
-          <div className="max-w-2xl mx-auto">
-            <PetForm
-              variant="page"
-              onClose={handleCloseForm}
-              onSubmit={handleSubmit}
-              initialStatus={chosenStatus}
-            />
-          </div>
-        )}
+      <main className="flex-1 px-4 py-8">
+        <div className="max-w-[736px] mx-auto bg-white dark:bg-card rounded-2xl shadow-sm border border-gray-200 dark:border-border p-8">
+          <PetForm
+            variant="page"
+            renderStepHeaderExternally
+            onStepChange={setStepInfo}
+            onClose={handleCloseForm}
+            onSubmit={handleSubmit}
+          />
+        </div>
       </main>
 
       <ContactRequiredModal
@@ -167,26 +141,7 @@ export default function CreateAdPage() {
         }}
       />
 
-      <CitySelectModal
-        open={showCityModal}
-        onClose={() => setShowCityModal(false)}
-        onSelect={(city: City | null) => {
-          if (city) {
-            setSelectedCity(city.name);
-            try {
-              localStorage.setItem('pet_finder_user_location', JSON.stringify({
-                lat: city.coordinates[0],
-                lng: city.coordinates[1],
-                city: city.name,
-              }));
-            } catch {}
-          }
-          setShowCityModal(false);
-        }}
-        currentCity={selectedCity}
-      />
-
-      <Toaster position="top-center" richColors />
+      <Footer />
     </div>
   );
 }

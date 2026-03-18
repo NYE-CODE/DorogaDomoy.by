@@ -1,0 +1,223 @@
+import { MapPin, User, Settings, FileText, Shield, LogOut, ChevronDown } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Link, useNavigate } from "react-router";
+import { Button } from "./ui/button";
+import { RegionSelector } from "./region-selector";
+import { useAuth } from "../../../context/AuthContext";
+import { useI18n } from "../../../context/I18nContext";
+
+export function Header() {
+  const { t } = useI18n();
+  const { user, isAuthenticated, openAuthModal, logout } = useAuth();
+  const navigate = useNavigate();
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isRegionOpen, setIsRegionOpen] = useState(false);
+  const [selectedRegion, setSelectedRegion] = useState(t.landing.header.allBelarus);
+  const profileRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+        setIsProfileOpen(false);
+      }
+    };
+
+    if (isProfileOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isProfileOpen]);
+
+  const navTo = (path: string) => {
+    navigate(path);
+    setIsProfileOpen(false);
+  };
+
+  return (
+    <header className="sticky top-0 z-50 bg-background shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center py-6">
+          <div className="flex items-center gap-3">
+            <Link to="/" className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 bg-foreground rounded-full flex items-center justify-center shrink-0">
+                <div className="text-background text-xl">🐾</div>
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="text-xl font-bold text-foreground leading-tight">DorogaDomoy.by</span>
+                <span className="text-sm text-muted-foreground leading-tight hidden md:block">{t.landing.header.tagline}</span>
+              </div>
+            </Link>
+          </div>
+
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex gap-4 items-center">
+            <Button asChild>
+              <Link to="/create" className="bg-[#FF9800] text-white hover:bg-[#F57C00] rounded-lg px-6 h-12 flex items-center justify-center gap-2 text-lg">
+                <span className="text-xl">+</span>
+                <span>{t.landing.header.createAd}</span>
+              </Link>
+            </Button>
+            
+            <button 
+              onClick={() => setIsRegionOpen(true)}
+              className="flex items-center gap-2 px-4 h-12 rounded-lg border border-border"
+            >
+              <MapPin size={18} className="text-primary" />
+              <span className="text-foreground">{selectedRegion}</span>
+              <ChevronDown size={16} className="text-muted-foreground" />
+            </button>
+
+            <div className="relative" ref={profileRef}>
+              {isAuthenticated && user ? (
+                <>
+                  <button 
+                    onClick={() => setIsProfileOpen(!isProfileOpen)}
+                    className="flex items-center gap-2 px-4 h-12 rounded-lg border border-border hover:border-primary transition-colors"
+                  >
+                    <div className="w-6 h-6 bg-[#FF9800] rounded-full flex items-center justify-center">
+                      <User size={14} className="text-white" />
+                    </div>
+                    <span className="text-foreground hidden lg:inline">{t.landing.header.profile}</span>
+                  </button>
+
+                  {/* Profile Dropdown */}
+                  {isProfileOpen && (
+                    <div className="absolute right-0 mt-2 w-64 bg-card rounded-lg shadow-lg border border-border py-2 z-50">
+                      <div className="px-4 py-3 border-b border-border">
+                        <p className="font-bold text-foreground">{user.name}</p>
+                        <p className="text-sm text-muted-foreground truncate">{user.email}</p>
+                      </div>
+                      <div className="py-2">
+                        <button onClick={() => { navigate("/profile"); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted transition-colors text-left">
+                          <User size={18} className="text-muted-foreground" />
+                          <span className="text-foreground">{t.landing.header.profile}</span>
+                        </button>
+                        <button onClick={() => { navigate("/my-ads"); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted transition-colors text-left">
+                          <FileText size={18} className="text-muted-foreground" />
+                          <span className="text-foreground">{t.landing.header.myAds}</span>
+                        </button>
+                        <button onClick={() => { navigate("/settings"); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted transition-colors text-left">
+                          <Settings size={18} className="text-muted-foreground" />
+                          <span className="text-foreground">{t.landing.header.settings}</span>
+                        </button>
+                        {user.role === "admin" && (
+                          <button onClick={() => { navigate("/admin"); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-primary/10 transition-colors text-left">
+                            <Shield size={18} className="text-[#FF9800]" />
+                            <span className="text-[#FF9800] font-medium">{t.landing.header.adminPanel}</span>
+                          </button>
+                        )}
+                        <div className="border-t border-border mt-2 pt-2">
+                          <button onClick={() => { logout(); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-destructive/10 transition-colors text-left">
+                            <LogOut size={18} className="text-destructive" />
+                            <span className="text-destructive font-medium">{t.landing.header.logout}</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <button
+                  onClick={openAuthModal}
+                  className="bg-[#FF9800] text-white hover:bg-[#F57C00] rounded-lg px-6 h-12 flex items-center justify-center gap-2 text-lg"
+                >
+                  <User size={18} className="text-white" />
+                  <span className="hidden lg:inline">{t.landing.header.login}</span>
+                </button>
+              )}
+            </div>
+          </nav>
+
+          {/* Mobile Navigation */}
+          <nav className="md:hidden flex gap-2 items-center">
+            <Button asChild className="bg-[#FF9800] text-white hover:bg-[#F57C00] rounded-lg w-12 h-12 flex items-center justify-center text-2xl">
+              <Link to="/create">+</Link>
+            </Button>
+
+            <div className="relative">
+              {isAuthenticated && user ? (
+                <>
+                  <button 
+                    onClick={() => setIsProfileOpen(!isProfileOpen)}
+                    className="w-12 h-12 bg-card rounded-lg border border-border flex items-center justify-center hover:border-primary transition-colors"
+                  >
+                    <div className="w-7 h-7 bg-[#FF9800] rounded-full flex items-center justify-center">
+                      <User size={16} className="text-white" />
+                    </div>
+                  </button>
+                  {isProfileOpen && (
+                    <div className="absolute right-0 mt-2 w-64 bg-card rounded-lg shadow-lg border border-border py-2 z-50">
+                      <div className="px-4 py-3 border-b border-border">
+                        <p className="font-bold text-foreground">{user.name}</p>
+                        <p className="text-sm text-muted-foreground truncate">{user.email}</p>
+                      </div>
+                      <div className="py-2">
+                        <button onClick={() => { navigate("/profile"); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted transition-colors text-left">
+                          <User size={18} className="text-muted-foreground" />
+                          <span className="text-foreground">{t.landing.header.profile}</span>
+                        </button>
+                        <button onClick={() => { navigate("/my-ads"); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted transition-colors text-left">
+                          <FileText size={18} className="text-muted-foreground" />
+                          <span className="text-foreground">{t.landing.header.myAds}</span>
+                        </button>
+                        <button onClick={() => { navigate("/settings"); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted transition-colors text-left">
+                          <Settings size={18} className="text-muted-foreground" />
+                          <span className="text-foreground">{t.landing.header.settings}</span>
+                        </button>
+                        {user.role === "admin" && (
+                          <button onClick={() => { navigate("/admin"); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-primary/10 transition-colors text-left">
+                            <Shield size={18} className="text-primary" />
+                            <span className="text-primary font-medium">{t.landing.header.adminPanel}</span>
+                          </button>
+                        )}
+                        <div className="border-t border-border mt-2 pt-2">
+                          <button onClick={() => { logout(); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-destructive/10 transition-colors text-left">
+                            <LogOut size={18} className="text-destructive" />
+                            <span className="text-destructive font-medium">{t.landing.header.logout}</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <button
+                  onClick={openAuthModal}
+                  className="w-12 h-12 bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg flex items-center justify-center"
+                >
+                  <User size={20} className="text-white" />
+                </button>
+              )}
+            </div>
+          </nav>
+        </div>
+
+        {/* Mobile Region Selector - Full Width Below */}
+        <div className="md:hidden pb-4">
+          <button 
+            onClick={() => setIsRegionOpen(true)}
+            className="w-full flex items-center justify-center gap-2 px-4 h-12 rounded-lg border border-border"
+          >
+            <MapPin size={18} className="text-primary" />
+            <span className="text-foreground">{selectedRegion}</span>
+            <ChevronDown size={16} className="text-muted-foreground" />
+          </button>
+        </div>
+      </div>
+
+      {/* Region Selector Modal */}
+      <RegionSelector 
+        isOpen={isRegionOpen}
+        onClose={() => setIsRegionOpen(false)}
+        selectedRegion={selectedRegion}
+        onSelectRegion={(region) => {
+          setSelectedRegion(region);
+          setIsRegionOpen(false);
+        }}
+      />
+    </header>
+  );
+}

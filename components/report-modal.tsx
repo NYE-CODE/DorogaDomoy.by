@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, AlertTriangle } from 'lucide-react';
+import { X, Send, AlertCircle } from 'lucide-react';
 import { ReportReason } from '../types/admin';
 import { useI18n } from '../context/I18nContext';
 import { useScrollLock } from './ui/use-scroll-lock';
@@ -12,53 +12,60 @@ interface ReportModalProps {
 export function ReportModal({ onClose, onSubmit }: ReportModalProps) {
   useScrollLock(true);
   const { t } = useI18n();
-  const [reason, setReason] = useState<ReportReason>('spam');
+  const [reason, setReason] = useState<ReportReason | ''>('');
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const isDescRequired = reason === 'other';
+  const canSubmit =
+    reason !== '' &&
+    (!isDescRequired || description.trim().length > 0);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!description.trim()) {
-      return;
-    }
+    if (!reason || !canSubmit) return;
 
     setIsSubmitting(true);
-    await onSubmit(reason, description.trim());
+    const desc = description.trim() || t.report.reasons[reason as ReportReason];
+    await onSubmit(reason as ReportReason, desc);
     setIsSubmitting(false);
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-card rounded-xl max-w-md w-full shadow-xl">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-orange-100 rounded-lg">
-              <AlertTriangle className="w-5 h-5 text-orange-600" />
-            </div>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{t.report.title}</h2>
-          </div>
+    <div
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white dark:bg-gray-900 rounded-2xl p-8 shadow-2xl max-w-2xl w-full mx-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-black dark:text-white">{t.report.title}</h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-accent dark:hover:bg-accent rounded-lg transition-colors"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
           >
-            <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+            <X size={28} />
           </button>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <p className="text-gray-600 dark:text-gray-400 mb-8">
+          {t.report.intro}
+        </p>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              {t.report.reasonLabel}
+              {t.report.reasonLabel} <span className="text-red-500">*</span>
             </label>
             <select
               value={reason}
-              onChange={(e) => setReason(e.target.value as ReportReason)}
-              className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white"
+              onChange={(e) => setReason(e.target.value as ReportReason | '')}
+              className="mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#FF9800] focus:border-[#FF9800] bg-white dark:bg-gray-800 dark:text-white"
               required
             >
+              <option value="">{t.report.reasonPlaceholder}</option>
               {(Object.keys(t.report.reasons) as ReportReason[]).map((key) => (
                 <option key={key} value={key}>
                   {t.report.reasons[key]}
@@ -70,43 +77,47 @@ export function ReportModal({ onClose, onSubmit }: ReportModalProps) {
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               {t.report.descLabel}
+              {isDescRequired && <span className="text-red-500"> *</span>}
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder={t.report.descPlaceholder}
-              className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white min-h-[120px] resize-none"
-              required
+              className="mt-1 block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#FF9800] focus:border-[#FF9800] bg-white dark:bg-gray-800 dark:text-white resize-none"
+              rows={5}
               maxLength={500}
             />
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              {t.report.descHint}
+            </p>
+            <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
               {description.length}/500 {t.common.characters}
             </p>
           </div>
 
-          <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
-            <p className="text-sm text-orange-800">
-              <strong>{t.report.warningNote}</strong> {t.report.warning}
-            </p>
-          </div>
+          <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex items-start gap-3 mb-4 text-sm text-gray-600 dark:text-gray-400">
+              <AlertCircle size={18} className="flex-shrink-0 mt-0.5 text-[#FF9800]" />
+              <p>{t.report.warning24h}</p>
+            </div>
 
-          {/* Actions */}
-          <div className="flex gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-accent dark:hover:bg-accent transition-colors"
-              disabled={isSubmitting}
-            >
-              {t.common.cancel}
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting || !description.trim()}
-              className="flex-1 px-4 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? t.report.submitting : t.report.submit}
-            </button>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 h-12 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors font-medium text-lg"
+              >
+                {t.common.cancel}
+              </button>
+              <button
+                type="submit"
+                disabled={!canSubmit || isSubmitting}
+                className="flex-1 flex items-center justify-center gap-2 h-12 bg-[#FF9800] text-white rounded-lg hover:bg-[#F57C00] transition-colors font-medium text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Send size={20} />
+                {isSubmitting ? t.report.submitting : t.report.submit}
+              </button>
+            </div>
           </div>
         </form>
       </div>

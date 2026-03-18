@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { MapPin, Phone, MessageCircle, Edit2, Trash2, Home, Heart, Building2, Clock, CheckCircle2, XCircle, Eye, MoreVertical } from 'lucide-react';
 import { Pet } from '../types/pet';
-import { statusColors, formatDate } from '../utils/pet-helpers';
+import { statusColors, formatDate, formatRelativeTime } from '../utils/pet-helpers';
 import { useAuth } from '../context/AuthContext';
 import { useI18n } from '../context/I18nContext';
 
@@ -121,31 +121,43 @@ export function PetCard({ pet, onClick, compact = false, onEdit, onDelete, sight
   };
 
   if (compact) {
+    const photoUrl = pet.photos[0] || 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&h=400&fit=crop';
+    const colorStr = pet.colors.length ? pet.colors.map(c => t.pet.color[c as keyof typeof t.pet.color]).join(', ') : '—';
+    const breedStr = pet.breed || 'Дворовый';
     return (
-      <div 
-        className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-3 cursor-pointer hover:shadow-md transition-shadow relative group"
+      <div
+        className="bg-white dark:bg-card rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
         onClick={onClick}
       >
-        <div className="flex gap-3">
-          <img 
-            src={pet.photos[0]} 
+        <div className="flex gap-3 p-3">
+          <img
+            src={photoUrl}
             alt={t.pet.animalType[pet.animalType]}
-            className="w-20 h-20 object-cover rounded-lg"
+            className="w-20 h-20 rounded-lg object-cover flex-shrink-0"
           />
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2 mb-1">
-              <h3 className="font-medium text-gray-900 dark:text-white truncate">
-                {t.pet.animalType[pet.animalType]} {pet.breed && `· ${pet.breed}`}
+              <h3 className="font-bold text-black dark:text-white truncate">
+                {t.pet.animalType[pet.animalType]}
               </h3>
-              <span className={`text-xs px-2 py-1 rounded border whitespace-nowrap ${statusColors[pet.status]}`}>
+              <span className={`px-2 py-1 rounded-full text-xs font-bold flex-shrink-0 ${
+                pet.status === 'searching'
+                  ? 'bg-[#FF9800] text-white'
+                  : 'bg-[#FDB913] text-black'
+              }`}>
                 {t.pet.status[pet.status]}
               </span>
             </div>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{pet.colors.map(c => t.pet.color[c as keyof typeof t.pet.color]).join(', ')}</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-              <MapPin className="w-3 h-3" />
-              {pet.city} · {formatDate(pet.publishedAt)}
-            </p>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{breedStr}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{colorStr}</p>
+            <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400 text-xs mb-1">
+              <MapPin size={12} />
+              <span className="truncate">{pet.city}</span>
+            </div>
+            <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400 text-xs">
+              <Clock size={12} />
+              <span>{formatRelativeTime(pet.publishedAt)}</span>
+            </div>
           </div>
         </div>
       </div>

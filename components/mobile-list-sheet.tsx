@@ -3,11 +3,11 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 /** Свёрнутая высота: полка + ручка + заголовок списка */
 const HEADER_HEIGHT = 96;
 const SNAP_THRESHOLD = 0.4; // если высота > 40% экрана — раскрыть
-/** Отступ сверху, чтобы панель фиксировалась чуть ниже шапки и не заходила под неё */
-const SITE_HEADER_SAFE = 100;
+/** Fallback отступ сверху, если измерение недоступно */
+const SITE_HEADER_SAFE_FALLBACK = 170;
 /** Высота полки над ручкой — чтобы при раскрытии ручка не пряталась под шапкой (компактно) */
 const HANDLE_SPACER = 16;
-/** Порог движения (px), после которого считаем жест драгом, а не тапом — чтобы кнопки/дропдаун в заголовке работали */
+/** Порог движения (px), после которого считаем жест драгом, а не тапом */
 const DRAG_THRESHOLD = 10;
 
 interface MobileListSheetProps {
@@ -18,6 +18,7 @@ interface MobileListSheetProps {
 export function MobileListSheet({ header, children }: MobileListSheetProps) {
   const [height, setHeight] = useState(HEADER_HEIGHT);
   const [isDragging, setIsDragging] = useState(false);
+  const [headerSafeTop, setHeaderSafeTop] = useState(SITE_HEADER_SAFE_FALLBACK);
   const startYRef = useRef(0);
   const startHeightRef = useRef(HEADER_HEIGHT);
   const maxHeightRef = useRef(0);
@@ -27,7 +28,32 @@ export function MobileListSheet({ header, children }: MobileListSheetProps) {
   const pointerDownOnHeaderRef = useRef(false);
   heightRef.current = height;
 
-  /** Полка + ручка: захват и драг сразу, без порога (там нет кнопок) */
+  const updateMaxHeight = useCallback(() => {
+    const el = rootRef.current?.parentElement;
+    if (el && typeof window !== 'undefined') {
+      const rect = el.getBoundingClientRect();
+      const top = Math.ceil(rect.top) + 8;
+      const max = Math.max(200, Math.floor(window.innerHeight - top));
+      maxHeightRef.current = max;
+      setHeaderSafeTop(top);
+    } else {
+      maxHeightRef.current = Math.max(200, Math.floor(window.innerHeight - SITE_HEADER_SAFE_FALLBACK));
+      setHeaderSafeTop(SITE_HEADER_SAFE_FALLBACK);
+    }
+  }, []);
+
+  useEffect(() => {
+    updateMaxHeight();
+    const ro = new ResizeObserver(updateMaxHeight);
+    const el = rootRef.current?.parentElement;
+    if (el) ro.observe(el);
+    window.addEventListener('resize', updateMaxHeight);
+    return () => {
+      if (el) ro.unobserve(el);
+      window.removeEventListener('resize', updateMaxHeight);
+    };
+  }, [updateMaxHeight]);
+
   const handleHandlePointerDown = useCallback(
     (e: React.PointerEvent) => {
       e.preventDefault();
@@ -38,20 +64,6 @@ export function MobileListSheet({ header, children }: MobileListSheetProps) {
     },
     []
   );
-
-  const getMaxHeight = useCallback(() => {
-    if (typeof window === 'undefined') return 400;
-    return Math.max(200, Math.floor(window.innerHeight - SITE_HEADER_SAFE));
-  }, []);
-
-  useEffect(() => {
-    maxHeightRef.current = getMaxHeight();
-    const onResize = () => {
-      maxHeightRef.current = getMaxHeight();
-    };
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, [getMaxHeight]);
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent) => {
@@ -116,12 +128,11 @@ export function MobileListSheet({ header, children }: MobileListSheetProps) {
     <div
       ref={rootRef}
       className="absolute inset-x-0 bottom-0 z-30 flex flex-col bg-card border-t border-gray-200 dark:border-gray-700 rounded-t-2xl shadow-lg overflow-hidden"
-      style={{ height: `${height}px`, maxHeight: `calc(100vh - ${SITE_HEADER_SAFE}px)` }}
+      style={{ height: `${height}px`, maxHeight: `calc(100vh - ${headerSafeTop}px)` }}
       onPointerMove={isDragging ? handlePointerMove : undefined}
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
     >
-      {/* Полка + ручка: компактно, не уходят под шапку при раскрытии; тянуть можно сразу */}
       <div
         ref={dragZoneRef}
         className="shrink-0 touch-none select-none cursor-grab active:cursor-grabbing flex flex-col"
@@ -135,7 +146,6 @@ export function MobileListSheet({ header, children }: MobileListSheetProps) {
           <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-gray-600" aria-hidden />
         </div>
       </div>
-      {/* Заголовок: зажать и тянуть или тап по кнопкам/дропдауну (порог движения) */}
       <div
         className="shrink-0 overflow-hidden cursor-grab active:cursor-grabbing select-none touch-manipulation"
         onPointerDown={handleHeaderPointerDown}

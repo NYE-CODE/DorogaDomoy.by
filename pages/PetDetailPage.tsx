@@ -1,6 +1,6 @@
-import { useParams } from 'react-router';
+import { useParams, Link } from 'react-router';
 import { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, MapPin, Phone, MessageCircle, Calendar, Share2, Printer, Home, Heart, Building2, AlertTriangle, ChevronLeft, ChevronRight, User, Copy, Check, X, Eye } from 'lucide-react';
+import { MapPin, Phone, MessageCircle, Calendar, Share2, Download, ChevronLeft, ChevronRight, User, Eye, AlertCircle, X, QrCode, FileText, Home, Heart, Building2, ArrowLeft, Send, Copy, Check, Printer } from 'lucide-react';
 import { Pet } from '../types/pet';
 import { formatDate } from '../utils/pet-helpers';
 import { toast, Toaster } from 'sonner';
@@ -84,61 +84,62 @@ function ImageCarousel({ photos, alt }: { photos: string[]; alt: string }) {
 
   if (photos.length === 0) return null;
 
-  if (photos.length === 1) {
-    return (
-      <div className="relative w-full aspect-[4/3] md:aspect-[16/10] bg-gray-100 dark:bg-gray-700 rounded-xl overflow-hidden">
-        <img
-          src={photos[0]}
-          alt={alt}
-          className="w-full h-full object-cover"
-        />
-      </div>
-    );
-  }
-
   const goTo = (index: number) => {
     setCurrent((index + photos.length) % photos.length);
   };
 
   return (
-    <div className="relative w-full aspect-[4/3] md:aspect-[16/10] bg-gray-100 dark:bg-gray-700 rounded-xl overflow-hidden group">
-      <img
-        src={photos[current]}
-        alt={`${alt} — фото ${current + 1}`}
-        className="w-full h-full object-cover transition-opacity duration-300"
-      />
-
-      <button
-        onClick={() => goTo(current - 1)}
-        className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 dark:bg-gray-800/80 hover:bg-card dark:hover:bg-card rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
-      >
-        <ChevronLeft className="w-5 h-5 text-gray-800 dark:text-gray-200" />
-      </button>
-      <button
-        onClick={() => goTo(current + 1)}
-        className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 dark:bg-gray-800/80 hover:bg-card dark:hover:bg-card rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
-      >
-        <ChevronRight className="w-5 h-5 text-gray-800 dark:text-gray-200" />
-      </button>
-
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-        {photos.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => setCurrent(i)}
-            className={`w-2.5 h-2.5 rounded-full transition-all ${
-              i === current
-                ? 'bg-card scale-110 shadow-md'
-                : 'bg-white/50 dark:bg-gray-800/50 hover:bg-card/90 dark:hover:bg-card/90'
-            }`}
-          />
-        ))}
+    <>
+      <div className="relative aspect-[4/3] bg-black">
+        <img
+          src={photos[current]}
+          alt={photos.length > 1 ? `${alt} — фото ${current + 1}` : alt}
+          className="w-full h-full object-contain"
+        />
+        {photos.length > 1 && (
+          <>
+            <button
+              onClick={() => goTo(current - 1)}
+              className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-colors"
+            >
+              <ChevronLeft className="w-5 h-5 text-gray-800" />
+            </button>
+            <button
+              onClick={() => goTo(current + 1)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-colors"
+            >
+              <ChevronRight className="w-5 h-5 text-gray-800 rotate-180" />
+            </button>
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+              {photos.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrent(i)}
+                  className={`h-2 rounded-full transition-all ${
+                    i === current ? 'bg-[#FF9800] w-6' : 'w-2 bg-white/60 hover:bg-white'
+                  }`}
+                />
+              ))}
+            </div>
+          </>
+        )}
       </div>
-
-      <div className="absolute top-4 left-4 bg-black/50 text-white text-sm px-3 py-1 rounded-full backdrop-blur-sm">
-        {current + 1} / {photos.length}
-      </div>
-    </div>
+      {photos.length > 1 && (
+        <div className="p-4 flex gap-2 overflow-x-auto">
+          {photos.map((src, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrent(i)}
+              className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-colors ${
+                i === current ? 'border-[#FF9800]' : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
+              }`}
+            >
+              <img src={src} alt={`${alt} — миниатюра ${i + 1}`} className="w-full h-full object-cover" />
+            </button>
+          ))}
+        </div>
+      )}
+    </>
   );
 }
 
@@ -151,11 +152,10 @@ export default function PetDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [reportingPetId, setReportingPetId] = useState<string | null>(null);
-  const [showShareMenu, setShowShareMenu] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [showFlyerModal, setShowFlyerModal] = useState(false);
+  const [showShareMenu, setShowShareMenu] = useState(false);
   const shareMenuRef = useRef<HTMLDivElement>(null);
-  const [showFlyerMenu, setShowFlyerMenu] = useState(false);
-  const flyerMenuRef = useRef<HTMLDivElement>(null);
   const [sightings, setSightings] = useState<SightingItem[]>([]);
   const [showSightingForm, setShowSightingForm] = useState(false);
 
@@ -181,15 +181,6 @@ export default function PetDetailPage() {
   }, [showShareMenu]);
 
   useEffect(() => {
-    if (!showFlyerMenu) return;
-    const close = (e: MouseEvent) => {
-      if (flyerMenuRef.current && !flyerMenuRef.current.contains(e.target as Node)) setShowFlyerMenu(false);
-    };
-    document.addEventListener('mousedown', close);
-    return () => document.removeEventListener('mousedown', close);
-  }, [showFlyerMenu]);
-
-  useEffect(() => {
     if (!pet || pet.isArchived || pet.status !== 'searching') return;
     sightingsApi.listByPet(pet.id).then(setSightings).catch(() => setSightings([]));
   }, [pet?.id, pet?.isArchived, pet?.status]);
@@ -207,15 +198,19 @@ export default function PetDetailPage() {
 
   if (error || !pet) {
     return (
-      <div className="min-h-screen bg-background dark:bg-gray-900 flex flex-col items-center justify-center gap-4 p-4">
-        <p className="text-gray-600 dark:text-gray-400 text-lg">{t.petDetail.notFound}</p>
-        <a
-          href="/search"
-          className="flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          {t.petDetail.toMain}
-        </a>
+      <div className="min-h-screen bg-gray-50 dark:bg-background flex items-center justify-center py-12">
+        <div className="text-center max-w-md mx-auto px-4">
+          <h1 className="text-2xl font-bold text-black dark:text-white mb-2">Объявление не найдено</h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            К сожалению, это объявление не существует или было удалено.
+          </p>
+          <Link
+            to="/"
+            className="inline-flex items-center justify-center h-12 px-6 bg-[#FF9800] text-white rounded-lg hover:bg-[#F57C00] transition-colors font-medium text-lg"
+          >
+            На главную
+          </Link>
+        </div>
       </div>
     );
   }
@@ -356,7 +351,7 @@ export default function PetDetailPage() {
   };
 
   const handleFlyerClassic = () => {
-    setShowFlyerMenu(false);
+    setShowFlyerModal(false);
     openFlyer(`<!DOCTYPE html><html><head><title>Листовка</title><style>${flyerCommonStyles}</style></head><body>
       ${flyerHeaderBody}
       <div class="contact-box">
@@ -370,7 +365,7 @@ export default function PetDetailPage() {
   };
 
   const handleFlyerQR = () => {
-    setShowFlyerMenu(false);
+    setShowFlyerModal(false);
     openFlyer(`<!DOCTYPE html><html><head><title>Листовка с QR</title><style>${flyerCommonStyles}
       .contact-qr { display: flex; align-items: center; gap: 20px; border: 3px solid #000; padding: 16px 20px; border-radius: 14px; }
       .contact-qr .left { flex: 1; text-align: center; }
@@ -428,46 +423,68 @@ export default function PetDetailPage() {
   const canAddSighting = pet.status === 'searching' && !pet.isArchived
     && !(currentUser && (pet.authorId === currentUser.id || (currentUser.id === 'user-demo' && pet.authorId === 'current-user')));
 
+  const dateStr = pet.publishedAt.toISOString().slice(0, 10);
+  const daysAgo = Math.floor((Date.now() - pet.publishedAt.getTime()) / 86400000);
+  const daysAgoText =
+    daysAgo === 0 ? 'сегодня' : daysAgo === 1 ? '1 день назад' : daysAgo < 5 ? `${daysAgo} дня назад` : `${daysAgo} дней назад`;
+
   return (
-    <div className="min-h-screen bg-background dark:bg-gray-900">
-      {/* Top bar */}
-      <div className="sticky top-0 z-30 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-          <a
-            href="/search"
-            className="flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+    <>
+    <div className="min-h-screen bg-gray-50 dark:bg-background py-8">
+      <div className="max-w-7xl mx-auto px-4">
+        {/* Breadcrumb */}
+        <div className="mb-6">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1 text-gray-600 dark:text-gray-400 hover:text-[#FF9800] transition-colors"
           >
-            <ArrowLeft className="w-5 h-5" />
-            <span className="hidden sm:inline">{t.petDetail.toMain}</span>
-          </a>
-
-          <h1 className="text-lg text-gray-900 dark:text-white truncate px-4">
-            {t.pet.animalType[pet.animalType]} {pet.breed && `· ${pet.breed}`}
-          </h1>
-        </div>
-      </div>
-
-      <div className="max-w-4xl mx-auto px-4 py-6 md:py-8">
-        {/* Status banner */}
-        <div className={`mb-6 px-4 py-3 rounded-xl border ${statusBg} flex items-center gap-3`}>
-          <div className={`w-3 h-3 rounded-full ${pet.status === 'searching' ? 'bg-primary dark:bg-red-500 animate-pulse' : 'bg-green-500'}`} />
-          <span className={`${statusText}`}>
-            {pet.status === 'searching' ? t.petDetail.helpFind : t.petDetail.helpFindOwner}
-          </span>
+            <ChevronLeft size={20} />
+            Вернуться к объявлениям
+          </Link>
         </div>
 
-        {/* Image carousel */}
-        <ImageCarousel photos={pet.photos} alt={t.pet.animalType[pet.animalType]} />
+        {/* Alert Banner */}
+        {pet.status === 'searching' && !pet.isArchived && (
+          <div className="bg-[#FFF4E5] border-2 border-[#FF9800] rounded-lg p-4 mb-6 flex items-start gap-3">
+            <AlertCircle size={24} className="text-[#FF9800] flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-[#FF9800] font-bold mb-1">ВНИМАНИЕ! Этого питомца ищут!</p>
+              <p className="text-gray-700 dark:text-gray-300">
+                Помогите найти потерявшееся животное. Если вы видели его, пожалуйста, свяжитесь с владельцем.
+              </p>
+            </div>
+          </div>
+        )}
 
-        {/* Action buttons */}
-        <div className="flex flex-wrap gap-3 mt-6">
-          <div className="relative flex-1 min-w-[180px]" ref={shareMenuRef}>
+        {pet.status === 'found' && !pet.isArchived && (
+          <div className="bg-[#E8F5E9] border-2 border-[#4CAF50] rounded-lg p-4 mb-6 flex items-start gap-3">
+            <AlertCircle size={24} className="text-[#4CAF50] flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-[#4CAF50] font-bold mb-1">Найдено животное!</p>
+              <p className="text-gray-700 dark:text-gray-300">
+                Это животное было найдено. Если это ваш питомец, пожалуйста, свяжитесь с нашедшим.
+              </p>
+            </div>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Column */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Photo Gallery */}
+            <div className="bg-white dark:bg-card rounded-2xl overflow-hidden shadow-lg">
+              <ImageCarousel photos={pet.photos} alt={t.pet.animalType[pet.animalType]} />
+            </div>
+
+            {/* Action buttons */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="relative" ref={shareMenuRef}>
             <button
               onClick={() => setShowShareMenu(!showShareMenu)}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+              className="w-full flex items-center justify-center gap-2 h-12 bg-[#FF9800] text-white rounded-lg hover:bg-[#F57C00] transition-colors font-medium text-lg"
             >
               <Share2 className="w-5 h-5" />
-              {t.petDetail.share}
+              Поделиться объявлением
             </button>
 
             {showShareMenu && (
@@ -528,159 +545,167 @@ export default function PetDetailPage() {
               </div>
             )}
           </div>
-          <div className="relative flex-1 min-w-[180px]" ref={flyerMenuRef}>
+          <div>
             <button
-              onClick={() => setShowFlyerMenu(!showFlyerMenu)}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-card border-2 border-primary text-primary rounded-lg hover:bg-primary/5 dark:hover:bg-primary/10 transition-colors"
+              onClick={() => setShowFlyerModal(true)}
+              className="w-full flex items-center justify-center gap-2 h-12 bg-white border-2 border-[#FF9800] text-[#FF9800] rounded-lg hover:bg-orange-50 transition-colors font-medium text-lg dark:bg-gray-900 dark:border-[#FF9800] dark:text-[#FF9800] dark:hover:bg-orange-950/30"
             >
-              <Printer className="w-5 h-5" />
+              <Download className="w-5 h-5" />
               Скачать листовку
             </button>
-            {showFlyerMenu && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-card rounded-xl border border-gray-200 dark:border-gray-700 shadow-xl z-50 overflow-hidden">
-                <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700">
-                  <span className="text-sm font-semibold text-gray-900 dark:text-white">Выберите шаблон</span>
-                </div>
-                <button onClick={handleFlyerClassic} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent dark:hover:bg-accent transition-colors">
-                  <span className="w-10 h-10 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700 shrink-0">
-                    <Printer className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-                  </span>
-                  <div className="text-left">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">Классическая</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Фото, описание, контакты</p>
-                  </div>
-                </button>
-                <button onClick={handleFlyerQR} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent dark:hover:bg-accent transition-colors border-t border-gray-100 dark:border-gray-700">
-                  <span className="w-10 h-10 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700 shrink-0">
-                    <svg viewBox="0 0 24 24" className="w-5 h-5 text-gray-700 dark:text-gray-300" fill="currentColor"><path d="M3 11h2v2H3v-2zm0-4h2v2H3V7zm4 4h2v2H7v-2zm0-4h2v2H7V7zm-4-4h6v6H3V3zm2 4h2V5H5v2zm8-4h6v6h-6V3zm2 4h2V5h-2v2zM3 13h6v6H3v-6zm2 4h2v-2H5v2zm8 0h2v2h-2v-2zm0-4h2v2h-2v-2zm4 4h2v2h-2v-2zm0-4h2v2h-2v-2zm4 0h2v2h-2v-2zm0 4h2v2h-2v-2zm-4-8h2v2h-2V9zm4 0h2v2h-2V9z"/></svg>
-                  </span>
-                  <div className="text-left">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">С QR-кодом</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Фото, контакты + QR на объявление</p>
-                  </div>
-                </button>
-              </div>
-            )}
           </div>
         </div>
 
-        {/* Main info grid */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Left column: details */}
-          <div className="bg-card rounded-xl border border-gray-200 dark:border-gray-700 p-6 space-y-5">
-            <h2 className="text-xl text-gray-900 dark:text-white pb-3 border-b border-gray-100 dark:border-gray-700">
-              {t.pet.information}
-            </h2>
+            {/* Description - inside left column */}
+            <div className="bg-white dark:bg-card rounded-2xl p-6 shadow-lg">
+              <h2 className="text-2xl font-bold text-black dark:text-white mb-4">{t.pet.description}</h2>
+              <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">{pet.description}</p>
+            </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Тип животного</p>
-                <p className="text-gray-900 dark:text-white">{t.pet.animalType[pet.animalType]}</p>
+            {/* Map Section */}
+            <div className="bg-white dark:bg-card rounded-2xl overflow-hidden shadow-lg">
+              <div className="p-6 border-b border-gray-200 dark:border-gray-200">
+                <div className="flex items-center gap-3 mb-2">
+                  <MapPin size={24} className="text-[#FF9800]" />
+                  <h2 className="text-2xl font-bold text-black dark:text-white">{t.pet.location}</h2>
+                </div>
+                <p className="text-gray-700 dark:text-gray-300 ml-9">{pet.city}</p>
               </div>
-              {pet.breed && (
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Порода</p>
-                  <p className="text-gray-900 dark:text-white">{pet.breed}</p>
+              {canAddSighting && pet.status === 'searching' && !pet.isArchived && (
+                <div className="p-6 bg-orange-50 dark:bg-orange-950/20 border-b border-gray-200 dark:border-gray-200">
+                  <button
+                    onClick={() => setShowSightingForm(true)}
+                    className="w-full h-12 bg-[#FF9800] text-white rounded-lg hover:bg-[#F57C00] transition-colors font-medium text-lg mb-3"
+                  >
+                    {t.petDetail.sawSimilar}
+                  </button>
+                  <p className="text-gray-600 dark:text-gray-400 text-center">{t.petDetail.sightingHintForVisitors.replace(/^\s*\u{1F441}\s*/u, '')}</p>
                 </div>
               )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Цвет</p>
-                <p className="text-gray-900 dark:text-white">{pet.colors.map(c => t.pet.color[c]).join(', ')}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Пол</p>
-                <p className="text-gray-900 dark:text-white">{t.pet.gender[pet.gender]}</p>
-              </div>
-            </div>
-
-            {pet.approximateAge && (
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Возраст</p>
-                <p className="text-gray-900 dark:text-white">{pet.approximateAge}</p>
-              </div>
-            )}
-
-            <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 pt-2 border-t border-gray-100 dark:border-gray-700">
-              <div className="flex items-center gap-1.5">
-                <MapPin className="w-4 h-4" />
-                <span>{pet.city}</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <Calendar className="w-4 h-4" />
-                <span>{formatDate(pet.publishedAt)}</span>
+              <div className="h-96">
+                <SinglePetMap pet={pet} sightings={sightings} seenLabel={t.sightings.seenLabel} />
               </div>
             </div>
           </div>
 
-          {/* Right column: description + contacts */}
+          {/* Right Column */}
           <div className="space-y-6">
-            {/* Description */}
-            <div className="bg-card rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-              <h2 className="text-xl text-gray-900 dark:text-white pb-3 border-b border-gray-100 dark:border-gray-700 mb-4">
-                {t.pet.description}
-              </h2>
-              <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">{pet.description}</p>
+            {/* Информация о животном */}
+            <div className="bg-white dark:bg-card rounded-2xl p-6 shadow-lg">
+              <h2 className="text-2xl font-bold text-black dark:text-white mb-6">{t.pet.information}</h2>
+              <div className="space-y-4">
+                <div>
+                  <div className="text-gray-500 dark:text-gray-400 text-sm mb-1">Статус</div>
+                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${
+                    pet.status === 'searching' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                  }`}>
+                    {pet.status === 'searching' ? 'Потеряно' : 'Найдено'}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-gray-500 dark:text-gray-400 text-sm mb-1">{t.pet.animalTypeLabel || 'Тип животного'}</div>
+                  <div className="font-medium text-black dark:text-white">{t.pet.animalType[pet.animalType]}</div>
+                </div>
+                {pet.breed && (
+                  <div>
+                    <div className="text-gray-500 dark:text-gray-400 text-sm mb-1">{t.pet.breedLabel}</div>
+                    <div className="font-medium text-black dark:text-white">{pet.breed}</div>
+                  </div>
+                )}
+                <div>
+                  <div className="text-gray-500 dark:text-gray-400 text-sm mb-1">{t.pet.colorLabel}</div>
+                  <div className="flex flex-wrap gap-2">
+                    {pet.colors.map((c) => (
+                      <span key={c} className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-sm">
+                        {t.pet.color[c]}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-gray-500 dark:text-gray-400 text-sm mb-1">{t.pet.genderLabel}</div>
+                  <div className="font-medium text-black dark:text-white">{t.pet.gender[pet.gender]}</div>
+                </div>
+                {pet.approximateAge && (
+                  <div>
+                    <div className="text-gray-500 dark:text-gray-400 text-sm mb-1">{t.pet.ageLabel}</div>
+                    <div className="font-medium text-black dark:text-white">{pet.approximateAge}</div>
+                  </div>
+                )}
+                <div className="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
+                  <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                    <MapPin className="w-[18px] h-[18px] flex-shrink-0" />
+                    <span>{pet.city}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                    <Calendar className="w-[18px] h-[18px] flex-shrink-0" />
+                    <span>{formatDate(pet.publishedAt)} {daysAgo > 0 && `(${daysAgoText})`}</span>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            {/* Contacts */}
+            {/* Контактная информация */}
             {!pet.isArchived && (
-              <div className="bg-card rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-                <h2 className="text-xl text-gray-900 dark:text-white pb-3 border-b border-gray-100 dark:border-gray-700 mb-4">
-                  {t.pet.contacts}
-                </h2>
-
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
-                    <User className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+              <div className="bg-white dark:bg-card rounded-2xl p-6 shadow-lg">
+                <h2 className="text-2xl font-bold text-black dark:text-white mb-4">{t.pet.contacts}</h2>
+                <div className="flex items-center gap-3 mb-6">
+                  <img
+                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(pet.authorName)}&size=48`}
+                    alt=""
+                    className="w-12 h-12 rounded-full object-cover"
+                  />
+                  <div>
+                    <Link to={`/user/${pet.authorId}`} className="font-medium text-black dark:text-white hover:text-[#FF9800] transition-colors">
+                      {pet.authorName}
+                    </Link>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">Автор объявления</div>
                   </div>
-                  <a
-                    href={`/user/${pet.authorId}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary hover:text-primary/90 hover:underline transition-colors"
-                  >
-                    {pet.authorName}
-                  </a>
                 </div>
-
-                <div className="flex flex-col gap-3">
+                <div className="space-y-3">
                   {pet.contacts.phone && (
-                    <button
-                      onClick={() => handleContactClick(`tel:${pet.contacts.phone}`)}
-                      className="flex items-center gap-3 px-4 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+                    <a
+                      href={`tel:${pet.contacts.phone}`}
+                      className="flex items-center justify-center gap-2 w-full h-12 bg-[#FF9800] text-white rounded-lg hover:bg-[#F57C00] transition-colors font-medium text-lg"
                     >
                       <Phone className="w-5 h-5" />
-                      <span>{pet.contacts.phone}</span>
-                    </button>
+                      {pet.contacts.phone}
+                    </a>
                   )}
                   {pet.contacts.telegram && (
-                    <button
-                      onClick={() => handleContactClick(`https://t.me/${pet.contacts.telegram!.replace('@', '')}`)}
-                      className="flex items-center gap-3 px-4 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+                    <a
+                      href={`https://t.me/${pet.contacts.telegram.replace('@', '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-2 w-full h-12 bg-[#0088cc] text-white rounded-lg hover:bg-[#006699] transition-colors font-medium text-lg"
                     >
-                      <MessageCircle className="w-5 h-5" />
-                      <span>{t.profile.telegram}</span>
-                    </button>
+                      <Send className="w-5 h-5" />
+                      Написать в Telegram
+                    </a>
                   )}
                   {pet.contacts.viber && (
-                    <button
-                      onClick={() => handleContactClick(`viber://chat?number=${pet.contacts.viber!.replace('+', '')}`)}
-                      className="flex items-center gap-3 px-4 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+                    <a
+                      href={`viber://chat?number=${pet.contacts.viber.replace('+', '')}`}
+                      className="flex items-center justify-center gap-2 w-full h-12 bg-[#7360f2] text-white rounded-lg hover:bg-[#5a4dd4] transition-colors font-medium text-lg"
                     >
                       <MessageCircle className="w-5 h-5" />
-                      <span>{t.profile.viber}</span>
-                    </button>
+                      {t.profile.viber}
+                    </a>
                   )}
+                </div>
+                <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                  <Link
+                    to={`/user/${pet.authorId}`}
+                    className="flex items-center justify-center w-full h-12 bg-white dark:bg-gray-900 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors font-medium text-lg"
+                  >
+                    Все объявления автора
+                  </Link>
                 </div>
               </div>
             )}
 
-            {/* Archived notice */}
             {pet.isArchived && (
-              <div className="bg-card rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+              <div className="bg-white dark:bg-card rounded-2xl p-6 shadow-lg">
                 <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg text-center">
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{t.petDetail.contactsHiddenArchived}</p>
                   {archiveBadge && (
@@ -694,60 +719,97 @@ export default function PetDetailPage() {
                 </div>
               </div>
             )}
-          </div>
-        </div>
 
-        {/* Map section */}
-        <div className="mt-8">
-          <div className="bg-card rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <MapPin className="w-5 h-5 text-gray-600 dark:text-gray-400 shrink-0" />
-                <h2 className="text-xl text-gray-900 dark:text-white hidden sm:block">{t.pet.location}</h2>
-                <span className="text-sm text-gray-500 dark:text-gray-400">{pet.city}</span>
-              </div>
-              {canAddSighting && (
-                <button
-                  onClick={() => setShowSightingForm(true)}
-                  className="flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium shrink-0"
-                >
-                  <Eye className="w-4 h-4" />
-                  {t.petDetail.sawSimilar}
-                </button>
-              )}
-            </div>
-            {pet.status === 'searching' && !pet.isArchived && (
-              <div className={`px-6 py-3 text-sm ${canAddSighting ? 'bg-primary/10 dark:bg-primary/20 border-b border-primary/20 dark:border-primary/30' : 'bg-gray-50 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-700'}`}>
-                {canAddSighting ? (
-                  <p className="text-foreground">
-                    {t.petDetail.sightingHintForVisitors.replace(/^\s*\u{1F441}\s*/u, '')}
-                  </p>
-                ) : (
-                  <p className="text-gray-600 dark:text-gray-400">
-                    {t.petDetail.sightingHintForAuthor}
-                  </p>
-                )}
-              </div>
-            )}
-            <div className="h-[300px] md:h-[400px]">
-              <SinglePetMap pet={pet} sightings={sightings} seenLabel={t.sightings.seenLabel} />
+            {/* Пожаловаться */}
+            <div className="bg-white dark:bg-card rounded-2xl p-6 shadow-lg">
+              <button
+                onClick={handleReportPet}
+                className="flex items-center justify-center gap-2 w-full text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+              >
+                <AlertCircle className="w-5 h-5" />
+                Пожаловаться на объявление
+              </button>
             </div>
           </div>
-        </div>
-
-        {/* Report */}
-        {!pet.isArchived && (
-          <div className="mt-6 mb-8 text-center">
-            <button
-              onClick={handleReportPet}
-              className="inline-flex items-center gap-2 px-4 py-3 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-accent dark:hover:bg-accent rounded-lg transition-colors text-sm"
-            >
-              <AlertTriangle className="w-4 h-4" />
-              {t.petDetail.report}
-            </button>
           </div>
-        )}
+        </div>
       </div>
+
+      {showFlyerModal && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          onClick={() => setShowFlyerModal(false)}
+        >
+          <div
+            className="bg-white dark:bg-gray-900 rounded-2xl p-8 shadow-2xl max-w-2xl w-full mx-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-black dark:text-white">{t.petDetail.flyerModalTitle}</h2>
+              <button
+                onClick={() => setShowFlyerModal(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              >
+                <X size={28} />
+              </button>
+            </div>
+
+            <p className="text-gray-600 dark:text-gray-400 mb-8">
+              {t.petDetail.flyerModalIntro}
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <button
+                onClick={handleFlyerQR}
+                className="group relative bg-gradient-to-br from-[#FFF4E5] to-white dark:from-orange-950/30 dark:to-gray-900 border-2 border-[#FF9800] rounded-2xl p-6 hover:shadow-xl transition-all duration-300 hover:scale-105"
+              >
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-20 h-20 bg-[#FF9800] rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <QrCode size={40} className="text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold text-black dark:text-white mb-2">{t.petDetail.flyerWithQR}</h3>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
+                    {t.petDetail.flyerWithQRDesc}
+                  </p>
+                  <div className="flex items-center gap-2 text-[#FF9800] font-medium">
+                    <Download size={18} />
+                    {t.petDetail.flyerDownload}
+                  </div>
+                </div>
+                <div className="absolute top-3 right-3 bg-[#FF9800] text-white text-xs px-2 py-1 rounded-full">
+                  {t.petDetail.flyerRecommended}
+                </div>
+              </button>
+
+              <button
+                onClick={handleFlyerClassic}
+                className="group relative bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 rounded-2xl p-6 hover:border-[#FF9800] hover:shadow-xl transition-all duration-300 hover:scale-105"
+              >
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-20 h-20 bg-gray-100 dark:bg-gray-700 group-hover:bg-[#FFF4E5] dark:group-hover:bg-orange-950/30 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-all">
+                    <FileText size={40} className="text-gray-600 dark:text-gray-400 group-hover:text-[#FF9800] transition-colors" />
+                  </div>
+                  <h3 className="text-xl font-bold text-black dark:text-white mb-2">{t.petDetail.flyerClassic}</h3>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
+                    {t.petDetail.flyerClassicDesc}
+                  </p>
+                  <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 group-hover:text-[#FF9800] font-medium transition-colors">
+                    <Download size={18} />
+                    {t.petDetail.flyerDownload}
+                  </div>
+                </div>
+              </button>
+            </div>
+
+            <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex items-start gap-3 text-sm text-gray-600 dark:text-gray-400">
+                <AlertCircle size={18} className="flex-shrink-0 mt-0.5 text-[#FF9800]" />
+                <p>{t.petDetail.flyerHint}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {reportingPetId && (
         <ReportModal
@@ -768,6 +830,6 @@ export default function PetDetailPage() {
       )}
 
       <Toaster theme={theme} />
-    </div>
+    </>
   );
 }
