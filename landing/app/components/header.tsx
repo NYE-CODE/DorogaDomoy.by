@@ -37,18 +37,22 @@ export function Header(props: HeaderProps = {}) {
   const profileRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      const el = event.target as Element;
+      const isInsideProfile = el?.closest?.('[data-profile-menu]');
+      if (!isInsideProfile) {
         setIsProfileOpen(false);
       }
     };
 
     if (isProfileOpen) {
       document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("touchstart", handleClickOutside);
     }
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
     };
   }, [isProfileOpen]);
 
@@ -89,7 +93,7 @@ export function Header(props: HeaderProps = {}) {
               <ChevronDown size={16} className="text-muted-foreground" />
             </button>
 
-            <div className="relative" ref={profileRef}>
+            <div className="relative" ref={profileRef} data-profile-menu>
               {isAuthenticated && user ? (
                 <>
                   <button 
@@ -104,7 +108,7 @@ export function Header(props: HeaderProps = {}) {
 
                   {/* Profile Dropdown */}
                   {isProfileOpen && (
-                    <div className="absolute right-0 mt-2 w-64 bg-card rounded-lg shadow-lg border border-border py-2 z-50">
+                    <div className="absolute right-0 mt-2 w-64 bg-card rounded-lg shadow-lg border border-border py-2 z-[100]">
                       <div className="px-4 py-3 border-b border-border">
                         <p className="font-bold text-foreground">{user.name}</p>
                         <p className="text-sm text-muted-foreground truncate">{user.email}</p>
@@ -156,7 +160,7 @@ export function Header(props: HeaderProps = {}) {
               <Link to="/create">+</Link>
             </Button>
 
-            <div className="relative">
+            <div className="relative" data-profile-menu>
               {isAuthenticated && user ? (
                 <>
                   <button 
@@ -168,7 +172,7 @@ export function Header(props: HeaderProps = {}) {
                     </div>
                   </button>
                   {isProfileOpen && (
-                    <div className="absolute right-0 mt-2 w-64 bg-card rounded-lg shadow-lg border border-border py-2 z-50">
+                    <div className="absolute right-0 mt-2 w-64 bg-card rounded-lg shadow-lg border border-border py-2 z-[100]">
                       <div className="px-4 py-3 border-b border-border">
                         <p className="font-bold text-foreground">{user.name}</p>
                         <p className="text-sm text-muted-foreground truncate">{user.email}</p>
