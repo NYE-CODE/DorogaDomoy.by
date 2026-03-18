@@ -6,13 +6,27 @@ import { RegionSelector } from "./region-selector";
 import { useAuth } from "../../../context/AuthContext";
 import { useI18n } from "../../../context/I18nContext";
 
-export function Header() {
+interface HeaderProps {
+  selectedCity?: string;
+  onCityClick?: () => void;
+}
+
+export function Header({ selectedCity: propSelectedCity, onCityClick }: HeaderProps = {}) {
   const { t } = useI18n();
   const { user, isAuthenticated, openAuthModal, logout } = useAuth();
   const navigate = useNavigate();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isRegionOpen, setIsRegionOpen] = useState(false);
   const [selectedRegion, setSelectedRegion] = useState(t.landing.header.allBelarus);
+
+  const hasCityControl = typeof onCityClick === 'function';
+  const displayRegion = hasCityControl
+    ? (propSelectedCity?.trim() || t.landing.header.allBelarus)
+    : selectedRegion;
+  const handleRegionClick = () => {
+    if (hasCityControl) onCityClick();
+    else setIsRegionOpen(true);
+  };
   const profileRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -60,11 +74,11 @@ export function Header() {
             </Button>
             
             <button 
-              onClick={() => setIsRegionOpen(true)}
+              onClick={handleRegionClick}
               className="flex items-center gap-2 px-4 h-12 rounded-lg border border-border"
             >
               <MapPin size={18} className="text-primary" />
-              <span className="text-foreground">{selectedRegion}</span>
+              <span className="text-foreground">{displayRegion}</span>
               <ChevronDown size={16} className="text-muted-foreground" />
             </button>
 
@@ -196,26 +210,28 @@ export function Header() {
         {/* Mobile Region Selector - Full Width Below */}
         <div className="md:hidden pb-4">
           <button 
-            onClick={() => setIsRegionOpen(true)}
+            onClick={handleRegionClick}
             className="w-full flex items-center justify-center gap-2 px-4 h-12 rounded-lg border border-border"
           >
             <MapPin size={18} className="text-primary" />
-            <span className="text-foreground">{selectedRegion}</span>
+            <span className="text-foreground">{displayRegion}</span>
             <ChevronDown size={16} className="text-muted-foreground" />
           </button>
         </div>
       </div>
 
-      {/* Region Selector Modal */}
-      <RegionSelector 
-        isOpen={isRegionOpen}
-        onClose={() => setIsRegionOpen(false)}
-        selectedRegion={selectedRegion}
-        onSelectRegion={(region) => {
-          setSelectedRegion(region);
-          setIsRegionOpen(false);
-        }}
-      />
+      {/* Region Selector Modal — только когда город не управляется родителем */}
+      {!hasCityControl && (
+        <RegionSelector 
+          isOpen={isRegionOpen}
+          onClose={() => setIsRegionOpen(false)}
+          selectedRegion={selectedRegion}
+          onSelectRegion={(region) => {
+            setSelectedRegion(region);
+            setIsRegionOpen(false);
+          }}
+        />
+      )}
     </header>
   );
 }

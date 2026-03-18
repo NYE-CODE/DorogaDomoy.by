@@ -20,8 +20,9 @@ export function CitySelectModal({ open, onClose, onSelect, currentCity }: CitySe
   const [activeTab, setActiveTab] = useState<OblastTab>('all');
 
   const searchResults = useMemo(() => {
-    if (!searchQuery.trim()) return null;
-    return searchCities(searchQuery, 20);
+    const q = searchQuery.trim();
+    if (!q) return null;
+    return searchCities(q, 50);
   }, [searchQuery]);
 
   const displayCities = useMemo(() => {
@@ -109,7 +110,7 @@ export function CitySelectModal({ open, onClose, onSelect, currentCity }: CitySe
             <button
               onClick={handleSelectAll}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg mb-4 transition-colors border ${
-                !currentCity
+                    !(currentCity?.trim())
                   ? 'bg-primary/10 border-primary/20 text-primary'
                   : 'bg-card border-border text-foreground hover:bg-accent dark:hover:bg-accent'
               }`}
@@ -132,7 +133,7 @@ export function CitySelectModal({ open, onClose, onSelect, currentCity }: CitySe
                       <CityButton
                         key={city.name}
                         city={city}
-                        isActive={currentCity === city.name}
+                        isActive={(currentCity?.trim() || '') === city.name.trim()}
                         onClick={() => handleSelect(city)}
                       />
                     ))}
@@ -149,7 +150,7 @@ export function CitySelectModal({ open, onClose, onSelect, currentCity }: CitySe
                 <CityButton
                   key={city.name}
                   city={city}
-                  isActive={currentCity === city.name}
+                        isActive={(currentCity?.trim() || '') === city.name.trim()}
                   onClick={() => handleSelect(city)}
                 />
               ))}
@@ -164,7 +165,7 @@ export function CitySelectModal({ open, onClose, onSelect, currentCity }: CitySe
                   <CityButton
                     key={city.name}
                     city={city}
-                    isActive={currentCity === city.name}
+                        isActive={(currentCity?.trim() || '') === city.name.trim()}
                     onClick={() => handleSelect(city)}
                   />
                 ))}

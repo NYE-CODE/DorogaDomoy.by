@@ -117,12 +117,25 @@ export const oblasts: Oblast[] = [
 
 const cities: City[] = oblasts.flatMap(o => o.cities);
 
-export function searchCities(query: string, limit: number = 8): City[] {
-  if (!query.trim()) return [];
-  const normalizedQuery = query.toLowerCase().trim();
+/** Нормализация для поиска: ё→е, trim, toLowerCase */
+function normalizeForSearch(s: string): string {
+  return s
+    .trim()
+    .toLowerCase()
+    .replace(/ё/g, 'е');
+}
+
+export function searchCities(query: string, limit: number = 50): City[] {
+  const normalizedQuery = normalizeForSearch(query);
+  if (!normalizedQuery) return [];
   return cities
-    .filter(city => city.name.toLowerCase().includes(normalizedQuery))
+    .filter(city => normalizeForSearch(city.name).includes(normalizedQuery))
     .slice(0, limit);
+}
+
+export function findCityByName(name: string): City | undefined {
+  const n = normalizeForSearch(name);
+  return cities.find(c => normalizeForSearch(c.name) === n);
 }
 
 export function findClosestCity(lat: number, lng: number): City {
