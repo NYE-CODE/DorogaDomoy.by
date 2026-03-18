@@ -7,6 +7,7 @@ import { BreedCombobox } from './breed-combobox';
 import { CAT_BREEDS, DOG_BREEDS } from '../utils/breeds';
 import { useAuth } from '../context/AuthContext';
 import { useI18n } from '../context/I18nContext';
+import { useIsMobile } from './ui/use-mobile';
 import { LocationPicker } from './location-picker';
 import { DEFAULT_CITY } from '../utils/cities';
 import { geocode } from '../utils/geocode';
@@ -118,11 +119,7 @@ const genderOptions: { value: Gender }[] = [
   { value: 'female' },
 ];
 
-const agePresetOptions: { label: string; value: string }[] = [
-  { label: 'Неизвестно', value: '' },
-  { label: 'менее 2 года', value: 'менее 2 года' },
-  { label: 'более 2 года', value: 'более 2 года' },
-];
+const agePresetValues = ['', 'менее 2 года', 'более 2 года'] as const;
 
 const TOTAL_STEPS_CREATE = 5;
 const TOTAL_STEPS_EDIT = 5;
@@ -130,7 +127,16 @@ const TOTAL_STEPS_EDIT = 5;
 export function PetForm({ onClose, onSubmit, initialData, isEditing = false, initialStatus, variant = 'modal', renderStepHeaderExternally = false, onStepChange }: PetFormProps) {
   const { user } = useAuth();
   const { t } = useI18n();
+  const isMobile = useIsMobile();
   useScrollLock(variant === 'modal');
+
+  const getAgeLabel = (value: string, short: boolean) => {
+    const pf = t.petForm as { ageUnknownShort?: string; ageLess2?: string; ageLess2Short?: string; ageMore2?: string; ageMore2Short?: string };
+    if (value === '') return short ? (pf.ageUnknownShort ?? 'Неизв.') : t.pet.gender.unknown;
+    if (value === 'менее 2 года') return short ? (pf.ageLess2Short ?? '< 2 года') : (pf.ageLess2 ?? 'менее 2 года');
+    if (value === 'более 2 года') return short ? (pf.ageMore2Short ?? '> 2 года') : (pf.ageMore2 ?? 'более 2 года');
+    return value;
+  };
 
   const totalSteps = isEditing ? TOTAL_STEPS_EDIT : TOTAL_STEPS_CREATE;
 
@@ -462,7 +468,9 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false, ini
                         } ${variant === 'page' ? 'text-sm' : 'px-3 py-1.5 text-sm'}`}
                       >
                         <span className="text-base leading-none">{opt.icon}</span>
-                        {t.pet.animalType[opt.value]}
+                        {(opt.value === 'cat' || opt.value === 'dog') && isMobile ? null : (
+                          <span>{t.pet.animalType[opt.value]}</span>
+                        )}
                       </button>
                     ))}
                   </div>
@@ -539,7 +547,9 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false, ini
                               : 'text-muted-foreground hover:bg-muted hover:text-foreground px-3 py-1.5'
                         }`}
                       >
-                        {t.pet.gender[opt.value]}
+                        {isMobile && opt.value === 'unknown'
+                          ? ((t.pet.gender as { unknownShort?: string }).unknownShort ?? 'Неизв.')
+                          : t.pet.gender[opt.value]}
                       </button>
                     ))}
                   </div>
@@ -548,18 +558,18 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false, ini
                   <label className="block text-sm font-semibold text-gray-500 uppercase mb-3">{t.petForm.ageLabel}</label>
                   {variant === 'page' ? (
                     <div className="flex gap-3">
-                      {agePresetOptions.map((a) => (
+                      {agePresetValues.map((value) => (
                         <button
-                          key={a.value}
+                          key={value || 'empty'}
                           type="button"
-                          onClick={() => setFormData({ ...formData, approximateAge: a.value })}
+                          onClick={() => setFormData({ ...formData, approximateAge: value })}
                           className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-                            (formData.approximateAge === a.value || (a.value === '' && !formData.approximateAge))
+                            (formData.approximateAge === value || (value === '' && !formData.approximateAge))
                               ? 'bg-gray-800 text-white'
                               : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                           }`}
                         >
-                          {a.label}
+                          {getAgeLabel(value, isMobile)}
                         </button>
                       ))}
                     </div>

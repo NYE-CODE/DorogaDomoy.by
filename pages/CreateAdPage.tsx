@@ -12,7 +12,7 @@ import { petsApi } from '../api/client';
 import { toast } from 'sonner';
 
 export default function CreateAdPage() {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading, openAuthModal } = useAuth();
   const { t } = useI18n();
   const navigate = useNavigate();
 
@@ -22,10 +22,9 @@ export default function CreateAdPage() {
   useEffect(() => {
     if (isLoading) return;
     if (!isAuthenticated) {
-      navigate('/', { replace: true });
-      return;
+      openAuthModal();
     }
-  }, [isLoading, isAuthenticated, navigate]);
+  }, [isLoading, isAuthenticated, openAuthModal]);
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -71,10 +70,29 @@ export default function CreateAdPage() {
     }
   };
 
-  if (isLoading || !isAuthenticated) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="landing-theme min-h-screen bg-gray-50 dark:bg-background flex flex-col items-center justify-center px-4">
+        <Header />
+        <main className="flex-1 flex flex-col items-center justify-center text-center">
+          <p className="text-lg text-gray-600 dark:text-gray-400 mb-6">
+            {(t.app as { loginToCreate?: string }).loginToCreate ?? 'Войдите или зарегистрируйтесь, чтобы создать объявление'}
+          </p>
+          <button
+            onClick={openAuthModal}
+            className="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 font-medium"
+          >
+            {(t.auth as { login?: string }).login ?? 'Войти'}
+          </button>
+        </main>
       </div>
     );
   }
