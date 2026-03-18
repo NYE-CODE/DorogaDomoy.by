@@ -1,6 +1,7 @@
 import { X, Search, MapPin } from "lucide-react";
 import { useState } from "react";
 import { useI18n } from "../../../context/I18nContext";
+import { useScrollLock } from "../../../components/ui/use-scroll-lock";
 
 interface RegionSelectorProps {
   isOpen: boolean;
@@ -51,25 +52,28 @@ export function RegionSelector({ isOpen, onClose, selectedRegion, onSelectRegion
   const { t } = useI18n();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
+  useScrollLock(isOpen);
 
   if (!isOpen) return null;
 
+  const q = searchQuery.trim().toLowerCase().replace(/ё/g, 'е');
   const filteredRegions = regions.filter((region) =>
-    region.name.toLowerCase().includes(searchQuery.toLowerCase())
+    region.name.toLowerCase().replace(/ё/g, 'е').includes(q)
   );
 
   const getFilteredCities = () => {
+    const q = searchQuery.trim().toLowerCase().replace(/ё/g, 'е');
     if (activeFilter && cities[activeFilter as keyof typeof cities]) {
       return cities[activeFilter as keyof typeof cities].filter((city) =>
-        city.toLowerCase().includes(searchQuery.toLowerCase())
+        city.trim().toLowerCase().replace(/ё/g, 'е').includes(q)
       );
     }
 
     // If no filter, show all cities that match search
     const allCities: { city: string; region: string }[] = [];
     Object.entries(cities).forEach(([region, cityList]) => {
-      cityList.forEach((city) => {
-        if (city.toLowerCase().includes(searchQuery.toLowerCase())) {
+        cityList.forEach((city) => {
+          if (city.trim().toLowerCase().replace(/ё/g, 'е').includes(q)) {
           allCities.push({ city, region });
         }
       });

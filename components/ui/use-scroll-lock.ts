@@ -15,10 +15,14 @@ export function useScrollLock(active: boolean) {
     const prevOverflow = document.body.style.overflow;
     const prevOverflowHtml = document.documentElement.style.overflow;
     const prevPaddingRight = document.body.style.paddingRight;
+    const prevPosition = document.body.style.position;
+    const prevWidth = document.body.style.width;
     const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
 
     document.documentElement.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.width = '100%';
     if (scrollbarWidth > 0) {
       document.body.style.paddingRight = `${scrollbarWidth}px`;
     }
@@ -30,6 +34,8 @@ export function useScrollLock(active: boolean) {
         document.documentElement.style.overflow = prevOverflowHtml || '';
         document.body.style.overflow = prevOverflow || '';
         document.body.style.paddingRight = prevPaddingRight || '';
+        document.body.style.position = prevPosition || '';
+        document.body.style.width = prevWidth || '';
       }
     };
   }, [active]);

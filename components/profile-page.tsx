@@ -301,7 +301,10 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-background flex flex-col">
-      <Header />
+      <Header
+        selectedCity={selectedCity}
+        onCityClick={() => setShowCityModal(true)}
+      />
 
       <main className="flex-1">
         <div className="min-h-screen bg-gray-50 dark:bg-background py-8">
