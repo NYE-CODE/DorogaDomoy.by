@@ -8,7 +8,7 @@ export function TermsPage({ onBack }: TermsPageProps) {
   return (
     <div className="min-h-screen bg-background dark:bg-gray-900">
       <header className="bg-card border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
-        <div className="max-w-4xl mx-auto px-4 md:px-6 py-4">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center gap-4">
             <button
               onClick={onBack}
@@ -21,7 +21,7 @@ export function TermsPage({ onBack }: TermsPageProps) {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 md:px-6 py-8">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-card rounded-lg border border-gray-200 dark:border-gray-700 p-6 md:p-8 space-y-8">
           
           {/* Introduction */}

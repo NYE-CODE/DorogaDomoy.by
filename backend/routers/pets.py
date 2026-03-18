@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from models import Pet, PlatformSettings, User
-from schemas import PetCreate, PetUpdate, PetResponse, StatisticsResponse
+from schemas import PetCreate, PetUpdate, PetResponse, StatisticsResponse, ARCHIVE_HAPPY_KEYWORDS
 from auth import get_current_user, get_current_user_required, require_admin
 from telegram_bot import send_notifications_for_pet
 
@@ -170,10 +170,40 @@ def list_pets(
 @router.get("/statistics", response_model=StatisticsResponse)
 def get_statistics(db: Session = Depends(get_db)):
     from sqlalchemy import func
-    pets = db.query(Pet).filter(Pet.is_archived == False).all()
-    searching = sum(1 for p in pets if p.status == "searching")
-    found = sum(1 for p in pets if p.status == "found")
-    return StatisticsResponse(searching=searching, found=found, fostering=0)
+    from schemas import _is_happy_archive
+
+    # Активные объявления (не архив, одобрены)
+    active = db.query(Pet).filter(
+        Pet.is_archived == False,
+        Pet.moderation_status == "approved",
+    ).all()
+    searching = sum(1 for p in active if p.status == "searching")
+    found = sum(1 for p in active if p.status == "found")
+    cities_count = len({p.city for p in active if p.city})
+
+    # Архив: найденные (счастливый конец) vs не найденные
+    archived = db.query(Pet).filter(Pet.is_archived == True).all()
+    found_pets = sum(1 for p in archived if _is_happy_archive(p.archive_reason))
+    not_found = sum(1 for p in archived if p.archive_reason and not _is_happy_archive(p.archive_reason))
+    total_with_outcome = found_pets + not_found
+    # Процент только при выборке >= 5, иначе вводит в заблуждение
+    success_rate = (
+        round(100.0 * found_pets / total_with_outcome, 1)
+        if total_with_outcome >= 5
+        else None
+    )
+
+    users_count = db.query(User).filter(User.is_blocked == False).count()
+
+    return StatisticsResponse(
+        searching=searching,
+        found=found,
+        fostering=0,
+        cities_count=cities_count,
+        found_pets=found_pets,
+        success_rate=success_rate,
+        users_count=users_count,
+    )
 
 
 @router.get("/{pet_id}", response_model=PetResponse)

@@ -76,8 +76,8 @@ export function BreedCombobox({
           type="button"
           disabled={disabled}
           className={cn(
-            'flex min-h-[2.75rem] w-full items-center justify-between rounded-lg border border-gray-300 dark:border-gray-600 bg-card px-3 py-2.5 text-sm',
-            'focus:ring-2 focus:ring-primary focus:border-transparent outline-none',
+            'flex min-h-[3rem] w-full items-center justify-between rounded-lg border border-border bg-background hover:border-primary/50 px-4 py-3 text-sm text-foreground',
+            'focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary',
             'disabled:cursor-not-allowed disabled:opacity-50',
             value ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400',
             className

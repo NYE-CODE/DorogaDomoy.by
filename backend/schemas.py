@@ -202,10 +202,26 @@ class NotificationResponse(BaseModel):
 
 
 # --- Statistics ---
+# Причины архивации со счастливым концом (найден питомец)
+ARCHIVE_HAPPY_KEYWORDS = ("вернулся домой", "найден хозяин", "пристроен", "приют")
+
+
+def _is_happy_archive(reason: Optional[str]) -> bool:
+    if not reason:
+        return False
+    r = reason.lower()
+    return any(kw in r for kw in ARCHIVE_HAPPY_KEYWORDS)
+
+
 class StatisticsResponse(BaseModel):
     searching: int
     found: int
     fostering: int = 0
+    # Для лендинга
+    cities_count: int = 0  # количество городов с активными объявлениями
+    found_pets: int = 0  # архив: питомец вернулся/пристроен/приют
+    success_rate: Optional[float] = None  # процент найденных (None если выборка < 5)
+    users_count: int = 0  # всего зарегистрированных пользователей
 
 
 # --- Sightings ---
@@ -231,3 +247,52 @@ class SightingResponse(BaseModel):
     class Config:
         from_attributes = True
         # SightingResponse is built manually in sighting_to_response, not from ORM
+
+
+# --- Media Articles (СМИ о нас) ---
+class MediaArticleCreate(BaseModel):
+    logo_url: Optional[str] = None
+    title: str = Field(..., min_length=1, max_length=100)
+    published_at: datetime
+    link: Optional[str] = None
+
+
+class MediaArticleUpdate(BaseModel):
+    logo_url: Optional[str] = None
+    title: Optional[str] = Field(None, min_length=1, max_length=100)
+    published_at: Optional[datetime] = None
+    link: Optional[str] = None
+
+
+class MediaArticleResponse(BaseModel):
+    id: str
+    logo_url: Optional[str] = None
+    title: str
+    published_at: datetime
+    link: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+# --- Partners (Наши партнеры) ---
+class PartnerCreate(BaseModel):
+    logo_url: Optional[str] = None
+    name: str = Field(..., min_length=1, max_length=100)
+    link: Optional[str] = None
+
+
+class PartnerUpdate(BaseModel):
+    logo_url: Optional[str] = None
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
+    link: Optional[str] = None
+
+
+class PartnerResponse(BaseModel):
+    id: str
+    logo_url: Optional[str] = None
+    name: str
+    link: Optional[str] = None
+
+    class Config:
+        from_attributes = True

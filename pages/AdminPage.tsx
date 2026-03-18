@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuth } from '../context/AuthContext';
 import { AdminPanel } from '../components/admin-panel';
-import { petsApi, usersApi, reportsApi } from '../api/client';
+import { petsApi, usersApi, reportsApi, mediaApi, partnersApi } from '../api/client';
+import type { MediaArticle, Partner } from '../api/client';
 import { Pet } from '../types/pet';
 import { User } from '../context/AuthContext';
 import { Report, ReportReason, reportReasonLabels } from '../types/admin';
@@ -17,6 +18,8 @@ export default function AdminPage() {
   const [pets, setPets] = useState<Pet[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
+  const [mediaArticles, setMediaArticles] = useState<MediaArticle[]>([]);
+  const [partners, setPartners] = useState<Partner[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
 
   const isAdmin = isAuthenticated && user?.role === 'admin';
@@ -33,10 +36,14 @@ export default function AdminPage() {
       petsApi.list().catch(() => [] as Pet[]),
       usersApi.list().catch(() => [] as User[]),
       reportsApi.list().catch(() => [] as Report[]),
-    ]).then(([p, u, r]) => {
+      mediaApi.list().catch(() => [] as MediaArticle[]),
+      partnersApi.list().catch(() => [] as Partner[]),
+    ]).then(([p, u, r, m, partnersList]) => {
       setPets(p);
       setUsers(u);
       setReports(r);
+      setMediaArticles(m);
+      setPartners(partnersList);
     }).finally(() => setDataLoading(false));
   }, [isLoading, isAdmin, navigate]);
 
@@ -163,6 +170,66 @@ export default function AdminPage() {
     toast.success('Жалоба удалена');
   };
 
+  const handleMediaCreate = async (data: { logo_url?: string; title: string; published_at: string; link?: string }) => {
+    try {
+      const m = await mediaApi.create(data);
+      setMediaArticles((prev) => [m, ...prev]);
+      toast.success('Публикация добавлена');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Ошибка');
+    }
+  };
+
+  const handleMediaUpdate = async (id: string, data: Partial<{ logo_url: string; title: string; published_at: string; link: string }>) => {
+    try {
+      const m = await mediaApi.update(id, data);
+      setMediaArticles((prev) => prev.map((x) => (x.id === m.id ? m : x)));
+      toast.success('Публикация обновлена');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Ошибка');
+    }
+  };
+
+  const handleMediaDelete = async (id: string) => {
+    try {
+      await mediaApi.delete(id);
+      setMediaArticles((prev) => prev.filter((m) => m.id !== id));
+      toast.success('Публикация удалена');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Ошибка');
+    }
+  };
+
+  const handlePartnerCreate = async (data: { logo_url?: string; name: string; link?: string }) => {
+    try {
+      const p = await partnersApi.create(data);
+      setPartners((prev) => [p, ...prev]);
+      toast.success('Партнёр добавлен');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Ошибка');
+    }
+  };
+
+  const handlePartnerUpdate = async (id: string, data: Partial<{ logo_url: string; name: string; link: string }>) => {
+    try {
+      const p = await partnersApi.update(id, data);
+      setPartners((prev) => prev.map((x) => (x.id === p.id ? p : x)));
+      toast.success('Партнёр обновлён');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Ошибка');
+    }
+  };
+
+  const handlePartnerDelete = async (id: string) => {
+    try {
+      await partnersApi.delete(id);
+      setPartners((prev) => prev.filter((p) => p.id !== id));
+      toast.success('Партнёр удалён');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Ошибка');
+    }
+  };
+
   return (
     <>
       <Toaster position="top-center" richColors theme={theme} />
@@ -170,6 +237,8 @@ export default function AdminPage() {
         pets={pets}
         users={users}
         reports={reports}
+        mediaArticles={mediaArticles}
+        partners={partners}
         onBack={() => navigate('/search')}
         onUpdatePet={handleUpdatePet}
         onDeletePet={handleDeletePet}
@@ -177,6 +246,12 @@ export default function AdminPage() {
         onDeleteUser={handleDeleteUser}
         onUpdateReport={handleUpdateReport}
         onDeleteReport={handleDeleteReport}
+        onMediaCreate={handleMediaCreate}
+        onMediaUpdate={handleMediaUpdate}
+        onMediaDelete={handleMediaDelete}
+        onPartnerCreate={handlePartnerCreate}
+        onPartnerUpdate={handlePartnerUpdate}
+        onPartnerDelete={handlePartnerDelete}
       />
     </>
   );

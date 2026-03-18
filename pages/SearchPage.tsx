@@ -563,7 +563,7 @@ export default function SearchPage() {
     }
 
     return (
-      <div className="flex-1 max-w-[1920px] mx-auto w-full px-4 md:px-6 py-6 flex flex-col gap-6">
+      <div className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 flex flex-col gap-6">
         <div className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-6 min-h-0">
           <div className="md:col-span-5 lg:col-span-4 flex flex-col md:h-[700px]">
             <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg flex flex-col h-full max-h-full">
@@ -599,14 +599,7 @@ export default function SearchPage() {
 
   return (
     <div className="min-h-screen bg-background dark:bg-gray-900 flex flex-col">
-      {view === 'main' && (
-        <Header
-          onViewChange={setView}
-          selectedCity={selectedCity}
-          onCityClick={() => setShowCityModal(true)}
-          onCreateClick={handleCreateClick}
-        />
-      )}
+      {view === 'main' && <Header />}
 
       <div className="flex-1 flex flex-col min-h-0 min-w-0">
         {renderContent()}

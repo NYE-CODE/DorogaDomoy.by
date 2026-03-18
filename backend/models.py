@@ -152,3 +152,25 @@ class Notification(Base):
 
     user = relationship("User")
     pet = relationship("Pet")
+
+
+class MediaArticle(Base):
+    """Публикации СМИ о платформе для секции «СМИ о нас» на лендинге."""
+    __tablename__ = "media_articles"
+
+    id = Column(String, primary_key=True, index=True)
+    logo_url = Column(String, nullable=True)  # URL логотипа СМИ или base64
+    title = Column(String, nullable=False)  # заголовок публикации
+    published_at = Column(DateTime, nullable=False)  # дата публикации
+    link = Column(String, nullable=True)  # ссылка на статью
+    sort_order = Column(String, default="0")  # порядок сортировки (для будущего)
+
+
+class Partner(Base):
+    """Партнёры платформы для секции «Наши партнеры» на лендинге."""
+    __tablename__ = "partners"
+
+    id = Column(String, primary_key=True, index=True)
+    logo_url = Column(String, nullable=True)  # URL логотипа
+    name = Column(String, nullable=False)  # название компании
+    link = Column(String, nullable=True)  # ссылка на сайт партнёра

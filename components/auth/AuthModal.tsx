@@ -100,7 +100,7 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
                     required
                     value={name}
                     onChange={e => setName(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all dark:bg-gray-700 dark:text-white"
+                    className="w-full pl-10 pr-4 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all bg-input-background text-foreground placeholder:text-muted-foreground hover:border-primary/50"
                     placeholder={t.auth.namePlaceholder}
                   />
                 </div>
@@ -117,7 +117,7 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
                   required
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all dark:bg-gray-700 dark:text-white"
+                  className="w-full pl-10 pr-4 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all bg-input-background text-foreground placeholder:text-muted-foreground hover:border-primary/50"
                   placeholder="name@example.by"
                 />
               </div>
@@ -133,7 +133,7 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
                   required
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all dark:bg-gray-700 dark:text-white"
+                  className="w-full pl-10 pr-4 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all bg-input-background text-foreground placeholder:text-muted-foreground hover:border-primary/50"
                   placeholder="••••••••"
                 />
               </div>

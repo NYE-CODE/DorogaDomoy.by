@@ -6,7 +6,7 @@ import type { Pet } from '../types/pet';
 import type { User } from '../context/AuthContext';
 import type { Report, ReportReason } from '../types/admin';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+export const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 export function getToken(): string | null {
   return localStorage.getItem('pet_finder_token');
@@ -187,6 +187,14 @@ export interface StatisticsResponse {
   searching: number;
   found: number;
   fostering: number;
+  /** Количество городов с активными объявлениями */
+  cities_count?: number;
+  /** Найденные питомцы (архив со счастливым концом) */
+  found_pets?: number;
+  /** Процент успешных поисков; null при малой выборке (< 5) */
+  success_rate?: number | null;
+  /** Зарегистрированные пользователи */
+  users_count?: number;
 }
 
 export const petsApi = {
@@ -254,6 +262,7 @@ export const petsApi = {
     if (data.city != null) body.city = data.city;
     if (data.location != null) body.location = data.location;
     if (data.contacts != null) body.contacts = data.contacts;
+    if (data.author_name != null && data.author_name.trim() !== '') body.author_name = data.author_name.trim();
     if (data.isArchived != null) body.is_archived = data.isArchived;
     if (data.archiveReason != null) body.archive_reason = data.archiveReason;
     if (data.moderationStatus != null) body.moderation_status = data.moderationStatus;
@@ -353,6 +362,22 @@ export const reportsApi = {
     }),
 };
 
+// --- Feature Flags ---
+export interface FeatureFlags {
+  ff_landing_show_stats: string;
+  ff_landing_show_help: string;
+}
+
+export const featureFlagsApi = {
+  get: () => api<FeatureFlags>('/feature-flags'),
+
+  update: (data: { ff_landing_show_stats?: boolean; ff_landing_show_help?: boolean }) =>
+    api<FeatureFlags>('/feature-flags', {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+};
+
 // --- Settings ---
 export interface PlatformSettings {
   require_moderation: string;
@@ -424,6 +449,68 @@ export const notificationsApi = {
 
   markRead: (id: string) =>
     api<{ detail: string }>(`/notifications/${id}/read`, { method: 'PATCH' }),
+};
+
+// --- Media Articles (СМИ о нас) ---
+export interface MediaArticle {
+  id: string;
+  logo_url?: string | null;
+  title: string;
+  published_at: string;
+  link?: string | null;
+}
+
+export const mediaApi = {
+  list: () => api<MediaArticle[]>('/media'),
+
+  create: (data: { logo_url?: string; title: string; published_at: string; link?: string }) =>
+    api<MediaArticle>('/media', {
+      method: 'POST',
+      body: JSON.stringify({
+        logo_url: data.logo_url || null,
+        title: data.title,
+        published_at: data.published_at,
+        link: data.link || null,
+      }),
+    }),
+
+  update: (id: string, data: Partial<{ logo_url: string; title: string; published_at: string; link: string }>) =>
+    api<MediaArticle>(`/media/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+
+  delete: (id: string) => api<void>(`/media/${id}`, { method: 'DELETE' }),
+};
+
+// --- Partners (Наши партнеры) ---
+export interface Partner {
+  id: string;
+  logo_url?: string | null;
+  name: string;
+  link?: string | null;
+}
+
+export const partnersApi = {
+  list: () => api<Partner[]>('/partners'),
+
+  create: (data: { logo_url?: string; name: string; link?: string }) =>
+    api<Partner>('/partners', {
+      method: 'POST',
+      body: JSON.stringify({
+        logo_url: data.logo_url || null,
+        name: data.name,
+        link: data.link || null,
+      }),
+    }),
+
+  update: (id: string, data: Partial<{ logo_url: string; name: string; link: string }>) =>
+    api<Partner>(`/partners/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+
+  delete: (id: string) => api<void>(`/partners/${id}`, { method: 'DELETE' }),
 };
 
 // --- Sightings (видения «видел похожее») ---

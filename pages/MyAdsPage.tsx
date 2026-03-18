@@ -1,32 +1,38 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useLocation } from 'react-router';
 import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
 import { useI18n } from '../context/I18nContext';
 import { MyAdsPage as MyAdsList } from '../components/my-ads-page';
-import { PetForm, PetFormData } from '../components/pet-form';
 import { DeleteReasonModal } from '../components/delete-reason-modal';
 import { ContactRequiredModal } from '../components/contact-required-modal';
 import { AuthModal } from '../components/auth/AuthModal';
 import { petsApi } from '../api/client';
 import { Pet } from '../types/pet';
-import { toast, Toaster } from 'sonner';
+import { toast } from 'sonner';
 
 export default function MyAdsPageRoute() {
   const { user, isAuthenticated, openAuthModal, closeAuthModal, isLoading } = useAuth();
-  const { theme } = useTheme();
   const { t } = useI18n();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [pets, setPets] = useState<Pet[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [editingPet, setEditingPet] = useState<Pet | null>(null);
   const [deletingPet, setDeletingPet] = useState<Pet | null>(null);
   const [showContactRequiredModal, setShowContactRequiredModal] = useState(false);
 
   useEffect(() => {
     if (isLoading) return;
+    // Переход с /create после успешного создания — не редиректить на /
+    const fromCreate = (location.state as { fromCreate?: boolean })?.fromCreate;
+    if (fromCreate) {
+      setDataLoading(true);
+      petsApi.list()
+        .then(setPets)
+        .catch(() => setPets([]))
+        .finally(() => setDataLoading(false));
+      return;
+    }
     if (!isAuthenticated) {
       navigate('/', { replace: true });
       return;
@@ -37,7 +43,7 @@ export default function MyAdsPageRoute() {
       .then(setPets)
       .catch(() => setPets([]))
       .finally(() => setDataLoading(false));
-  }, [isLoading, isAuthenticated, navigate]);
+  }, [isLoading, isAuthenticated, navigate, location.state]);
 
   if (isLoading || dataLoading) {
     return (
@@ -56,35 +62,6 @@ export default function MyAdsPageRoute() {
       return;
     }
     navigate('/create');
-  };
-
-  const handleUpdatePet = async (formData: PetFormData) => {
-    if (!editingPet) return;
-    try {
-      const updatedPet = await petsApi.update(editingPet.id, {
-        photos: formData.photos,
-        animalType: formData.animalType,
-        breed: formData.breed,
-        colors: formData.colors,
-        gender: formData.gender,
-        approximateAge: formData.approximateAge,
-        status: formData.status,
-        description: formData.description,
-        city: formData.city,
-        location: formData.location,
-        contacts: formData.contacts,
-      });
-      setPets((prev) => prev.map((p) => (p.id === editingPet.id ? updatedPet : p)));
-      setEditingPet(null);
-      setShowForm(false);
-      if (updatedPet.moderationStatus === 'pending') {
-        toast.success('Объявление обновлено и отправлено на модерацию');
-      } else {
-        toast.success(t.app.adUpdated);
-      }
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t.common.error);
-    }
   };
 
   const handleDeletePet = async (reason: string) => {
@@ -120,24 +97,9 @@ export default function MyAdsPageRoute() {
         pets={pets}
         onBack={() => navigate('/search')}
         onCreateClick={handleCreateClick}
-        onEditPet={(pet) => {
-          setEditingPet(pet);
-          setShowForm(true);
-        }}
+        onEditPet={(pet) => navigate(`/edit/${pet.id}`)}
         onDeletePet={setDeletingPet}
       />
-
-      {showForm && editingPet && (
-        <PetForm
-          onClose={() => {
-            setShowForm(false);
-            setEditingPet(null);
-          }}
-          onSubmit={handleUpdatePet}
-          initialData={editingPet}
-          isEditing
-        />
-      )}
 
       {deletingPet && (
         <DeleteReasonModal
@@ -157,8 +119,6 @@ export default function MyAdsPageRoute() {
       />
 
       <AuthModal />
-
-      <Toaster position="top-center" richColors theme={theme} />
     </>
   );
 }
