@@ -71,8 +71,7 @@ export function RegionSelector({ isOpen, onClose, selectedRegion, onSelectRegion
 
     // If no filter, show all cities that match search
     const allCities: { city: string; region: string }[] = [];
-      const q = searchQuery.trim().toLowerCase().replace(/ё/g, 'е');
-      Object.entries(cities).forEach(([region, cityList]) => {
+    Object.entries(cities).forEach(([region, cityList]) => {
         cityList.forEach((city) => {
           if (city.trim().toLowerCase().replace(/ё/g, 'е').includes(q)) {
           allCities.push({ city, region });
