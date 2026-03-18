@@ -42,9 +42,7 @@ export function Header() {
         <div className="flex justify-between items-center py-6">
           <div className="flex items-center gap-3">
             <Link to="/" className="flex items-center gap-3 min-w-0">
-              <div className="w-10 h-10 bg-foreground rounded-full flex items-center justify-center shrink-0">
-                <div className="text-background text-xl">🐾</div>
-              </div>
+              <img src="/logo.png" alt="DorogaDomoy.by" className="w-10 h-10 shrink-0 object-contain" />
               <div className="flex flex-col min-w-0">
                 <span className="text-xl font-bold text-foreground leading-tight">DorogaDomoy.by</span>
                 <span className="text-sm text-muted-foreground leading-tight hidden md:block">{t.landing.header.tagline}</span>
