@@ -1,8 +1,11 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 
-/** Свёрнутая высота: полка + ручка + заголовок списка */
-const HEADER_HEIGHT = 96;
-const SNAP_THRESHOLD = 0.4; // если высота > 40% экрана — раскрыть
+/** Минимальная высота: ручка + заголовок (можно опустить вниз) */
+const COLLAPSED_HEIGHT = 96;
+/** Высота по умолчанию: ручка + заголовок + первое объявление */
+const PEEK_HEIGHT = 320;
+const SNAP_THRESHOLD_FULL = 0.6; // если > 60% экрана — раскрыть на полную
+const SNAP_THRESHOLD_PEEK = 0.25; // если < 25% экрана — свернуть до минимума
 /** Fallback отступ сверху, если измерение недоступно */
 const SITE_HEADER_SAFE_FALLBACK = 170;
 /** Высота полки над ручкой — чтобы при раскрытии ручка не пряталась под шапкой (компактно) */
@@ -16,15 +19,15 @@ interface MobileListSheetProps {
 }
 
 export function MobileListSheet({ header, children }: MobileListSheetProps) {
-  const [height, setHeight] = useState(HEADER_HEIGHT);
+  const [height, setHeight] = useState(PEEK_HEIGHT);
   const [isDragging, setIsDragging] = useState(false);
   const [headerSafeTop, setHeaderSafeTop] = useState(SITE_HEADER_SAFE_FALLBACK);
   const startYRef = useRef(0);
-  const startHeightRef = useRef(HEADER_HEIGHT);
+  const startHeightRef = useRef(PEEK_HEIGHT);
   const maxHeightRef = useRef(0);
   const rootRef = useRef<HTMLDivElement>(null);
   const dragZoneRef = useRef<HTMLDivElement>(null);
-  const heightRef = useRef(HEADER_HEIGHT);
+  const heightRef = useRef(PEEK_HEIGHT);
   const pointerDownOnHeaderRef = useRef(false);
   heightRef.current = height;
 
@@ -80,7 +83,7 @@ export function MobileListSheet({ header, children }: MobileListSheetProps) {
           setIsDragging(true);
           const delta = startYRef.current - e.clientY;
           const newHeight = Math.max(
-            HEADER_HEIGHT,
+            COLLAPSED_HEIGHT,
             Math.min(maxHeightRef.current, startHeightRef.current + delta)
           );
           setHeight(newHeight);
@@ -90,7 +93,7 @@ export function MobileListSheet({ header, children }: MobileListSheetProps) {
       e.preventDefault();
       const delta = startYRef.current - e.clientY;
       const newHeight = Math.max(
-        HEADER_HEIGHT,
+        COLLAPSED_HEIGHT,
         Math.min(maxHeightRef.current, startHeightRef.current + delta)
       );
       setHeight(newHeight);
@@ -104,10 +107,12 @@ export function MobileListSheet({ header, children }: MobileListSheetProps) {
     setIsDragging(false);
     const maxH = maxHeightRef.current;
     const currentH = heightRef.current;
-    if (currentH > maxH * SNAP_THRESHOLD) {
+    if (currentH > maxH * SNAP_THRESHOLD_FULL) {
       setHeight(maxH);
+    } else if (currentH < maxH * SNAP_THRESHOLD_PEEK) {
+      setHeight(COLLAPSED_HEIGHT);
     } else {
-      setHeight(HEADER_HEIGHT);
+      setHeight(PEEK_HEIGHT);
     }
   }, [isDragging]);
 

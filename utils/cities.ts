@@ -13,12 +13,6 @@ export const DEFAULT_CITY: City = { name: 'Минск', coordinates: [53.9006, 2
 
 export const oblasts: Oblast[] = [
   {
-    name: 'Минск',
-    cities: [
-      { name: 'Минск', coordinates: [53.9006, 27.5590], zoom: 11 },
-    ],
-  },
-  {
     name: 'Брестская область',
     cities: [
       { name: 'Барановичи', coordinates: [53.1327, 26.0139], zoom: 13 },
@@ -84,6 +78,7 @@ export const oblasts: Oblast[] = [
   {
     name: 'Минская область',
     cities: [
+      { name: 'Минск', coordinates: [53.9006, 27.5590], zoom: 11 },
       { name: 'Борисов', coordinates: [54.2279, 28.5050], zoom: 13 },
       { name: 'Вилейка', coordinates: [54.4917, 26.9167], zoom: 13 },
       { name: 'Дзержинск', coordinates: [53.6833, 27.1333], zoom: 13 },
@@ -116,6 +111,16 @@ export const oblasts: Oblast[] = [
 ];
 
 const cities: City[] = oblasts.flatMap(o => o.cities);
+
+/** Областные центры Беларуси */
+export const REGIONAL_CENTERS = new Set([
+  'Минск',
+  'Брест',
+  'Витебск',
+  'Гомель',
+  'Гродно',
+  'Могилёв',
+]);
 
 /** Нормализация для поиска: ё→е, trim, toLowerCase */
 function normalizeForSearch(s: string): string {

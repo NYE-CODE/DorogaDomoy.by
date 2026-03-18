@@ -16,6 +16,7 @@ import SettingsPageRoute from './pages/SettingsPage.tsx'
 import { TermsPage } from './components/terms-page'
 import { AuthModal } from './components/auth/AuthModal'
 import { AuthProvider, useAuth } from './context/AuthContext.tsx'
+import { CityProvider } from './context/CityContext.tsx'
 import { ThemeProvider, useTheme } from './context/ThemeContext.tsx'
 import { I18nProvider } from './context/I18nContext.tsx'
 import './styles/globals.css';
@@ -62,21 +63,23 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <MetrikaTracker />
           <GlobalToaster />
           <AuthProvider>
-            <AuthModalGlobal />
-            <Routes>
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/search" element={<SearchPage />} />
-              <Route path="/profile" element={<ProfilePage />} />
-              <Route path="/pet/:id" element={<PetDetailPage />} />
-              <Route path="/user/:id" element={<UserProfilePage />} />
-              <Route path="/my-ads" element={<MyAdsPageRoute />} />
-              <Route path="/create" element={<CreateAdPage />} />
-              <Route path="/edit/:id" element={<EditAdPage />} />
-              <Route path="/settings" element={<SettingsPageRoute />} />
-              <Route path="/admin" element={<AdminPage />} />
-              <Route path="/terms" element={<TermsRoute />} />
-              <Route path="*" element={<NotFoundPage />} />
-            </Routes>
+            <CityProvider>
+              <AuthModalGlobal />
+              <Routes>
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/search" element={<SearchPage />} />
+                <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/pet/:id" element={<PetDetailPage />} />
+                <Route path="/user/:id" element={<UserProfilePage />} />
+                <Route path="/my-ads" element={<MyAdsPageRoute />} />
+                <Route path="/create" element={<CreateAdPage />} />
+                <Route path="/edit/:id" element={<EditAdPage />} />
+                <Route path="/settings" element={<SettingsPageRoute />} />
+                <Route path="/admin" element={<AdminPage />} />
+                <Route path="/terms" element={<TermsRoute />} />
+                <Route path="*" element={<NotFoundPage />} />
+              </Routes>
+            </CityProvider>
           </AuthProvider>
         </BrowserRouter>
       </I18nProvider>

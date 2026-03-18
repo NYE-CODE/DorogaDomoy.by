@@ -7,6 +7,7 @@ import { API_BASE, telegramApi, notificationsApi, type NotificationSettingsData 
 import { toast } from 'sonner';
 import { Header } from './layout/Header';
 import { CitySelectModal } from './city-select-modal';
+import { useCity } from '../context/CityContext';
 import type { City } from '../utils/cities';
 
 const roleLabels: Record<string, string> = {
@@ -62,16 +63,7 @@ export default function ProfilePage() {
   const [notifSaving, setNotifSaving] = useState(false);
   const [localRadius, setLocalRadius] = useState(1);
 
-  const [selectedCity, setSelectedCity] = useState(() => {
-    try {
-      const saved = localStorage.getItem('pet_finder_user_location');
-      if (saved) {
-        const data = JSON.parse(saved);
-        return (data.city || '').trim();
-      }
-    } catch {}
-    return '';
-  });
+  const { selectedCity, saveCity, clearCity } = useCity();
   const [showCityModal, setShowCityModal] = useState(false);
 
   type ProfileTab = 'personal' | 'security' | 'notifications';
@@ -89,15 +81,13 @@ export default function ProfilePage() {
 
   const handleCityModalSelect = useCallback((city: City | null) => {
     if (city) {
-      setSelectedCity(city.name);
+      saveCity(city.coordinates[0], city.coordinates[1], city.name);
       saveUserLocation({ lat: city.coordinates[0], lng: city.coordinates[1] }, city.name);
     } else {
-      setSelectedCity('');
-      try { localStorage.removeItem('pet_finder_user_location'); } catch {}
+      clearCity();
     }
-    try { localStorage.setItem('pet_finder_city_confirmed', 'true'); } catch {}
     setShowCityModal(false);
-  }, [saveUserLocation]);
+  }, [saveCity, clearCity, saveUserLocation]);
 
   useEffect(() => {
     if (user) {
@@ -301,10 +291,7 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-background flex flex-col">
-      <Header
-        selectedCity={selectedCity}
-        onCityClick={() => setShowCityModal(true)}
-      />
+      <Header selectedCity={selectedCity} onCityClick={() => setShowCityModal(true)} />
 
       <main className="flex-1">
         <div className="min-h-screen bg-gray-50 dark:bg-background py-8">
