@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useRef, useCallback, lazy, Suspense } fro
 import { useNavigate } from 'react-router';
 import { TermsPage } from '../components/terms-page';
 import { useAuth } from '../context/AuthContext';
+import { useCity } from '../context/CityContext';
 import { useTheme } from '../context/ThemeContext';
 import { useI18n } from '../context/I18nContext';
 import { Header } from '../components/layout/Header';
@@ -31,6 +32,7 @@ type View = 'main' | 'terms';
 
 export default function SearchPage() {
   const { user, isAuthenticated, openAuthModal, closeAuthModal, isLoading } = useAuth();
+  const { selectedCity, saveCity, clearCity } = useCity();
   const { theme } = useTheme();
   const { t } = useI18n();
   const routerNavigate = useNavigate();
@@ -192,19 +194,20 @@ export default function SearchPage() {
       mapRequestAbortRef.current?.abort();
     };
   }, []);
-  const savedLoc = (() => {
+  const getSavedLocation = useCallback((): { lat: number; lng: number; city?: string } | null => {
     try {
       const saved = localStorage.getItem('pet_finder_user_location');
-      if (saved) {
-        const data = JSON.parse(saved);
-        const { lat, lng } = data;
-        if (typeof lat === 'number' && typeof lng === 'number') {
-          return { lat, lng, city: (data.city || '').trim() };
-        }
+      if (!saved) return null;
+      const data = JSON.parse(saved);
+      const { lat, lng } = data;
+      if (typeof lat === 'number' && typeof lng === 'number') {
+        return { lat, lng, city: (data.city || '').trim() };
       }
     } catch {}
     return null;
-  })();
+  }, []);
+
+  const savedLoc = getSavedLocation();
   const initialSavedLocRef = useRef(savedLoc);
 
   const cityConfirmed = (() => {
@@ -228,7 +231,6 @@ export default function SearchPage() {
       localStorage.setItem('pet_finder_user_location', JSON.stringify(toSave));
     } catch {}
   };
-  const [selectedCity, setSelectedCity] = useState(savedLoc?.city ?? '');
   const [showCityModal, setShowCityModal] = useState(false);
   const [showCityDetectPopup, setShowCityDetectPopup] = useState(false);
   const [detectedCityName, setDetectedCityName] = useState('');
@@ -276,14 +278,14 @@ export default function SearchPage() {
     reverseGeocodeLocality(initialSavedLoc.lat, initialSavedLoc.lng).then((locality) => {
       if (cancelled || !locality || locality === initialSavedLoc.city) return;
 
-      setSelectedCity((prev: string) => (prev === initialSavedLoc.city ? locality : prev));
+      saveCity(initialSavedLoc.lat, initialSavedLoc.lng, locality);
       saveUserLocation({ lat: initialSavedLoc.lat, lng: initialSavedLoc.lng }, locality);
     });
 
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [saveCity]);
 
   useEffect(() => {
     if (view !== 'main' || !mapBoundsRef.current) return;
@@ -302,23 +304,20 @@ export default function SearchPage() {
   ]);
 
   const confirmCity = (city: City) => {
-    setSelectedCity(city.name);
+    saveCity(city.coordinates[0], city.coordinates[1], city.name);
     setMapCenter(city.coordinates);
     setMapZoom(city.zoom || 12);
     saveUserLocation({ lat: city.coordinates[0], lng: city.coordinates[1] }, city.name);
-    try { localStorage.setItem('pet_finder_city_confirmed', 'true'); } catch {}
   };
 
   const handleCityModalSelect = (city: City | null) => {
     if (city) {
       confirmCity(city);
     } else {
-      setSelectedCity('');
+      clearCity();
       setMapCenter([53.7098, 27.9534]);
       setMapZoom(7);
-      try { localStorage.removeItem('pet_finder_user_location'); } catch {}
     }
-    try { localStorage.setItem('pet_finder_city_confirmed', 'true'); } catch {}
     setShowCityModal(false);
   };
 
@@ -362,10 +361,13 @@ export default function SearchPage() {
 
   if (isLoading || dataLoading) {
     return (
-      <div className="min-h-screen bg-background dark:bg-gray-900 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-          <p className="text-gray-600 dark:text-gray-400">{t.common.loading}</p>
+      <div className="min-h-screen bg-background dark:bg-gray-900 flex flex-col">
+        {view === 'main' && <Header selectedCity={selectedCity} onCityClick={() => setShowCityModal(true)} />}
+        <div className="flex-1 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+            <p className="text-gray-600 dark:text-gray-400">{t.common.loading}</p>
+          </div>
         </div>
       </div>
     );
@@ -599,12 +601,7 @@ export default function SearchPage() {
 
   return (
     <div className="min-h-screen bg-background dark:bg-gray-900 flex flex-col">
-      {view === 'main' && (
-        <Header
-          selectedCity={selectedCity}
-          onCityClick={() => setShowCityModal(true)}
-        />
-      )}
+      {view === 'main' && <Header selectedCity={selectedCity} onCityClick={() => setShowCityModal(true)} />}
 
       <div className="flex-1 flex flex-col min-h-0 min-w-0">
         {renderContent()}

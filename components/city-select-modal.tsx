@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { X, Search, MapPin } from 'lucide-react';
-import { oblasts, City, searchCities } from '../utils/cities';
+import { oblasts, City, searchCities, REGIONAL_CENTERS } from '../utils/cities';
 import { useScrollLock } from './ui/use-scroll-lock';
 import { useI18n } from '../context/I18nContext';
 
@@ -110,7 +110,7 @@ export function CitySelectModal({ open, onClose, onSelect, currentCity }: CitySe
             <button
               onClick={handleSelectAll}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg mb-4 transition-colors border ${
-                    !(currentCity?.trim())
+                !(currentCity?.trim())
                   ? 'bg-primary/10 border-primary/20 text-primary'
                   : 'bg-card border-border text-foreground hover:bg-accent dark:hover:bg-accent'
               }`}
@@ -125,19 +125,39 @@ export function CitySelectModal({ open, onClose, onSelect, currentCity }: CitySe
             <div className="space-y-5">
               {oblasts.map((oblast) => (
                 <div key={oblast.name}>
-                  <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
-                    {oblast.name}
-                  </p>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
-                    {oblast.cities.map((city) => (
-                      <CityButton
-                        key={city.name}
-                        city={city}
-                        isActive={(currentCity?.trim() || '') === city.name.trim()}
-                        onClick={() => handleSelect(city)}
-                      />
-                    ))}
-                  </div>
+                  {oblast.cities.length === 1 ? (
+                    <button
+                      type="button"
+                      onClick={() => handleSelect(oblast.cities[0])}
+                      className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                        (currentCity?.trim() || '') === oblast.cities[0].name.trim()
+                          ? 'bg-primary/10 text-primary font-medium'
+                          : 'text-gray-700 dark:text-gray-300 hover:bg-accent dark:hover:bg-accent'
+                      }`}
+                    >
+                      <span className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                        {oblast.name}
+                      </span>
+                      <span className="ml-2 font-medium">{oblast.cities[0].name}</span>
+                    </button>
+                  ) : (
+                    <>
+                      <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
+                        {oblast.name}
+                      </p>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
+                        {sortCitiesWithCentersFirst(oblast.cities).map((city) => (
+                          <CityButton
+                            key={city.name}
+                            city={city}
+                            isActive={(currentCity?.trim() || '') === city.name.trim()}
+                            onClick={() => handleSelect(city)}
+                            isBold={REGIONAL_CENTERS.has(city.name.trim())}
+                          />
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </div>
               ))}
             </div>
@@ -146,12 +166,13 @@ export function CitySelectModal({ open, onClose, onSelect, currentCity }: CitySe
           {/* When a tab is selected */}
           {!searchQuery && activeTab !== 'all' && displayCities && (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
-              {displayCities.map((city) => (
+              {sortCitiesWithCentersFirst(displayCities).map((city) => (
                 <CityButton
                   key={city.name}
                   city={city}
-                        isActive={(currentCity?.trim() || '') === city.name.trim()}
+                  isActive={(currentCity?.trim() || '') === city.name.trim()}
                   onClick={() => handleSelect(city)}
+                  isBold={REGIONAL_CENTERS.has(city.name.trim())}
                 />
               ))}
             </div>
@@ -161,12 +182,13 @@ export function CitySelectModal({ open, onClose, onSelect, currentCity }: CitySe
           {searchQuery && searchResults && (
             searchResults.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
-                {searchResults.map((city) => (
+                {sortCitiesWithCentersFirst(searchResults).map((city) => (
                   <CityButton
                     key={city.name}
                     city={city}
-                        isActive={(currentCity?.trim() || '') === city.name.trim()}
+                    isActive={(currentCity?.trim() || '') === city.name.trim()}
                     onClick={() => handleSelect(city)}
+                    isBold={REGIONAL_CENTERS.has(city.name.trim())}
                   />
                 ))}
               </div>
@@ -183,7 +205,17 @@ export function CitySelectModal({ open, onClose, onSelect, currentCity }: CitySe
   );
 }
 
-function CityButton({ city, isActive, onClick }: { city: City; isActive: boolean; onClick: () => void }) {
+function CityButton({
+  city,
+  isActive,
+  onClick,
+  isBold = false,
+}: {
+  city: City;
+  isActive: boolean;
+  onClick: () => void;
+  isBold?: boolean;
+}) {
   return (
     <button
       onClick={onClick}
@@ -191,9 +223,15 @@ function CityButton({ city, isActive, onClick }: { city: City; isActive: boolean
         isActive
           ? 'bg-primary/10 text-primary font-medium'
           : 'text-gray-700 dark:text-gray-300 hover:bg-accent dark:hover:bg-accent'
-      }`}
+      } ${isBold ? 'font-semibold' : ''}`}
     >
       {city.name}
     </button>
   );
+}
+
+function sortCitiesWithCentersFirst(cities: City[]): City[] {
+  const centers = cities.filter((c) => REGIONAL_CENTERS.has(c.name.trim()));
+  const rest = cities.filter((c) => !REGIONAL_CENTERS.has(c.name.trim()));
+  return [...centers, ...rest];
 }

@@ -2,16 +2,20 @@ import { MapPin, User, Settings, FileText, Shield, LogOut, ChevronDown } from "l
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router";
 import { Button } from "./ui/button";
-import { RegionSelector } from "./region-selector";
+import { CitySelectModal } from "../../../components/city-select-modal";
 import { useAuth } from "../../../context/AuthContext";
 import { useI18n } from "../../../context/I18nContext";
+import { useCityOptional } from "../../../context/CityContext";
 
 interface HeaderProps {
   selectedCity?: string;
   onCityClick?: () => void;
 }
 
-export function Header({ selectedCity: propSelectedCity, onCityClick }: HeaderProps = {}) {
+export function Header(props: HeaderProps = {}) {
+  const { selectedCity: propSelectedCity, onCityClick } = props || {};
+  const cityContext = useCityOptional();
+  const selectedCityFromContext = cityContext?.selectedCity ?? '';
   const { t } = useI18n();
   const { user, isAuthenticated, openAuthModal, logout } = useAuth();
   const navigate = useNavigate();
@@ -19,10 +23,13 @@ export function Header({ selectedCity: propSelectedCity, onCityClick }: HeaderPr
   const [isRegionOpen, setIsRegionOpen] = useState(false);
   const [selectedRegion, setSelectedRegion] = useState(t.landing.header.allBelarus);
 
+  useEffect(() => {
+    const fromContext = cityContext?.selectedCity?.trim();
+    setSelectedRegion(fromContext || t.landing.header.allBelarus);
+  }, [cityContext?.selectedCity]);
+
   const hasCityControl = typeof onCityClick === 'function';
-  const displayRegion = hasCityControl
-    ? (propSelectedCity?.trim() || t.landing.header.allBelarus)
-    : selectedRegion;
+  const displayRegion = (selectedCityFromContext?.trim() || propSelectedCity?.trim() || selectedRegion) || t.landing.header.allBelarus;
   const handleRegionClick = () => {
     if (hasCityControl) onCityClick();
     else setIsRegionOpen(true);
@@ -220,14 +227,19 @@ export function Header({ selectedCity: propSelectedCity, onCityClick }: HeaderPr
         </div>
       </div>
 
-      {/* Region Selector Modal — только когда город не управляется родителем */}
-      {!hasCityControl && (
-        <RegionSelector 
-          isOpen={isRegionOpen}
+      {/* City Select Modal — когда город не управляется родителем (лендинг) */}
+      {!hasCityControl && cityContext && (
+        <CitySelectModal
+          open={isRegionOpen}
           onClose={() => setIsRegionOpen(false)}
-          selectedRegion={selectedRegion}
-          onSelectRegion={(region) => {
-            setSelectedRegion(region);
+          currentCity={selectedCityFromContext || propSelectedCity}
+          onSelect={(city) => {
+            if (city) {
+              cityContext.saveCity(city.coordinates[0], city.coordinates[1], city.name);
+            } else {
+              cityContext.clearCity();
+            }
+            setSelectedRegion(city?.name ?? t.landing.header.allBelarus);
             setIsRegionOpen(false);
           }}
         />

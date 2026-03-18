@@ -1030,7 +1030,6 @@ export const translations = {
       adPublished: 'Аб\'ява апублікавана!',
       adSentModeration: 'Аб\'ява адпраўлена на мадэрацыю!',
       loginToCreate: 'Увайдзіце або зарэгіструйцеся, каб стварыць аб\'яву',
-      loginToCreate: 'Увайдзіце або зарэгіструйцеся, каб стварыць аб\'яву',
       adUpdated: 'Аб\'ява абноўлена!',
     },
     moderation: {
@@ -1617,7 +1616,6 @@ export const translations = {
       switchToMap: 'Switch to map',
       adPublished: 'Ad published!',
       adSentModeration: 'Ad sent for moderation!',
-      loginToCreate: 'Log in or register to create an ad',
       loginToCreate: 'Log in or register to create an ad',
       adUpdated: 'Ad updated!',
     },
