@@ -14,9 +14,7 @@ export function Footer() {
           <div>
             <div className="flex items-center gap-3 mb-6">
               <Link to="/" className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-[#FDB913] rounded-full flex items-center justify-center">
-                  <div className="text-black text-xl">🐾</div>
-                </div>
+                <img src="/logo.png" alt="DorogaDomoy.by" className="w-10 h-10 object-contain" />
                 <span className="text-2xl font-bold">DorogaDomoy.by</span>
               </Link>
             </div>
