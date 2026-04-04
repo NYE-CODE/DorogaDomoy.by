@@ -14,12 +14,14 @@ class UserContacts(BaseModel):
 class UserBase(BaseModel):
     email: str
     name: str
-    role: str = "user"
     contacts: UserContacts = UserContacts()
 
 
-class UserCreate(UserBase):
+class UserCreate(BaseModel):
+    email: str
+    name: str
     password: str
+    contacts: UserContacts = UserContacts()
 
 
 class UserLogin(BaseModel):
@@ -30,6 +32,7 @@ class UserLogin(BaseModel):
 class UserResponse(UserBase):
     id: str
     avatar: Optional[str] = None
+    role: str = "user"
     is_blocked: Optional[bool] = False
     blocked_reason: Optional[str] = None
     telegram_id: Optional[int] = None
@@ -293,6 +296,83 @@ class PartnerResponse(BaseModel):
     logo_url: Optional[str] = None
     name: str
     link: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+# --- Profile Pets (адресник / QR) ---
+class ProfilePetCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=80)
+    species: str  # dog, cat, other
+    breed: Optional[str] = Field(None, max_length=80)
+    gender: str = "male"
+    age: Optional[str] = Field(None, max_length=20)
+    colors: list[str] = []
+    special_marks: Optional[str] = None
+    is_chipped: bool = False
+    chip_number: Optional[str] = Field(None, max_length=40)
+    medical_info: Optional[str] = None
+    temperament: Optional[str] = Field(None, max_length=40)
+    responds_to_name: bool = True
+    favorite_treats: Optional[str] = None
+    favorite_walks: Optional[str] = None
+    photos: list[str] = []
+
+    @field_validator("breed", mode="before")
+    @classmethod
+    def trim_breed(cls, v):
+        return _trim_optional_str(v)
+
+
+class ProfilePetUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=80)
+    species: Optional[str] = None
+    breed: Optional[str] = Field(None, max_length=80)
+    gender: Optional[str] = None
+    age: Optional[str] = Field(None, max_length=20)
+    colors: Optional[list[str]] = None
+    special_marks: Optional[str] = None
+    is_chipped: Optional[bool] = None
+    chip_number: Optional[str] = Field(None, max_length=40)
+    medical_info: Optional[str] = None
+    temperament: Optional[str] = Field(None, max_length=40)
+    responds_to_name: Optional[bool] = None
+    favorite_treats: Optional[str] = None
+    favorite_walks: Optional[str] = None
+    photos: Optional[list[str]] = None
+
+    @field_validator("breed", mode="before")
+    @classmethod
+    def trim_breed(cls, v):
+        return _trim_optional_str(v)
+
+
+class ProfilePetResponse(BaseModel):
+    id: str
+    owner_id: str
+    name: str
+    species: str
+    breed: Optional[str] = None
+    gender: str = "male"
+    age: Optional[str] = None
+    colors: list[str] = []
+    special_marks: Optional[str] = None
+    is_chipped: bool = False
+    chip_number: Optional[str] = None
+    medical_info: Optional[str] = None
+    temperament: Optional[str] = None
+    responds_to_name: bool = True
+    favorite_treats: Optional[str] = None
+    favorite_walks: Optional[str] = None
+    photos: list[str] = []
+    created_at: datetime
+    updated_at: datetime
+    owner_name: Optional[str] = None
+    owner_phone: Optional[str] = None
+    owner_email: Optional[str] = None
+    owner_city: Optional[str] = None
+    owner_viber: Optional[str] = None
 
     class Config:
         from_attributes = True

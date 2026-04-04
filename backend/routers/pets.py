@@ -1,51 +1,44 @@
 """Pets CRUD API."""
 import asyncio
-import base64
 import logging
-from datetime import datetime, timedelta
+from datetime import timedelta
 from pathlib import Path
 from typing import Optional
 import uuid
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
+from sqlalchemy import func, select
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
 from database import get_db
-from models import Pet, PlatformSettings, User
+from models import Pet, User
 from schemas import PetCreate, PetUpdate, PetResponse, StatisticsResponse, ARCHIVE_HAPPY_KEYWORDS
 from auth import get_current_user, get_current_user_required, require_admin
+from platform_settings import DEFAULT_MAX_PHOTOS, get_bool_setting, get_int_setting
 from telegram_bot import send_notifications_for_pet
+from time_utils import utc_now
+from upload_utils import save_data_image
 
 
 def _moderation_required(db: Session) -> bool:
     try:
-        row = db.query(PlatformSettings).filter(PlatformSettings.key == "require_moderation").first()
-        return row.value == "true" if row and hasattr(row, "value") else True
+        return get_bool_setting(db, "require_moderation", default=True)
     except Exception:
         return True
 
 
 def _max_photos(db: Session) -> int:
     try:
-        row = db.query(PlatformSettings).filter(PlatformSettings.key == "max_photos").first()
-        return int(row.value) if row and row.value is not None else MAX_PHOTOS
-    except (ValueError, TypeError, AttributeError):
-        return MAX_PHOTOS
+        return get_int_setting(db, "max_photos", default=DEFAULT_MAX_PHOTOS)
+    except Exception:
+        return DEFAULT_MAX_PHOTOS
 
 router = APIRouter(prefix="/pets", tags=["pets"])
 
 UPLOADS_DIR = Path(__file__).resolve().parent.parent / "uploads"
 UPLOADS_DIR.mkdir(exist_ok=True)
 
-MIME_TO_EXT = {
-    "image/jpeg": ".jpg",
-    "image/png": ".png",
-    "image/gif": ".gif",
-    "image/webp": ".webp",
-}
-
-MAX_PHOTO_BYTES = 10 * 1024 * 1024  # 10 MB per photo after decoding
-MAX_PHOTOS = 10
+MAX_PHOTOS = DEFAULT_MAX_PHOTOS
 
 
 def _contacts_to_dict(contacts) -> dict:
@@ -63,24 +56,7 @@ def save_base64_photo(data_url: str) -> str:
     """Decode a data:image/…;base64,… string, save to disk, return URL path."""
     if not data_url.startswith("data:"):
         return data_url
-
-    try:
-        header, encoded = data_url.split(",", 1)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Некорректный формат фото")
-
-    mime = header.split(";")[0].replace("data:", "")
-    ext = MIME_TO_EXT.get(mime, ".jpg")
-
-    raw = base64.b64decode(encoded)
-    if len(raw) > MAX_PHOTO_BYTES:
-        raise HTTPException(status_code=400, detail="Фото слишком большое (макс. 10 МБ)")
-
-    filename = f"{uuid.uuid4().hex}{ext}"
-    filepath = UPLOADS_DIR / filename
-    filepath.write_bytes(raw)
-
-    return f"/uploads/{filename}"
+    return save_data_image(data_url, UPLOADS_DIR)
 
 
 def pet_to_response(p: Pet) -> PetResponse:
@@ -129,60 +105,61 @@ def list_pets(
     db: Session = Depends(get_db),
     user: Optional[User] = Depends(get_current_user),
 ):
-    q = db.query(Pet)
+    stmt = select(Pet)
     if animal_type:
-        q = q.filter(Pet.animal_type == animal_type)
+        stmt = stmt.where(Pet.animal_type == animal_type)
     if breed:
-        q = q.filter(Pet.breed.ilike(f"%{breed}%"))
+        stmt = stmt.where(Pet.breed.ilike(f"%{breed}%"))
     if city:
-        q = q.filter(Pet.city.ilike(f"%{city}%"))
+        stmt = stmt.where(Pet.city.ilike(f"%{city}%"))
     if status:
-        q = q.filter(Pet.status == status)
+        stmt = stmt.where(Pet.status == status)
     if statuses:
         status_values = [s.strip() for s in statuses.split(",") if s.strip()]
         if status_values:
-            q = q.filter(Pet.status.in_(status_values))
+            stmt = stmt.where(Pet.status.in_(status_values))
     if days:
-        q = q.filter(Pet.published_at >= datetime.utcnow() - timedelta(days=days))
+        stmt = stmt.where(Pet.published_at >= utc_now() - timedelta(days=days))
     if moderation_status:
-        q = q.filter(Pet.moderation_status == moderation_status)
+        stmt = stmt.where(Pet.moderation_status == moderation_status)
     if is_archived is not None:
-        q = q.filter(Pet.is_archived == is_archived)
+        stmt = stmt.where(Pet.is_archived == is_archived)
     if search:
-        q = q.filter(
+        stmt = stmt.where(
             (Pet.description.ilike(f"%{search}%")) |
             (Pet.breed.ilike(f"%{search}%")) |
             (Pet.city.ilike(f"%{search}%"))
         )
     if author_id:
-        q = q.filter(Pet.author_id == author_id)
+        stmt = stmt.where(Pet.author_id == author_id)
     if None not in (north, south, east, west):
-        q = q.filter(
+        stmt = stmt.where(
             Pet.location_lat >= south,
             Pet.location_lat <= north,
             Pet.location_lng >= west,
             Pet.location_lng <= east,
         )
-    pets = q.order_by(Pet.published_at.desc()).all()
+    pets = db.scalars(stmt.order_by(Pet.published_at.desc())).all()
     return [pet_to_response(p) for p in pets]
 
 
 @router.get("/statistics", response_model=StatisticsResponse)
 def get_statistics(db: Session = Depends(get_db)):
-    from sqlalchemy import func
     from schemas import _is_happy_archive
 
     # Активные объявления (не архив, одобрены)
-    active = db.query(Pet).filter(
-        Pet.is_archived == False,
-        Pet.moderation_status == "approved",
+    active = db.scalars(
+        select(Pet).where(
+            Pet.is_archived.is_(False),
+            Pet.moderation_status == "approved",
+        )
     ).all()
     searching = sum(1 for p in active if p.status == "searching")
     found = sum(1 for p in active if p.status == "found")
     cities_count = len({p.city for p in active if p.city})
 
     # Архив: найденные (счастливый конец) vs не найденные
-    archived = db.query(Pet).filter(Pet.is_archived == True).all()
+    archived = db.scalars(select(Pet).where(Pet.is_archived.is_(True))).all()
     found_pets = sum(1 for p in archived if _is_happy_archive(p.archive_reason))
     not_found = sum(1 for p in archived if p.archive_reason and not _is_happy_archive(p.archive_reason))
     total_with_outcome = found_pets + not_found
@@ -193,7 +170,9 @@ def get_statistics(db: Session = Depends(get_db)):
         else None
     )
 
-    users_count = db.query(User).filter(User.is_blocked == False).count()
+    users_count = db.scalar(
+        select(func.count()).select_from(User).where(User.is_blocked.is_(False))
+    ) or 0
 
     return StatisticsResponse(
         searching=searching,
@@ -208,7 +187,7 @@ def get_statistics(db: Session = Depends(get_db)):
 
 @router.get("/{pet_id}", response_model=PetResponse)
 def get_pet(pet_id: str, db: Session = Depends(get_db)):
-    pet = db.query(Pet).filter(Pet.id == pet_id).first()
+    pet = db.scalar(select(Pet).where(Pet.id == pet_id))
     if not pet:
         raise HTTPException(status_code=404, detail="Объявление не найдено")
     return pet_to_response(pet)
@@ -278,7 +257,7 @@ async def _send_notifications_bg(pet_id: str):
     from database import SessionLocal
     db = SessionLocal()
     try:
-        pet = db.query(Pet).filter(Pet.id == pet_id).first()
+        pet = db.scalar(select(Pet).where(Pet.id == pet_id))
         if pet:
             await send_notifications_for_pet(pet, db)
     except Exception as e:
@@ -295,7 +274,7 @@ async def update_pet(
     user: User = Depends(get_current_user_required),
     db: Session = Depends(get_db),
 ):
-    pet = db.query(Pet).filter(Pet.id == pet_id).first()
+    pet = db.scalar(select(Pet).where(Pet.id == pet_id))
     if not pet:
         raise HTTPException(status_code=404, detail="Объявление не найдено")
     if pet.author_id != user.id and user.role != "admin":
@@ -303,14 +282,17 @@ async def update_pet(
 
     old_moderation_status = pet.moderation_status
 
-    ALLOWED_FIELDS = {
+    COMMON_FIELDS = {
         "photos", "animal_type", "breed", "colors", "gender",
         "approximate_age", "status", "description", "city",
         "location", "contacts", "is_archived", "archive_reason",
-        "moderation_status", "moderation_reason",
     }
+    ADMIN_ONLY_FIELDS = {"moderation_status", "moderation_reason"}
     d = data.model_dump(exclude_unset=True)
-    d = {k: v for k, v in d.items() if k in ALLOWED_FIELDS}
+    allowed_fields = set(COMMON_FIELDS)
+    if user.role == "admin":
+        allowed_fields.update(ADMIN_ONLY_FIELDS)
+    d = {k: v for k, v in d.items() if k in allowed_fields}
     if "photos" in d and d["photos"] is not None:
         limit = _max_photos(db)
         if len(d["photos"]) > limit:
@@ -329,9 +311,10 @@ async def update_pet(
             d["contacts"] = dict(d["contacts"])
     for k, v in d.items():
         setattr(pet, k, v)
-    pet.updated_at = datetime.utcnow()
-    if "moderation_status" in d or "moderation_reason" in d:
-        pet.moderated_at = datetime.utcnow()
+    pet.updated_at = utc_now()
+    moderation_updated = any(field in d for field in ADMIN_ONLY_FIELDS)
+    if moderation_updated:
+        pet.moderated_at = utc_now()
         pet.moderated_by = user.id
     elif pet.author_id == user.id:
         if _moderation_required(db) and user.role != "admin":
@@ -359,7 +342,7 @@ def delete_pet(
     user: User = Depends(get_current_user_required),
     db: Session = Depends(get_db),
 ):
-    pet = db.query(Pet).filter(Pet.id == pet_id).first()
+    pet = db.scalar(select(Pet).where(Pet.id == pet_id))
     if not pet:
         raise HTTPException(status_code=404, detail="Объявление не найдено")
     if pet.author_id != user.id and user.role != "admin":

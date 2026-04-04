@@ -1,12 +1,13 @@
 """Users API (admin + profile)."""
 import logging
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from database import get_db
 from models import User, Pet, Notification, NotificationSettings
 from schemas import UserResponse, UserUpdate
-from auth import require_admin
+from auth import get_current_user, require_admin
 from utils import user_to_response
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -20,16 +21,16 @@ def list_users(
     db: Session = Depends(get_db),
     _: User = Depends(require_admin),
 ):
-    q = db.query(User)
+    stmt = select(User)
     if search:
-        q = q.filter(
+        stmt = stmt.where(
             (User.name.ilike(f"%{search}%")) | (User.email.ilike(f"%{search}%"))
         )
     if role:
-        q = q.filter(User.role == role)
+        stmt = stmt.where(User.role == role)
     if is_blocked is not None:
-        q = q.filter(User.is_blocked == is_blocked)
-    users = q.all()
+        stmt = stmt.where(User.is_blocked == is_blocked)
+    users = db.scalars(stmt).all()
     return [user_to_response(u) for u in users]
 
 
@@ -37,11 +38,17 @@ def list_users(
 def get_user(
     user_id: str,
     db: Session = Depends(get_db),
+    current: User | None = Depends(get_current_user),
 ):
-    user = db.query(User).filter(User.id == user_id).first()
+    user = db.scalar(select(User).where(User.id == user_id))
     if not user:
         raise HTTPException(status_code=404, detail="Пользователь не найден")
-    return user_to_response(user)
+    include_private = current is not None and (current.id == user_id or current.role == "admin")
+    return user_to_response(
+        user,
+        include_block_status=include_private,
+        include_telegram=include_private,
+    )
 
 
 @router.patch("/{user_id}", response_model=UserResponse)
@@ -51,7 +58,7 @@ def update_user(
     db: Session = Depends(get_db),
     current: User = Depends(require_admin),
 ):
-    user = db.query(User).filter(User.id == user_id).first()
+    user = db.scalar(select(User).where(User.id == user_id))
     if not user:
         raise HTTPException(status_code=404, detail="Пользователь не найден")
     # Admin cannot demote themselves — prevents losing access to admin panel
@@ -87,16 +94,16 @@ def delete_user(
 ):
     if current.id == user_id:
         raise HTTPException(status_code=400, detail="Нельзя удалить самого себя")
-    user = db.query(User).filter(User.id == user_id).first()
+    user = db.scalar(select(User).where(User.id == user_id))
     if not user:
         raise HTTPException(status_code=404, detail="Пользователь не найден")
     try:
-        db.query(Notification).filter(Notification.user_id == user_id).delete()
-        db.query(NotificationSettings).filter(NotificationSettings.user_id == user_id).delete()
+        db.execute(delete(Notification).where(Notification.user_id == user_id))
+        db.execute(delete(NotificationSettings).where(NotificationSettings.user_id == user_id))
         from models import TelegramLinkCode, Report
-        db.query(Report).filter(Report.reporter_id == user_id).delete()
-        db.query(TelegramLinkCode).filter(TelegramLinkCode.user_id == user_id).delete()
-        db.query(Pet).filter(Pet.author_id == user_id).delete()
+        db.execute(delete(Report).where(Report.reporter_id == user_id))
+        db.execute(delete(TelegramLinkCode).where(TelegramLinkCode.user_id == user_id))
+        db.execute(delete(Pet).where(Pet.author_id == user_id))
         db.delete(user)
         db.commit()
     except Exception as e:

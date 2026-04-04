@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { authApi, getToken } from '../api/client';
+import { authApi } from '../api/client';
 
 export interface User {
   id: string;
@@ -25,7 +25,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, name: string, password: string, contacts: User['contacts']) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   updateContacts: (contacts: User['contacts']) => Promise<void>;
   updateProfile: (name: string, email: string) => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
@@ -44,10 +44,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   useEffect(() => {
-    if (!getToken()) {
-      setIsLoading(false);
-      return;
-    }
     authApi.me()
       .then(setUser)
       .catch(() => setUser(null))
@@ -66,8 +62,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsAuthModalOpen(false);
   };
 
-  const logout = () => {
-    authApi.logout();
+  const logout = async () => {
+    await authApi.logout();
     setUser(null);
   };
 
@@ -99,7 +95,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const u = await authApi.me();
       setUser(u);
     } catch {
-      // ignore
+      setUser(null);
     }
   };
 

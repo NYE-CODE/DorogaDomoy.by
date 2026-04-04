@@ -13,7 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from database import init_db, check_db_writable
-from routers import auth, pets, users, reports, settings, telegram, notifications, sightings, media, partners, feature_flags
+from routers import auth, pets, users, reports, settings, telegram, notifications, sightings, media, partners, feature_flags, profile_pets
 from telegram_bot import BOT_TOKEN, process_telegram_update
 
 logging.basicConfig(
@@ -128,6 +128,7 @@ app.include_router(sightings.router)
 app.include_router(media.router)
 app.include_router(partners.router)
 app.include_router(feature_flags.router)
+app.include_router(profile_pets.router)
 
 
 @app.get("/")
@@ -138,10 +139,6 @@ def root():
 @app.get("/health")
 def health():
     """Diagnostic endpoint: checks database read/write access."""
-    import os
     info = check_db_writable()
-    info["cwd"] = os.getcwd()
-    info["pid"] = os.getpid()
-    info["uid"] = os.getuid() if hasattr(os, "getuid") else "N/A"
     status_ok = info.get("writable", False)
-    return {"status": "ok" if status_ok else "error", "details": info}
+    return {"status": "ok" if status_ok else "error"}

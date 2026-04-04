@@ -37,6 +37,20 @@ import { Switch } from './ui/switch';
 
 type AdminTab = 'dashboard' | 'moderation' | 'pets' | 'users' | 'reports' | 'media' | 'partners' | 'featureFlags' | 'settings';
 
+const ADMIN_PLACEHOLDER_PHOTO =
+  'data:image/svg+xml;utf8,' +
+  encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96">' +
+      '<rect width="96" height="96" fill="#f3f4f6"/>' +
+      '<path d="M24 63l12-14 15 17 10-9 11 13H24z" fill="#d1d5db"/>' +
+      '<circle cx="39" cy="33" r="8" fill="#d1d5db"/>' +
+    '</svg>'
+  );
+
+function getAdminPetPreviewPhoto(pet: Pet): string {
+  return pet.photos[0] || ADMIN_PLACEHOLDER_PHOTO;
+}
+
 interface AdminPanelProps {
   pets: Pet[];
   users: User[];
@@ -124,6 +138,7 @@ export function AdminPanel({
   const [featureFlags, setFeatureFlags] = useState({
     ff_landing_show_stats: true,
     ff_landing_show_help: true,
+    ff_landing_show_pets_feature: true,
   });
 
   useEffect(() => {
@@ -141,6 +156,8 @@ export function AdminPanel({
       setFeatureFlags({
         ff_landing_show_stats: ff.ff_landing_show_stats === 'true',
         ff_landing_show_help: ff.ff_landing_show_help === 'true',
+        ff_landing_show_pets_feature:
+          (ff.ff_landing_show_pets_feature ?? 'true') === 'true',
       });
     }).catch(() => {});
   }, []);
@@ -161,6 +178,7 @@ export function AdminPanel({
     featureFlagsApi.update({
       ff_landing_show_stats: featureFlags.ff_landing_show_stats,
       ff_landing_show_help: featureFlags.ff_landing_show_help,
+      ff_landing_show_pets_feature: featureFlags.ff_landing_show_pets_feature,
     }).then(() => {
       toast.success('Фича-флаги сохранены');
     }).catch(() => {
@@ -189,6 +207,9 @@ export function AdminPanel({
       ? (pets.filter(p => p.status === 'found').length / pets.length) * 100 
       : 0
   };
+  const recentPets = [...pets]
+    .sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime())
+    .slice(0, 5);
 
   const tabs = [
     { id: 'dashboard' as const, label: 'Дашборд', icon: LayoutDashboard },
@@ -291,10 +312,10 @@ export function AdminPanel({
       <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-6">
         <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Последние объявления</h3>
         <div className="space-y-3">
-          {pets.slice(0, 5).map(pet => (
+          {recentPets.map(pet => (
             <div key={pet.id} className="flex items-center justify-between p-3 bg-accent dark:bg-accent rounded-lg">
               <div className="flex items-center gap-3">
-                <img src={pet.photos[0]} alt="" className="w-12 h-12 object-cover rounded-lg" />
+                <img src={getAdminPetPreviewPhoto(pet)} alt="" className="w-12 h-12 object-cover rounded-lg" />
                 <div>
                   <p className="font-medium text-gray-900 dark:text-white">{pet.breed || 'Без породы'}</p>
                   <p className="text-sm text-gray-600 dark:text-gray-400">{pet.city} · {pet.authorName}</p>
@@ -699,7 +720,7 @@ export function AdminPanel({
                         rel="noopener noreferrer"
                         className="flex items-center gap-3 p-3 bg-muted dark:bg-accent rounded-lg hover:bg-accent dark:hover:bg-accent transition-colors group"
                       >
-                        <img src={pet.photos[0]} alt="" className="w-12 h-12 object-cover rounded-lg" />
+                        <img src={getAdminPetPreviewPhoto(pet)} alt="" className="w-12 h-12 object-cover rounded-lg" />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-blue-600">{pet.breed || 'Без породы'}</p>
                           <p className="text-xs text-gray-600 dark:text-gray-400">{pet.city} · {pet.authorName}</p>
@@ -1110,6 +1131,18 @@ export function AdminPanel({
             <Switch
               checked={featureFlags.ff_landing_show_help}
               onCheckedChange={(v) => setFeatureFlags((f) => ({ ...f, ff_landing_show_help: v }))}
+            />
+          </div>
+          <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+            <div>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Секция «Защитите питомца» (QR)</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Блок после «Как это работает?» с профилем питомца и QR-кодом</p>
+            </div>
+            <Switch
+              checked={featureFlags.ff_landing_show_pets_feature}
+              onCheckedChange={(v) =>
+                setFeatureFlags((f) => ({ ...f, ff_landing_show_pets_feature: v }))
+              }
             />
           </div>
         </div>

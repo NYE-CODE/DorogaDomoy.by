@@ -1,6 +1,8 @@
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import 'leaflet.markercluster';
+import 'leaflet.markercluster/dist/MarkerCluster.css';
 import { Pet } from '../types/pet';
 import { statusLabels, animalTypeLabels, statusColors, formatDate } from '../utils/pet-helpers';
 
@@ -48,10 +50,109 @@ const getMarkerIcon = (animalType: string, status: string): L.DivIcon => {
 const isTouchDevice = typeof window !== 'undefined' &&
   ('ontouchstart' in window || navigator.maxTouchPoints > 0);
 
+const FALLBACK_IMAGE =
+  'data:image/svg+xml;utf8,' +
+  encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 120">' +
+      '<rect width="160" height="120" fill="#f3f4f6"/>' +
+      '<path d="M42 78l18-20 22 24 16-14 20 24H42z" fill="#d1d5db"/>' +
+      '<circle cx="63" cy="44" r="10" fill="#d1d5db"/>' +
+    '</svg>'
+  );
+
+function getSafeImageSrc(url?: string): string {
+  if (!url) return FALLBACK_IMAGE;
+  if (url.startsWith('data:image/')) return url;
+  try {
+    const parsed = new URL(url, window.location.origin);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? parsed.toString() : FALLBACK_IMAGE;
+  } catch {
+    return FALLBACK_IMAGE;
+  }
+}
+
+function createPreviewContent(pet: Pet): HTMLDivElement {
+  const container = document.createElement('div');
+  container.style.width = '12rem';
+
+  const image = document.createElement('img');
+  image.src = getSafeImageSrc(pet.photos[0]);
+  image.alt = animalTypeLabels[pet.animalType];
+  image.loading = 'lazy';
+  image.style.width = '100%';
+  image.style.height = '128px';
+  image.style.objectFit = 'cover';
+  image.style.borderRadius = '8px';
+  image.style.marginBottom = '8px';
+  container.appendChild(image);
+
+  const info = document.createElement('div');
+  info.style.display = 'flex';
+  info.style.flexDirection = 'column';
+  info.style.gap = '4px';
+
+  const title = document.createElement('h4');
+  title.style.fontWeight = '600';
+  title.style.fontSize = '14px';
+  title.style.margin = '0';
+  title.textContent = pet.breed
+    ? `${animalTypeLabels[pet.animalType]} · ${pet.breed}`
+    : animalTypeLabels[pet.animalType];
+  info.appendChild(title);
+
+  const status = document.createElement('div');
+  status.className = statusColors[pet.status];
+  status.style.display = 'inline-flex';
+  status.style.padding = '2px 6px';
+  status.style.borderRadius = '4px';
+  status.style.fontSize = '12px';
+  status.style.width = 'fit-content';
+  status.textContent = statusLabels[pet.status];
+  info.appendChild(status);
+
+  const city = document.createElement('p');
+  city.style.fontSize = '12px';
+  city.style.color = '#4b5563';
+  city.style.margin = '0';
+  city.textContent = pet.city;
+  info.appendChild(city);
+
+  const publishedAt = document.createElement('p');
+  publishedAt.style.fontSize = '12px';
+  publishedAt.style.color = '#6b7280';
+  publishedAt.style.margin = '0';
+  publishedAt.textContent = formatDate(pet.publishedAt);
+  info.appendChild(publishedAt);
+
+  container.appendChild(info);
+  return container;
+}
+
+function createClusterGroup(): L.MarkerClusterGroup {
+  return L.markerClusterGroup({
+    maxClusterRadius: 72,
+    spiderfyOnMaxZoom: true,
+    showCoverageOnHover: false,
+    zoomToBoundsOnClick: true,
+    chunkedLoading: true,
+    iconCreateFunction(cluster) {
+      const count = cluster.getChildCount();
+      const size = count < 10 ? 40 : count < 100 ? 48 : 56;
+      const half = Math.round(size / 2);
+      return L.divIcon({
+        html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:#FF9800;color:#fff;font-weight:700;font-size:${count >= 100 ? 13 : 15}px;display:flex;align-items:center;justify-content:center;border:3px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,.28)">${count}</div>`,
+        className: 'pet-map-cluster',
+        iconSize: [size, size],
+        iconAnchor: [half, half],
+      });
+    },
+  });
+}
+
 export default function MapView({ pets, onPetClick, onBoundsChange, center = [53.9006, 27.5590], zoom = 11 }: MapViewProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
-  const markersLayerRef = useRef<L.LayerGroup | null>(null);
+  const markersLayerRef = useRef<L.MarkerClusterGroup | null>(null);
 
   // Initialize Map
   useEffect(() => {
@@ -66,7 +167,7 @@ export default function MapView({ pets, onPetClick, onBoundsChange, center = [53
         maxZoom: 19,
       }).addTo(map);
 
-      markersLayerRef.current = L.layerGroup().addTo(map);
+      markersLayerRef.current = createClusterGroup().addTo(map);
       mapInstanceRef.current = map;
 
       // Handle bounds change
@@ -111,37 +212,16 @@ export default function MapView({ pets, onPetClick, onBoundsChange, center = [53
         { icon: getMarkerIcon(pet.animalType, pet.status) }
       );
 
-      const previewHtml = `
-        <div class="w-48">
-          <img 
-            src="${pet.photos[0]}" 
-            alt="${animalTypeLabels[pet.animalType]}"
-            style="width:100%;height:128px;object-fit:cover;border-radius:8px;margin-bottom:8px"
-            loading="lazy"
-          />
-          <div style="display:flex;flex-direction:column;gap:4px">
-            <h4 style="font-weight:600;font-size:14px;margin:0">
-              ${animalTypeLabels[pet.animalType]} ${pet.breed ? `· ${pet.breed}` : ''}
-            </h4>
-            <div class="${statusColors[pet.status]}" style="display:inline-flex;padding:2px 6px;border-radius:4px;font-size:12px;width:fit-content">
-              ${statusLabels[pet.status]}
-            </div>
-            <p style="font-size:12px;color:#4b5563;margin:0">${pet.city}</p>
-            <p style="font-size:12px;color:#6b7280;margin:0">${formatDate(pet.publishedAt)}</p>
-          </div>
-        </div>
-      `;
+      const previewContent = createPreviewContent(pet);
 
       if (isTouchDevice) {
-        const popupContent = document.createElement('div');
-        popupContent.innerHTML = previewHtml;
-        popupContent.style.cursor = 'pointer';
-        popupContent.addEventListener('click', () => {
+        previewContent.style.cursor = 'pointer';
+        previewContent.addEventListener('click', () => {
           onPetClick(pet);
           mapInstanceRef.current?.closePopup();
         });
 
-        marker.bindPopup(popupContent, {
+        marker.bindPopup(previewContent, {
           offset: [0, -10],
           closeButton: true,
           className: 'pet-preview-popup',
@@ -151,7 +231,7 @@ export default function MapView({ pets, onPetClick, onBoundsChange, center = [53
           onPetClick(pet);
         });
 
-        marker.bindTooltip(previewHtml, {
+        marker.bindTooltip(createPreviewContent(pet), {
           direction: 'top',
           offset: [0, -10],
           opacity: 0.95,

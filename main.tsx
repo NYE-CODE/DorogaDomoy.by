@@ -1,19 +1,7 @@
-import React, { useEffect } from 'react'
+import React, { Suspense, lazy, useEffect } from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router'
 import { Toaster } from 'sonner'
-import LandingPage from './pages/LandingPage.tsx'
-import SearchPage from './pages/SearchPage.tsx'
-import ProfilePage from './components/profile-page.tsx'
-import PetDetailPage from './pages/PetDetailPage.tsx'
-import UserProfilePage from './pages/UserProfilePage.tsx'
-import NotFoundPage from './pages/NotFoundPage.tsx'
-import AdminPage from './pages/AdminPage.tsx'
-import MyAdsPageRoute from './pages/MyAdsPage.tsx'
-import CreateAdPage from './pages/CreateAdPage.tsx'
-import EditAdPage from './pages/EditAdPage.tsx'
-import SettingsPageRoute from './pages/SettingsPage.tsx'
-import { TermsPage } from './components/terms-page'
 import { AuthModal } from './components/auth/AuthModal'
 import { AuthProvider, useAuth } from './context/AuthContext.tsx'
 import { CityProvider } from './context/CityContext.tsx'
@@ -22,6 +10,25 @@ import { I18nProvider } from './context/I18nContext.tsx'
 import './styles/globals.css';
 // Стили лендинга (шрифты и т.п.) — theme-scoped подключается в LandingPage
 import './landing/styles/fonts.css'
+
+const LandingPage = lazy(() => import('./pages/LandingPage.tsx'));
+const SearchPage = lazy(() => import('./pages/SearchPage.tsx'));
+const ProfilePage = lazy(() => import('./components/profile-page.tsx'));
+const PetDetailPage = lazy(() => import('./pages/PetDetailPage.tsx'));
+const UserProfilePage = lazy(() => import('./pages/UserProfilePage.tsx'));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage.tsx'));
+const AdminPage = lazy(() => import('./pages/AdminPage.tsx'));
+const MyAdsPageRoute = lazy(() => import('./pages/MyAdsPage.tsx'));
+const CreateAdPage = lazy(() => import('./pages/CreateAdPage.tsx'));
+const EditAdPage = lazy(() => import('./pages/EditAdPage.tsx'));
+const SettingsPageRoute = lazy(() => import('./pages/SettingsPage.tsx'));
+const MyPetsPageRoute = lazy(() => import('./pages/MyPetsPage.tsx'));
+const MyPetProfilePage = lazy(() => import('./pages/MyPetProfilePage.tsx'));
+const AddEditPetPageRoute = lazy(() => import('./pages/AddEditPetPage.tsx'));
+const PublicPetProfilePage = lazy(() => import('./pages/PublicPetProfilePage.tsx'));
+const TermsPage = lazy(() =>
+  import('./components/terms-page').then((module) => ({ default: module.TermsPage }))
+);
 
 function GlobalToaster() {
   const { theme } = useTheme();
@@ -55,6 +62,14 @@ function AuthModalGlobal() {
   return <AuthModal onNavigateToTerms={handleNavigateToTerms} />;
 }
 
+function RouteLoader() {
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center text-sm text-muted-foreground">
+      Загрузка...
+    </div>
+  );
+}
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ThemeProvider>
@@ -65,20 +80,27 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <AuthProvider>
             <CityProvider>
               <AuthModalGlobal />
-              <Routes>
-                <Route path="/" element={<LandingPage />} />
-                <Route path="/search" element={<SearchPage />} />
-                <Route path="/profile" element={<ProfilePage />} />
-                <Route path="/pet/:id" element={<PetDetailPage />} />
-                <Route path="/user/:id" element={<UserProfilePage />} />
-                <Route path="/my-ads" element={<MyAdsPageRoute />} />
-                <Route path="/create" element={<CreateAdPage />} />
-                <Route path="/edit/:id" element={<EditAdPage />} />
-                <Route path="/settings" element={<SettingsPageRoute />} />
-                <Route path="/admin" element={<AdminPage />} />
-                <Route path="/terms" element={<TermsRoute />} />
-                <Route path="*" element={<NotFoundPage />} />
-              </Routes>
+              <Suspense fallback={<RouteLoader />}>
+                <Routes>
+                  <Route path="/" element={<LandingPage />} />
+                  <Route path="/search" element={<SearchPage />} />
+                  <Route path="/profile" element={<ProfilePage />} />
+                  <Route path="/pet-profile/:id" element={<PublicPetProfilePage />} />
+                  <Route path="/my-pets/add" element={<AddEditPetPageRoute />} />
+                  <Route path="/my-pets/:id/edit" element={<AddEditPetPageRoute />} />
+                  <Route path="/my-pets/:id" element={<MyPetProfilePage />} />
+                  <Route path="/my-pets" element={<MyPetsPageRoute />} />
+                  <Route path="/pet/:id" element={<PetDetailPage />} />
+                  <Route path="/user/:id" element={<UserProfilePage />} />
+                  <Route path="/my-ads" element={<MyAdsPageRoute />} />
+                  <Route path="/create" element={<CreateAdPage />} />
+                  <Route path="/edit/:id" element={<EditAdPage />} />
+                  <Route path="/settings" element={<SettingsPageRoute />} />
+                  <Route path="/admin" element={<AdminPage />} />
+                  <Route path="/terms" element={<TermsRoute />} />
+                  <Route path="*" element={<NotFoundPage />} />
+                </Routes>
+              </Suspense>
             </CityProvider>
           </AuthProvider>
         </BrowserRouter>

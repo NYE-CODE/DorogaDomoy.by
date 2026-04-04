@@ -241,10 +241,10 @@ export default function SearchPage() {
 
     const detectCity = async () => {
       try {
-        const res = await fetch('http://ip-api.com/json/?fields=status,lat,lon', { signal: AbortSignal.timeout(5000) });
+        const res = await fetch('https://ipapi.co/json/', { signal: AbortSignal.timeout(5000) });
         const data = await res.json();
-        if (data.status === 'success' && typeof data.lat === 'number' && typeof data.lon === 'number') {
-          const closest = findClosestCity(data.lat, data.lon);
+        if (typeof data.latitude === 'number' && typeof data.longitude === 'number') {
+          const closest = findClosestCity(data.latitude, data.longitude);
           detectedCityRef.current = closest;
           setDetectedCityName(closest.name);
           setShowCityDetectPopup(true);

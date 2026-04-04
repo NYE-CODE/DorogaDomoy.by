@@ -1,24 +1,21 @@
 """Feature flags API. GET — публичный (лендинг). PATCH — только админ."""
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from database import get_db
 from models import PlatformSettings, User
 from auth import require_admin
+from platform_settings import FEATURE_FLAG_DEFAULTS, get_settings_with_defaults
 
 router = APIRouter(prefix="/feature-flags", tags=["feature-flags"])
 
-DEFAULTS = {
-    "ff_landing_show_stats": "true",
-    "ff_landing_show_help": "true",
-}
+DEFAULTS = FEATURE_FLAG_DEFAULTS
 
 
 def _get_all(db: Session) -> dict:
-    rows = db.query(PlatformSettings).all()
-    current = {r.key: r.value for r in rows}
-    return {k: current.get(k, v) for k, v in DEFAULTS.items()}
+    return get_settings_with_defaults(db, DEFAULTS)
 
 
 @router.get("")
@@ -30,6 +27,7 @@ def get_feature_flags(db: Session = Depends(get_db)):
 class FeatureFlagsUpdate(BaseModel):
     ff_landing_show_stats: bool | None = None
     ff_landing_show_help: bool | None = None
+    ff_landing_show_pets_feature: bool | None = None
 
 
 @router.patch("")
@@ -44,7 +42,7 @@ def update_feature_flags(
         if k not in DEFAULTS:
             continue
         val_str = "true" if v else "false"
-        row = db.query(PlatformSettings).filter(PlatformSettings.key == k).first()
+        row = db.scalar(select(PlatformSettings).where(PlatformSettings.key == k))
         if row:
             row.value = val_str
         else:

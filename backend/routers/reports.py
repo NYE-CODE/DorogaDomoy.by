@@ -1,14 +1,15 @@
 """Reports API."""
 import logging
-from datetime import datetime
 import uuid
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from database import get_db
 from models import Report, Pet, User
 from schemas import ReportCreate, ReportUpdate, ReportResponse
 from auth import get_current_user_required, require_admin
+from time_utils import utc_now
 
 router = APIRouter(prefix="/reports", tags=["reports"])
 
@@ -36,12 +37,12 @@ def list_reports(
     db: Session = Depends(get_db),
     _: User = Depends(require_admin),
 ):
-    q = db.query(Report)
+    stmt = select(Report)
     if status:
-        q = q.filter(Report.status == status)
+        stmt = stmt.where(Report.status == status)
     if reason:
-        q = q.filter(Report.reason == reason)
-    reports = q.order_by(Report.created_at.desc()).all()
+        stmt = stmt.where(Report.reason == reason)
+    reports = db.scalars(stmt.order_by(Report.created_at.desc())).all()
     return [report_to_response(r) for r in reports]
 
 
@@ -51,7 +52,7 @@ def create_report(
     user: User = Depends(get_current_user_required),
     db: Session = Depends(get_db),
 ):
-    pet = db.query(Pet).filter(Pet.id == data.pet_id).first()
+    pet = db.scalar(select(Pet).where(Pet.id == data.pet_id))
     if not pet:
         raise HTTPException(status_code=404, detail="Объявление не найдено")
     report_id = "report-" + str(uuid.uuid4())[:8]
@@ -82,12 +83,12 @@ def update_report(
     db: Session = Depends(get_db),
     admin: User = Depends(require_admin),
 ):
-    report = db.query(Report).filter(Report.id == report_id).first()
+    report = db.scalar(select(Report).where(Report.id == report_id))
     if not report:
         raise HTTPException(status_code=404, detail="Жалоба не найдена")
     if data.status:
         report.status = data.status
-        report.reviewed_at = datetime.utcnow()
+        report.reviewed_at = utc_now()
         report.reviewed_by = admin.id
     if data.resolution:
         report.resolution = data.resolution
@@ -107,7 +108,7 @@ def delete_report(
     db: Session = Depends(get_db),
     _: User = Depends(require_admin),
 ):
-    report = db.query(Report).filter(Report.id == report_id).first()
+    report = db.scalar(select(Report).where(Report.id == report_id))
     if not report:
         raise HTTPException(status_code=404, detail="Жалоба не найдена")
     try:

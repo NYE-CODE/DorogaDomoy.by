@@ -38,4 +38,5 @@ pytest.cache/
 
 ## DB
 *.db
+*.db-*
 

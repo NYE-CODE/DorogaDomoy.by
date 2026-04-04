@@ -4,19 +4,22 @@ import logging
 import uuid
 from pathlib import Path
 from typing import Optional
-from fastapi import APIRouter, Depends, File, HTTPException, Body, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Body, Response, UploadFile
 from PIL import Image
 from pydantic import BaseModel
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from database import get_db
 from models import User
 from schemas import UserCreate, UserLogin, UserResponse, Token
 from auth import (
+    clear_auth_cookie,
     get_password_hash,
     verify_password,
     create_access_token,
     get_current_user_required,
+    set_auth_cookie,
 )
 from utils import user_to_response
 
@@ -30,19 +33,22 @@ AVATAR_SIZE = 256
 
 
 @router.post("/register", response_model=Token)
-def register(data: UserCreate, db: Session = Depends(get_db)):
-    existing = db.query(User).filter(User.email == data.email).first()
+def register(
+    data: UserCreate,
+    response: Response,
+    db: Session = Depends(get_db),
+):
+    existing = db.scalar(select(User).where(User.email == data.email))
     if existing:
         raise HTTPException(status_code=400, detail="Email уже зарегистрирован")
     user_id = "user-" + str(int(__import__("time").time() * 1000))
-    is_admin = data.email == "admin@dorogadomoy.by"
     user = User(
         id=user_id,
         email=data.email,
         name=data.name,
         password_hash=get_password_hash(data.password),
         avatar=f"https://api.dicebear.com/7.x/avataaars/svg?seed={data.name}",
-        role="admin" if is_admin else data.role,
+        role="user",
         contacts=data.contacts.model_dump() if hasattr(data, 'contacts') and data.contacts else {},
     )
     try:
@@ -54,18 +60,30 @@ def register(data: UserCreate, db: Session = Depends(get_db)):
         logging.exception("Ошибка при регистрации пользователя: %s", e)
         raise HTTPException(status_code=500, detail=f"Не удалось зарегистрироваться: {type(e).__name__}") from e
     token = create_access_token(data={"sub": user.id})
+    set_auth_cookie(response, token)
     return Token(access_token=token, user=user_to_response(user))
 
 
 @router.post("/login", response_model=Token)
-def login(data: UserLogin, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == data.email).first()
+def login(
+    data: UserLogin,
+    response: Response,
+    db: Session = Depends(get_db),
+):
+    user = db.scalar(select(User).where(User.email == data.email))
     if not user or not verify_password(data.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Неверный email или пароль")
     if user.is_blocked:
         raise HTTPException(status_code=403, detail="Аккаунт заблокирован")
     token = create_access_token(data={"sub": user.id})
+    set_auth_cookie(response, token)
     return Token(access_token=token, user=user_to_response(user))
+
+
+@router.post("/logout", status_code=204)
+def logout(response: Response):
+    clear_auth_cookie(response)
+    return response
 
 
 @router.get("/me", response_model=UserResponse)
@@ -168,7 +186,7 @@ def update_me(
     if body.avatar is not None:
         user.avatar = body.avatar
     if body.email is not None and body.email != user.email:
-        existing = db.query(User).filter(User.email == body.email, User.id != user.id).first()
+        existing = db.scalar(select(User).where(User.email == body.email, User.id != user.id))
         if existing:
             raise HTTPException(status_code=400, detail="Этот email уже используется")
         user.email = body.email
