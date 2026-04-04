@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { useNavigate } from "react-router";
 import {
   QrCode,
   Zap,
@@ -10,12 +10,15 @@ import {
   Heart,
 } from "lucide-react";
 import { useI18n } from "../../../context/I18nContext";
+import { useAuthenticatedAction } from "../../../utils/use-authenticated-action";
 
 const DOG_IMAGE =
   "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=800&h=600&fit=crop";
 
 export function PetsFeature() {
   const { t } = useI18n();
+  const navigate = useNavigate();
+  const { runWhenAuthed } = useAuthenticatedAction();
   const p = t.landing.petsFeature;
   const features = [
     {
@@ -158,13 +161,14 @@ export function PetsFeature() {
         </div>
 
         <div className="text-center">
-          <Link
-            to="/my-pets"
+          <button
+            type="button"
+            onClick={() => runWhenAuthed(() => navigate("/my-pets"))}
             className="inline-flex items-center gap-3 bg-[#FF9800] text-white hover:bg-[#F57C00] rounded-lg px-8 h-12 text-lg transition-colors font-medium shadow-lg hover:shadow-xl"
           >
             <Heart size={24} />
             <span>{p.ctaButton}</span>
-          </Link>
+          </button>
           <p className="text-gray-600 mt-4">{p.ctaSub}</p>
         </div>
       </div>
