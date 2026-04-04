@@ -3,14 +3,15 @@ import logging
 import os
 import math
 import uuid
-from datetime import datetime
 from typing import Optional
 
 import httpx
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from database import SessionLocal
 from models import User, Pet, Sighting, TelegramLinkCode, NotificationSettings, Notification
+from time_utils import utc_now
 
 logger = logging.getLogger(__name__)
 
@@ -83,31 +84,32 @@ def handle_link_command(telegram_id: int, telegram_username: Optional[str], code
     """Process /link CODE command. Returns reply text for the user."""
     db: Session = SessionLocal()
     try:
-        link_code = (
-            db.query(TelegramLinkCode)
-            .filter(TelegramLinkCode.code == code_text.upper(), TelegramLinkCode.used == False)
-            .first()
+        link_code = db.scalar(
+            select(TelegramLinkCode).where(
+                TelegramLinkCode.code == code_text.upper(),
+                TelegramLinkCode.used.is_(False),
+            )
         )
         if not link_code:
             return "Неверный код. Убедитесь, что скопировали его правильно, и попробуйте снова."
 
-        if link_code.expires_at < datetime.utcnow():
+        if link_code.expires_at < utc_now():
             return "Код истёк. Запросите новый на сайте в настройках профиля."
 
-        existing = db.query(User).filter(User.telegram_id == telegram_id).first()
+        existing = db.scalar(select(User).where(User.telegram_id == telegram_id))
         if existing and existing.id != link_code.user_id:
             return (
                 "Этот Telegram-аккаунт уже привязан к другому профилю на DorogaDomoy.by. "
                 "Сначала отвяжите его в настройках того аккаунта."
             )
 
-        user = db.query(User).filter(User.id == link_code.user_id).first()
+        user = db.scalar(select(User).where(User.id == link_code.user_id))
         if not user:
             return "Пользователь не найден. Попробуйте снова."
 
         user.telegram_id = telegram_id
         user.telegram_username = telegram_username
-        user.telegram_linked_at = datetime.utcnow()
+        user.telegram_linked_at = utc_now()
 
         contacts = dict(user.contacts or {})
         contacts["telegram"] = f"@{telegram_username}" if telegram_username else None
@@ -115,10 +117,11 @@ def handle_link_command(telegram_id: int, telegram_username: Optional[str], code
 
         link_code.used = True
 
-        db.query(TelegramLinkCode).filter(
-            TelegramLinkCode.user_id == user.id,
-            TelegramLinkCode.id != link_code.id,
-        ).update({"used": True})
+        db.execute(
+            update(TelegramLinkCode)
+            .where(TelegramLinkCode.user_id == user.id, TelegramLinkCode.id != link_code.id)
+            .values(used=True)
+        )
 
         db.commit()
 
@@ -166,20 +169,19 @@ async def send_notifications_for_pet(pet: Pet, db: Session):
         return
 
     # Find all users with notifications enabled and Telegram linked (excluding the author)
-    settings_list = (
-        db.query(NotificationSettings)
+    settings_list = db.scalars(
+        select(NotificationSettings)
         .join(User, User.id == NotificationSettings.user_id)
-        .filter(
-            NotificationSettings.notifications_enabled == True,
-            User.telegram_id.isnot(None),
-            User.is_blocked == False,
+        .where(
+            NotificationSettings.notifications_enabled.is_(True),
+            User.telegram_id.is_not(None),
+            User.is_blocked.is_(False),
             User.id != pet.author_id,
         )
-        .all()
-    )
+    ).all()
 
     for ns in settings_list:
-        user = db.query(User).filter(User.id == ns.user_id).first()
+        user = db.scalar(select(User).where(User.id == ns.user_id))
         if not user or not user.telegram_id:
             continue
 
@@ -188,18 +190,16 @@ async def send_notifications_for_pet(pet: Pet, db: Session):
         if not matching_status:
             continue
 
-        user_pets = (
-            db.query(Pet)
-            .filter(
+        user_pets = db.scalars(
+            select(Pet).where(
                 Pet.author_id == user.id,
                 Pet.status == matching_status,
-                Pet.is_archived == False,
+                Pet.is_archived.is_(False),
                 Pet.moderation_status == "approved",
-                Pet.location_lat.isnot(None),
-                Pet.location_lng.isnot(None),
+                Pet.location_lat.is_not(None),
+                Pet.location_lng.is_not(None),
             )
-            .all()
-        )
+        ).all()
 
         if not user_pets:
             continue
@@ -217,10 +217,8 @@ async def send_notifications_for_pet(pet: Pet, db: Session):
         if closest_distance is None:
             continue
 
-        existing = (
-            db.query(Notification)
-            .filter(Notification.user_id == user.id, Notification.pet_id == pet.id)
-            .first()
+        existing = db.scalar(
+            select(Notification).where(Notification.user_id == user.id, Notification.pet_id == pet.id)
         )
         if existing:
             continue
@@ -249,7 +247,7 @@ async def send_notifications_for_pet(pet: Pet, db: Session):
             type="new_nearby",
             message=message,
             sent_via="telegram" if sent else "failed",
-            sent_at=datetime.utcnow(),
+            sent_at=utc_now(),
         )
         db.add(notification)
 
@@ -267,13 +265,13 @@ def send_sighting_notification_sync(sighting_id: str, pet_id: str) -> None:
         return
     db = SessionLocal()
     try:
-        pet = db.query(Pet).filter(Pet.id == pet_id).first()
+        pet = db.scalar(select(Pet).where(Pet.id == pet_id))
         if not pet:
             return
-        author = db.query(User).filter(User.id == pet.author_id).first()
+        author = db.scalar(select(User).where(User.id == pet.author_id))
         if not author or not author.telegram_id:
             return
-        sighting = db.query(Sighting).filter(Sighting.id == sighting_id).first()
+        sighting = db.scalar(select(Sighting).where(Sighting.id == sighting_id))
         if not sighting:
             return
 

@@ -38,6 +38,8 @@ interface PetFormProps {
   renderStepHeaderExternally?: boolean;
   /** Вызывается при смене шага — родитель может отрисовать секцию шага под хедером */
   onStepChange?: (info: PetFormStepInfo) => void;
+  /** Частичное предзаполнение при создании (например из «Мои питомцы») */
+  prefillPartial?: Partial<PetFormData> | null;
 }
 
 export interface PetFormData {
@@ -124,7 +126,17 @@ const agePresetValues = ['', 'менее 2 года', 'более 2 года'] a
 const TOTAL_STEPS_CREATE = 5;
 const TOTAL_STEPS_EDIT = 5;
 
-export function PetForm({ onClose, onSubmit, initialData, isEditing = false, initialStatus, variant = 'modal', renderStepHeaderExternally = false, onStepChange }: PetFormProps) {
+export function PetForm({
+  onClose,
+  onSubmit,
+  initialData,
+  isEditing = false,
+  initialStatus,
+  variant = 'modal',
+  renderStepHeaderExternally = false,
+  onStepChange,
+  prefillPartial = null,
+}: PetFormProps) {
   const { user } = useAuth();
   const { t } = useI18n();
   const isMobile = useIsMobile();
@@ -152,7 +164,7 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false, ini
   useEffect(() => {
     setStep(1);
     setTried(false);
-  }, [isEditing, initialData?.id]);
+  }, [isEditing, initialData?.id, prefillPartial]);
 
   useEffect(() => {
     if (!initialData && initialStatus) {
@@ -171,11 +183,14 @@ export function PetForm({ onClose, onSubmit, initialData, isEditing = false, ini
     if (initialData) {
       setFormData(formDataFromPet(initialData));
     } else {
-      const base = { ...defaultFormData };
+      const base = { ...defaultFormData, status: initialStatus ?? 'searching' };
       if (user?.contacts) base.contacts = user.contacts;
+      if (prefillPartial) {
+        Object.assign(base, prefillPartial);
+      }
       setFormData(base);
     }
-  }, [initialData?.id, user?.id]);
+  }, [initialData?.id, user?.id, prefillPartial, initialStatus]);
 
   const compressImage = (file: File, maxDim = 1200, quality = 0.8): Promise<string> =>
     new Promise((resolve, reject) => {

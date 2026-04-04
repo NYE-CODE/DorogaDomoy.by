@@ -1,13 +1,27 @@
 import { useParams, Link } from 'react-router';
 import { useState, useEffect, useMemo } from 'react';
-import { MapPin, Calendar, Phone, Mail, MessageCircle, Share2, Clock, ShieldBan, ShieldCheck } from 'lucide-react';
+import {
+  MapPin,
+  Calendar,
+  Phone,
+  Mail,
+  MessageCircle,
+  Share2,
+  Clock,
+  ShieldBan,
+  ShieldCheck,
+  PawPrint,
+} from 'lucide-react';
 import { User, useAuth } from '../context/AuthContext';
 import { Pet } from '../types/pet';
-import { API_BASE, usersApi, petsApi } from '../api/client';
+import { API_BASE, usersApi, petsApi, profilePetsApi } from '../api/client';
 import { useI18n } from '../context/I18nContext';
 import { toast } from 'sonner';
 import { Header } from '../components/layout/Header';
 import { Footer } from '../components/layout/Footer';
+import { profilePetToListCard, type ProfilePetListCard } from '../utils/profile-pet-display';
+import { dateLocaleForUi } from '../utils/profile-pet-text';
+import { copyText } from '../utils/copy-text';
 
 const ARCHIVE_SUCCESS_REASONS = [
   'Питомец вернулся домой / найден хозяин',
@@ -27,7 +41,7 @@ const getRoleName = (role: User['role'], t: any): string => {
 
 export default function UserProfilePage() {
   const { id } = useParams<{ id: string }>();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { user: currentUser } = useAuth();
   const [user, setUser] = useState<User | null>(null);
   const [allPets, setAllPets] = useState<Pet[]>([]);
@@ -35,6 +49,7 @@ export default function UserProfilePage() {
   const [error, setError] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [blocking, setBlocking] = useState(false);
+  const [profilePets, setProfilePets] = useState<ProfilePetListCard[]>([]);
 
   useEffect(() => {
     if (!id) return;
@@ -53,6 +68,15 @@ export default function UserProfilePage() {
       .finally(() => setLoading(false));
   }, [id]);
 
+  useEffect(() => {
+    if (!id) return;
+    const form = t.myPets.form;
+    profilePetsApi
+      .list({ owner_id: id })
+      .then((arr) => setProfilePets(arr.map((pet) => profilePetToListCard(pet, form))))
+      .catch(() => setProfilePets([]));
+  }, [id, locale]);
+
   const stats = useMemo(() => {
     const active = allPets.filter((p) => !p.isArchived && p.moderationStatus === 'approved');
     const successful = allPets.filter(
@@ -62,8 +86,9 @@ export default function UserProfilePage() {
       total: allPets.length,
       active: active.length,
       successful: successful.length,
+      pets: profilePets.length,
     };
-  }, [allPets]);
+  }, [allPets, profilePets]);
 
   const activePets = useMemo(
     () => allPets.filter((p) => !p.isArchived && p.moderationStatus === 'approved'),
@@ -102,22 +127,12 @@ export default function UserProfilePage() {
     }
   };
 
-  const copyToClipboard = () => {
+  const copyToClipboard = async () => {
     const url = window.location.href;
-    const textArea = document.createElement('textarea');
-    textArea.value = url;
-    textArea.style.position = 'fixed';
-    textArea.style.left = '-999999px';
-    document.body.appendChild(textArea);
-    textArea.select();
-    try {
-      document.execCommand('copy');
+    if (await copyText(url)) {
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), 2000);
-    } catch {
-      //
     }
-    document.body.removeChild(textArea);
   };
 
   const getStatusTitle = (pet: Pet) => {
@@ -212,7 +227,7 @@ export default function UserProfilePage() {
               <button
                 onClick={copyToClipboard}
                 className="p-2 text-[#FF9800] hover:bg-orange-50 dark:hover:bg-orange-950/30 rounded-lg transition-colors"
-                title={isCopied ? 'Скопировано' : 'Поделиться профилем'}
+                title={isCopied ? t.userProfile.shareCopied : t.userProfile.shareProfile}
               >
                 <Share2 size={20} />
               </button>
@@ -250,8 +265,8 @@ export default function UserProfilePage() {
                     <div className="flex items-center gap-2">
                       <Calendar size={18} className="text-[#FF9800]" />
                       <span className="text-sm sm:text-base">
-                        На сайте с{' '}
-                        {joinDate.toLocaleDateString('ru-RU', {
+                        {t.userProfile.memberSince}{' '}
+                        {joinDate.toLocaleDateString(dateLocaleForUi(locale), {
                           month: 'long',
                           year: 'numeric',
                         })}
@@ -268,66 +283,117 @@ export default function UserProfilePage() {
                       className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#FF9800] text-white rounded-lg hover:bg-[#F57C00] transition-colors font-medium text-sm sm:text-base"
                     >
                       <Phone size={18} />
-                      Позвонить
+                      {t.userProfile.call}
                     </a>
                   )}
-                  {user.email && (
+                  {user.contacts?.telegram && (
                     <a
-                      href={`mailto:${user.email}`}
-                      className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-white dark:bg-transparent border-2 border-[#FF9800] text-[#FF9800] rounded-lg hover:bg-orange-50 dark:hover:bg-orange-950/20 transition-colors font-medium text-sm sm:text-base"
-                    >
-                      <Mail size={18} />
-                      Написать
-                    </a>
-                  )}
-                  {user.contacts?.telegram && !user.contacts?.phone && (
-                    <a
-                      href={`https://t.me/${user.contacts.telegram.replace('@', '')}`}
+                      href={`https://t.me/${user.contacts.telegram.replace(/^@/, '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-white dark:bg-transparent border-2 border-[#FF9800] text-[#FF9800] rounded-lg hover:bg-orange-50 dark:hover:bg-orange-950/20 transition-colors font-medium text-sm sm:text-base"
                     >
                       <MessageCircle size={18} />
-                      Связаться
+                      {t.userProfile.contact}
                     </a>
                   )}
+                  {!user.contacts?.telegram && user.contacts?.viber && /\d/.test(user.contacts.viber) && (
+                    <a
+                      href={`viber://chat?number=${user.contacts.viber.replace(/\D/g, '')}`}
+                      className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-white dark:bg-transparent border-2 border-[#FF9800] text-[#FF9800] rounded-lg hover:bg-orange-50 dark:hover:bg-orange-950/20 transition-colors font-medium text-sm sm:text-base"
+                    >
+                      <MessageCircle size={18} />
+                      {t.userProfile.contact}
+                    </a>
+                  )}
+                  {!user.contacts?.telegram &&
+                    !(user.contacts?.viber && /\d/.test(user.contacts.viber)) &&
+                    user.email && (
+                      <a
+                        href={`mailto:${user.email}`}
+                        className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-white dark:bg-transparent border-2 border-[#FF9800] text-[#FF9800] rounded-lg hover:bg-orange-50 dark:hover:bg-orange-950/20 transition-colors font-medium text-sm sm:text-base"
+                      >
+                        <Mail size={18} />
+                        {t.userProfile.writeEmail}
+                      </a>
+                    )}
                 </div>
               </div>
             </div>
 
             {/* Stats Section */}
-            <div className="grid grid-cols-3 gap-4 mt-8 pt-6 border-t border-gray-200 dark:border-border">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 pt-6 border-t border-gray-200 dark:border-border">
               <div className="text-center">
-                <div className="text-2xl sm:text-3xl font-bold text-[#FF9800] mb-1">
-                  {stats.total}
-                </div>
+                <div className="text-2xl sm:text-3xl font-bold text-[#FF9800] mb-1">{stats.total}</div>
                 <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                  За все время
+                  {t.userProfile.statAds}
                 </div>
               </div>
-              <div className="text-center border-x border-gray-200 dark:border-border">
-                <div className="text-2xl sm:text-3xl font-bold text-[#FF9800] mb-1">
-                  {stats.active}
+              <div className="text-center md:border-x border-gray-200 dark:border-border">
+                <div className="text-2xl sm:text-3xl font-bold text-[#FF9800] mb-1">{stats.active}</div>
+                <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                  {t.userProfile.statActive}
                 </div>
-                <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Сейчас</div>
+              </div>
+              <div className="text-center md:border-r border-gray-200 dark:border-border">
+                <div className="text-2xl sm:text-3xl font-bold text-[#FDB913] mb-1">{stats.successful}</div>
+                <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                  {t.userProfile.statReturned}
+                </div>
               </div>
               <div className="text-center">
-                <div className="text-2xl sm:text-3xl font-bold text-[#FDB913] mb-1">
-                  {stats.successful}
-                </div>
+                <div className="text-2xl sm:text-3xl font-bold text-[#FF9800] mb-1">{stats.pets}</div>
                 <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                  Успешно закрыты
+                  {t.userProfile.statPets}
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Питомцы профиля (карточки «мои питомцы», не объявления) */}
+          <div className="bg-white dark:bg-card rounded-2xl shadow-sm border border-gray-200 dark:border-border overflow-hidden mb-6">
+            <div className="border-b border-gray-200 dark:border-border px-6 py-4">
+              <h2 className="text-xl font-bold text-black dark:text-white">{t.userProfile.userPetsTitle}</h2>
+            </div>
+            <div className="p-4 sm:p-6">
+              {profilePets.length === 0 ? (
+                <p className="text-center text-gray-600 dark:text-gray-400 py-8">{t.userProfile.noUserPets}</p>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+                  {profilePets.map((pet) => (
+                    <div
+                      key={pet.id}
+                      className="bg-white dark:bg-card rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 group border border-gray-200 dark:border-border"
+                    >
+                      <div className="relative overflow-hidden">
+                        <img
+                          src={pet.photo}
+                          alt={pet.name}
+                          className="w-full h-32 sm:h-40 object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-[#FDB913] flex items-center justify-center">
+                          <PawPrint size={14} className="text-black" strokeWidth={2} />
+                        </div>
+                      </div>
+                      <div className="p-3">
+                        <h3 className="font-bold text-black dark:text-white mb-1 text-sm sm:text-base truncate">
+                          {pet.name}
+                        </h3>
+                        <p className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm truncate">
+                          {pet.subtitle}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
           {/* Announcements Section */}
           <div className="bg-white dark:bg-card rounded-2xl shadow-sm border border-gray-200 dark:border-border overflow-hidden">
             <div className="border-b border-gray-200 dark:border-border px-6 py-4">
-              <h2 className="text-xl font-bold text-black dark:text-white">
-                Активные объявления
-              </h2>
+              <h2 className="text-xl font-bold text-black dark:text-white">{t.userProfile.activeAdsTitle}</h2>
             </div>
 
             <div className="p-4 sm:p-6">
@@ -367,7 +433,7 @@ export default function UserProfilePage() {
                                 : 'bg-[#FDB913] text-black'
                             }`}
                           >
-                            {pet.status === 'searching' ? 'Потерян' : 'Найден'}
+                            {pet.status === 'searching' ? t.userProfile.lostBadge : t.userProfile.foundBadge}
                           </div>
                         </div>
                         <div className="p-6">
@@ -384,7 +450,7 @@ export default function UserProfilePage() {
                           <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm">
                             <Clock size={16} />
                             <span>
-                              {pet.publishedAt.toLocaleDateString('ru-RU', {
+                              {pet.publishedAt.toLocaleDateString(dateLocaleForUi(locale), {
                                 day: 'numeric',
                                 month: 'long',
                               })}
@@ -405,7 +471,7 @@ export default function UserProfilePage() {
               to="/"
               className="inline-flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors font-medium"
             >
-              ← Вернуться на главную
+              {t.userProfile.backHome}
             </Link>
           </div>
         </div>

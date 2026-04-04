@@ -7,29 +7,24 @@ import type { User } from '../context/AuthContext';
 import type { Report, ReportReason } from '../types/admin';
 
 export const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const LEGACY_TOKEN_KEY = 'pet_finder_token';
 
-export function getToken(): string | null {
-  return localStorage.getItem('pet_finder_token');
-}
-
-function setToken(token: string) {
-  localStorage.setItem('pet_finder_token', token);
-}
-
-function clearToken() {
-  localStorage.removeItem('pet_finder_token');
+function clearLegacyToken() {
+  localStorage.removeItem(LEGACY_TOKEN_KEY);
 }
 
 export async function api<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const token = getToken();
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
   };
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-  const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  const res = await fetch(`${API_BASE}${path}`, {
+    ...options,
+    credentials: 'include',
+    headers,
+  });
   if (res.status === 401) {
-    clearToken();
+    clearLegacyToken();
     const err = await res.json().catch(() => ({}));
     const msg = typeof err?.detail === 'string' ? err.detail : 'Сессия истекла';
     throw new Error(msg);
@@ -85,7 +80,7 @@ export const authApi = {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     }).then((r) => {
-      setToken(r.access_token);
+      clearLegacyToken();
       return toUser(r.user);
     }),
 
@@ -94,7 +89,7 @@ export const authApi = {
       method: 'POST',
       body: JSON.stringify({ email, name, password, contacts }),
     }).then((r) => {
-      setToken(r.access_token);
+      clearLegacyToken();
       return toUser(r.user);
     }),
 
@@ -115,14 +110,13 @@ export const authApi = {
   uploadAvatar: async (file: File) => {
     const formData = new FormData();
     formData.append('file', file);
-    const token = getToken();
     const res = await fetch(`${API_BASE}/auth/avatar-upload`, {
       method: 'POST',
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      credentials: 'include',
       body: formData,
     });
     if (res.status === 401) {
-      clearToken();
+      clearLegacyToken();
       throw new Error('Сессия истекла');
     }
     if (!res.ok) {
@@ -133,7 +127,13 @@ export const authApi = {
     return data.avatar as string;
   },
 
-  logout: () => clearToken(),
+  logout: async () => {
+    try {
+      await api<void>('/auth/logout', { method: 'POST' });
+    } finally {
+      clearLegacyToken();
+    }
+  },
 };
 
 // --- Pets ---
@@ -393,12 +393,18 @@ export const reportsApi = {
 export interface FeatureFlags {
   ff_landing_show_stats: string;
   ff_landing_show_help: string;
+  /** Отсутствует в ответе старых бэкендов до миграции — клиент трактует как true */
+  ff_landing_show_pets_feature?: string;
 }
 
 export const featureFlagsApi = {
   get: () => api<FeatureFlags>('/feature-flags'),
 
-  update: (data: { ff_landing_show_stats?: boolean; ff_landing_show_help?: boolean }) =>
+  update: (data: {
+    ff_landing_show_stats?: boolean;
+    ff_landing_show_help?: boolean;
+    ff_landing_show_pets_feature?: boolean;
+  }) =>
     api<FeatureFlags>('/feature-flags', {
       method: 'PATCH',
       body: JSON.stringify(data),
@@ -538,6 +544,84 @@ export const partnersApi = {
     }),
 
   delete: (id: string) => api<void>(`/partners/${id}`, { method: 'DELETE' }),
+};
+
+// --- Profile Pets (адресник / QR) ---
+export interface ProfilePetResponse {
+  id: string;
+  owner_id: string;
+  name: string;
+  species: string;
+  breed?: string | null;
+  gender: string;
+  age?: string | null;
+  colors: string[];
+  special_marks?: string | null;
+  is_chipped: boolean;
+  chip_number?: string | null;
+  medical_info?: string | null;
+  temperament?: string | null;
+  responds_to_name: boolean;
+  favorite_treats?: string | null;
+  favorite_walks?: string | null;
+  photos: string[];
+  created_at: string;
+  updated_at: string;
+  owner_name?: string | null;
+  owner_phone?: string | null;
+  owner_email?: string | null;
+  owner_city?: string | null;
+  owner_viber?: string | null;
+}
+
+export interface ProfilePetInput {
+  name: string;
+  species: string;
+  breed?: string;
+  gender: string;
+  age?: string;
+  colors: string[];
+  special_marks?: string;
+  is_chipped: boolean;
+  chip_number?: string;
+  medical_info?: string;
+  temperament?: string;
+  responds_to_name: boolean;
+  favorite_treats?: string;
+  favorite_walks?: string;
+  photos: string[];
+}
+
+function resolveProfilePetPhotos(p: ProfilePetResponse): ProfilePetResponse {
+  return { ...p, photos: p.photos.map(resolvePhotoUrl) };
+}
+
+export const profilePetsApi = {
+  list: (params?: { owner_id?: string }) => {
+    const q = new URLSearchParams();
+    if (params) Object.entries(params).forEach(([k, v]) => v != null && q.set(k, String(v)));
+    return api<ProfilePetResponse[]>(`/profile-pets?${q}`).then((arr) => arr.map(resolveProfilePetPhotos));
+  },
+
+  my: () =>
+    api<ProfilePetResponse[]>('/profile-pets/my').then((arr) => arr.map(resolveProfilePetPhotos)),
+
+  get: (id: string) =>
+    api<ProfilePetResponse>(`/profile-pets/${id}`).then(resolveProfilePetPhotos),
+
+  create: (data: ProfilePetInput) =>
+    api<ProfilePetResponse>('/profile-pets', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }).then(resolveProfilePetPhotos),
+
+  update: (id: string, data: Partial<ProfilePetInput>) =>
+    api<ProfilePetResponse>(`/profile-pets/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }).then(resolveProfilePetPhotos),
+
+  delete: (id: string) => api<void>(`/profile-pets/${id}`, { method: 'DELETE' }),
 };
 
 // --- Sightings (видения «видел похожее») ---

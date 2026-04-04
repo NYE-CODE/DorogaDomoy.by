@@ -3,7 +3,7 @@ import { Heart, Share2, DollarSign, Users } from "lucide-react";
 import { Button } from "./ui/button";
 import { petsApi } from "../../../api/client";
 import { useI18n } from "../../../context/I18nContext";
-import { useFeatureFlags } from "../../context/FeatureFlagsContext";
+import { useFeatureFlags } from "../../../context/FeatureFlagsContext";
 
 export function Help() {
   const { t } = useI18n();

@@ -1,6 +1,7 @@
 """Partners API (Наши партнеры) — для лендинга и админ-панели."""
 import uuid
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from database import get_db
@@ -24,7 +25,7 @@ def _to_response(p: Partner) -> PartnerResponse:
 @router.get("", response_model=list[PartnerResponse])
 def list_partners(db: Session = Depends(get_db)):
     """Публичный список партнёров — для секции «Наши партнеры» на лендинге."""
-    items = db.query(Partner).all()
+    items = db.scalars(select(Partner)).all()
     return [_to_response(p) for p in items]
 
 
@@ -55,7 +56,7 @@ def update_partner(
     _user=Depends(require_admin),
 ):
     """Обновить партнёра (только админ)."""
-    p = db.query(Partner).filter(Partner.id == partner_id).first()
+    p = db.scalar(select(Partner).where(Partner.id == partner_id))
     if not p:
         raise HTTPException(status_code=404, detail="Партнёр не найден")
     if data.logo_url is not None:
@@ -76,7 +77,7 @@ def delete_partner(
     _user=Depends(require_admin),
 ):
     """Удалить партнёра (только админ)."""
-    p = db.query(Partner).filter(Partner.id == partner_id).first()
+    p = db.scalar(select(Partner).where(Partner.id == partner_id))
     if not p:
         raise HTTPException(status_code=404, detail="Партнёр не найден")
     db.delete(p)

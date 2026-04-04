@@ -1,7 +1,7 @@
 import { Mail, MessageCircle, Bot } from "lucide-react";
 import { Link } from "react-router";
 import { useI18n } from "../../../context/I18nContext";
-import { useFeatureFlags } from "../../context/FeatureFlagsContext";
+import { useFeatureFlags } from "../../../context/FeatureFlagsContext";
 
 export function Footer() {
   const { t } = useI18n();

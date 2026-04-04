@@ -4,11 +4,12 @@
     cd /path/to/backend
     python migrate_schema.py
 """
-import os
 import sqlite3
 import sys
+from pathlib import Path
 
-DB_PATH = os.getenv("DATABASE_PATH", "petfinder.db")
+from database import _resolve_db_url
+from platform_settings import ALL_PLATFORM_SETTINGS_DEFAULTS
 
 # Колонки, которые могут отсутствовать (добавлены после первой версии)
 PET_COLUMNS_TO_ADD = [
@@ -28,6 +29,24 @@ USER_COLUMNS_TO_ADD = [
     ("telegram_id", "BIGINT"),
     ("telegram_username", "VARCHAR"),
     ("telegram_linked_at", "DATETIME"),
+]
+
+PROFILE_PET_COLUMNS_TO_ADD = [
+    ("breed", "VARCHAR"),
+    ("gender", "VARCHAR DEFAULT 'male'"),
+    ("age", "VARCHAR"),
+    ("colors", "JSON DEFAULT '[]'"),
+    ("special_marks", "TEXT"),
+    ("is_chipped", "INTEGER DEFAULT 0"),
+    ("chip_number", "VARCHAR"),
+    ("medical_info", "TEXT"),
+    ("temperament", "VARCHAR"),
+    ("responds_to_name", "INTEGER DEFAULT 1"),
+    ("favorite_treats", "TEXT"),
+    ("favorite_walks", "TEXT"),
+    ("photos", "JSON DEFAULT '[]'"),
+    ("created_at", "DATETIME"),
+    ("updated_at", "DATETIME"),
 ]
 
 NEW_TABLES = {
@@ -98,6 +117,29 @@ NEW_TABLES = {
             link VARCHAR
         )
     """,
+    "profile_pets": """
+        CREATE TABLE profile_pets (
+            id VARCHAR PRIMARY KEY,
+            owner_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            name VARCHAR NOT NULL,
+            species VARCHAR NOT NULL,
+            breed VARCHAR,
+            gender VARCHAR DEFAULT 'male',
+            age VARCHAR,
+            colors JSON DEFAULT '[]',
+            special_marks TEXT,
+            is_chipped INTEGER DEFAULT 0,
+            chip_number VARCHAR,
+            medical_info TEXT,
+            temperament VARCHAR,
+            responds_to_name INTEGER DEFAULT 1,
+            favorite_treats TEXT,
+            favorite_walks TEXT,
+            photos JSON DEFAULT '[]',
+            created_at DATETIME,
+            updated_at DATETIME
+        )
+    """,
 }
 
 
@@ -106,11 +148,19 @@ def get_existing_columns(conn, table):
     return {row[1] for row in cur.fetchall()}
 
 
+def resolve_sqlite_db_path() -> Path:
+    database_url = _resolve_db_url()
+    if not database_url.startswith("sqlite:///"):
+        raise RuntimeError("migrate_schema.py currently supports only sqlite DATABASE_URL")
+    return Path(database_url.replace("sqlite:///", "")).resolve()
+
+
 def migrate(conn):
     changes = []
     for table, col_defs in [
         ("pets", PET_COLUMNS_TO_ADD),
         ("users", USER_COLUMNS_TO_ADD),
+        ("profile_pets", PROFILE_PET_COLUMNS_TO_ADD),
     ]:
         try:
             existing = get_existing_columns(conn, table)
@@ -152,13 +202,7 @@ def ensure_platform_settings(conn):
             )
         """)
         print("Created platform_settings table")
-    defaults = [
-        ("require_moderation", "true"),
-        ("max_photos", "10"),
-        ("auto_archive_days", "365"),
-        ("ff_landing_show_stats", "true"),
-        ("ff_landing_show_help", "true"),
-    ]
+    defaults = list(ALL_PLATFORM_SETTINGS_DEFAULTS.items())
     for key, value in defaults:
         cur = conn.execute("SELECT 1 FROM platform_settings WHERE key = ?", (key,))
         if cur.fetchone() is None:
@@ -167,10 +211,12 @@ def ensure_platform_settings(conn):
 
 
 if __name__ == "__main__":
-    if not os.path.exists(DB_PATH):
-        print(f"Database not found: {DB_PATH}", file=sys.stderr)
+    db_path = resolve_sqlite_db_path()
+    if not db_path.exists():
+        print(f"Database not found: {db_path}", file=sys.stderr)
         sys.exit(1)
-    conn = sqlite3.connect(DB_PATH)
+    print(f"Using database: {db_path}")
+    conn = sqlite3.connect(db_path)
     try:
         changes = migrate(conn)
         ensure_new_tables(conn)

@@ -174,3 +174,30 @@ class Partner(Base):
     logo_url = Column(String, nullable=True)  # URL логотипа
     name = Column(String, nullable=False)  # название компании
     link = Column(String, nullable=True)  # ссылка на сайт партнёра
+
+
+class ProfilePet(Base):
+    """Профиль питомца пользователя (адресник / QR)."""
+    __tablename__ = "profile_pets"
+
+    id = Column(String, primary_key=True, index=True)
+    owner_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    name = Column(String, nullable=False)
+    species = Column(String, nullable=False)  # dog, cat, other
+    breed = Column(String, nullable=True)
+    gender = Column(String, default="male")  # male, female
+    age = Column(String, nullable=True)
+    colors = Column(JSON, default=list)
+    special_marks = Column(Text, nullable=True)
+    is_chipped = Column(Boolean, default=False)
+    chip_number = Column(String, nullable=True)
+    medical_info = Column(Text, nullable=True)
+    temperament = Column(String, nullable=True)
+    responds_to_name = Column(Boolean, default=True)
+    favorite_treats = Column(Text, nullable=True)
+    favorite_walks = Column(Text, nullable=True)
+    photos = Column(JSON, default=list)  # list of URL strings
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    owner = relationship("User", backref="profile_pets", foreign_keys=[owner_id])

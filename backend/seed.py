@@ -1,4 +1,6 @@
 """Seed database with initial admin user and sample data."""
+from sqlalchemy import func, select
+
 from database import init_db, SessionLocal
 from models import User, Pet
 from auth import get_password_hash
@@ -7,7 +9,7 @@ init_db()
 db = SessionLocal()
 
 # Create admin user if not exists
-admin = db.query(User).filter(User.email == "admin@dorogadomoy.by").first()
+admin = db.scalar(select(User).where(User.email == "admin@dorogadomoy.by"))
 if not admin:
     admin = User(
         id="user-admin",
@@ -23,7 +25,7 @@ if not admin:
     print("Admin created: admin@dorogadomoy.by / admin123")
 
 # Add sample pets if empty
-if db.query(Pet).count() == 0:
+if db.scalar(select(func.count()).select_from(Pet)) == 0:
     sample_pets = [
         Pet(
             id="pet-1",

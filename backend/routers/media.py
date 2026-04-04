@@ -1,6 +1,7 @@
 """Media articles API (СМИ о нас) — для лендинга и админ-панели."""
 import uuid
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from database import get_db
@@ -25,7 +26,7 @@ def _to_response(m: MediaArticle) -> MediaArticleResponse:
 @router.get("", response_model=list[MediaArticleResponse])
 def list_articles(db: Session = Depends(get_db)):
     """Публичный список статей СМИ — для секции «СМИ о нас» на лендинге."""
-    items = db.query(MediaArticle).order_by(MediaArticle.published_at.desc()).all()
+    items = db.scalars(select(MediaArticle).order_by(MediaArticle.published_at.desc())).all()
     return [_to_response(m) for m in items]
 
 
@@ -57,7 +58,7 @@ def update_article(
     _user=Depends(require_admin),
 ):
     """Обновить статью (только админ)."""
-    m = db.query(MediaArticle).filter(MediaArticle.id == article_id).first()
+    m = db.scalar(select(MediaArticle).where(MediaArticle.id == article_id))
     if not m:
         raise HTTPException(status_code=404, detail="Статья не найдена")
     if data.logo_url is not None:
@@ -80,7 +81,7 @@ def delete_article(
     _user=Depends(require_admin),
 ):
     """Удалить статью (только админ)."""
-    m = db.query(MediaArticle).filter(MediaArticle.id == article_id).first()
+    m = db.scalar(select(MediaArticle).where(MediaArticle.id == article_id))
     if not m:
         raise HTTPException(status_code=404, detail="Статья не найдена")
     db.delete(m)

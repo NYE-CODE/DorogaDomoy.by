@@ -3,9 +3,10 @@ import logging
 import os
 import secrets
 import uuid
-from datetime import datetime, timedelta
+from datetime import timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, Header, HTTPException, Request
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from database import get_db
@@ -13,12 +14,14 @@ from models import User, TelegramLinkCode
 from schemas import TelegramLinkRequestResponse, TelegramLinkStatusResponse
 from auth import get_current_user_required
 from telegram_bot import process_telegram_update, send_telegram_message, BOT_USERNAME, BOT_TOKEN
+from time_utils import utc_now
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["telegram"])
 
 LINK_CODE_TTL_MINUTES = 5
+WEBHOOK_SECRET = os.getenv("TELEGRAM_WEBHOOK_SECRET")
 
 
 def _generate_code() -> str:
@@ -36,26 +39,27 @@ def request_telegram_link(
     if user.telegram_id:
         raise HTTPException(status_code=400, detail="Telegram уже привязан")
 
-    db.query(TelegramLinkCode).filter(
-        TelegramLinkCode.user_id == user.id,
-        TelegramLinkCode.used == False,
-    ).update({"used": True})
+    db.execute(
+        update(TelegramLinkCode)
+        .where(TelegramLinkCode.user_id == user.id, TelegramLinkCode.used.is_(False))
+        .values(used=True)
+    )
 
     for _ in range(10):
         code = _generate_code()
-        existing = db.query(TelegramLinkCode).filter(TelegramLinkCode.code == code).first()
+        existing = db.scalar(select(TelegramLinkCode).where(TelegramLinkCode.code == code))
         if not existing:
             break
     else:
         raise HTTPException(status_code=500, detail="Не удалось сгенерировать код")
 
-    expires_at = datetime.utcnow() + timedelta(minutes=LINK_CODE_TTL_MINUTES)
+    expires_at = utc_now() + timedelta(minutes=LINK_CODE_TTL_MINUTES)
 
     link_code = TelegramLinkCode(
         id=f"tlc-{uuid.uuid4().hex[:12]}",
         code=code,
         user_id=user.id,
-        created_at=datetime.utcnow(),
+        created_at=utc_now(),
         expires_at=expires_at,
     )
     db.add(link_code)
@@ -123,8 +127,13 @@ async def unlink_telegram(
 
 
 @router.post("/telegram-webhook")
-async def telegram_webhook(request: Request):
+async def telegram_webhook(
+    request: Request,
+    secret_token: str | None = Header(None, alias="X-Telegram-Bot-Api-Secret-Token"),
+):
     """Endpoint for Telegram Bot webhook."""
+    if not WEBHOOK_SECRET or secret_token != WEBHOOK_SECRET:
+        raise HTTPException(status_code=403, detail="Недопустимый webhook secret")
     try:
         update = await request.json()
         await process_telegram_update(update)

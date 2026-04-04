@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router';
+import { useState, useEffect, useMemo } from 'react';
+import { useNavigate, useSearchParams } from 'react-router';
 import { useAuth } from '../context/AuthContext';
 import '../landing/styles/theme-scoped.css';
 import { useI18n } from '../context/I18nContext';
@@ -8,16 +8,32 @@ import { Footer } from '../components/layout/Footer';
 import { PetForm, PetFormData, PetFormStepInfo } from '../components/pet-form';
 import { ChevronLeft } from 'lucide-react';
 import { ContactRequiredModal } from '../components/contact-required-modal';
-import { petsApi } from '../api/client';
+import { petsApi, profilePetsApi } from '../api/client';
 import { toast } from 'sonner';
+import { buildPrefillFromProfilePet } from '../utils/profile-pet-prefill';
 
 export default function CreateAdPage() {
   const { user, isAuthenticated, isLoading, openAuthModal } = useAuth();
   const { t } = useI18n();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const profilePetId = searchParams.get('petId')?.trim() || null;
 
   const [showContactRequired, setShowContactRequired] = useState(false);
   const [stepInfo, setStepInfo] = useState<PetFormStepInfo | null>(null);
+  const [profilePrefill, setProfilePrefill] = useState<Partial<PetFormData> | null>(null);
+  const [profilePrefillLoading, setProfilePrefillLoading] = useState(false);
+
+  const prefillLabels = useMemo(
+    () => ({
+      labelName: t.myPets.form.labelName,
+      labelChipNumber: t.myPets.form.labelChipNumber,
+      labelChipped: t.myPets.form.labelChipped,
+      medicalTitle: t.myPets.ownerProfile.medicalTitle,
+      yes: t.myPets.form.yes,
+    }),
+    [t],
+  );
 
   useEffect(() => {
     if (isLoading) return;
@@ -32,6 +48,39 @@ export default function CreateAdPage() {
       if (!hasContacts) setShowContactRequired(true);
     }
   }, [isAuthenticated, user]);
+
+  useEffect(() => {
+    if (!profilePetId || !user?.id) {
+      setProfilePrefill(null);
+      setProfilePrefillLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setProfilePrefillLoading(true);
+    profilePetsApi
+      .get(profilePetId)
+      .then((p) => {
+        if (cancelled) return;
+        if (p.owner_id !== user.id) {
+          toast.error(t.myPets.createAdPrefillForbidden);
+          setProfilePrefill(null);
+          return;
+        }
+        setProfilePrefill(buildPrefillFromProfilePet(p, prefillLabels));
+      })
+      .catch(() => {
+        if (!cancelled) {
+          toast.error(t.myPets.createAdPrefillError);
+          setProfilePrefill(null);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setProfilePrefillLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [profilePetId, user?.id, prefillLabels]);
 
   const handleCloseForm = () => navigate('/');
 
@@ -74,6 +123,19 @@ export default function CreateAdPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (profilePetId && profilePrefillLoading) {
+    return (
+      <div className="landing-theme min-h-screen bg-gray-50 dark:bg-background flex flex-col">
+        <Header />
+        <main className="flex-1 flex flex-col items-center justify-center px-4">
+          <div className="w-10 h-10 border-4 border-[#FF9800]/30 border-t-[#FF9800] rounded-full animate-spin mb-4" />
+          <p className="text-gray-600 dark:text-muted-foreground text-center">{t.common.loading}</p>
+        </main>
+        <Footer />
       </div>
     );
   }
@@ -141,11 +203,13 @@ export default function CreateAdPage() {
       <main className="flex-1 px-4 py-8">
         <div className="max-w-[736px] mx-auto bg-white dark:bg-card rounded-2xl shadow-sm border border-gray-200 dark:border-border p-8">
           <PetForm
+            key={profilePetId ?? 'create'}
             variant="page"
             renderStepHeaderExternally
             onStepChange={setStepInfo}
             onClose={handleCloseForm}
             onSubmit={handleSubmit}
+            prefillPartial={profilePrefill}
           />
         </div>
       </main>

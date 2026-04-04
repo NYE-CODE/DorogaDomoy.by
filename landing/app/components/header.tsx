@@ -1,4 +1,4 @@
-import { MapPin, User, Settings, FileText, Shield, LogOut, ChevronDown } from "lucide-react";
+import { MapPin, User, Settings, FileText, Shield, LogOut, ChevronDown, PawPrint } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router";
 import { Button } from "./ui/button";
@@ -26,7 +26,7 @@ export function Header(props: HeaderProps = {}) {
   useEffect(() => {
     const fromContext = cityContext?.selectedCity?.trim();
     setSelectedRegion(fromContext || t.landing.header.allBelarus);
-  }, [cityContext?.selectedCity]);
+  }, [cityContext?.selectedCity, t.landing.header.allBelarus]);
 
   const hasCityControl = typeof onCityClick === 'function';
   const displayRegion = (selectedCityFromContext?.trim() || propSelectedCity?.trim() || selectedRegion) || t.landing.header.allBelarus;
@@ -55,11 +55,6 @@ export function Header(props: HeaderProps = {}) {
       document.removeEventListener("touchstart", handleClickOutside);
     };
   }, [isProfileOpen]);
-
-  const navTo = (path: string) => {
-    navigate(path);
-    setIsProfileOpen(false);
-  };
 
   return (
     <header className="sticky top-0 z-50 bg-background shadow-sm">
@@ -117,6 +112,10 @@ export function Header(props: HeaderProps = {}) {
                         <button onClick={() => { navigate("/profile"); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted transition-colors text-left">
                           <User size={18} className="text-muted-foreground" />
                           <span className="text-foreground">{t.landing.header.profile}</span>
+                        </button>
+                        <button onClick={() => { navigate("/my-pets"); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted transition-colors text-left">
+                          <PawPrint size={18} className="text-muted-foreground" />
+                          <span className="text-foreground">{t.landing.header.myPets}</span>
                         </button>
                         <button onClick={() => { navigate("/my-ads"); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted transition-colors text-left">
                           <FileText size={18} className="text-muted-foreground" />
@@ -181,6 +180,10 @@ export function Header(props: HeaderProps = {}) {
                         <button onClick={() => { navigate("/profile"); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted transition-colors text-left">
                           <User size={18} className="text-muted-foreground" />
                           <span className="text-foreground">{t.landing.header.profile}</span>
+                        </button>
+                        <button onClick={() => { navigate("/my-pets"); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted transition-colors text-left">
+                          <PawPrint size={18} className="text-muted-foreground" />
+                          <span className="text-foreground">{t.landing.header.myPets}</span>
                         </button>
                         <button onClick={() => { navigate("/my-ads"); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted transition-colors text-left">
                           <FileText size={18} className="text-muted-foreground" />

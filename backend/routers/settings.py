@@ -1,24 +1,20 @@
 """Platform settings API."""
 from fastapi import APIRouter, Depends
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from database import get_db
 from models import PlatformSettings, User
 from auth import require_admin
+from platform_settings import PLATFORM_SETTINGS_DEFAULTS, get_settings_with_defaults
 
 router = APIRouter(prefix="/settings", tags=["settings"])
 
-DEFAULTS = {
-    "require_moderation": "true",
-    "auto_archive_days": "90",
-    "max_photos": "5",
-}
+DEFAULTS = PLATFORM_SETTINGS_DEFAULTS
 
 
 def _get_all(db: Session) -> dict:
-    rows = db.query(PlatformSettings).all()
-    current = {r.key: r.value for r in rows}
-    return {k: current.get(k, v) for k, v in DEFAULTS.items()}
+    return get_settings_with_defaults(db, DEFAULTS)
 
 
 @router.get("")
@@ -36,7 +32,7 @@ def update_settings(
     for k, v in data.items():
         if k not in allowed:
             continue
-        row = db.query(PlatformSettings).filter(PlatformSettings.key == k).first()
+        row = db.scalar(select(PlatformSettings).where(PlatformSettings.key == k))
         if row:
             row.value = str(v)
         else:

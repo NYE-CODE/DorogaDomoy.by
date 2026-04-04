@@ -13,6 +13,64 @@ import { SightingForm } from '../components/SightingForm';
 import { ReportReason } from '../types/admin';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { buildPetShareBundle, type PetShareDict } from '../utils/pet-share-text';
+import {
+  trySharePetForInstagram,
+  tryCopyImageToClipboard,
+  resolvePetImageUrlForShare,
+} from '../utils/instagram-web-share';
+import { copyText as copyToClipboard } from '../utils/copy-text';
+
+const PRINT_PLACEHOLDER_IMAGE =
+  'data:image/svg+xml;utf8,' +
+  encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">' +
+      '<rect width="800" height="600" fill="#f3f4f6"/>' +
+      '<path d="M210 390l90-102 116 128 86-74 98 118H210z" fill="#d1d5db"/>' +
+      '<circle cx="318" cy="214" r="42" fill="#d1d5db"/>' +
+    '</svg>'
+  );
+
+function escapeHtml(value: string | null | undefined): string {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+function getSafeImageUrl(url?: string): string {
+  if (!url) return PRINT_PLACEHOLDER_IMAGE;
+  if (url.startsWith('data:image/')) return url;
+  try {
+    const parsed = new URL(url, window.location.origin);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? parsed.toString() : PRINT_PLACEHOLDER_IMAGE;
+  } catch {
+    return PRINT_PLACEHOLDER_IMAGE;
+  }
+}
+
+function createSightingPopupContent(seenLabel: string, sighting: SightingItem): HTMLDivElement {
+  const container = document.createElement('div');
+  container.className = 'text-sm';
+
+  const title = document.createElement('strong');
+  const seenAt = new Date(sighting.seen_at);
+  title.textContent =
+    `${seenLabel} ${seenAt.toLocaleDateString('ru-RU')} ` +
+    seenAt.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  container.appendChild(title);
+
+  if (sighting.comment) {
+    const comment = document.createElement('div');
+    const trimmed = sighting.comment.slice(0, 80);
+    comment.textContent = `${trimmed}${sighting.comment.length > 80 ? '…' : ''}`;
+    container.appendChild(comment);
+  }
+
+  return container;
+}
 
 function SinglePetMap({ pet, sightings = [], seenLabel }: { pet: Pet; sightings?: SightingItem[]; seenLabel: string }) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -68,9 +126,7 @@ function SinglePetMap({ pet, sightings = [], seenLabel }: { pet: Pet; sightings?
         iconAnchor: [14, 14],
       });
       const m = L.marker([s.location_lat, s.location_lng], { icon }).addTo(markersLayerRef.current!);
-      const d = new Date(s.seen_at);
-      const popup = `<div class="text-sm"><strong>${seenLabel}</strong> ${d.toLocaleDateString('ru-RU')} ${d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}${s.comment ? `<br/>${s.comment.slice(0, 80)}${s.comment.length > 80 ? '…' : ''}` : ''}</div>`;
-      m.bindPopup(popup);
+      m.bindPopup(createSightingPopupContent(seenLabel, s));
     });
   }, [sightings, seenLabel]);
 
@@ -152,12 +208,17 @@ export default function PetDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [reportingPetId, setReportingPetId] = useState<string | null>(null);
-  const [linkCopied, setLinkCopied] = useState(false);
+  const [copiedKind, setCopiedKind] = useState<null | 'link' | 'full'>(null);
   const [showFlyerModal, setShowFlyerModal] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
   const shareMenuRef = useRef<HTMLDivElement>(null);
   const [sightings, setSightings] = useState<SightingItem[]>([]);
   const [showSightingForm, setShowSightingForm] = useState(false);
+  const [instagramGuide, setInstagramGuide] = useState<null | {
+    variant: 'post' | 'story' | 'dm';
+    openPath: string;
+    includePhoto: boolean;
+  }>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -246,66 +307,103 @@ export default function PetDetailPage() {
     window.open(url, '_blank');
   };
 
-  const getShareUrl = () => window.location.href;
-  const getShareText = () => {
-    const animal = t.pet.animalType[pet.animalType];
-    const status = pet.status === 'searching' ? 'Потерян' : 'Найден';
-    const breed = pet.breed ? ` (${pet.breed})` : '';
-    return `${status}: ${animal}${breed} — ${pet.city}. ${pet.description?.slice(0, 120) || ''}`;
+  const shareDict: PetShareDict = {
+    shareHeadlineLost: t.petDetail.shareHeadlineLost,
+    shareHeadlineFound: t.petDetail.shareHeadlineFound,
+    shareLostLine: t.petDetail.shareLostLine,
+    shareFoundLine: t.petDetail.shareFoundLine,
+    shareBreedParen: t.petDetail.shareBreedParen,
+    shareMoreOn: t.petDetail.shareMoreOn,
+    shareCta: t.petDetail.shareCta,
+  };
+  const shareBundle = buildPetShareBundle(
+    pet,
+    t.pet.animalType[pet.animalType],
+    shareDict,
+    window.location.origin,
+  );
+
+  const handleCopyPostText = async () => {
+    if (await copyToClipboard(shareBundle.textFull)) {
+      toast.success(t.petDetail.shareCopiedFull);
+      setCopiedKind('full');
+      setTimeout(() => setCopiedKind(null), 2500);
+    } else toast.error(t.common.error);
+    setShowShareMenu(false);
   };
 
-  const handleCopyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(getShareUrl());
-    } catch {
-      const ta = document.createElement('textarea');
-      ta.value = getShareUrl();
-      ta.style.position = 'fixed';
-      ta.style.left = '-9999px';
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      document.body.removeChild(ta);
-    }
-    setLinkCopied(true);
-    toast.success('Ссылка скопирована');
-    setTimeout(() => setLinkCopied(false), 2000);
+  const handleCopyLinkOnly = async () => {
+    if (await copyToClipboard(shareBundle.url)) {
+      toast.success(t.petDetail.shareCopiedLink);
+      setCopiedKind('link');
+      setTimeout(() => setCopiedKind(null), 2500);
+    } else toast.error(t.common.error);
+    setShowShareMenu(false);
   };
 
   const handleShareTelegram = () => {
-    const url = `https://t.me/share/url?url=${encodeURIComponent(getShareUrl())}&text=${encodeURIComponent(getShareText())}`;
-    window.open(url, '_blank', 'width=600,height=400');
+    const u = `https://t.me/share/url?url=${encodeURIComponent(shareBundle.url)}&text=${encodeURIComponent(shareBundle.textForMessenger)}`;
+    window.open(u, '_blank', 'noopener,noreferrer,width=600,height=520');
     setShowShareMenu(false);
   };
 
   const handleShareX = () => {
-    const url = `https://x.com/intent/tweet?url=${encodeURIComponent(getShareUrl())}&text=${encodeURIComponent(getShareText())}`;
-    window.open(url, '_blank', 'width=600,height=400');
+    const u = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareBundle.textShort)}&url=${encodeURIComponent(shareBundle.url)}`;
+    window.open(u, '_blank', 'noopener,noreferrer,width=600,height=520');
     setShowShareMenu(false);
   };
 
-  const handleShareInstagramDM = () => {
-    const url = `https://ig.me/m?text=${encodeURIComponent(getShareText() + '\n' + getShareUrl())}`;
-    window.open(url, '_blank');
+  const handleShareVk = () => {
+    const u = `https://vk.com/share.php?url=${encodeURIComponent(shareBundle.url)}&title=${encodeURIComponent(shareBundle.vkTitle)}&comment=${encodeURIComponent(shareBundle.vkComment)}`;
+    window.open(u, '_blank', 'noopener,noreferrer');
     setShowShareMenu(false);
   };
 
-  const handleShareInstagramStory = () => {
-    handleCopyLink();
-    toast.info('Ссылка скопирована. Откройте Instagram, создайте Stories и вставьте ссылку-стикер.', { duration: 5000 });
-    window.open('https://www.instagram.com/', '_blank');
+  const handleShareWhatsApp = () => {
+    window.open(`https://wa.me/?text=${encodeURIComponent(shareBundle.textFull)}`, '_blank', 'noopener,noreferrer');
     setShowShareMenu(false);
   };
 
-  const handleShareInstagramPost = () => {
-    handleCopyLink();
-    toast.info('Ссылка скопирована. Откройте Instagram, создайте пост и вставьте ссылку в описание.', { duration: 5000 });
-    window.open('https://www.instagram.com/', '_blank');
+  const finishInstagramShare = async (
+    variant: 'post' | 'story' | 'dm',
+    includePhoto: boolean,
+    openPath: string,
+  ) => {
+    await copyToClipboard(shareBundle.textFull);
     setShowShareMenu(false);
+    const photo = includePhoto ? pet.photos[0] : undefined;
+    const result = await trySharePetForInstagram(photo, shareBundle.textFull, shareBundle.vkTitle);
+    if (result === 'shared') {
+      toast.success(t.petDetail.shareInstagramSystemOk, {
+        description: t.petDetail.shareInstagramSystemOkDesc,
+        duration: 9000,
+      });
+      return;
+    }
+    if (result === 'aborted') return;
+    setInstagramGuide({ variant, openPath, includePhoto });
   };
 
-  const petUrl = `${window.location.origin}/pet/${pet.id}`;
+  const handleShareInstagramPost = () => void finishInstagramShare('post', true, '/');
+
+  const handleShareInstagramStory = () => void finishInstagramShare('story', true, '/');
+
+  const handleShareInstagramDm = () => void finishInstagramShare('dm', true, '/direct/inbox/');
+
+  const petUrl = shareBundle.url;
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(petUrl)}`;
+  const safePhotoUrl = getSafeImageUrl(pet.photos[0]);
+  const flyerTitle = escapeHtml(pet.status === 'searching' ? t.petDetail.lostPet : t.petDetail.foundPet);
+  const flyerSubtitle = escapeHtml(`${pet.city} · ${t.pet.animalType[pet.animalType]}`);
+  const flyerBreed = escapeHtml(pet.breed || t.pet.notSpecified);
+  const flyerColors = escapeHtml(pet.colors.map(c => t.pet.color[c]).join(', '));
+  const flyerGender = escapeHtml(t.pet.gender[pet.gender]);
+  const flyerAge = pet.approximateAge ? escapeHtml(pet.approximateAge) : null;
+  const flyerDescription = escapeHtml(pet.description);
+  const flyerContactPhone = escapeHtml(pet.contacts.phone || t.petDetail.seeContacts);
+  const flyerAuthorName = escapeHtml(pet.authorName);
+  const qrLabel = escapeHtml(t.petDetail.moreOnSite);
+  const callAnytimeLabel = escapeHtml(t.petDetail.callAnytime);
 
   const flyerCommonStyles = `
     @page { size: A4 portrait; margin: 10mm; }
@@ -328,24 +426,25 @@ export default function PetDetailPage() {
 
   const flyerHeaderBody = `
     <div class="header">
-      <h1 class="title">${pet.status === 'searching' ? t.petDetail.lostPet : t.petDetail.foundPet}</h1>
-      <div class="subtitle">${pet.city} · ${t.pet.animalType[pet.animalType]}</div>
+      <h1 class="title">${flyerTitle}</h1>
+      <div class="subtitle">${flyerSubtitle}</div>
     </div>
     <div class="photo-container">
-      <img src="${pet.photos[0]}" class="photo" />
+      <img src="${safePhotoUrl}" class="photo" />
     </div>
     <div class="info-grid">
-      <div><div class="label">${t.pet.breedLabel}</div><div class="value">${pet.breed || t.pet.notSpecified}</div></div>
-      <div><div class="label">${t.pet.colorLabel}</div><div class="value">${pet.colors.map(c => t.pet.color[c]).join(', ')}</div></div>
-      <div><div class="label">${t.pet.genderLabel}</div><div class="value">${t.pet.gender[pet.gender]}</div></div>
-      ${pet.approximateAge ? `<div><div class="label">${t.pet.ageLabel}</div><div class="value">${pet.approximateAge}</div></div>` : ''}
+      <div><div class="label">${escapeHtml(t.pet.breedLabel)}</div><div class="value">${flyerBreed}</div></div>
+      <div><div class="label">${escapeHtml(t.pet.colorLabel)}</div><div class="value">${flyerColors}</div></div>
+      <div><div class="label">${escapeHtml(t.pet.genderLabel)}</div><div class="value">${flyerGender}</div></div>
+      ${flyerAge ? `<div><div class="label">${escapeHtml(t.pet.ageLabel)}</div><div class="value">${flyerAge}</div></div>` : ''}
     </div>
-    <div class="description">${pet.description}</div>
+    <div class="description">${flyerDescription}</div>
   `;
 
   const openFlyer = (html: string) => {
-    const w = window.open('', '_blank');
+    const w = window.open('', '_blank', 'noopener,noreferrer');
     if (!w) return;
+    w.opener = null;
     w.document.write(html);
     w.document.close();
   };
@@ -355,9 +454,9 @@ export default function PetDetailPage() {
     openFlyer(`<!DOCTYPE html><html><head><title>Листовка</title><style>${flyerCommonStyles}</style></head><body>
       ${flyerHeaderBody}
       <div class="contact-box">
-        <div class="contact-label">${t.petDetail.callAnytime}</div>
-        <div class="phone">${pet.contacts.phone || t.petDetail.seeContacts}</div>
-        <div class="value">${pet.authorName}</div>
+        <div class="contact-label">${callAnytimeLabel}</div>
+        <div class="phone">${flyerContactPhone}</div>
+        <div class="value">${flyerAuthorName}</div>
       </div>
       <div class="footer">DorogaDomoy.by</div>
       <script>window.onload = () => { setTimeout(() => window.print(), 500); }<\/script>
@@ -376,13 +475,13 @@ export default function PetDetailPage() {
       ${flyerHeaderBody}
       <div class="contact-qr">
         <div class="left">
-          <div class="contact-label">${t.petDetail.callAnytime}</div>
-          <div class="phone">${pet.contacts.phone || t.petDetail.seeContacts}</div>
-          <div class="value">${pet.authorName}</div>
+          <div class="contact-label">${callAnytimeLabel}</div>
+          <div class="phone">${flyerContactPhone}</div>
+          <div class="value">${flyerAuthorName}</div>
         </div>
         <div class="qr">
           <img src="${qrUrl}" alt="QR" />
-          <div class="qr-label">${t.petDetail.moreOnSite}</div>
+          <div class="qr-label">${qrLabel}</div>
         </div>
       </div>
       <div class="footer">DorogaDomoy.by</div>
@@ -484,62 +583,81 @@ export default function PetDetailPage() {
               className="w-full flex items-center justify-center gap-2 h-12 bg-[#FF9800] text-white rounded-lg hover:bg-[#F57C00] transition-colors font-medium text-lg"
             >
               <Share2 className="w-5 h-5" />
-              Поделиться объявлением
+              {t.petDetail.shareAdButton}
             </button>
 
             {showShareMenu && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-card rounded-xl border border-gray-200 dark:border-gray-700 shadow-xl z-50 overflow-hidden">
-                <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+              <div className="absolute top-full left-0 right-0 mt-2 bg-card rounded-xl border border-gray-200 dark:border-gray-700 shadow-xl z-50 overflow-hidden max-h-[min(70vh,520px)] overflow-y-auto">
+                <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between sticky top-0 bg-card z-10">
                   <span className="text-sm font-semibold text-gray-900 dark:text-white">{t.petDetail.share}</span>
-                  <button onClick={() => setShowShareMenu(false)} className="p-1 hover:bg-accent dark:hover:bg-accent rounded-lg"><X className="w-4 h-4 text-gray-400 dark:text-gray-500" /></button>
+                  <button type="button" onClick={() => setShowShareMenu(false)} className="p-1 hover:bg-accent dark:hover:bg-accent rounded-lg"><X className="w-4 h-4 text-gray-400 dark:text-gray-500" /></button>
                 </div>
 
                 <div className="py-1">
-                  <button onClick={handleShareTelegram} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent dark:hover:bg-accent transition-colors">
-                    <span className="w-8 h-8 flex items-center justify-center rounded-full bg-[#2AABEE]/10">
+                  <button type="button" onClick={handleShareTelegram} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent dark:hover:bg-accent transition-colors text-left">
+                    <span className="w-8 h-8 flex items-center justify-center rounded-full bg-[#2AABEE]/10 shrink-0">
                       <svg viewBox="0 0 24 24" className="w-4.5 h-4.5 text-[#2AABEE]" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
                     </span>
-                    <span className="text-sm text-gray-700 dark:text-gray-300">Telegram</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">{t.petDetail.shareTelegram}</span>
                   </button>
 
-                  <button onClick={handleShareX} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent dark:hover:bg-accent transition-colors">
-                    <span className="w-8 h-8 flex items-center justify-center rounded-full bg-black/5 dark:bg-white/10">
+                  <button type="button" onClick={handleShareX} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent dark:hover:bg-accent transition-colors text-left">
+                    <span className="w-8 h-8 flex items-center justify-center rounded-full bg-black/5 dark:bg-white/10 shrink-0">
                       <svg viewBox="0 0 24 24" className="w-4 h-4 text-gray-900 dark:text-white" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
                     </span>
-                    <span className="text-sm text-gray-700 dark:text-gray-300">X (Twitter)</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">{t.petDetail.shareX}</span>
+                  </button>
+
+                  <button type="button" onClick={handleShareVk} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent dark:hover:bg-accent transition-colors text-left">
+                    <span className="w-8 h-8 flex items-center justify-center rounded-full bg-[#0077FF]/15 shrink-0 text-[#0077FF] font-bold text-xs">VK</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">{t.petDetail.shareVk}</span>
+                  </button>
+
+                  <button type="button" onClick={handleShareWhatsApp} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent dark:hover:bg-accent transition-colors text-left">
+                    <span className="w-8 h-8 flex items-center justify-center rounded-full bg-[#25D366]/15 shrink-0">
+                      <svg viewBox="0 0 24 24" className="w-4 h-4 text-[#25D366]" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.435 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                    </span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">{t.petDetail.shareWhatsApp}</span>
                   </button>
 
                   <div className="border-t border-gray-100 dark:border-gray-700 my-1" />
-                  <div className="px-4 py-1.5"><span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">Instagram</span></div>
+                  <div className="px-4 py-1.5"><span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">{t.petDetail.shareInstagramSection}</span></div>
 
-                  <button onClick={handleShareInstagramPost} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent dark:hover:bg-accent transition-colors">
-                    <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 text-white">
+                  <button type="button" onClick={handleShareInstagramPost} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent dark:hover:bg-accent transition-colors text-left">
+                    <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 text-white shrink-0">
                       <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
                     </span>
-                    <span className="text-sm text-gray-700 dark:text-gray-300">Пост</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">{t.petDetail.shareInstagramPost}</span>
                   </button>
 
-                  <button onClick={handleShareInstagramStory} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent dark:hover:bg-accent transition-colors">
-                    <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 text-white">
+                  <button type="button" onClick={handleShareInstagramStory} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent dark:hover:bg-accent transition-colors text-left">
+                    <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 text-white shrink-0">
                       <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/></svg>
                     </span>
-                    <span className="text-sm text-gray-700 dark:text-gray-300">Stories</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">{t.petDetail.shareInstagramStory}</span>
                   </button>
 
-                  <button onClick={handleShareInstagramDM} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent dark:hover:bg-accent transition-colors">
-                    <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 text-white">
+                  <button type="button" onClick={handleShareInstagramDm} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent dark:hover:bg-accent transition-colors text-left">
+                    <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 text-white shrink-0">
                       <MessageCircle className="w-4 h-4" />
                     </span>
-                    <span className="text-sm text-gray-700 dark:text-gray-300">Сообщение</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">{t.petDetail.shareInstagramDm}</span>
                   </button>
 
                   <div className="border-t border-gray-100 dark:border-gray-700 my-1" />
 
-                  <button onClick={() => { handleCopyLink(); setShowShareMenu(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent dark:hover:bg-accent transition-colors">
-                    <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700">
-                      {linkCopied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4 text-gray-600 dark:text-gray-400" />}
+                  <button type="button" onClick={handleCopyPostText} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent dark:hover:bg-accent transition-colors text-left">
+                    <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 shrink-0">
+                      {copiedKind === 'full' ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4 text-gray-600 dark:text-gray-400" />}
                     </span>
-                    <span className="text-sm text-gray-700 dark:text-gray-300">{linkCopied ? 'Скопировано!' : 'Копировать ссылку'}</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">{t.petDetail.shareCopyFull}</span>
+                  </button>
+
+                  <button type="button" onClick={handleCopyLinkOnly} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent dark:hover:bg-accent transition-colors text-left">
+                    <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 shrink-0">
+                      {copiedKind === 'link' ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4 text-gray-600 dark:text-gray-400" />}
+                    </span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">{t.petDetail.shareCopyLinkOnly}</span>
                   </button>
                 </div>
               </div>
@@ -805,6 +923,134 @@ export default function PetDetailPage() {
               <div className="flex items-start gap-3 text-sm text-gray-600 dark:text-gray-400">
                 <AlertCircle size={18} className="flex-shrink-0 mt-0.5 text-[#FF9800]" />
                 <p>{t.petDetail.flyerHint}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {instagramGuide && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="instagram-guide-title"
+          onClick={() => setInstagramGuide(null)}
+        >
+          <div
+            className="bg-white dark:bg-card rounded-2xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-border"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6">
+              <div className="flex justify-between items-start gap-4 mb-4">
+                <h2
+                  id="instagram-guide-title"
+                  className="text-xl font-bold text-gray-900 dark:text-white pr-2"
+                >
+                  {t.petDetail.shareInstagramModalTitle}
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setInstagramGuide(null)}
+                  className="p-1 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-muted shrink-0"
+                  aria-label={t.common.close}
+                >
+                  <X size={22} />
+                </button>
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                {t.petDetail.shareInstagramModalExplain}
+              </p>
+              <ol className="list-decimal pl-5 space-y-2 text-sm text-gray-700 dark:text-gray-300 mb-4">
+                <li>{t.petDetail.shareInstagramModalStep1}</li>
+                {instagramGuide.includePhoto && pet.photos[0] ? (
+                  <li>{t.petDetail.shareInstagramModalStep2}</li>
+                ) : null}
+                <li>
+                  {instagramGuide.variant === 'story'
+                    ? t.petDetail.shareInstagramModalStep3Story
+                    : instagramGuide.variant === 'dm'
+                      ? t.petDetail.shareInstagramModalStep3Dm
+                      : t.petDetail.shareInstagramModalStep3Post}
+                </li>
+              </ol>
+              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5">
+                {t.petDetail.shareInstagramModalCaptionLabel}
+              </p>
+              <textarea
+                readOnly
+                rows={6}
+                value={shareBundle.textFull}
+                className="w-full text-sm border border-gray-300 dark:border-border rounded-lg p-3 bg-gray-50 dark:bg-muted/50 text-gray-900 dark:text-gray-100 resize-y min-h-[120px]"
+                onFocus={(e) => e.target.select()}
+              />
+              <button
+                type="button"
+                className="mt-2 w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 h-10 rounded-lg border border-gray-300 dark:border-border text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-muted"
+                onClick={async () => {
+                  if (await copyToClipboard(shareBundle.textFull)) {
+                    toast.success(t.petDetail.shareCopiedFull);
+                  } else toast.error(t.common.error);
+                }}
+              >
+                <Copy className="w-4 h-4" />
+                {t.petDetail.shareInstagramModalCopyText}
+              </button>
+              {instagramGuide.includePhoto && pet.photos[0] ? (
+                <div className="mt-5 pt-5 border-t border-gray-200 dark:border-border">
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                    {t.petDetail.shareInstagramPost}
+                  </p>
+                  <div className="flex flex-col sm:flex-row flex-wrap gap-2">
+                    <button
+                      type="button"
+                      className="inline-flex items-center justify-center gap-2 px-4 h-10 rounded-lg bg-gray-100 dark:bg-muted text-sm font-medium text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-muted/80"
+                      onClick={async () => {
+                        const ok = await tryCopyImageToClipboard(pet.photos[0]);
+                        if (ok) toast.success(t.petDetail.shareInstagramModalPhotoCopied);
+                        else toast.error(t.petDetail.shareInstagramModalPhotoFail);
+                      }}
+                    >
+                      <Copy className="w-4 h-4" />
+                      {t.petDetail.shareInstagramModalCopyPhoto}
+                    </button>
+                    <button
+                      type="button"
+                      className="inline-flex items-center justify-center gap-2 px-4 h-10 rounded-lg border border-gray-300 dark:border-border text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-muted"
+                      onClick={() =>
+                        window.open(
+                          resolvePetImageUrlForShare(pet.photos[0]),
+                          '_blank',
+                          'noopener,noreferrer',
+                        )
+                      }
+                    >
+                      {t.petDetail.shareInstagramModalOpenPhoto}
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+              <div className="mt-6 flex flex-col sm:flex-row gap-2">
+                <button
+                  type="button"
+                  className="flex-1 h-12 rounded-lg bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 text-white text-sm font-semibold hover:opacity-95 transition-opacity"
+                  onClick={() =>
+                    window.open(
+                      `https://www.instagram.com${instagramGuide.openPath}`,
+                      '_blank',
+                      'noopener,noreferrer',
+                    )
+                  }
+                >
+                  {t.petDetail.shareInstagramModalOpenIg}
+                </button>
+                <button
+                  type="button"
+                  className="flex-1 h-12 rounded-lg border border-gray-300 dark:border-border text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-muted"
+                  onClick={() => setInstagramGuide(null)}
+                >
+                  {t.petDetail.shareInstagramModalClose}
+                </button>
               </div>
             </div>
           </div>
