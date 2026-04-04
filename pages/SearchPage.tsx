@@ -24,6 +24,7 @@ import { PetForm } from '../components/pet-form';
 import { Filters } from '../components/filters';
 import { MobileListSheet } from '../components/mobile-list-sheet';
 import { useIsMobile } from '../components/ui/use-mobile';
+import { useAuthenticatedAction } from '../utils/use-authenticated-action';
 const MapView = lazy(() => import('../components/map-view'));
 import { SlidersHorizontal } from 'lucide-react';
 import type { LatLngBounds } from 'leaflet';
@@ -31,7 +32,8 @@ import type { LatLngBounds } from 'leaflet';
 type View = 'main' | 'terms';
 
 export default function SearchPage() {
-  const { user, isAuthenticated, openAuthModal, closeAuthModal, isLoading } = useAuth();
+  const { user, closeAuthModal, isLoading } = useAuth();
+  const { runWhenAuthed } = useAuthenticatedAction();
   const { selectedCity, saveCity, clearCity } = useCity();
   const { theme } = useTheme();
   const { t } = useI18n();
@@ -430,16 +432,14 @@ export default function SearchPage() {
   };
 
   const handleCreateClick = () => {
-    if (!isAuthenticated) {
-      openAuthModal();
-      return;
-    }
-    const hasContacts = user?.contacts?.phone || user?.contacts?.telegram || user?.contacts?.viber;
-    if (!hasContacts) {
-      setShowContactRequiredModal(true);
-      return;
-    }
-    routerNavigate('/create');
+    runWhenAuthed(() => {
+      const hasContacts = user?.contacts?.phone || user?.contacts?.telegram || user?.contacts?.viber;
+      if (!hasContacts) {
+        setShowContactRequiredModal(true);
+        return;
+      }
+      routerNavigate('/create');
+    });
   };
 
   const openEditForm = (pet: Pet) => {
