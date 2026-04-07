@@ -240,6 +240,8 @@ export const petsApi = {
     south?: number;
     east?: number;
     west?: number;
+    limit?: number;
+    offset?: number;
   }, options: RequestInit = {}) => {
     const q = new URLSearchParams();
     if (params) Object.entries(params).forEach(([k, v]) => v != null && q.set(k, String(v)));
@@ -395,6 +397,8 @@ export interface FeatureFlags {
   ff_landing_show_help: string;
   /** Отсутствует в ответе старых бэкендов до миграции — клиент трактует как true */
   ff_landing_show_pets_feature?: string;
+  /** FAQ на лендинге; до миграции — true */
+  ff_landing_show_faq?: string;
 }
 
 export const featureFlagsApi = {
@@ -404,6 +408,7 @@ export const featureFlagsApi = {
     ff_landing_show_stats?: boolean;
     ff_landing_show_help?: boolean;
     ff_landing_show_pets_feature?: boolean;
+    ff_landing_show_faq?: boolean;
   }) =>
     api<FeatureFlags>('/feature-flags', {
       method: 'PATCH',
@@ -416,6 +421,10 @@ export interface PlatformSettings {
   require_moderation: string;
   auto_archive_days: string;
   max_photos: string;
+  /** @username канала / супергруппы или -100… — куда слать анонсы блога */
+  telegram_blog_chat_id?: string;
+  /** Публичный username канала без @ — для ссылок на пост и комментарии */
+  telegram_blog_public_username?: string;
 }
 
 export const settingsApi = {
@@ -494,7 +503,13 @@ export interface MediaArticle {
 }
 
 export const mediaApi = {
-  list: () => api<MediaArticle[]>('/media'),
+  list: (params?: { limit?: number; offset?: number }) => {
+    const q = new URLSearchParams();
+    if (params?.limit != null) q.set('limit', String(params.limit));
+    if (params?.offset != null && params.offset > 0) q.set('offset', String(params.offset));
+    const suffix = q.toString() ? `?${q}` : '';
+    return api<MediaArticle[]>(`/media${suffix}`);
+  },
 
   create: (data: { logo_url?: string; title: string; published_at: string; link?: string }) =>
     api<MediaArticle>('/media', {
@@ -514,6 +529,131 @@ export const mediaApi = {
     }),
 
   delete: (id: string) => api<void>(`/media/${id}`, { method: 'DELETE' }),
+};
+
+// --- Blog ---
+export interface BlogCategory {
+  id: string;
+  slug: string;
+  title: string;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BlogPostListItem {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt?: string | null;
+  cover_image_url?: string | null;
+  category: string;
+  category_title: string;
+  published_at: string;
+  reading_minutes: number;
+}
+
+export interface BlogPostPublic extends BlogPostListItem {
+  body_md: string;
+  meta_description?: string | null;
+  telegram_post_url?: string | null;
+}
+
+export interface BlogPostAdmin extends BlogPostPublic {
+  status: string;
+  created_at: string;
+  updated_at: string;
+  author_id?: string | null;
+  telegram_message_id?: number | null;
+  telegram_channel_username?: string | null;
+}
+
+export const blogApi = {
+  listCategories: () => api<BlogCategory[]>('/blog/categories'),
+
+  listPublished: (params?: { limit?: number; offset?: number }) => {
+    const q = new URLSearchParams();
+    if (params?.limit != null) q.set('limit', String(params.limit));
+    if (params?.offset != null && params.offset > 0) q.set('offset', String(params.offset));
+    const suffix = q.toString() ? `?${q}` : '';
+    return api<BlogPostListItem[]>(`/blog/posts${suffix}`);
+  },
+
+  getPublished: (slug: string) => api<BlogPostPublic>(`/blog/posts/${encodeURIComponent(slug)}`),
+
+  adminList: (params?: { limit?: number; offset?: number }) => {
+    const q = new URLSearchParams();
+    if (params?.limit != null) q.set('limit', String(params.limit));
+    if (params?.offset != null && params.offset > 0) q.set('offset', String(params.offset));
+    const suffix = q.toString() ? `?${q}` : '';
+    return api<BlogPostAdmin[]>(`/blog/admin/posts${suffix}`);
+  },
+
+  adminCategoryCreate: (data: { slug: string; title: string; sort_order?: number }) =>
+    api<BlogCategory>('/blog/admin/categories', {
+      method: 'POST',
+      body: JSON.stringify({
+        slug: data.slug,
+        title: data.title,
+        sort_order: data.sort_order ?? 0,
+      }),
+    }),
+
+  adminCategoryUpdate: (id: string, data: Partial<{ title: string; sort_order: number }>) =>
+    api<BlogCategory>(`/blog/admin/categories/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+
+  adminCategoryDelete: (id: string) =>
+    api<void>(`/blog/admin/categories/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+
+  adminCreate: (data: {
+    slug: string;
+    title: string;
+    excerpt?: string;
+    body_md: string;
+    cover_image_url?: string;
+    meta_description?: string;
+    category?: string;
+    status?: 'draft' | 'published';
+  }) =>
+    api<BlogPostAdmin>('/blog/admin/posts', {
+      method: 'POST',
+      body: JSON.stringify({
+        slug: data.slug,
+        title: data.title,
+        excerpt: data.excerpt ?? null,
+        body_md: data.body_md,
+        cover_image_url: data.cover_image_url ?? null,
+        meta_description: data.meta_description ?? null,
+        category: data.category ?? 'guides',
+        status: data.status ?? 'draft',
+      }),
+    }),
+
+  adminUpdate: (
+    id: string,
+    data: Partial<{
+      slug: string;
+      title: string;
+      excerpt: string;
+      body_md: string;
+      cover_image_url: string;
+      meta_description: string;
+      category: string;
+      status: 'draft' | 'published';
+    }>,
+  ) =>
+    api<BlogPostAdmin>(`/blog/admin/posts/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+
+  adminDelete: (id: string) => api<void>(`/blog/admin/posts/${id}`, { method: 'DELETE' }),
+
+  adminSendTelegram: (id: string) =>
+    api<BlogPostAdmin>(`/blog/admin/posts/${id}/telegram`, { method: 'POST' }),
 };
 
 // --- Partners (Наши партнеры) ---
@@ -546,6 +686,63 @@ export const partnersApi = {
   delete: (id: string) => api<void>(`/partners/${id}`, { method: 'DELETE' }),
 };
 
+// --- FAQ (лендинг) ---
+export interface FaqItem {
+  id: string;
+  question_ru: string;
+  question_be: string;
+  question_en: string;
+  answer_ru: string;
+  answer_be: string;
+  answer_en: string;
+  sort_order: number;
+}
+
+export const faqApi = {
+  list: () => api<FaqItem[]>('/faq'),
+
+  create: (data: {
+    question_ru?: string;
+    question_be?: string;
+    question_en?: string;
+    answer_ru?: string;
+    answer_be?: string;
+    answer_en?: string;
+    sort_order?: number;
+  }) =>
+    api<FaqItem>('/faq', {
+      method: 'POST',
+      body: JSON.stringify({
+        question_ru: data.question_ru ?? '',
+        question_be: data.question_be ?? '',
+        question_en: data.question_en ?? '',
+        answer_ru: data.answer_ru ?? '',
+        answer_be: data.answer_be ?? '',
+        answer_en: data.answer_en ?? '',
+        sort_order: data.sort_order ?? 0,
+      }),
+    }),
+
+  update: (
+    id: string,
+    data: Partial<{
+      question_ru: string;
+      question_be: string;
+      question_en: string;
+      answer_ru: string;
+      answer_be: string;
+      answer_en: string;
+      sort_order: number;
+    }>,
+  ) =>
+    api<FaqItem>(`/faq/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+
+  delete: (id: string) => api<void>(`/faq/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+};
+
 // --- Profile Pets (адресник / QR) ---
 export interface ProfilePetResponse {
   id: string;
@@ -572,6 +769,8 @@ export interface ProfilePetResponse {
   owner_email?: string | null;
   owner_city?: string | null;
   owner_viber?: string | null;
+  /** Привязан ли Telegram у владельца (нужен для кнопки «Я нашёл питомца») */
+  owner_telegram_linked?: boolean;
 }
 
 export interface ProfilePetInput {
@@ -590,6 +789,13 @@ export interface ProfilePetInput {
   favorite_treats?: string;
   favorite_walks?: string;
   photos: string[];
+}
+
+export interface ProfilePetFoundSignalResponse {
+  accepted: boolean;
+  throttled: boolean;
+  telegram_sent: boolean;
+  detail: string;
 }
 
 function resolveProfilePetPhotos(p: ProfilePetResponse): ProfilePetResponse {
@@ -620,6 +826,12 @@ export const profilePetsApi = {
       method: 'PATCH',
       body: JSON.stringify(data),
     }).then(resolveProfilePetPhotos),
+
+  sendFoundSignal: (id: string, source: 'qr' | 'nfc' | 'unknown' = 'unknown') =>
+    api<ProfilePetFoundSignalResponse>(
+      `/profile-pets/${id}/found-signal?source=${encodeURIComponent(source)}`,
+      { method: 'POST' }
+    ),
 
   delete: (id: string) => api<void>(`/profile-pets/${id}`, { method: 'DELETE' }),
 };

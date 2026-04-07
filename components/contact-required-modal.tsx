@@ -30,8 +30,8 @@ export function ContactRequiredModal({ open, onClose, onGoToProfile }: ContactRe
           >
             <X className="w-5 h-5" />
           </button>
-          <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center">
-            <AlertCircle className="w-8 h-8 text-amber-600" />
+          <div className="w-16 h-16 bg-white dark:bg-card rounded-full flex items-center justify-center shadow-sm">
+            <AlertCircle className="w-8 h-8 text-amber-600 dark:text-amber-400" />
           </div>
         </div>
 

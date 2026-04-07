@@ -2,7 +2,7 @@
 from sqlalchemy import func, select
 
 from database import init_db, SessionLocal
-from models import User, Pet
+from models import User, Pet  # загружает ORM до init_db()
 from auth import get_password_hash
 
 init_db()

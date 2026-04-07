@@ -1,4 +1,5 @@
 """Pydantic schemas for API request/response."""
+import re
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, Field, field_validator
@@ -327,6 +328,41 @@ class PartnerResponse(BaseModel):
         from_attributes = True
 
 
+# --- FAQ (лендинг) ---
+class FaqItemCreate(BaseModel):
+    question_ru: str = Field(default="", max_length=4000)
+    question_be: str = Field(default="", max_length=4000)
+    question_en: str = Field(default="", max_length=4000)
+    answer_ru: str = Field(default="", max_length=16000)
+    answer_be: str = Field(default="", max_length=16000)
+    answer_en: str = Field(default="", max_length=16000)
+    sort_order: int = 0
+
+
+class FaqItemUpdate(BaseModel):
+    question_ru: Optional[str] = Field(None, max_length=4000)
+    question_be: Optional[str] = Field(None, max_length=4000)
+    question_en: Optional[str] = Field(None, max_length=4000)
+    answer_ru: Optional[str] = Field(None, max_length=16000)
+    answer_be: Optional[str] = Field(None, max_length=16000)
+    answer_en: Optional[str] = Field(None, max_length=16000)
+    sort_order: Optional[int] = None
+
+
+class FaqItemResponse(BaseModel):
+    id: str
+    question_ru: str
+    question_be: str
+    question_en: str
+    answer_ru: str
+    answer_be: str
+    answer_en: str
+    sort_order: int
+
+    class Config:
+        from_attributes = True
+
+
 # --- Profile Pets (адресник / QR) ---
 class ProfilePetCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=80)
@@ -399,6 +435,143 @@ class ProfilePetResponse(BaseModel):
     owner_email: Optional[str] = None
     owner_city: Optional[str] = None
     owner_viber: Optional[str] = None
+    # True, если у владельца привязан Telegram — доступна отправка сигнала «нашёл питомца»
+    owner_telegram_linked: bool = False
 
     class Config:
         from_attributes = True
+
+
+class ProfilePetFoundSignalResponse(BaseModel):
+    accepted: bool = True
+    throttled: bool = False
+    telegram_sent: bool = False
+    detail: str = "ok"
+
+
+# --- Blog ---
+_SLUG_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+
+
+def validate_slug(v: str) -> str:
+    s = (v or "").strip().lower()
+    if not s or len(s) > 120 or not _SLUG_RE.match(s):
+        raise ValueError("slug: только латиница, цифры и дефисы, например moya-statya")
+    return s
+
+
+class BlogCategoryResponse(BaseModel):
+    id: str
+    slug: str
+    title: str
+    sort_order: int = 0
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class BlogCategoryCreate(BaseModel):
+    slug: str
+    title: str = Field(..., min_length=1, max_length=200)
+    sort_order: int = Field(default=0, ge=-10_000, le=10_000)
+
+    @field_validator("slug", mode="before")
+    @classmethod
+    def slug_fmt(cls, v):
+        return validate_slug(str(v))
+
+
+class BlogCategoryUpdate(BaseModel):
+    title: Optional[str] = Field(None, min_length=1, max_length=200)
+    sort_order: Optional[int] = Field(None, ge=-10_000, le=10_000)
+
+
+class BlogPostCreate(BaseModel):
+    slug: str
+    title: str = Field(..., min_length=1, max_length=200)
+    excerpt: Optional[str] = Field(None, max_length=2000)
+    body_md: str = Field(..., min_length=1, max_length=200_000)
+    cover_image_url: Optional[str] = Field(None, max_length=2000)
+    meta_description: Optional[str] = Field(None, max_length=320)
+    category: str = Field(default="guides", max_length=40)
+    status: str = Field(default="draft")  # draft, published
+
+    @field_validator("slug", mode="before")
+    @classmethod
+    def slug_fmt(cls, v):
+        return validate_slug(str(v))
+
+    @field_validator("status")
+    @classmethod
+    def status_ok(cls, v):
+        if v not in ("draft", "published"):
+            raise ValueError("status: draft или published")
+        return v
+
+
+class BlogPostUpdate(BaseModel):
+    slug: Optional[str] = None
+    title: Optional[str] = Field(None, min_length=1, max_length=200)
+    excerpt: Optional[str] = Field(None, max_length=2000)
+    body_md: Optional[str] = Field(None, min_length=1, max_length=200_000)
+    cover_image_url: Optional[str] = Field(None, max_length=2000)
+    meta_description: Optional[str] = Field(None, max_length=320)
+    category: Optional[str] = Field(None, max_length=40)
+    status: Optional[str] = None
+
+    @field_validator("slug", mode="before")
+    @classmethod
+    def slug_fmt(cls, v):
+        if v is None or (isinstance(v, str) and not str(v).strip()):
+            return None
+        return validate_slug(str(v))
+
+    @field_validator("status")
+    @classmethod
+    def status_ok(cls, v):
+        if v is None:
+            return None
+        if v not in ("draft", "published"):
+            raise ValueError("status: draft или published")
+        return v
+
+
+class BlogPostListItem(BaseModel):
+    id: str
+    slug: str
+    title: str
+    excerpt: Optional[str] = None
+    cover_image_url: Optional[str] = None
+    category: str
+    category_title: str
+    published_at: datetime
+    reading_minutes: int = 1
+
+
+class BlogPostPublicResponse(BaseModel):
+    id: str
+    slug: str
+    title: str
+    excerpt: Optional[str] = None
+    body_md: str
+    cover_image_url: Optional[str] = None
+    meta_description: Optional[str] = None
+    category: str
+    category_title: str
+    published_at: datetime
+    reading_minutes: int = 1
+    telegram_post_url: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class BlogPostAdminResponse(BlogPostPublicResponse):
+    status: str
+    created_at: datetime
+    updated_at: datetime
+    author_id: Optional[str] = None
+    telegram_message_id: Optional[int] = None
+    telegram_channel_username: Optional[str] = None

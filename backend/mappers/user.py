@@ -1,4 +1,4 @@
-"""Shared utilities for routers."""
+"""Маппинг User ORM → API-схемы (роутеры не тянут логику через utils)."""
 from models import User
 from schemas import UserResponse
 

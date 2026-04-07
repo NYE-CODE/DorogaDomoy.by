@@ -1,4 +1,5 @@
 """Telegram bot: handles /start, /link commands and sends notifications via Bot API."""
+import html
 import logging
 import os
 import math
@@ -10,7 +11,16 @@ from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from database import SessionLocal
-from models import User, Pet, Sighting, TelegramLinkCode, NotificationSettings, Notification
+from models import (
+    User,
+    Pet,
+    Sighting,
+    TelegramLinkCode,
+    NotificationSettings,
+    Notification,
+    ProfilePet,
+    ProfilePetScanSignal,
+)
 from time_utils import utc_now
 
 logger = logging.getLogger(__name__)
@@ -168,9 +178,12 @@ async def send_notifications_for_pet(pet: Pet, db: Session):
     if not pet.location_lat or not pet.location_lng:
         return
 
-    # Find all users with notifications enabled and Telegram linked (excluding the author)
-    settings_list = db.scalars(
-        select(NotificationSettings)
+    matching_status = OPPOSITE_STATUS.get(pet.status)
+    if not matching_status:
+        return
+
+    stmt = (
+        select(NotificationSettings, User)
         .join(User, User.id == NotificationSettings.user_id)
         .where(
             NotificationSettings.notifications_enabled.is_(True),
@@ -178,49 +191,51 @@ async def send_notifications_for_pet(pet: Pet, db: Session):
             User.is_blocked.is_(False),
             User.id != pet.author_id,
         )
-    ).all()
+    )
+    rows = db.execute(stmt).all()
+    if not rows:
+        return
 
-    for ns in settings_list:
-        user = db.scalar(select(User).where(User.id == ns.user_id))
-        if not user or not user.telegram_id:
-            continue
+    user_ids = [u.id for _, u in rows]
+    pets_by_author: dict[str, list[Pet]] = {}
+    for up in db.scalars(
+        select(Pet).where(
+            Pet.author_id.in_(user_ids),
+            Pet.status == matching_status,
+            Pet.is_archived.is_(False),
+            Pet.moderation_status == "approved",
+            Pet.location_lat.is_not(None),
+            Pet.location_lng.is_not(None),
+        )
+    ).all():
+        pets_by_author.setdefault(up.author_id, []).append(up)
 
-        # Cross-match: "searching" ads match with "found" and vice versa
-        matching_status = OPPOSITE_STATUS.get(pet.status)
-        if not matching_status:
-            continue
-
-        user_pets = db.scalars(
-            select(Pet).where(
-                Pet.author_id == user.id,
-                Pet.status == matching_status,
-                Pet.is_archived.is_(False),
-                Pet.moderation_status == "approved",
-                Pet.location_lat.is_not(None),
-                Pet.location_lng.is_not(None),
+    notified_already = set(
+        db.scalars(
+            select(Notification.user_id).where(
+                Notification.pet_id == pet.id,
+                Notification.user_id.in_(user_ids),
             )
         ).all()
+    )
 
+    for ns, user in rows:
+        if not user.telegram_id or user.id in notified_already:
+            continue
+
+        user_pets = pets_by_author.get(user.id) or []
         if not user_pets:
             continue
 
         radius = ns.notification_radius_km or 1.0
         closest_distance = None
-        closest_user_pet = None
 
         for up in user_pets:
             dist = _haversine_km(up.location_lat, up.location_lng, pet.location_lat, pet.location_lng)
             if dist <= radius and (closest_distance is None or dist < closest_distance):
                 closest_distance = dist
-                closest_user_pet = up
 
         if closest_distance is None:
-            continue
-
-        existing = db.scalar(
-            select(Notification).where(Notification.user_id == user.id, Notification.pet_id == pet.id)
-        )
-        if existing:
             continue
 
         animal_label = ANIMAL_TYPE_LABELS.get(pet.animal_type, pet.animal_type)
@@ -250,6 +265,7 @@ async def send_notifications_for_pet(pet: Pet, db: Session):
             sent_at=utc_now(),
         )
         db.add(notification)
+        notified_already.add(user.id)
 
     try:
         db.commit()
@@ -289,6 +305,116 @@ def send_sighting_notification_sync(sighting_id: str, pet_id: str) -> None:
         logger.exception("send_sighting_notification error: %s", e)
     finally:
         db.close()
+
+
+def send_profile_pet_signal_sync(signal_id: str, profile_pet_id: str) -> bool:
+    """Синхронная отправка сигнала владельцу адресника (QR/NFC)."""
+    if not BOT_TOKEN:
+        logger.info("TELEGRAM_BOT_TOKEN not configured, skipping profile pet signal")
+        return False
+    db = SessionLocal()
+    try:
+        signal = db.scalar(select(ProfilePetScanSignal).where(ProfilePetScanSignal.id == signal_id))
+        pet = db.scalar(select(ProfilePet).where(ProfilePet.id == profile_pet_id))
+        if not signal or not pet:
+            return False
+        owner = db.scalar(select(User).where(User.id == pet.owner_id))
+        if not owner or not owner.telegram_id:
+            return False
+
+        settings = db.scalar(
+            select(NotificationSettings).where(NotificationSettings.user_id == owner.id)
+        )
+        if settings and not settings.notifications_enabled:
+            return False
+
+        source_label = "QR-коду" if signal.source == "qr" else ("NFC-брелока" if signal.source == "nfc" else "адресника")
+        msg = (
+            f"🐾 <b>Сигнал по питомцу!</b>\n\n"
+            f"Кто-то нажал «Я нашёл этого питомца» после сканирования {source_label}.\n"
+            f"Питомец: <b>{pet.name}</b>\n\n"
+            f"Проверьте контакты и, если нужно, обновите статус."
+        )
+        keyboard = {
+            "inline_keyboard": [[{"text": "Открыть карточку питомца", "url": f"{SITE_URL}/pet-profile/{pet.id}"}]]
+        }
+        sent = _send_telegram_message_sync(owner.telegram_id, msg, reply_markup=keyboard)
+        return bool(sent)
+    except Exception as e:
+        logger.exception("send_profile_pet_signal_sync error: %s", e)
+        return False
+    finally:
+        db.close()
+
+
+async def publish_blog_post_to_telegram(
+    *,
+    chat_id: str,
+    title: str,
+    excerpt: Optional[str],
+    article_url: str,
+    cover_image_url: Optional[str],
+) -> tuple[Optional[int], Optional[str]]:
+    """
+    Публикует анонс статьи в канал/супергруппу (chat_id — @username или -100...).
+    Возвращает (message_id, None) при успехе или (None, текст_ошибки).
+    """
+    if not BOT_TOKEN:
+        return None, "TELEGRAM_BOT_TOKEN не задан"
+    chat = (chat_id or "").strip()
+    if not chat:
+        return None, "Не задан чат для публикации блога"
+    safe_title = html.escape(title.strip())
+    safe_url = html.escape(article_url.strip(), quote=True)
+    lines = [f"<b>{safe_title}</b>"]
+    if excerpt and excerpt.strip():
+        ex = html.escape(excerpt.strip())
+        if len(ex) > 400:
+            ex = ex[:397] + "…"
+        lines.extend(["", ex])
+    lines.extend(["", f'<a href="{safe_url}">Читать на сайте →</a>'])
+    text = "\n".join(lines)
+    try:
+        async with httpx.AsyncClient(timeout=20) as client:
+            use_photo = bool(
+                cover_image_url
+                and (
+                    cover_image_url.startswith("http://")
+                    or cover_image_url.startswith("https://")
+                )
+            )
+            if use_photo:
+                cap = text if len(text) <= 1024 else (text[:1021] + "…")
+                resp = await client.post(
+                    f"{TELEGRAM_API}/sendPhoto",
+                    json={
+                        "chat_id": chat,
+                        "photo": cover_image_url,
+                        "caption": cap,
+                        "parse_mode": "HTML",
+                    },
+                )
+            else:
+                resp = await client.post(
+                    f"{TELEGRAM_API}/sendMessage",
+                    json={
+                        "chat_id": chat,
+                        "text": text[:4096],
+                        "parse_mode": "HTML",
+                        "disable_web_page_preview": False,
+                    },
+                )
+            data = resp.json()
+            if not data.get("ok"):
+                err = data.get("description") or resp.text
+                logger.error("Telegram blog publish failed: %s", err)
+                return None, str(err)
+            result = data.get("result") or {}
+            mid = result.get("message_id")
+            return (int(mid) if mid is not None else None), None
+    except Exception as e:
+        logger.exception("publish_blog_post_to_telegram: %s", e)
+        return None, str(e)
 
 
 async def process_telegram_update(update: dict):

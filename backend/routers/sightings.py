@@ -14,6 +14,7 @@ from database import get_db
 from models import Pet, Sighting, User
 from schemas import SightingCreate, SightingResponse
 from auth import get_current_user
+from integrations.telegram import send_sighting_notification_sync
 from time_utils import utc_now
 
 logger = logging.getLogger(__name__)
@@ -123,7 +124,6 @@ def create_sighting(
     db.refresh(sighting)
 
     # Send Telegram notification to pet owner (sync — BackgroundTasks run in threadpool)
-    from telegram_bot import send_sighting_notification_sync
     background_tasks.add_task(send_sighting_notification_sync, sighting.id, pet.id)
 
     return sighting_to_response(sighting)

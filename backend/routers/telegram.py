@@ -15,6 +15,7 @@ from schemas import TelegramLinkRequestResponse, TelegramLinkStatusResponse
 from auth import get_current_user_required
 from telegram_bot import process_telegram_update, send_telegram_message, BOT_USERNAME, BOT_TOKEN
 from time_utils import utc_now
+from rate_limit import limiter
 
 logger = logging.getLogger(__name__)
 
@@ -127,6 +128,7 @@ async def unlink_telegram(
 
 
 @router.post("/telegram-webhook")
+@limiter.limit("200/minute")
 async def telegram_webhook(
     request: Request,
     secret_token: str | None = Header(None, alias="X-Telegram-Bot-Api-Secret-Token"),

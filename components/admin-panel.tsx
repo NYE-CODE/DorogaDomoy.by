@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { 
   LayoutDashboard, 
   FileText, 
@@ -22,23 +22,65 @@ import {
   Newspaper,
   Plus,
   Handshake,
-  PawPrint
+  PawPrint,
+  BookOpen,
+  MessageCircle,
+  FolderOpen,
+  Wrench,
+  Tags,
+  HelpCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Pet } from '../types/pet';
 import { User } from '../context/AuthContext';
-import { Report, AdminStats, reportReasonLabels } from '../types/admin';
+import { Report, AdminStats, type ReportReason } from '../types/admin';
 import { formatDate, statusLabels } from '../utils/pet-helpers';
 import { BELARUS_MOBILE_PHONE_PLACEHOLDER } from '../utils/belarus-phone';
-import { settingsApi, featureFlagsApi, API_BASE } from '../api/client';
-import type { MediaArticle, Partner, ProfilePetResponse } from '../api/client';
+import { settingsApi, featureFlagsApi, blogApi, API_BASE } from '../api/client';
+import type { BlogCategory, BlogPostAdmin, FaqItem, MediaArticle, Partner, ProfilePetResponse } from '../api/client';
 import { ModerationPanel } from './moderation-panel';
 import { PetsAdminPanel } from './pets-admin-panel';
 import { ProfilePetsAdminPanel } from './profile-pets-admin-panel';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Switch } from './ui/switch';
+import { BlogMarkdownEditor } from './blog-markdown-editor';
+import { titleToBlogSlug } from '../utils/blog-slug';
+import { useI18n } from '../context/I18nContext';
 
-type AdminTab = 'dashboard' | 'moderation' | 'pets' | 'profilePets' | 'users' | 'reports' | 'media' | 'partners' | 'featureFlags' | 'settings';
+type AdminTab =
+  | 'dashboard'
+  | 'moderation'
+  | 'pets'
+  | 'profilePets'
+  | 'users'
+  | 'reports'
+  | 'media'
+  | 'blog'
+  | 'blogCategories'
+  | 'partners'
+  | 'featureFlags'
+  | 'telegramBlog'
+  | 'faq'
+  | 'settings';
+
+type AdminSection = 'operations' | 'content' | 'blog' | 'admin';
+
+const TAB_SECTION: Record<AdminTab, AdminSection> = {
+  dashboard: 'operations',
+  moderation: 'operations',
+  pets: 'operations',
+  profilePets: 'operations',
+  users: 'operations',
+  reports: 'operations',
+  blog: 'blog',
+  blogCategories: 'blog',
+  telegramBlog: 'blog',
+  media: 'content',
+  partners: 'content',
+  faq: 'content',
+  featureFlags: 'admin',
+  settings: 'admin',
+};
 
 const ADMIN_PLACEHOLDER_PHOTO =
   'data:image/svg+xml;utf8,' +
@@ -76,6 +118,55 @@ interface AdminPanelProps {
   onPartnerUpdate: (id: string, data: Partial<{ logo_url: string; name: string; link: string }>) => void;
   onPartnerDelete: (id: string) => void;
   onDeleteProfilePet: (id: string) => void;
+  blogPosts: BlogPostAdmin[];
+  onBlogCreate: (data: {
+    slug: string;
+    title: string;
+    excerpt?: string;
+    body_md: string;
+    cover_image_url?: string;
+    meta_description?: string;
+    category?: string;
+    status?: 'draft' | 'published';
+  }) => void;
+  onBlogUpdate: (
+    id: string,
+    data: Partial<{
+      slug: string;
+      title: string;
+      excerpt: string;
+      body_md: string;
+      cover_image_url: string;
+      meta_description: string;
+      category: string;
+      status: 'draft' | 'published';
+    }>,
+  ) => void;
+  onBlogDelete: (id: string) => void;
+  onBlogSendTelegram: (id: string) => void;
+  faqItems: FaqItem[];
+  onFaqCreate: (data: {
+    question_ru?: string;
+    question_be?: string;
+    question_en?: string;
+    answer_ru?: string;
+    answer_be?: string;
+    answer_en?: string;
+    sort_order?: number;
+  }) => void;
+  onFaqUpdate: (
+    id: string,
+    data: Partial<{
+      question_ru: string;
+      question_be: string;
+      question_en: string;
+      answer_ru: string;
+      answer_be: string;
+      answer_en: string;
+      sort_order: number;
+    }>,
+  ) => void;
+  onFaqDelete: (id: string) => void;
 }
 
 export function AdminPanel({ 
@@ -99,8 +190,52 @@ export function AdminPanel({
   onPartnerUpdate,
   onPartnerDelete,
   onDeleteProfilePet,
+  blogPosts,
+  onBlogCreate,
+  onBlogUpdate,
+  onBlogDelete,
+  onBlogSendTelegram,
+  faqItems,
+  onFaqCreate,
+  onFaqUpdate,
+  onFaqDelete,
 }: AdminPanelProps) {
+  const { t, locale } = useI18n();
+  const ap = t.adminPanel;
+
+  const sectionMeta = useMemo(
+    () =>
+      [
+        { id: 'operations' as const, label: ap.sections.operations, shortLabel: ap.sections.operationsShort, icon: ClipboardCheck },
+        { id: 'content' as const, label: ap.sections.content, shortLabel: ap.sections.contentShort, icon: FolderOpen },
+        { id: 'blog' as const, label: ap.sections.blog, shortLabel: ap.sections.blogShort, icon: BookOpen },
+        { id: 'admin' as const, label: ap.sections.administration, shortLabel: ap.sections.administrationShort, icon: Wrench },
+      ] as const,
+    [locale],
+  );
+
   const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
+  const [activeSection, setActiveSection] = useState<AdminSection>('operations');
+
+  const selectTab = (tab: AdminTab) => {
+    setActiveTab(tab);
+    setActiveSection(TAB_SECTION[tab]);
+  };
+
+  const selectSection = (section: AdminSection) => {
+    setActiveSection(section);
+    if (TAB_SECTION[activeTab] !== section) {
+      const order: AdminTab[] =
+        section === 'operations'
+          ? ['dashboard', 'moderation', 'pets', 'profilePets', 'users', 'reports']
+          : section === 'content'
+            ? ['media', 'partners', 'faq']
+            : section === 'blog'
+              ? ['blog', 'blogCategories', 'telegramBlog']
+              : ['featureFlags', 'settings'];
+      setActiveTab(order[0]);
+    }
+  };
 
   // Edit user modal
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -130,11 +265,32 @@ export function AdminPanel({
   const [editPublishedAt, setEditPublishedAt] = useState('');
   const [editLink, setEditLink] = useState('');
 
+  const [editingBlog, setEditingBlog] = useState<BlogPostAdmin | 'create' | null>(null);
+  const [editBlogSlug, setEditBlogSlug] = useState('');
+  const [editBlogTitle, setEditBlogTitle] = useState('');
+  const [editBlogExcerpt, setEditBlogExcerpt] = useState('');
+  const [editBlogBody, setEditBlogBody] = useState('');
+  const [editBlogCover, setEditBlogCover] = useState('');
+  const [editBlogMeta, setEditBlogMeta] = useState('');
+  const [editBlogCategory, setEditBlogCategory] = useState('');
+  const [editBlogStatus, setEditBlogStatus] = useState<'draft' | 'published'>('draft');
+  /** Пока false — slug пересчитывается из заголовка (только новая статья). */
+  const [blogSlugUserTouched, setBlogSlugUserTouched] = useState(false);
+
   // Partner modal (create/edit)
   const [editingPartner, setEditingPartner] = useState<Partner | 'create' | null>(null);
   const [editPartnerLogoUrl, setEditPartnerLogoUrl] = useState('');
   const [editPartnerName, setEditPartnerName] = useState('');
   const [editPartnerLink, setEditPartnerLink] = useState('');
+
+  const [editingFaq, setEditingFaq] = useState<FaqItem | 'create' | null>(null);
+  const [editFaqQr, setEditFaqQr] = useState('');
+  const [editFaqQb, setEditFaqQb] = useState('');
+  const [editFaqQe, setEditFaqQe] = useState('');
+  const [editFaqAr, setEditFaqAr] = useState('');
+  const [editFaqAb, setEditFaqAb] = useState('');
+  const [editFaqAe, setEditFaqAe] = useState('');
+  const [editFaqSort, setEditFaqSort] = useState(0);
 
   // Platform settings (stored on backend)
   const [settings, setSettings] = useState({
@@ -147,7 +303,22 @@ export function AdminPanel({
     ff_landing_show_stats: true,
     ff_landing_show_help: true,
     ff_landing_show_pets_feature: true,
+    ff_landing_show_faq: true,
   });
+
+  const [blogTelegramChatId, setBlogTelegramChatId] = useState('');
+  const [blogTelegramPublicUsername, setBlogTelegramPublicUsername] = useState('');
+
+  const [blogCategories, setBlogCategories] = useState<BlogCategory[]>([]);
+  const [editingBlogCategory, setEditingBlogCategory] = useState<BlogCategory | 'create' | null>(null);
+  const [editCatSlug, setEditCatSlug] = useState('');
+  const [editCatTitle, setEditCatTitle] = useState('');
+  const [editCatSort, setEditCatSort] = useState(0);
+
+  useEffect(() => {
+    if (activeSection !== 'blog') return;
+    blogApi.listCategories().then(setBlogCategories).catch(() => setBlogCategories([]));
+  }, [activeSection, activeTab]);
 
   useEffect(() => {
     settingsApi.get().then((s) => {
@@ -156,6 +327,8 @@ export function AdminPanel({
         autoArchiveDays: parseInt(s.auto_archive_days, 10) || 90,
         maxPhotos: parseInt(s.max_photos, 10) || 5,
       });
+      setBlogTelegramChatId(s.telegram_blog_chat_id ?? '');
+      setBlogTelegramPublicUsername(s.telegram_blog_public_username ?? '');
     }).catch(() => {});
   }, []);
 
@@ -166,6 +339,7 @@ export function AdminPanel({
         ff_landing_show_help: ff.ff_landing_show_help === 'true',
         ff_landing_show_pets_feature:
           (ff.ff_landing_show_pets_feature ?? 'true') === 'true',
+        ff_landing_show_faq: (ff.ff_landing_show_faq ?? 'true') === 'true',
       });
     }).catch(() => {});
   }, []);
@@ -176,9 +350,9 @@ export function AdminPanel({
       auto_archive_days: String(settings.autoArchiveDays),
       max_photos: String(settings.maxPhotos),
     }).then(() => {
-      toast.success('Настройки сохранены');
+      toast.success(ap.toasts.settingsSaved);
     }).catch(() => {
-      toast.error('Не удалось сохранить настройки');
+      toast.error(ap.toasts.settingsError);
     });
   };
 
@@ -187,11 +361,28 @@ export function AdminPanel({
       ff_landing_show_stats: featureFlags.ff_landing_show_stats,
       ff_landing_show_help: featureFlags.ff_landing_show_help,
       ff_landing_show_pets_feature: featureFlags.ff_landing_show_pets_feature,
+      ff_landing_show_faq: featureFlags.ff_landing_show_faq,
     }).then(() => {
-      toast.success('Фича-флаги сохранены');
+      toast.success(ap.toasts.flagsSaved);
     }).catch(() => {
-      toast.error('Не удалось сохранить фича-флаги');
+      toast.error(ap.toasts.flagsError);
     });
+  };
+
+  const handleSaveBlogTelegramSettings = () => {
+    settingsApi
+      .update({
+        telegram_blog_chat_id: blogTelegramChatId.trim(),
+        telegram_blog_public_username: blogTelegramPublicUsername.trim().replace(/^@/, ''),
+      })
+      .then((s) => {
+        setBlogTelegramChatId(s.telegram_blog_chat_id ?? '');
+        setBlogTelegramPublicUsername(s.telegram_blog_public_username ?? '');
+        toast.success(ap.toasts.telegramSaved);
+      })
+      .catch(() => {
+        toast.error(ap.toasts.telegramError);
+      });
   };
 
   // Calculate real stats from data
@@ -219,29 +410,47 @@ export function AdminPanel({
     .sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime())
     .slice(0, 5);
 
-  const tabs = [
-    { id: 'dashboard' as const, label: 'Дашборд', icon: LayoutDashboard },
-    { id: 'moderation' as const, label: 'Модерация', icon: ClipboardCheck },
-    { id: 'pets' as const, label: 'Объявления', icon: FileText },
-    { id: 'profilePets' as const, label: 'Питомцы', icon: PawPrint },
-    { id: 'users' as const, label: 'Пользователи', icon: Users },
-    { id: 'reports' as const, label: 'Жалобы', icon: AlertTriangle },
-    { id: 'media' as const, label: 'СМИ о нас', icon: Newspaper },
-    { id: 'partners' as const, label: 'Партнеры', icon: Handshake },
-    { id: 'featureFlags' as const, label: 'Feature flags', icon: Flag },
-    { id: 'settings' as const, label: 'Настройки', icon: Settings },
-  ];
+  const allTabs = useMemo(
+    () =>
+      [
+        { id: 'dashboard' as const, label: ap.tabs.dashboard, icon: LayoutDashboard },
+        { id: 'moderation' as const, label: ap.tabs.moderation, icon: ClipboardCheck },
+        { id: 'pets' as const, label: ap.tabs.ads, icon: FileText },
+        { id: 'profilePets' as const, label: ap.tabs.pets, icon: PawPrint },
+        { id: 'users' as const, label: ap.tabs.users, icon: Users },
+        { id: 'reports' as const, label: ap.tabs.reports, icon: AlertTriangle },
+        { id: 'media' as const, label: ap.tabs.media, icon: Newspaper },
+        { id: 'partners' as const, label: ap.tabs.partners, icon: Handshake },
+        { id: 'faq' as const, label: ap.tabs.faq, icon: HelpCircle },
+        { id: 'blog' as const, label: ap.tabs.articles, icon: BookOpen },
+        { id: 'blogCategories' as const, label: ap.tabs.categories, icon: Tags },
+        { id: 'telegramBlog' as const, label: ap.tabs.telegram, icon: MessageCircle },
+        { id: 'featureFlags' as const, label: ap.tabs.featureFlags, icon: Flag },
+        { id: 'settings' as const, label: ap.tabs.settings, icon: Settings },
+      ] as const,
+    [locale],
+  );
+
+  const subTabs = allTabs.filter((tab) => TAB_SECTION[tab.id] === activeSection);
+
+  const faqRowsSorted = useMemo(
+    () =>
+      [...faqItems].sort((a, b) =>
+        a.sort_order !== b.sort_order ? a.sort_order - b.sort_order : a.id.localeCompare(b.id),
+      ),
+    [faqItems],
+  );
 
   const renderDashboard = () => (
     <div className="space-y-6">
-      <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Обзор платформы</h2>
+      <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">{ap.dashboard.title}</h2>
       
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Всего объявлений</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">{ap.dashboard.statTotalAds}</p>
               <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{stats.totalPets}</p>
             </div>
             <div className="p-3 bg-accent dark:bg-accent rounded-lg">
@@ -249,14 +458,14 @@ export function AdminPanel({
             </div>
           </div>
           <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-            Активных: {stats.activePets} | В архиве: {stats.archivedPets}
+            {ap.dashboard.statActive}: {stats.activePets} | {ap.dashboard.statArchived}: {stats.archivedPets}
           </div>
         </div>
 
         <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Пользователи</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">{ap.dashboard.statUsers}</p>
               <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{stats.totalUsers}</p>
             </div>
             <div className="p-3 bg-accent dark:bg-accent rounded-lg">
@@ -264,14 +473,14 @@ export function AdminPanel({
             </div>
           </div>
           <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-            Заблокировано: {stats.blockedUsers}
+            {ap.dashboard.statBlocked}: {stats.blockedUsers}
           </div>
         </div>
 
         <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Жалобы</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">{ap.dashboard.statReports}</p>
               <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{stats.pendingReports}</p>
             </div>
             <div className="p-3 bg-accent dark:bg-accent rounded-lg">
@@ -279,14 +488,14 @@ export function AdminPanel({
             </div>
           </div>
           <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-            Обработано: {stats.resolvedReports}
+            {ap.dashboard.statReportsResolved}: {stats.resolvedReports}
           </div>
         </div>
 
         <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Успешность</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">{ap.dashboard.statSuccess}</p>
               <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{stats.successRate.toFixed(1)}%</p>
             </div>
             <div className="p-3 bg-accent dark:bg-accent rounded-lg">
@@ -294,7 +503,7 @@ export function AdminPanel({
             </div>
           </div>
           <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-            Питомцев найдено
+            {ap.dashboard.statSuccessHint}
           </div>
         </div>
       </div>
@@ -303,15 +512,15 @@ export function AdminPanel({
       <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-6">
         <div className="flex items-center gap-2 mb-4">
           <Calendar className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-          <h3 className="font-semibold text-gray-900 dark:text-white">Активность</h3>
+          <h3 className="font-semibold text-gray-900 dark:text-white">{ap.dashboard.activity}</h3>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div className="p-4 bg-accent dark:bg-accent rounded-lg">
-            <p className="text-sm text-gray-600 dark:text-gray-400">За последние 7 дней</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">{ap.dashboard.last7}</p>
             <p className="text-2xl font-bold text-foreground mt-1">{stats.petsLast7Days}</p>
           </div>
           <div className="p-4 bg-accent dark:bg-accent rounded-lg">
-            <p className="text-sm text-gray-600 dark:text-gray-400">За последние 30 дней</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">{ap.dashboard.last30}</p>
             <p className="text-2xl font-bold text-foreground mt-1">{stats.petsLast30Days}</p>
           </div>
         </div>
@@ -319,14 +528,14 @@ export function AdminPanel({
 
       {/* Recent Activity */}
       <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-        <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Последние объявления</h3>
+        <h3 className="font-semibold text-gray-900 dark:text-white mb-4">{ap.dashboard.recentAds}</h3>
         <div className="space-y-3">
           {recentPets.map(pet => (
             <div key={pet.id} className="flex items-center justify-between p-3 bg-accent dark:bg-accent rounded-lg">
               <div className="flex items-center gap-3">
                 <img src={getAdminPetPreviewPhoto(pet)} alt="" className="w-12 h-12 object-cover rounded-lg" />
                 <div>
-                  <p className="font-medium text-gray-900 dark:text-white">{pet.breed || 'Без породы'}</p>
+                  <p className="font-medium text-gray-900 dark:text-white">{pet.breed || ap.breedUnknown}</p>
                   <p className="text-sm text-gray-600 dark:text-gray-400">{pet.city} · {pet.authorName}</p>
                 </div>
               </div>
@@ -386,16 +595,16 @@ export function AdminPanel({
 
     return (
       <div className="space-y-6">
-        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Управление пользователями</h2>
+        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">{ap.users.title}</h2>
         
         {/* Filters Panel */}
         <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-4">
           <div className="flex flex-wrap gap-4 items-end">
             <div className="flex-1 min-w-[250px]">
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Поиск</label>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{ap.users.search}</label>
               <input
                 type="text"
-                placeholder="Поиск по имени или email..."
+                placeholder={ap.users.searchPlaceholder}
                 value={usersSearch}
                 onChange={(e) => {
                   setUsersSearch(e.target.value);
@@ -406,37 +615,37 @@ export function AdminPanel({
             </div>
 
             <div className="min-w-[180px]">
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Роль</label>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{ap.users.role}</label>
               <Select value={usersRoleFilter} onValueChange={(v) => { setUsersRoleFilter(v); setUsersPage(1); }}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Все роли" />
+                  <SelectValue placeholder={ap.users.roleAll} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Все роли</SelectItem>
-                  <SelectItem value="user">Пользователи</SelectItem>
-                  <SelectItem value="volunteer">Волонтёры</SelectItem>
-                  <SelectItem value="shelter">Приюты</SelectItem>
-                  <SelectItem value="admin">Администраторы</SelectItem>
+                  <SelectItem value="all">{ap.users.roleAll}</SelectItem>
+                  <SelectItem value="user">{ap.users.roleUsers}</SelectItem>
+                  <SelectItem value="volunteer">{ap.users.roleVolunteers}</SelectItem>
+                  <SelectItem value="shelter">{ap.users.roleShelters}</SelectItem>
+                  <SelectItem value="admin">{ap.users.roleAdmins}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="min-w-[180px]">
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Статус</label>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{ap.users.status}</label>
               <Select value={usersStatusFilter} onValueChange={(v) => { setUsersStatusFilter(v); setUsersPage(1); }}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Все статусы" />
+                  <SelectValue placeholder={ap.users.statusAll} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Все статусы</SelectItem>
-                  <SelectItem value="active">Активные</SelectItem>
-                  <SelectItem value="blocked">Заблокированные</SelectItem>
+                  <SelectItem value="all">{ap.users.statusAll}</SelectItem>
+                  <SelectItem value="active">{ap.users.statusActive}</SelectItem>
+                  <SelectItem value="blocked">{ap.users.statusBlocked}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="text-sm text-gray-600 dark:text-gray-400 ml-auto">
-              Найдено: {filteredUsers.length} пользователей
+              {ap.users.found}: {filteredUsers.length} {ap.users.usersCount}
             </div>
           </div>
         </div>
@@ -445,20 +654,20 @@ export function AdminPanel({
           <table className="w-full min-w-[700px]">
             <thead className="bg-muted dark:bg-accent border-b border-gray-200 dark:border-gray-600">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Пользователь</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Email</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Роль</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Интеграция</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Контакты</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Статус</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Действия</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.users.colUser}</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.users.colEmail}</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.users.colRole}</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.users.colIntegration}</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.users.colContacts}</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.users.colStatus}</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.users.colActions}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {paginatedUsers.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
-                    Пользователи не найдены
+                    {ap.users.empty}
                   </td>
                 </tr>
               ) : (
@@ -474,7 +683,7 @@ export function AdminPanel({
                           target="_blank"
                           rel="noopener noreferrer"
                           className="font-medium text-primary hover:text-primary/90 hover:underline text-sm truncate max-w-[120px]"
-                          title="Открыть профиль"
+                          title={ap.users.openProfile}
                         >
                           {user.name}
                         </a>
@@ -486,13 +695,13 @@ export function AdminPanel({
                         user.role === 'admin' ? 'bg-primary/10 dark:bg-primary/20 text-primary' :
                         'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
                       }`}>
-                        {{ user: 'Пользователь', volunteer: 'Волонтёр', shelter: 'Приют', admin: 'Админ' }[user.role]}
+                        {{ user: ap.users.roleUser, volunteer: ap.users.roleVolunteer, shelter: ap.users.roleShelter, admin: ap.users.roleAdmin }[user.role]}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 truncate max-w-[140px]">
                       {user.telegramUsername
                         ? `@${String(user.telegramUsername).replace(/^@/, '')}`
-                        : 'Отсутствует'}
+                        : ap.users.telegramNone}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 truncate max-w-[140px]">
                       {user.contacts.phone || user.contacts.viber || '—'}
@@ -500,11 +709,11 @@ export function AdminPanel({
                     <td className="px-4 py-3">
                       {user.isBlocked ? (
                         <span className="inline-flex px-2 py-1 text-xs rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 whitespace-nowrap">
-                          Заблокирован
+                          {ap.users.blocked}
                         </span>
                       ) : (
                         <span className="inline-flex px-2 py-1 text-xs rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 whitespace-nowrap">
-                          Активен
+                          {ap.users.active}
                         </span>
                       )}
                     </td>
@@ -513,25 +722,25 @@ export function AdminPanel({
                         <button
                           onClick={() => openEditUser(user)}
                           className="p-1.5 text-primary hover:bg-primary/10 dark:hover:bg-primary/20 rounded transition-colors"
-                          title="Редактировать"
+                          title={ap.users.editTitleTooltip}
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => onUpdateUser({ ...user, isBlocked: !user.isBlocked })}
                           className={`p-1.5 rounded transition-colors ${user.isBlocked ? 'text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20' : 'text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20'}`}
-                          title={user.isBlocked ? 'Разблокировать' : 'Заблокировать'}
+                          title={user.isBlocked ? ap.users.unblockTooltip : ap.users.blockTooltip}
                         >
                           {user.isBlocked ? <CheckCircle2 className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
                         </button>
                         <button
                           onClick={() => {
-                            if (window.confirm(`Удалить пользователя ${user.name}? Это действие необратимо.`)) {
+                            if (window.confirm(ap.users.deleteConfirm(user.name))) {
                               onDeleteUser(user.id);
                             }
                           }}
                           className="p-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
-                          title="Удалить"
+                          title={ap.users.deleteTooltip}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -549,44 +758,44 @@ export function AdminPanel({
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setEditingUser(null)}>
             <div className="bg-card rounded-xl shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center justify-between px-6 py-4 border-b dark:border-gray-700">
-                <h3 className="font-semibold text-gray-900 dark:text-white">Редактировать пользователя</h3>
+                <h3 className="font-semibold text-gray-900 dark:text-white">{ap.users.modalTitle}</h3>
                 <button onClick={() => setEditingUser(null)} className="p-1 hover:bg-accent dark:hover:bg-accent rounded"><X className="w-5 h-5 dark:text-gray-400" /></button>
               </div>
               <div className="px-6 py-4 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Имя</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{ap.users.name}</label>
                   <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{ap.users.email}</label>
                   <input type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Роль</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{ap.users.roleField}</label>
                   <Select value={editRole} onValueChange={(v) => setEditRole(v as User['role'])}>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Роль" />
+                      <SelectValue placeholder={ap.users.rolePlaceholder} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="user">Пользователь</SelectItem>
-                      <SelectItem value="volunteer">Волонтёр</SelectItem>
-                      <SelectItem value="shelter">Приют</SelectItem>
-                      <SelectItem value="admin">Админ</SelectItem>
+                      <SelectItem value="user">{ap.users.roleUser}</SelectItem>
+                      <SelectItem value="volunteer">{ap.users.roleVolunteer}</SelectItem>
+                      <SelectItem value="shelter">{ap.users.roleShelter}</SelectItem>
+                      <SelectItem value="admin">{ap.users.roleAdmin}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Телефон</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{ap.users.phone}</label>
                   <input type="tel" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} placeholder={BELARUS_MOBILE_PHONE_PLACEHOLDER} className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Вайбер</label>
-                  <input type="text" value={editViber} onChange={(e) => setEditViber(e.target.value)} placeholder="Номер или ник" className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{ap.users.viber}</label>
+                  <input type="text" value={editViber} onChange={(e) => setEditViber(e.target.value)} placeholder={ap.users.viberPlaceholder} className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
                 </div>
               </div>
               <div className="flex justify-end gap-3 px-6 py-4 border-t dark:border-gray-700">
-                <button onClick={() => setEditingUser(null)} className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-accent dark:hover:bg-accent">Отмена</button>
-                <button onClick={handleSaveEditUser} className="flex items-center gap-2 px-4 py-3 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"><Save className="w-4 h-4" /> Сохранить</button>
+                <button onClick={() => setEditingUser(null)} className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-accent dark:hover:bg-accent">{t.common.cancel}</button>
+                <button onClick={handleSaveEditUser} className="flex items-center gap-2 px-4 py-3 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"><Save className="w-4 h-4" /> {t.common.save}</button>
               </div>
             </div>
           </div>
@@ -601,14 +810,14 @@ export function AdminPanel({
               className="flex items-center gap-2 px-4 py-3 text-sm bg-card border border-gray-200 dark:border-gray-700 dark:text-gray-300 rounded-lg hover:bg-accent dark:hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ChevronLeft className="w-4 h-4" />
-              Назад
+              {t.common.back}
             </button>
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-600 dark:text-gray-400">
-                Страница {usersPage} из {totalPages}
+                {ap.users.pageOf(usersPage, totalPages)}
               </span>
               <span className="text-xs text-gray-500 dark:text-gray-400">
-                ({filteredUsers.length} всего)
+                {ap.users.totalShort(filteredUsers.length)}
               </span>
             </div>
             <button
@@ -616,7 +825,7 @@ export function AdminPanel({
               disabled={usersPage >= totalPages}
               className="flex items-center gap-2 px-4 py-3 text-sm bg-card border border-gray-200 dark:border-gray-700 dark:text-gray-300 rounded-lg hover:bg-accent dark:hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Вперед
+              {t.common.forward}
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
@@ -642,13 +851,13 @@ export function AdminPanel({
 
     return (
       <div className="space-y-6">
-        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Жалобы</h2>
+        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">{ap.reports.title}</h2>
         
         {/* Filters Panel */}
         <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-4">
           <div className="flex flex-wrap gap-4 items-end">
             <div className="flex-1 min-w-[200px]">
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Статус жалобы</label>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{ap.reports.statusLabel}</label>
               <select
                 value={reportsStatusFilter}
                 onChange={(e) => {
@@ -657,16 +866,16 @@ export function AdminPanel({
                 }}
                 className="w-full px-3 py-2.5 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               >
-                <option value="all">Все статусы</option>
-                <option value="pending">Новые</option>
-                <option value="reviewed">Проверенные</option>
-                <option value="resolved">Решённые</option>
-                <option value="dismissed">Отклонённые</option>
+                <option value="all">{ap.reports.statusAll}</option>
+                <option value="pending">{ap.reports.statusNew}</option>
+                <option value="reviewed">{ap.reports.statusReviewed}</option>
+                <option value="resolved">{ap.reports.statusResolved}</option>
+                <option value="dismissed">{ap.reports.statusDismissed}</option>
               </select>
             </div>
 
             <div className="flex-1 min-w-[200px]">
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Причина жалобы</label>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{ap.reports.reasonLabel}</label>
               <select
                 value={reportsReasonFilter}
                 onChange={(e) => {
@@ -675,18 +884,17 @@ export function AdminPanel({
                 }}
                 className="w-full px-3 py-2.5 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               >
-                <option value="all">Все причины</option>
-                <option value="spam">Спам / Реклама</option>
-                <option value="inappropriate">Неприемлемый контент</option>
-                <option value="fake">Мошенничество / Фейк</option>
-                <option value="duplicate">Дубликат объявления</option>
-                <option value="found">Питомец уже найден</option>
-                <option value="other">Другая причина</option>
+                <option value="all">{ap.reports.reasonAll}</option>
+                {(Object.keys(ap.reports.reasons) as ReportReason[]).map((rk) => (
+                  <option key={rk} value={rk}>
+                    {ap.reports.reasons[rk]}
+                  </option>
+                ))}
               </select>
             </div>
 
             <div className="text-sm text-gray-600 dark:text-gray-400 ml-auto">
-              Найдено: {filteredReports.length} жалоб
+              {ap.reports.foundCount}: {filteredReports.length} {ap.reports.complaints}
             </div>
           </div>
         </div>
@@ -694,7 +902,7 @@ export function AdminPanel({
       <div className="space-y-4">
         {paginatedReports.length === 0 ? (
           <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-12 text-center">
-            <p className="text-gray-500 dark:text-gray-400">Жалобы не найдены</p>
+            <p className="text-gray-500 dark:text-gray-400">{ap.reports.empty}</p>
           </div>
         ) : (
           paginatedReports.map(report => {
@@ -710,15 +918,15 @@ export function AdminPanel({
                         report.status === 'dismissed' ? 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300' :
                         'bg-muted text-muted-foreground'
                       }`}>
-                        {report.status === 'pending' ? 'Новая' : 
-                         report.status === 'resolved' ? 'Решена' : 
-                         report.status === 'dismissed' ? 'Отклонена' : 'Проверена'}
+                        {report.status === 'pending' ? ap.reports.badgeNew : 
+                         report.status === 'resolved' ? ap.reports.badgeResolved : 
+                         report.status === 'dismissed' ? ap.reports.badgeDismissed : ap.reports.badgeReviewed}
                       </span>
-                      <span className="text-sm font-medium text-gray-900 dark:text-white">{reportReasonLabels[report.reason]}</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">{ap.reports.reasons[report.reason]}</span>
                     </div>
                     
                     <p className="font-medium text-gray-900 dark:text-white mb-1">
-                      От: <a href={`/user/${report.reporterId}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/90 hover:underline">{report.reporterName}</a>
+                      {ap.reports.from}: <a href={`/user/${report.reporterId}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/90 hover:underline">{report.reporterName}</a>
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{report.description}</p>
                     
@@ -731,7 +939,7 @@ export function AdminPanel({
                       >
                         <img src={getAdminPetPreviewPhoto(pet)} alt="" className="w-12 h-12 object-cover rounded-lg" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-blue-600">{pet.breed || 'Без породы'}</p>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400">{pet.breed || ap.breedUnknown}</p>
                           <p className="text-xs text-gray-600 dark:text-gray-400">{pet.city} · {pet.authorName}</p>
                         </div>
                         <ExternalLink className="w-4 h-4 text-gray-400 dark:text-gray-500 group-hover:text-primary shrink-0" />
@@ -749,14 +957,14 @@ export function AdminPanel({
                         <button
                           onClick={() => onUpdateReport({ ...report, status: 'resolved', reviewedAt: new Date() })}
                           className="p-2 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
-                          title="Решить"
+                          title={ap.reports.resolveTooltip}
                         >
                           <CheckCircle2 className="w-5 h-5" />
                         </button>
                         <button
                           onClick={() => onUpdateReport({ ...report, status: 'dismissed', reviewedAt: new Date() })}
                           className="p-2 text-gray-600 dark:text-gray-400 hover:bg-accent dark:hover:bg-accent rounded-lg transition-colors"
-                          title="Отклонить"
+                          title={ap.reports.dismissTooltip}
                         >
                           <XCircle className="w-5 h-5" />
                         </button>
@@ -764,12 +972,12 @@ export function AdminPanel({
                     )}
                     <button
                       onClick={() => {
-                        if (window.confirm('Удалить эту жалобу безвозвратно?')) {
+                        if (window.confirm(ap.reports.deleteConfirm)) {
                           onDeleteReport(report.id);
                         }
                       }}
                       className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                      title="Удалить жалобу"
+                      title={ap.reports.deleteTooltip}
                     >
                       <Trash2 className="w-5 h-5" />
                     </button>
@@ -790,14 +998,14 @@ export function AdminPanel({
             className="flex items-center gap-2 px-4 py-3 text-sm bg-card border border-gray-200 dark:border-gray-700 dark:text-gray-300 rounded-lg hover:bg-accent dark:hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <ChevronLeft className="w-4 h-4" />
-            Назад
+            {t.common.back}
           </button>
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-600 dark:text-gray-400">
-              Страница {reportsPage} из {totalPages}
+              {ap.reports.pageOf(reportsPage, totalPages)}
             </span>
             <span className="text-xs text-gray-500 dark:text-gray-400">
-              ({filteredReports.length} всего)
+              {ap.users.totalShort(filteredReports.length)}
             </span>
           </div>
           <button
@@ -805,7 +1013,7 @@ export function AdminPanel({
             disabled={reportsPage >= totalPages}
             className="flex items-center gap-2 px-4 py-3 text-sm bg-card border border-gray-200 dark:border-gray-700 dark:text-gray-300 rounded-lg hover:bg-accent dark:hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Вперед
+            {t.common.forward}
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>
@@ -850,15 +1058,638 @@ export function AdminPanel({
     setEditingMedia(null);
   };
 
+  const openBlogCreate = () => {
+    setEditingBlog('create');
+    setEditBlogSlug('');
+    setEditBlogTitle('');
+    setEditBlogExcerpt('');
+    setEditBlogBody('');
+    setEditBlogCover('');
+    setEditBlogMeta('');
+    setEditBlogCategory(blogCategories[0]?.slug ?? '');
+    setEditBlogStatus('draft');
+    setBlogSlugUserTouched(false);
+  };
+
+  const openBlogEdit = (bp: BlogPostAdmin) => {
+    setEditingBlog(bp);
+    setEditBlogSlug(bp.slug);
+    setEditBlogTitle(bp.title);
+    setBlogSlugUserTouched(true);
+    setEditBlogExcerpt(bp.excerpt || '');
+    setEditBlogBody(bp.body_md);
+    setEditBlogCover(bp.cover_image_url || '');
+    setEditBlogMeta(bp.meta_description || '');
+    setEditBlogCategory(bp.category || blogCategories[0]?.slug || '');
+    setEditBlogStatus(bp.status === 'published' ? 'published' : 'draft');
+  };
+
+  const handleSaveBlog = () => {
+    const slug = editBlogSlug.trim().toLowerCase();
+    const title = editBlogTitle.trim();
+    const body = editBlogBody.trim();
+    if (!slug || !title || !body) {
+      toast.error(ap.toasts.blogFillRequired);
+      return;
+    }
+    if (!blogCategories.length) {
+      toast.error(ap.toasts.blogNeedCategory);
+      return;
+    }
+    const categorySlug = blogCategories.some((c) => c.slug === editBlogCategory)
+      ? editBlogCategory
+      : blogCategories[0].slug;
+    if (editingBlog === 'create') {
+      onBlogCreate({
+        slug,
+        title,
+        excerpt: editBlogExcerpt.trim() || undefined,
+        body_md: body,
+        cover_image_url: editBlogCover.trim() || undefined,
+        meta_description: editBlogMeta.trim() || undefined,
+        category: categorySlug,
+        status: editBlogStatus,
+      });
+    } else if (editingBlog && editingBlog !== 'create') {
+      onBlogUpdate(editingBlog.id, {
+        slug,
+        title,
+        excerpt: editBlogExcerpt.trim() || undefined,
+        body_md: body,
+        cover_image_url: editBlogCover.trim() || undefined,
+        meta_description: editBlogMeta.trim() || undefined,
+        category: categorySlug,
+        status: editBlogStatus,
+      });
+    }
+    setEditingBlog(null);
+  };
+
+  const openBlogCategoryCreate = () => {
+    setEditingBlogCategory('create');
+    setEditCatSlug('');
+    setEditCatTitle('');
+    setEditCatSort(0);
+  };
+
+  const openBlogCategoryEdit = (c: BlogCategory) => {
+    setEditingBlogCategory(c);
+    setEditCatSlug(c.slug);
+    setEditCatTitle(c.title);
+    setEditCatSort(c.sort_order);
+  };
+
+  const refreshBlogCategories = () => {
+    blogApi.listCategories().then(setBlogCategories).catch(() => setBlogCategories([]));
+  };
+
+  const handleSaveBlogCategory = () => {
+    if (editingBlogCategory === 'create') {
+      const slug = editCatSlug.trim().toLowerCase();
+      const title = editCatTitle.trim();
+      if (!slug || !title) {
+        toast.error(ap.toasts.categoryFillSlugTitle);
+        return;
+      }
+      blogApi
+        .adminCategoryCreate({ slug, title, sort_order: editCatSort })
+        .then(() => {
+          toast.success(ap.toasts.categoryCreated);
+          setEditingBlogCategory(null);
+          refreshBlogCategories();
+        })
+        .catch((e: unknown) => toast.error(e instanceof Error ? e.message : ap.toasts.categoryCreateError));
+    } else if (editingBlogCategory && editingBlogCategory !== 'create') {
+      const title = editCatTitle.trim();
+      if (!title) {
+        toast.error(ap.toasts.categoryTitleRequired);
+        return;
+      }
+      blogApi
+        .adminCategoryUpdate(editingBlogCategory.id, { title, sort_order: editCatSort })
+        .then(() => {
+          toast.success(ap.toasts.savedShort);
+          setEditingBlogCategory(null);
+          refreshBlogCategories();
+        })
+        .catch((e: unknown) => toast.error(e instanceof Error ? e.message : ap.toasts.saveErrorShort));
+    }
+  };
+
+  const blogTelegramUrl = (p: BlogPostAdmin) => {
+    if (p.telegram_message_id == null) return null;
+    const u = (p.telegram_channel_username || '').replace(/^@/, '');
+    if (!u) return null;
+    return `https://t.me/${u}/${p.telegram_message_id}`;
+  };
+
+  const renderBlog = () => {
+    const blogCategorySelectValue = blogCategories.some((c) => c.slug === editBlogCategory)
+      ? editBlogCategory
+      : (blogCategories[0]?.slug ?? '');
+
+    return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">{ap.tabs.articles}</h2>
+        <button
+          type="button"
+          onClick={openBlogCreate}
+          className="flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 text-sm"
+        >
+          <Plus className="w-4 h-4" /> {ap.blog.newArticle}
+        </button>
+      </div>
+
+      <p className="text-sm text-gray-600 dark:text-gray-400 max-w-3xl">
+        {ap.blog.hintTelegramPrefix}{' '}
+        <button
+          type="button"
+          onClick={() => selectTab('telegramBlog')}
+          className="text-primary font-medium hover:underline"
+        >
+          {ap.blog.hintTelegramLink}
+        </button>
+        .
+      </p>
+
+      {blogCategories.length === 0 ? (
+        <p className="text-sm text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-lg px-4 py-3 max-w-3xl">
+          {ap.blog.hintCategoriesEmptyPrefix}{' '}
+          <button type="button" onClick={() => selectTab('blogCategories')} className="font-medium underline">
+            {ap.blog.hintCategoriesLink}
+          </button>
+          {ap.blog.hintCategoriesEmptySuffix}
+        </p>
+      ) : null}
+
+      <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg overflow-x-auto">
+        <table className="w-full min-w-[720px]">
+          <thead className="bg-muted dark:bg-accent border-b border-gray-200 dark:border-gray-600">
+            <tr>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.blog.colTitle}</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.blog.colSlug}</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.blog.colStatus}</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.blog.colTelegram}</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.blog.colActions}</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+            {blogPosts.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                  {ap.blog.empty}
+                </td>
+              </tr>
+            ) : (
+              blogPosts.map((p) => {
+                const tg = blogTelegramUrl(p);
+                return (
+                  <tr key={p.id} className="hover:bg-accent dark:hover:bg-accent">
+                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white font-medium max-w-[200px]">
+                      <span className="line-clamp-2">{p.title}</span>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300 font-mono">{p.slug}</td>
+                    <td className="px-4 py-3 text-sm">
+                      <span
+                        className={
+                          p.status === 'published'
+                            ? 'text-green-600 dark:text-green-400'
+                            : 'text-amber-600 dark:text-amber-400'
+                        }
+                      >
+                        {p.status === 'published' ? ap.blog.published : ap.blog.draft}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      {tg ? (
+                        <a href={tg} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-1">
+                          {ap.blog.tgOpen} <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                      ) : p.status === 'published' ? (
+                        <button
+                          type="button"
+                          onClick={() => onBlogSendTelegram(p.id)}
+                          className="text-primary text-sm hover:underline"
+                        >
+                          {ap.blog.tgSend}
+                        </button>
+                      ) : (
+                        <span className="text-gray-400">{ap.blog.tgDash}</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-1">
+                        {p.status === 'published' ? (
+                          <button
+                            type="button"
+                            onClick={() => window.open(`/blog/${p.slug}`, '_blank')}
+                            className="p-1.5 text-primary hover:bg-primary/10 rounded transition-colors"
+                            title={ap.blog.previewSite}
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                          </button>
+                        ) : null}
+                        <button
+                          type="button"
+                          onClick={() => openBlogEdit(p)}
+                          className="p-1.5 text-primary hover:bg-primary/10 dark:hover:bg-primary/20 rounded transition-colors"
+                          title={ap.blog.editTooltip}
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (window.confirm(ap.toasts.deleteArticleConfirm)) onBlogDelete(p.id);
+                          }}
+                          className="p-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                          title={ap.blog.deleteTooltip}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {editingBlog && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={() => setEditingBlog(null)}
+        >
+          <div
+            className="bg-card rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-6 py-4 border-b dark:border-gray-700 sticky top-0 bg-card z-10">
+              <h3 className="font-semibold text-gray-900 dark:text-white">
+                {editingBlog === 'create' ? ap.blog.modalNewTitle : ap.blog.modalEditTitle}
+              </h3>
+              <button type="button" onClick={() => setEditingBlog(null)} className="p-1 hover:bg-accent rounded">
+                <X className="w-5 h-5 dark:text-gray-400" />
+              </button>
+            </div>
+            <div className="px-6 py-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{ap.blog.fieldTitle}</label>
+                <input
+                  type="text"
+                  value={editBlogTitle}
+                  onChange={(e) => {
+                    const v = e.target.value.slice(0, 200);
+                    setEditBlogTitle(v);
+                    if (editingBlog === 'create' && !blogSlugUserTouched) {
+                      setEditBlogSlug(titleToBlogSlug(v));
+                    }
+                  }}
+                  maxLength={200}
+                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
+                />
+              </div>
+              <div>
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {ap.blog.fieldSlug}
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditBlogSlug(titleToBlogSlug(editBlogTitle));
+                      setBlogSlugUserTouched(false);
+                    }}
+                    className="text-xs text-primary hover:underline"
+                  >
+                    {ap.blog.slugFromTitle}
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  value={editBlogSlug}
+                  onChange={(e) => {
+                    setBlogSlugUserTouched(true);
+                    setEditBlogSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''));
+                  }}
+                  placeholder={ap.blog.slugPlaceholder}
+                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg font-mono text-sm"
+                />
+                {editingBlog === 'create' && !blogSlugUserTouched ? (
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    {ap.blog.slugHint}
+                  </p>
+                ) : null}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{ap.blog.fieldExcerpt}</label>
+                <textarea
+                  value={editBlogExcerpt}
+                  onChange={(e) => setEditBlogExcerpt(e.target.value.slice(0, 2000))}
+                  rows={3}
+                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg resize-y min-h-[80px]"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  {ap.blog.fieldBody}
+                </label>
+                <BlogMarkdownEditor value={editBlogBody} onChange={setEditBlogBody} rows={14} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{ap.blog.fieldCover}</label>
+                <input
+                  type="text"
+                  value={editBlogCover}
+                  onChange={(e) => setEditBlogCover(e.target.value)}
+                  placeholder={ap.blog.coverPlaceholder}
+                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm"
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{ap.blog.coverHint}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{ap.blog.fieldMeta}</label>
+                <input
+                  type="text"
+                  value={editBlogMeta}
+                  onChange={(e) => setEditBlogMeta(e.target.value.slice(0, 320))}
+                  maxLength={320}
+                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm"
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{ap.blog.fieldCategory}</label>
+                  <Select
+                    value={blogCategorySelectValue}
+                    onValueChange={setEditBlogCategory}
+                    disabled={blogCategories.length === 0}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder={ap.blog.categoryNone} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {blogCategories.map((c) => (
+                        <SelectItem key={c.id} value={c.slug}>
+                          {c.title} ({c.slug})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{ap.blog.fieldStatus}</label>
+                  <Select
+                    value={editBlogStatus}
+                    onValueChange={(v) => setEditBlogStatus(v as 'draft' | 'published')}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="draft">{ap.blog.statusDraft}</SelectItem>
+                      <SelectItem value="published">{ap.blog.statusPublished}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 px-6 py-4 border-t dark:border-gray-700 sticky bottom-0 bg-card">
+              <button
+                type="button"
+                onClick={() => setEditingBlog(null)}
+                className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-accent"
+              >
+                {t.common.cancel}
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveBlog}
+                className="flex items-center gap-2 px-4 py-3 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+              >
+                <Save className="w-4 h-4" /> {t.common.save}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+    );
+  };
+
+  const renderBlogCategories = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">{ap.categories.title}</h2>
+        <button
+          type="button"
+          onClick={openBlogCategoryCreate}
+          className="flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 text-sm"
+        >
+          <Plus className="w-4 h-4" /> {ap.categories.new}
+        </button>
+      </div>
+      <p className="text-sm text-gray-600 dark:text-gray-400 max-w-3xl">
+        {ap.categories.hint}
+      </p>
+
+      <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg overflow-x-auto">
+        <table className="w-full min-w-[560px]">
+          <thead className="bg-muted dark:bg-accent border-b border-gray-200 dark:border-gray-600">
+            <tr>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                {ap.categories.colOrder}
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                {ap.categories.colName}
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.categories.colSlug}</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                {ap.categories.colActions}
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+            {blogCategories.length === 0 ? (
+              <tr>
+                <td colSpan={4} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                  {ap.categories.empty}
+                </td>
+              </tr>
+            ) : (
+              [...blogCategories]
+                .sort((a, b) => a.sort_order - b.sort_order || a.slug.localeCompare(b.slug))
+                .map((c) => (
+                  <tr key={c.id} className="hover:bg-accent dark:hover:bg-accent">
+                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{c.sort_order}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white font-medium">{c.title}</td>
+                    <td className="px-4 py-3 text-sm font-mono text-gray-600 dark:text-gray-300">{c.slug}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => openBlogCategoryEdit(c)}
+                          className="p-1.5 text-primary hover:bg-primary/10 dark:hover:bg-primary/20 rounded transition-colors"
+                          title={ap.users.editTitleTooltip}
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!window.confirm(ap.categories.deleteConfirm)) return;
+                            blogApi
+                              .adminCategoryDelete(c.id)
+                              .then(() => {
+                                toast.success(ap.toasts.categoryDeleted);
+                                refreshBlogCategories();
+                              })
+                              .catch((e: unknown) =>
+                                toast.error(e instanceof Error ? e.message : ap.toasts.categoryDeleteError),
+                              );
+                          }}
+                          className="p-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                          title={ap.users.deleteTooltip}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {editingBlogCategory ? (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={() => setEditingBlogCategory(null)}
+        >
+          <div
+            className="bg-card rounded-xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-6 py-4 border-b dark:border-gray-700 sticky top-0 bg-card z-10">
+              <h3 className="font-semibold text-gray-900 dark:text-white">
+                {editingBlogCategory === 'create' ? ap.categories.modalNew : ap.categories.modalEdit}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setEditingBlogCategory(null)}
+                className="p-1 hover:bg-accent rounded"
+              >
+                <X className="w-5 h-5 dark:text-gray-400" />
+              </button>
+            </div>
+            <div className="px-6 py-4 space-y-4">
+              {editingBlogCategory === 'create' ? (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      {ap.categories.nameLabel}
+                    </label>
+                    <input
+                      type="text"
+                      value={editCatTitle}
+                      onChange={(e) => setEditCatTitle(e.target.value.slice(0, 200))}
+                      className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
+                    />
+                  </div>
+                  <div>
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{ap.categories.slugLabel}</label>
+                      <button
+                        type="button"
+                        onClick={() => setEditCatSlug(titleToBlogSlug(editCatTitle))}
+                        className="text-xs text-primary hover:underline"
+                      >
+                        {ap.categories.slugFromTitle}
+                      </button>
+                    </div>
+                    <input
+                      type="text"
+                      value={editCatSlug}
+                      onChange={(e) =>
+                        setEditCatSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))
+                      }
+                      placeholder={ap.categories.slugPlaceholder}
+                      className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg font-mono text-sm"
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      {ap.categories.nameLabel}
+                    </label>
+                    <input
+                      type="text"
+                      value={editCatTitle}
+                      onChange={(e) => setEditCatTitle(e.target.value.slice(0, 200))}
+                      className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{ap.blog.colSlug}</label>
+                    <input
+                      type="text"
+                      value={editCatSlug}
+                      readOnly
+                      className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 rounded-lg font-mono text-sm cursor-not-allowed"
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{ap.categories.slugReadonlyHint}</p>
+                  </div>
+                </>
+              )}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  {ap.categories.sortLabel}
+                </label>
+                <input
+                  type="number"
+                  value={editCatSort}
+                  onChange={(e) => setEditCatSort(parseInt(e.target.value, 10) || 0)}
+                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 px-6 py-4 border-t dark:border-gray-700">
+              <button
+                type="button"
+                onClick={() => setEditingBlogCategory(null)}
+                className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-accent"
+              >
+                {t.common.cancel}
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveBlogCategory}
+                className="flex items-center gap-2 px-4 py-3 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+              >
+                <Save className="w-4 h-4" /> {t.common.save}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+
   const renderMedia = () => (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">СМИ о нас</h2>
+        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">{ap.media.title}</h2>
         <button
           onClick={openMediaCreate}
           className="flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 text-sm"
         >
-          <Plus className="w-4 h-4" /> Добавить публикацию
+          <Plus className="w-4 h-4" /> {ap.media.add}
         </button>
       </div>
 
@@ -866,18 +1697,18 @@ export function AdminPanel({
         <table className="w-full min-w-[600px]">
           <thead className="bg-muted dark:bg-accent border-b border-gray-200 dark:border-gray-600">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Лого</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Заголовок</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Дата</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Ссылка</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Действия</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.media.colLogo}</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.media.colTitle}</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.media.colDate}</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.media.colLink}</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.media.colActions}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
             {mediaArticles.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
-                  Публикаций пока нет. Добавьте первую.
+                  {ap.media.empty}
                 </td>
               </tr>
             ) : (
@@ -906,16 +1737,16 @@ export function AdminPanel({
                       <button
                         onClick={() => openMediaEdit(m)}
                         className="p-1.5 text-primary hover:bg-primary/10 dark:hover:bg-primary/20 rounded transition-colors"
-                        title="Редактировать"
+                        title={ap.blog.editTooltip}
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => {
-                          if (window.confirm('Удалить эту публикацию?')) onMediaDelete(m.id);
+                          if (window.confirm(ap.media.deletePublicationConfirm)) onMediaDelete(m.id);
                         }}
                         className="p-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
-                        title="Удалить"
+                        title={ap.blog.deleteTooltip}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -934,39 +1765,39 @@ export function AdminPanel({
           <div className="bg-card rounded-xl shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 py-4 border-b dark:border-gray-700">
               <h3 className="font-semibold text-gray-900 dark:text-white">
-                {editingMedia === 'create' ? 'Добавить публикацию' : 'Редактировать публикацию'}
+                {editingMedia === 'create' ? ap.media.modalAdd : ap.media.modalEdit}
               </h3>
               <button onClick={() => setEditingMedia(null)} className="p-1 hover:bg-accent dark:hover:bg-accent rounded"><X className="w-5 h-5 dark:text-gray-400" /></button>
             </div>
             <div className="px-6 py-4 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">URL логотипа</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{ap.media.logoUrl}</label>
                 <input type="text" value={editLogoUrl} onChange={(e) => setEditLogoUrl(e.target.value)} placeholder="https://..." className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Заголовок *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{ap.media.titleLabel}</label>
                 <input
                   type="text"
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value.slice(0, 100))}
                   maxLength={100}
-                  placeholder="Заголовок публикации (макс. 100 символов)"
+                  placeholder={ap.media.titleHint}
                   className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{editTitle.length}/100</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Дата публикации *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{ap.media.dateLabel}</label>
                 <input type="date" value={editPublishedAt} onChange={(e) => setEditPublishedAt(e.target.value)} className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ссылка на статью</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{ap.media.linkLabel}</label>
                 <input type="url" value={editLink} onChange={(e) => setEditLink(e.target.value)} placeholder="https://..." className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
               </div>
             </div>
             <div className="flex justify-end gap-3 px-6 py-4 border-t dark:border-gray-700">
-              <button onClick={() => setEditingMedia(null)} className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-accent dark:hover:bg-accent">Отмена</button>
-              <button onClick={handleSaveMedia} disabled={!editTitle.trim() || editTitle.length > 100} className="flex items-center gap-2 px-4 py-3 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"><Save className="w-4 h-4" /> Сохранить</button>
+              <button onClick={() => setEditingMedia(null)} className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-accent dark:hover:bg-accent">{t.common.cancel}</button>
+              <button onClick={handleSaveMedia} disabled={!editTitle.trim() || editTitle.length > 100} className="flex items-center gap-2 px-4 py-3 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"><Save className="w-4 h-4" /> {t.common.save}</button>
             </div>
           </div>
         </div>
@@ -1008,12 +1839,12 @@ export function AdminPanel({
   const renderPartners = () => (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Наши партнеры</h2>
+        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">{ap.partners.title}</h2>
         <button
           onClick={openPartnerCreate}
           className="flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 text-sm"
         >
-          <Plus className="w-4 h-4" /> Добавить партнёра
+          <Plus className="w-4 h-4" /> {ap.partners.add}
         </button>
       </div>
 
@@ -1021,17 +1852,17 @@ export function AdminPanel({
         <table className="w-full min-w-[600px]">
           <thead className="bg-muted dark:bg-accent border-b border-gray-200 dark:border-gray-600">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Лого</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Название</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Ссылка</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Действия</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.partners.colLogo}</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.partners.colName}</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.partners.colLink}</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.partners.colActions}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
             {partners.length === 0 ? (
               <tr>
                 <td colSpan={4} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
-                  Партнёров пока нет. Добавьте первого.
+                  {ap.partners.empty}
                 </td>
               </tr>
             ) : (
@@ -1059,16 +1890,16 @@ export function AdminPanel({
                       <button
                         onClick={() => openPartnerEdit(p)}
                         className="p-1.5 text-primary hover:bg-primary/10 dark:hover:bg-primary/20 rounded transition-colors"
-                        title="Редактировать"
+                        title={ap.blog.editTooltip}
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => {
-                          if (window.confirm('Удалить этого партнёра?')) onPartnerDelete(p.id);
+                          if (window.confirm(ap.partners.deleteConfirm)) onPartnerDelete(p.id);
                         }}
                         className="p-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
-                        title="Удалить"
+                        title={ap.blog.deleteTooltip}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -1086,28 +1917,274 @@ export function AdminPanel({
           <div className="bg-card rounded-xl shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 py-4 border-b dark:border-gray-700">
               <h3 className="font-semibold text-gray-900 dark:text-white">
-                {editingPartner === 'create' ? 'Добавить партнёра' : 'Редактировать партнёра'}
+                {editingPartner === 'create' ? ap.partners.modalAdd : ap.partners.modalEdit}
               </h3>
               <button onClick={() => setEditingPartner(null)} className="p-1 hover:bg-accent dark:hover:bg-accent rounded"><X className="w-5 h-5 dark:text-gray-400" /></button>
             </div>
             <div className="px-6 py-4 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">URL логотипа</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{ap.partners.logoUrl}</label>
                 <input type="text" value={editPartnerLogoUrl} onChange={(e) => setEditPartnerLogoUrl(e.target.value)} placeholder="https://..." className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Название компании *</label>
-                <input type="text" value={editPartnerName} onChange={(e) => setEditPartnerName(e.target.value.slice(0, 100))} maxLength={100} placeholder="Название партнёра" className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{ap.partners.nameLabel}</label>
+                <input type="text" value={editPartnerName} onChange={(e) => setEditPartnerName(e.target.value.slice(0, 100))} maxLength={100} placeholder={ap.partners.namePlaceholder} className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{editPartnerName.length}/100</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ссылка</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{ap.partners.linkLabel}</label>
                 <input type="url" value={editPartnerLink} onChange={(e) => setEditPartnerLink(e.target.value)} placeholder="https://..." className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
               </div>
             </div>
             <div className="flex justify-end gap-3 px-6 py-4 border-t dark:border-gray-700">
-              <button onClick={() => setEditingPartner(null)} className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-accent dark:hover:bg-accent">Отмена</button>
-              <button onClick={handleSavePartner} disabled={!editPartnerName.trim()} className="flex items-center gap-2 px-4 py-3 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"><Save className="w-4 h-4" /> Сохранить</button>
+              <button onClick={() => setEditingPartner(null)} className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-accent dark:hover:bg-accent">{t.common.cancel}</button>
+              <button onClick={handleSavePartner} disabled={!editPartnerName.trim()} className="flex items-center gap-2 px-4 py-3 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"><Save className="w-4 h-4" /> {t.common.save}</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  const openFaqCreate = () => {
+    const nextOrder = faqItems.length ? Math.max(...faqItems.map((f) => f.sort_order), 0) + 1 : 0;
+    setEditingFaq('create');
+    setEditFaqQr('');
+    setEditFaqQb('');
+    setEditFaqQe('');
+    setEditFaqAr('');
+    setEditFaqAb('');
+    setEditFaqAe('');
+    setEditFaqSort(nextOrder);
+  };
+
+  const openFaqEdit = (row: FaqItem) => {
+    setEditingFaq(row);
+    setEditFaqQr(row.question_ru);
+    setEditFaqQb(row.question_be);
+    setEditFaqQe(row.question_en);
+    setEditFaqAr(row.answer_ru);
+    setEditFaqAb(row.answer_be);
+    setEditFaqAe(row.answer_en);
+    setEditFaqSort(row.sort_order);
+  };
+
+  const handleSaveFaq = () => {
+    if (editingFaq === 'create') {
+      onFaqCreate({
+        question_ru: editFaqQr,
+        question_be: editFaqQb,
+        question_en: editFaqQe,
+        answer_ru: editFaqAr,
+        answer_be: editFaqAb,
+        answer_en: editFaqAe,
+        sort_order: editFaqSort,
+      });
+    } else if (editingFaq && editingFaq !== 'create') {
+      onFaqUpdate(editingFaq.id, {
+        question_ru: editFaqQr,
+        question_be: editFaqQb,
+        question_en: editFaqQe,
+        answer_ru: editFaqAr,
+        answer_be: editFaqAb,
+        answer_en: editFaqAe,
+        sort_order: editFaqSort,
+      });
+    }
+    setEditingFaq(null);
+  };
+
+  const renderFaq = () => (
+    <div className="space-y-6">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">{ap.faq.title}</h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 max-w-3xl">{ap.faq.hint}</p>
+        </div>
+        <button
+          type="button"
+          onClick={openFaqCreate}
+          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 text-sm shrink-0"
+        >
+          <Plus className="w-4 h-4" /> {ap.faq.add}
+        </button>
+      </div>
+
+      <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg overflow-x-auto">
+        <table className="w-full min-w-[480px]">
+          <thead className="bg-muted dark:bg-accent border-b border-gray-200 dark:border-gray-600">
+            <tr>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                {ap.faq.colOrder}
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                {ap.faq.colQuestion}
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                {ap.faq.colActions}
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+            {faqRowsSorted.length === 0 ? (
+              <tr>
+                <td colSpan={3} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                  {ap.faq.empty}
+                </td>
+              </tr>
+            ) : (
+              faqRowsSorted.map((row) => (
+                <tr key={row.id} className="hover:bg-accent dark:hover:bg-accent">
+                  <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                    {row.sort_order}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-white max-w-md truncate">
+                    {row.question_ru || '—'}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => openFaqEdit(row)}
+                        className="p-1.5 text-primary hover:bg-primary/10 dark:hover:bg-primary/20 rounded transition-colors"
+                        title={ap.blog.editTooltip}
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (window.confirm(ap.faq.deleteConfirm)) onFaqDelete(row.id);
+                        }}
+                        className="p-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                        title={ap.blog.deleteTooltip}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {editingFaq && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={() => setEditingFaq(null)}
+        >
+          <div
+            className="bg-card rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-6 py-4 border-b dark:border-gray-700 sticky top-0 bg-card z-10">
+              <h3 className="font-semibold text-gray-900 dark:text-white">
+                {editingFaq === 'create' ? ap.faq.modalAdd : ap.faq.modalEdit}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setEditingFaq(null)}
+                className="p-1 hover:bg-accent dark:hover:bg-accent rounded"
+              >
+                <X className="w-5 h-5 dark:text-gray-400" />
+              </button>
+            </div>
+            <div className="px-6 py-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  {ap.faq.sortLabel}
+                </label>
+                <input
+                  type="number"
+                  value={editFaqSort}
+                  onChange={(e) => setEditFaqSort(parseInt(e.target.value, 10) || 0)}
+                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  {ap.faq.questionRu}
+                </label>
+                <textarea
+                  value={editFaqQr}
+                  onChange={(e) => setEditFaqQr(e.target.value)}
+                  rows={2}
+                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg resize-y"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  {ap.faq.questionBe}
+                </label>
+                <textarea
+                  value={editFaqQb}
+                  onChange={(e) => setEditFaqQb(e.target.value)}
+                  rows={2}
+                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg resize-y"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  {ap.faq.questionEn}
+                </label>
+                <textarea
+                  value={editFaqQe}
+                  onChange={(e) => setEditFaqQe(e.target.value)}
+                  rows={2}
+                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg resize-y"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  {ap.faq.answerRu}
+                </label>
+                <textarea
+                  value={editFaqAr}
+                  onChange={(e) => setEditFaqAr(e.target.value)}
+                  rows={4}
+                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg resize-y"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  {ap.faq.answerBe}
+                </label>
+                <textarea
+                  value={editFaqAb}
+                  onChange={(e) => setEditFaqAb(e.target.value)}
+                  rows={4}
+                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg resize-y"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  {ap.faq.answerEn}
+                </label>
+                <textarea
+                  value={editFaqAe}
+                  onChange={(e) => setEditFaqAe(e.target.value)}
+                  rows={4}
+                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg resize-y"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 px-6 py-4 border-t dark:border-gray-700 sticky bottom-0 bg-card">
+              <button
+                type="button"
+                onClick={() => setEditingFaq(null)}
+                className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-accent dark:hover:bg-accent"
+              >
+                {t.common.cancel}
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveFaq}
+                className="flex items-center gap-2 px-4 py-3 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+              >
+                <Save className="w-4 h-4" /> {t.common.save}
+              </button>
             </div>
           </div>
         </div>
@@ -1117,15 +2194,15 @@ export function AdminPanel({
 
   const renderFeatureFlags = () => (
     <div className="space-y-6">
-      <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Feature flags</h2>
+      <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">{ap.featureFlags.title}</h2>
 
       <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-        <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Лендинг</h3>
+        <h3 className="font-semibold text-gray-900 dark:text-white mb-4">{ap.featureFlags.landingTitle}</h3>
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Показывать секцию статистики</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Hero и блок «Как помочь» с цифрами (найденные питомцы, пользователи и т.д.)</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{ap.featureFlags.ffStats}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{ap.featureFlags.ffStatsDesc}</p>
             </div>
             <Switch
               checked={featureFlags.ff_landing_show_stats}
@@ -1134,8 +2211,8 @@ export function AdminPanel({
           </div>
           <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-200 dark:border-gray-600">
             <div>
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Показывать секцию «Как нам помочь»</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Секция на лендинге и ссылка в навигации футера</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{ap.featureFlags.ffHelp}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{ap.featureFlags.ffHelpDesc}</p>
             </div>
             <Switch
               checked={featureFlags.ff_landing_show_help}
@@ -1144,8 +2221,8 @@ export function AdminPanel({
           </div>
           <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-200 dark:border-gray-600">
             <div>
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Секция «Защитите питомца» (QR)</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Блок после «Как это работает?» с профилем питомца и QR-кодом</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{ap.featureFlags.ffPets}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{ap.featureFlags.ffPetsDesc}</p>
             </div>
             <Switch
               checked={featureFlags.ff_landing_show_pets_feature}
@@ -1154,12 +2231,22 @@ export function AdminPanel({
               }
             />
           </div>
+          <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+            <div>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{ap.featureFlags.ffFaq}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{ap.featureFlags.ffFaqDesc}</p>
+            </div>
+            <Switch
+              checked={featureFlags.ff_landing_show_faq}
+              onCheckedChange={(v) => setFeatureFlags((f) => ({ ...f, ff_landing_show_faq: v }))}
+            />
+          </div>
         </div>
       </div>
 
       <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-        <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Основной сайт поиска</h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400">Пока пусто. Фича-флаги для поиска появятся здесь.</p>
+        <h3 className="font-semibold text-gray-900 dark:text-white mb-4">{ap.featureFlags.siteTitle}</h3>
+        <p className="text-sm text-gray-500 dark:text-gray-400">{ap.featureFlags.siteEmpty}</p>
       </div>
 
       <div className="flex justify-end">
@@ -1167,7 +2254,63 @@ export function AdminPanel({
           onClick={handleSaveFeatureFlags}
           className="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
         >
-          Сохранить
+          {t.common.save}
+        </button>
+      </div>
+    </div>
+  );
+
+  const renderTelegramBlogSettings = () => (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">{ap.telegram.title}</h2>
+      <p className="text-sm text-gray-600 dark:text-gray-400 max-w-3xl">
+        {ap.telegram.intro}
+      </p>
+
+      <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-xl p-6 space-y-4 max-w-3xl">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{ap.telegram.publishTargetTitle}</h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            {ap.telegram.envVarsIntro}{' '}
+            <code className="text-xs bg-muted px-1 rounded">TELEGRAM_BLOG_CHAT_ID</code>{' '}
+            {ap.telegram.envVarsConjunction}{' '}
+            <code className="text-xs bg-muted px-1 rounded">TELEGRAM_BLOG_PUBLIC_USERNAME</code>
+            {ap.telegram.envVarsSuffix}
+          </p>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            {ap.telegram.chatIdLabel}
+          </label>
+          <input
+            type="text"
+            value={blogTelegramChatId}
+            onChange={(e) => setBlogTelegramChatId(e.target.value)}
+            placeholder={ap.telegram.chatIdPlaceholder}
+            className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm font-mono"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            {ap.telegram.publicUsernameLabel}
+          </label>
+          <input
+            type="text"
+            value={blogTelegramPublicUsername}
+            onChange={(e) => setBlogTelegramPublicUsername(e.target.value.replace(/^@/, ''))}
+            placeholder={ap.telegram.usernamePlaceholder}
+            className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm font-mono"
+          />
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            {ap.telegram.usernameHint}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={handleSaveBlogTelegramSettings}
+          className="px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 text-sm font-medium"
+        >
+          {ap.telegram.save}
         </button>
       </div>
     </div>
@@ -1175,29 +2318,29 @@ export function AdminPanel({
 
   const renderSettings = () => (
     <div className="space-y-6">
-      <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Настройки платформы</h2>
+      <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">{ap.settings.title}</h2>
       
       <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-        <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Общие настройки</h3>
+        <h3 className="font-semibold text-gray-900 dark:text-white mb-4">{ap.settings.general}</h3>
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Требуется ли модерация новых объявлений
+              {ap.settings.moderationLabel}
             </label>
             <Select value={settings.requireModeration ? 'yes' : 'no'} onValueChange={(v) => setSettings(s => ({ ...s, requireModeration: v === 'yes' }))}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Модерация" />
+                <SelectValue placeholder={ap.settings.moderationPh} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="yes">Да, требуется проверка</SelectItem>
-                <SelectItem value="no">Нет, публиковать сразу</SelectItem>
+                <SelectItem value="yes">{ap.settings.moderationYes}</SelectItem>
+                <SelectItem value="no">{ap.settings.moderationNo}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Автоматическая архивация после (дней)
+              {ap.settings.archiveLabel}
             </label>
             <input 
               type="number"
@@ -1211,7 +2354,7 @@ export function AdminPanel({
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Максимум фото на объявление
+              {ap.settings.maxPhotosLabel}
             </label>
             <input 
               type="number"
@@ -1226,9 +2369,9 @@ export function AdminPanel({
       </div>
 
       <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-        <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Управление городами</h3>
+        <h3 className="font-semibold text-gray-900 dark:text-white mb-4">{ap.settings.citiesTitle}</h3>
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          Список городов настраивается в файле /utils/cities.ts
+          {ap.settings.citiesHint}
         </p>
       </div>
 
@@ -1237,7 +2380,7 @@ export function AdminPanel({
           onClick={handleSaveSettings}
           className="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
         >
-          Сохранить настройки
+          {ap.settings.save}
         </button>
       </div>
     </div>
@@ -1257,46 +2400,70 @@ export function AdminPanel({
                 <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
               </button>
               <div>
-                <h1 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">Админ-панель</h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400 hidden sm:block">Управление платформой</p>
+                <h1 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">{ap.header.title}</h1>
+                <p className="text-sm text-gray-600 dark:text-gray-400 hidden sm:block">{ap.header.subtitle}</p>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Tabs */}
+      {/* Разделы + подвкладки */}
       <div className="bg-card border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 overflow-x-auto scrollbar-hide">
-          <div className="flex gap-1 min-w-max">
-            {tabs.map(tab => {
-              const Icon = tab.icon;
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex gap-2 py-2 overflow-x-auto scrollbar-hide border-b border-gray-200/80 dark:border-gray-600/80">
+            {sectionMeta.map((sec) => {
+              const SecIcon = sec.icon;
+              const isActive = activeSection === sec.id;
               return (
                 <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors whitespace-nowrap text-sm ${
-                    activeTab === tab.id
-                      ? 'border-primary text-primary'
-                      : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                  key={sec.id}
+                  type="button"
+                  onClick={() => selectSection(sec.id)}
+                  className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-lg text-sm font-medium shrink-0 transition-colors ${
+                    isActive
+                      ? 'bg-primary/15 text-primary ring-1 ring-primary/30'
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-muted dark:hover:bg-gray-800'
                   }`}
                 >
-                  <Icon className="w-4 h-4 shrink-0" />
-                  <span className="hidden sm:inline">{tab.label}</span>
-                  <span className="sm:hidden">{tab.label}</span>
-                  {tab.id === 'reports' && stats.pendingReports > 0 && (
-                    <span className="px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded-full text-xs font-medium">
-                      {stats.pendingReports}
-                    </span>
-                  )}
-                  {tab.id === 'moderation' && pets.filter(p => p.moderationStatus === 'pending').length > 0 && (
-                    <span className="px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-full text-xs font-medium">
-                      {pets.filter(p => p.moderationStatus === 'pending').length}
-                    </span>
-                  )}
+                  <SecIcon className="w-4 h-4 shrink-0" />
+                  <span className="hidden sm:inline">{sec.label}</span>
+                  <span className="sm:hidden">{sec.shortLabel}</span>
                 </button>
               );
             })}
+          </div>
+          <div className="overflow-x-auto scrollbar-hide">
+            <div className="flex gap-1 min-w-max">
+              {subTabs.map((tab) => {
+                const Icon = tab.icon;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => selectTab(tab.id)}
+                    className={`flex items-center gap-2 px-3 sm:px-4 py-3 border-b-2 transition-colors whitespace-nowrap text-sm ${
+                      activeTab === tab.id
+                        ? 'border-primary text-primary'
+                        : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4 shrink-0" />
+                    <span>{tab.label}</span>
+                    {tab.id === 'reports' && stats.pendingReports > 0 && (
+                      <span className="px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded-full text-xs font-medium">
+                        {stats.pendingReports}
+                      </span>
+                    )}
+                    {tab.id === 'moderation' && pets.filter((p) => p.moderationStatus === 'pending').length > 0 && (
+                      <span className="px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-full text-xs font-medium">
+                        {pets.filter((p) => p.moderationStatus === 'pending').length}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
@@ -1333,8 +2500,12 @@ export function AdminPanel({
         {activeTab === 'users' && renderUsers()}
         {activeTab === 'reports' && renderReports()}
         {activeTab === 'media' && renderMedia()}
+        {activeTab === 'blog' && renderBlog()}
+        {activeTab === 'blogCategories' && renderBlogCategories()}
         {activeTab === 'partners' && renderPartners()}
+        {activeTab === 'faq' && renderFaq()}
         {activeTab === 'featureFlags' && renderFeatureFlags()}
+        {activeTab === 'telegramBlog' && renderTelegramBlogSettings()}
         {activeTab === 'settings' && renderSettings()}
       </div>
     </div>

@@ -3,17 +3,22 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from models import PlatformSettings
+from ttl_cache import settings_cache_get, settings_cache_set
 
 PLATFORM_SETTINGS_DEFAULTS = {
     "require_moderation": "true",
     "auto_archive_days": "90",
     "max_photos": "10",
+    # Блог: куда слать анонсы (можно задать в админке; .env — запасной вариант)
+    "telegram_blog_chat_id": "",
+    "telegram_blog_public_username": "",
 }
 
 FEATURE_FLAG_DEFAULTS = {
     "ff_landing_show_stats": "true",
     "ff_landing_show_help": "true",
     "ff_landing_show_pets_feature": "true",
+    "ff_landing_show_faq": "true",
 }
 
 ALL_PLATFORM_SETTINGS_DEFAULTS = {
@@ -25,9 +30,18 @@ DEFAULT_MAX_PHOTOS = int(PLATFORM_SETTINGS_DEFAULTS["max_photos"])
 
 
 def get_settings_with_defaults(db: Session, defaults: dict[str, str]) -> dict[str, str]:
-    rows = db.scalars(select(PlatformSettings)).all()
+    if not defaults:
+        return {}
+    cache_key = tuple(sorted(defaults.keys()))
+    hit = settings_cache_get(cache_key)
+    if hit is not None:
+        return hit
+    keys = list(defaults.keys())
+    rows = db.scalars(select(PlatformSettings).where(PlatformSettings.key.in_(keys))).all()
     current = {row.key: row.value for row in rows}
-    return {key: current.get(key, default) for key, default in defaults.items()}
+    merged = {key: current.get(key, default) for key, default in defaults.items()}
+    settings_cache_set(cache_key, merged)
+    return merged
 
 
 def get_setting_value(db: Session, key: str, default: str) -> str:

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { CheckCircle2, XCircle, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Pet } from '../types/pet';
 import { formatDate, statusLabels, animalTypeLabels } from '../utils/pet-helpers';
-import { useAuth } from '../context/AuthContext';
+import { useI18n } from '../context/I18nContext';
 import { useScrollLock } from './ui/use-scroll-lock';
 
 interface ModerationPanelProps {
@@ -12,7 +12,8 @@ interface ModerationPanelProps {
 }
 
 export function ModerationPanel({ pets, onApprovePet, onRejectPet }: ModerationPanelProps) {
-  const { user } = useAuth();
+  const { t } = useI18n();
+  const m = t.adminPanel.moderation;
   const [rejectingPet, setRejectingPet] = useState<Pet | null>(null);
   useScrollLock(!!rejectingPet);
   const [rejectReason, setRejectReason] = useState('');
@@ -47,10 +48,10 @@ export function ModerationPanel({ pets, onApprovePet, onRejectPet }: ModerationP
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white">
-          Модерация объявлений
+          {m.title}
         </h2>
         <div className="px-4 py-2 bg-primary/10 dark:bg-primary/20 text-primary rounded-lg border border-primary/20 dark:border-primary/30 font-medium text-sm self-start">
-          На проверке: {pendingPets.length}
+          {m.pendingBadge(pendingPets.length)}
         </div>
       </div>
 
@@ -58,10 +59,10 @@ export function ModerationPanel({ pets, onApprovePet, onRejectPet }: ModerationP
         <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-12 text-center">
           <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-            Нет объявлений на модерации
+            {m.emptyTitle}
           </h3>
           <p className="text-gray-500 dark:text-gray-400">
-            Все объявления проверены!
+            {m.emptyHint}
           </p>
         </div>
       ) : (
@@ -105,18 +106,18 @@ export function ModerationPanel({ pets, onApprovePet, onRejectPet }: ModerationP
 
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-4">
                       <div className="text-sm">
-                        <span className="text-gray-600 dark:text-gray-400">Автор: </span>
+                        <span className="text-gray-600 dark:text-gray-400">{m.author} </span>
                         <span className="font-medium text-gray-900 dark:text-white">{pet.authorName}</span>
                       </div>
                       {pet.contacts.phone && (
                         <div className="text-sm">
-                          <span className="text-gray-600 dark:text-gray-400">Тел: </span>
+                          <span className="text-gray-600 dark:text-gray-400">{m.phoneShort} </span>
                           <span className="font-medium text-gray-900 dark:text-white">{pet.contacts.phone}</span>
                         </div>
                       )}
                       {pet.contacts.telegram && (
                         <div className="text-sm">
-                          <span className="text-gray-600 dark:text-gray-400">TG: </span>
+                          <span className="text-gray-600 dark:text-gray-400">{m.telegramShort} </span>
                           <span className="font-medium text-gray-900 dark:text-white">{pet.contacts.telegram}</span>
                         </div>
                       )}
@@ -129,7 +130,7 @@ export function ModerationPanel({ pets, onApprovePet, onRejectPet }: ModerationP
                           <img
                             key={index}
                             src={photo}
-                            alt={`Фото ${index + 2}`}
+                            alt={m.extraPhotoAlt(index + 2)}
                             className="w-16 h-16 object-cover rounded shrink-0"
                           />
                         ))}
@@ -143,14 +144,14 @@ export function ModerationPanel({ pets, onApprovePet, onRejectPet }: ModerationP
                         className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-3 border border-primary text-primary bg-card rounded-lg hover:bg-primary/10 dark:hover:bg-primary/20 transition-colors text-sm font-medium"
                       >
                         <CheckCircle2 className="w-4 h-4" />
-                        Одобрить
+                        {m.approve}
                       </button>
                       <button
                         onClick={() => handleRejectClick(pet)}
                         className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-3 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 bg-card rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-sm font-medium"
                       >
                         <XCircle className="w-4 h-4" />
-                        Отклонить
+                        {m.reject}
                       </button>
                     </div>
                   </div>
@@ -168,7 +169,7 @@ export function ModerationPanel({ pets, onApprovePet, onRejectPet }: ModerationP
                 className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 bg-card border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-accent dark:hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronLeft className="w-4 h-4" />
-                Назад
+                {m.prevPage}
               </button>
               
               <span className="text-sm text-gray-700 dark:text-gray-300">{page} / {totalPages}</span>
@@ -178,7 +179,7 @@ export function ModerationPanel({ pets, onApprovePet, onRejectPet }: ModerationP
                 disabled={page === totalPages}
                 className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 bg-card border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-accent dark:hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                Вперед
+                {m.nextPage}
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
@@ -192,7 +193,7 @@ export function ModerationPanel({ pets, onApprovePet, onRejectPet }: ModerationP
           <div className="bg-card rounded-lg max-w-md w-full p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                Отклонить объявление
+                {m.rejectModalTitle}
               </h3>
               <button
                 onClick={() => setRejectingPet(null)}
@@ -203,13 +204,13 @@ export function ModerationPanel({ pets, onApprovePet, onRejectPet }: ModerationP
             </div>
 
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              Укажите причину отклонения. Автор увидит это сообщение.
+              {m.rejectHint}
             </p>
 
             <textarea
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
-              placeholder="Например: Недостаточно информации о питомце, некачественные фотографии, подозрение на мошенничество..."
+              placeholder={m.rejectPlaceholder}
               className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg resize-none focus:ring-2 focus:ring-primary focus:border-transparent bg-card dark:bg-gray-700"
               rows={4}
             />
@@ -219,14 +220,14 @@ export function ModerationPanel({ pets, onApprovePet, onRejectPet }: ModerationP
                 onClick={() => setRejectingPet(null)}
                 className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-accent dark:hover:bg-accent transition-colors"
               >
-                Отмена
+                {m.rejectCancel}
               </button>
               <button
                 onClick={handleRejectConfirm}
                 disabled={!rejectReason.trim()}
                 className="flex-1 px-4 py-3 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
               >
-                Отклонить
+                {m.rejectConfirm}
               </button>
             </div>
           </div>

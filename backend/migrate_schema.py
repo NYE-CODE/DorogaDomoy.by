@@ -117,6 +117,18 @@ NEW_TABLES = {
             link VARCHAR
         )
     """,
+    "faq_items": """
+        CREATE TABLE faq_items (
+            id VARCHAR PRIMARY KEY,
+            question_ru TEXT NOT NULL DEFAULT '',
+            question_be TEXT NOT NULL DEFAULT '',
+            question_en TEXT NOT NULL DEFAULT '',
+            answer_ru TEXT NOT NULL DEFAULT '',
+            answer_be TEXT NOT NULL DEFAULT '',
+            answer_en TEXT NOT NULL DEFAULT '',
+            sort_order INTEGER NOT NULL DEFAULT 0
+        )
+    """,
     "profile_pets": """
         CREATE TABLE profile_pets (
             id VARCHAR PRIMARY KEY,
@@ -138,6 +150,47 @@ NEW_TABLES = {
             photos JSON DEFAULT '[]',
             created_at DATETIME,
             updated_at DATETIME
+        )
+    """,
+    "blog_categories": """
+        CREATE TABLE blog_categories (
+            id VARCHAR PRIMARY KEY,
+            slug VARCHAR UNIQUE NOT NULL,
+            title VARCHAR NOT NULL,
+            sort_order INTEGER DEFAULT 0,
+            created_at DATETIME,
+            updated_at DATETIME
+        )
+    """,
+    "blog_posts": """
+        CREATE TABLE blog_posts (
+            id VARCHAR PRIMARY KEY,
+            slug VARCHAR UNIQUE NOT NULL,
+            title VARCHAR NOT NULL,
+            excerpt TEXT,
+            body_md TEXT NOT NULL,
+            cover_image_url VARCHAR,
+            meta_description VARCHAR,
+            category VARCHAR DEFAULT 'guides',
+            status VARCHAR DEFAULT 'draft',
+            published_at DATETIME,
+            created_at DATETIME,
+            updated_at DATETIME,
+            author_id VARCHAR REFERENCES users(id),
+            telegram_message_id INTEGER,
+            telegram_channel_username VARCHAR
+        )
+    """,
+    "profile_pet_scan_signals": """
+        CREATE TABLE profile_pet_scan_signals (
+            id VARCHAR PRIMARY KEY,
+            profile_pet_id VARCHAR NOT NULL REFERENCES profile_pets(id) ON DELETE CASCADE,
+            owner_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            reporter_id VARCHAR REFERENCES users(id) ON DELETE SET NULL,
+            ip_hash VARCHAR,
+            source VARCHAR DEFAULT 'unknown',
+            telegram_sent INTEGER DEFAULT 0,
+            created_at DATETIME
         )
     """,
 }
@@ -189,6 +242,31 @@ def ensure_new_tables(conn):
             print(f"Created table: {table_name}")
 
 
+def seed_blog_categories(conn):
+    """Начальные категории блога (если таблица пуста), чтобы slug-и совпадали со старыми постами."""
+    try:
+        cur = conn.execute("SELECT 1 FROM blog_categories LIMIT 1")
+        if cur.fetchone():
+            return
+    except sqlite3.OperationalError:
+        return
+    from datetime import datetime
+
+    now = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+    seed_rows = [
+        ("bc-guides", "guides", "Советы", 0),
+        ("bc-stories", "stories", "Истории", 1),
+        ("bc-news", "news", "Новости", 2),
+        ("bc-safety", "safety", "Безопасность", 3),
+    ]
+    for sid, slug, title, so in seed_rows:
+        conn.execute(
+            "INSERT INTO blog_categories (id, slug, title, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+            (sid, slug, title, so, now, now),
+        )
+    print("Seeded blog_categories (defaults)")
+
+
 def ensure_platform_settings(conn):
     """Убедиться, что таблица platform_settings существует и содержит нужные ключи."""
     cur = conn.execute(
@@ -210,6 +288,42 @@ def ensure_platform_settings(conn):
             print(f"Added platform_settings: {key}={value}")
 
 
+PERFORMANCE_INDEXES = [
+    "CREATE INDEX IF NOT EXISTS ix_pets_author_id ON pets (author_id)",
+    "CREATE INDEX IF NOT EXISTS ix_pets_status ON pets (status)",
+    (
+        "CREATE INDEX IF NOT EXISTS ix_pets_moderation_archived_published "
+        "ON pets (moderation_status, is_archived, published_at DESC)"
+    ),
+    "CREATE INDEX IF NOT EXISTS ix_pets_animal_type ON pets (animal_type)",
+    "CREATE INDEX IF NOT EXISTS ix_blog_posts_status_published ON blog_posts (status, published_at DESC)",
+    "CREATE INDEX IF NOT EXISTS ix_reports_status ON reports (status)",
+    "CREATE INDEX IF NOT EXISTS ix_reports_created_at ON reports (created_at DESC)",
+    "CREATE INDEX IF NOT EXISTS ix_reports_pet_id ON reports (pet_id)",
+    (
+        "CREATE INDEX IF NOT EXISTS ix_notifications_user_pet "
+        "ON notifications (user_id, pet_id)"
+    ),
+    (
+        "CREATE INDEX IF NOT EXISTS ix_sightings_pet_reporter_created "
+        "ON sightings (pet_id, reporter_id, created_at)"
+    ),
+    (
+        "CREATE INDEX IF NOT EXISTS ix_sightings_pet_ip_created "
+        "ON sightings (pet_id, ip_hash, created_at)"
+    ),
+]
+
+
+def ensure_performance_indexes(conn):
+    """Идемпотентные индексы под частые фильтры (SQLite)."""
+    for ddl in PERFORMANCE_INDEXES:
+        try:
+            conn.execute(ddl)
+        except sqlite3.OperationalError as e:
+            print(f"Warning: index skipped: {e}")
+
+
 if __name__ == "__main__":
     db_path = resolve_sqlite_db_path()
     if not db_path.exists():
@@ -220,7 +334,9 @@ if __name__ == "__main__":
     try:
         changes = migrate(conn)
         ensure_new_tables(conn)
+        seed_blog_categories(conn)
         ensure_platform_settings(conn)
+        ensure_performance_indexes(conn)
         conn.commit()
         if changes:
             print("Added columns:", ", ".join(changes))

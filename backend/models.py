@@ -1,6 +1,6 @@
 """SQLAlchemy models for User, Pet, Report, Notifications."""
 from datetime import datetime
-from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Text, JSON, Float, BigInteger
+from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Text, JSON, Float, BigInteger, Integer
 from sqlalchemy.orm import relationship
 from database import Base
 
@@ -176,6 +176,21 @@ class Partner(Base):
     link = Column(String, nullable=True)  # ссылка на сайт партнёра
 
 
+class FaqItem(Base):
+    """Вопросы и ответы для секции FAQ на лендинге (три языка)."""
+
+    __tablename__ = "faq_items"
+
+    id = Column(String, primary_key=True, index=True)
+    question_ru = Column(Text, nullable=False, default="")
+    question_be = Column(Text, nullable=False, default="")
+    question_en = Column(Text, nullable=False, default="")
+    answer_ru = Column(Text, nullable=False, default="")
+    answer_be = Column(Text, nullable=False, default="")
+    answer_en = Column(Text, nullable=False, default="")
+    sort_order = Column(Integer, default=0, nullable=False)
+
+
 class ProfilePet(Base):
     """Профиль питомца пользователя (адресник / QR)."""
     __tablename__ = "profile_pets"
@@ -201,3 +216,56 @@ class ProfilePet(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     owner = relationship("User", backref="profile_pets", foreign_keys=[owner_id])
+
+
+class BlogCategory(Base):
+    """Категория статей блога (динамический справочник; slug хранится в blog_posts.category)."""
+
+    __tablename__ = "blog_categories"
+
+    id = Column(String, primary_key=True, index=True)
+    slug = Column(String, unique=True, nullable=False, index=True)
+    title = Column(String, nullable=False)
+    sort_order = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class BlogPost(Base):
+    """Статья блога: публикация на сайте и анонс в Telegram."""
+
+    __tablename__ = "blog_posts"
+
+    id = Column(String, primary_key=True, index=True)
+    slug = Column(String, unique=True, nullable=False, index=True)
+    title = Column(String, nullable=False)
+    excerpt = Column(Text, nullable=True)
+    body_md = Column(Text, nullable=False)
+    cover_image_url = Column(String, nullable=True)
+    meta_description = Column(String, nullable=True)
+    category = Column(String, default="guides")
+    status = Column(String, default="draft")  # draft, published
+    published_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    author_id = Column(String, ForeignKey("users.id"), nullable=True)
+    telegram_message_id = Column(Integer, nullable=True)
+    telegram_channel_username = Column(String, nullable=True)
+
+    author = relationship("User", foreign_keys=[author_id])
+
+
+class ProfilePetScanSignal(Base):
+    """Сигналы со страницы адресника (QR/NFC): «я нашёл питомца»."""
+    __tablename__ = "profile_pet_scan_signals"
+
+    id = Column(String, primary_key=True, index=True)
+    profile_pet_id = Column(String, ForeignKey("profile_pets.id", ondelete="CASCADE"), nullable=False, index=True)
+    owner_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    reporter_id = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    ip_hash = Column(String, nullable=True, index=True)
+    source = Column(String, default="unknown")  # qr, nfc, unknown
+    telegram_sent = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+    profile_pet = relationship("ProfilePet", foreign_keys=[profile_pet_id])

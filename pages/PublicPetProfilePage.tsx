@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router';
+import { useParams, Link, useSearchParams } from 'react-router';
 import {
   Phone,
   MapPin,
@@ -16,10 +16,12 @@ import {
 import { useI18n } from '../context/I18nContext';
 import { profilePetsApi, type ProfilePetResponse } from '../api/client';
 import { resolveProfilePetSpecies, speciesFullLabel } from '../utils/profile-pet-display';
-import { formatPetAge, genderLabel, temperamentLabel } from '../utils/profile-pet-text';
+import { formatPetAgeDisplay, genderLabel, temperamentLabel } from '../utils/profile-pet-text';
+import { toast } from 'sonner';
 
 export default function PublicPetProfilePage() {
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
   const { t, locale } = useI18n();
   const f = t.myPets.form;
   const pp = t.publicPetProfile;
@@ -28,6 +30,12 @@ export default function PublicPetProfilePage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [mainPhotoIndex, setMainPhotoIndex] = useState(0);
+  const [sendingFoundSignal, setSendingFoundSignal] = useState(false);
+
+  const signalSource = (() => {
+    const s = (searchParams.get('src') || '').trim().toLowerCase();
+    return s === 'qr' || s === 'nfc' ? s : 'unknown';
+  })();
 
   useEffect(() => {
     if (!id) {
@@ -44,6 +52,14 @@ export default function PublicPetProfilePage() {
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false));
   }, [id]);
+
+  const photosLength = pet?.photos?.length ?? 0;
+  useEffect(() => {
+    setMainPhotoIndex((i) => {
+      if (photosLength === 0) return 0;
+      return Math.min(i, photosLength - 1);
+    });
+  }, [photosLength]);
 
   if (loading) {
     return (
@@ -75,16 +91,31 @@ export default function PublicPetProfilePage() {
 
   const photos = pet.photos?.length ? pet.photos : [];
   const mainPhoto = photos[mainPhotoIndex] ?? photos[0];
-  const ageNum = parseInt(pet.age ?? '', 10);
-  const ageDisplay = Number.isFinite(ageNum) ? formatPetAge(ageNum, locale, pp) : (pet.age || '—');
+  const ageDisplay = formatPetAgeDisplay(pet.age, locale, pp);
   const colorsLine = (pet.colors ?? []).filter(Boolean).join(', ');
   const resolvedSpecies = resolveProfilePetSpecies(pet.species, pet.breed);
 
-  const ownerName = pet.owner_name ?? '';
-  const ownerPhone = pet.owner_phone ?? '';
-  const ownerEmail = pet.owner_email ?? '';
-  const ownerCity = pet.owner_city ?? '';
-  const ownerViber = pet.owner_viber ?? '';
+  const ownerName = (pet.owner_name ?? '').trim();
+  const ownerPhone = (pet.owner_phone ?? '').trim();
+  const ownerEmail = (pet.owner_email ?? '').trim();
+  const ownerCity = (pet.owner_city ?? '').trim();
+  const ownerViber = (pet.owner_viber ?? '').trim();
+  const showFoundSignalCta = pet.owner_telegram_linked === true;
+
+  const handleFoundSignal = async () => {
+    if (!id || sendingFoundSignal) return;
+    setSendingFoundSignal(true);
+    try {
+      const result = await profilePetsApi.sendFoundSignal(id, signalSource);
+      if (result.throttled) toast.info(pp.signalAlreadySent);
+      else toast.success(pp.signalSent);
+    } catch (err) {
+      if (import.meta.env.DEV && err instanceof Error) console.warn('[sendFoundSignal]', err);
+      toast.error(pp.signalSendError);
+    } finally {
+      setSendingFoundSignal(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-background py-6 sm:py-8">
@@ -100,19 +131,31 @@ export default function PublicPetProfilePage() {
         </div>
         <div className="grid lg:grid-cols-3 gap-6 lg:gap-8">
             <div className="lg:col-span-2 space-y-6">
-              <div className="rounded-2xl bg-[#FDB913]/10 dark:bg-[#FDB913]/15 border border-[#FDB913]/30 dark:border-[#FDB913]/25 p-4 md:p-6">
-                <div className="flex items-start gap-3 md:gap-4">
-                  <div className="w-10 h-10 md:w-12 md:h-12 bg-[#FF9800] rounded-full flex items-center justify-center shrink-0">
-                    <PawPrint size={20} className="text-white md:w-6 md:h-6" />
+              {showFoundSignalCta && (
+                <div className="rounded-2xl bg-[#FDB913]/10 dark:bg-[#FDB913]/15 border border-[#FDB913]/30 dark:border-[#FDB913]/25 p-4 md:p-6">
+                  <div className="flex items-start gap-3 md:gap-4">
+                    <div className="w-10 h-10 md:w-12 md:h-12 bg-[#FF9800] rounded-full flex items-center justify-center shrink-0">
+                      <PawPrint size={20} className="text-white md:w-6 md:h-6" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-black dark:text-white mb-1 text-base md:text-lg">
+                        {pp.bannerTitle}
+                      </p>
+                      <p className="text-sm md:text-base text-gray-600 dark:text-gray-400">{pp.bannerText}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-bold text-black dark:text-white mb-1 text-base md:text-lg">
-                      {pp.bannerTitle}
-                    </p>
-                    <p className="text-sm md:text-base text-gray-600 dark:text-gray-400">{pp.bannerText}</p>
+                  <div className="mt-4 md:mt-5">
+                    <button
+                      type="button"
+                      onClick={handleFoundSignal}
+                      disabled={sendingFoundSignal}
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#FF9800] text-white hover:bg-[#F57C00] disabled:opacity-60 disabled:cursor-not-allowed rounded-lg h-11 px-5 text-sm md:text-base font-medium transition-colors"
+                    >
+                      {sendingFoundSignal ? pp.signalSending : pp.signalCta}
+                    </button>
                   </div>
                 </div>
-              </div>
+              )}
 
               <div className="bg-white dark:bg-card rounded-2xl shadow-sm border border-gray-200 dark:border-border overflow-hidden">
                 {mainPhoto && (

@@ -7,6 +7,7 @@ import {
   Download,
   Share2,
   PawPrint,
+  MessageCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Header } from '../components/layout/Header';
@@ -15,7 +16,7 @@ import { useI18n } from '../context/I18nContext';
 import { useAuth } from '../context/AuthContext';
 import { profilePetsApi, type ProfilePetResponse } from '../api/client';
 import { resolveProfilePetSpecies, speciesPlainLabel } from '../utils/profile-pet-display';
-import { dateLocaleForUi, formatPetAge, genderLabel, temperamentLabel } from '../utils/profile-pet-text';
+import { dateLocaleForUi, formatPetAgeDisplay, genderLabel, temperamentLabel } from '../utils/profile-pet-text';
 
 export default function MyPetProfilePage() {
   const { id } = useParams<{ id: string }>();
@@ -35,6 +36,8 @@ export default function MyPetProfilePage() {
 
   const publicPetUrl =
     typeof window !== 'undefined' && id ? `${window.location.origin}/pet-profile/${id}` : '';
+  const publicPetQrUrl =
+    typeof window !== 'undefined' && id ? `${window.location.origin}/pet-profile/${id}?src=qr` : '';
 
   useEffect(() => {
     const onDoc = (e: MouseEvent) => {
@@ -73,6 +76,14 @@ export default function MyPetProfilePage() {
       .finally(() => setLoading(false));
   }, [id, user?.id, authLoading]);
 
+  const photosLength = pet?.photos?.length ?? 0;
+  useEffect(() => {
+    setPhotoIndex((i) => {
+      if (photosLength === 0) return 0;
+      return Math.min(i, photosLength - 1);
+    });
+  }, [photosLength]);
+
   const downloadQrSvg = () => {
     const svg = qrWrapRef.current?.querySelector('svg');
     if (!svg) return;
@@ -110,8 +121,7 @@ export default function MyPetProfilePage() {
 
   const photos = pet.photos?.length ? pet.photos : [];
   const mainPhoto = photos[photoIndex] ?? photos[0];
-  const ageNum = parseInt(pet.age ?? '', 10);
-  const ageDisplay = Number.isFinite(ageNum) ? formatPetAge(ageNum, locale, pp) : pet.age || '—';
+  const ageDisplay = formatPetAgeDisplay(pet.age, locale, pp);
   const colorsLine = (pet.colors ?? []).filter(Boolean).join(', ') || '—';
   const resolvedSpecies = resolveProfilePetSpecies(pet.species, pet.breed);
   const speciesLine = `${speciesPlainLabel(resolvedSpecies, f)}${pet.breed ? ` • ${pet.breed}` : ''}`;
@@ -140,6 +150,33 @@ export default function MyPetProfilePage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-6">
+              {user != null && user.telegramId == null && (
+                <div className="rounded-xl border border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-950/30 p-5 md:p-6">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-full bg-[#FF9800]/20 flex items-center justify-center shrink-0">
+                        <MessageCircle className="text-[#FF9800]" size={20} />
+                      </div>
+                      <div>
+                        <h2 className="font-bold text-gray-900 dark:text-white text-lg mb-1">
+                          {op.telegramFoundSignalTitle}
+                        </h2>
+                        <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                          {op.telegramFoundSignalHint}
+                        </p>
+                      </div>
+                    </div>
+                    <Link
+                      to="/profile?tab=notifications"
+                      className="inline-flex items-center justify-center gap-2 shrink-0 bg-[#FF9800] text-white hover:bg-[#F57C00] rounded-lg h-11 px-5 text-sm font-medium transition-colors whitespace-nowrap"
+                    >
+                      <MessageCircle size={18} />
+                      {op.linkTelegramCta}
+                    </Link>
+                  </div>
+                </div>
+              )}
+
               <div className="bg-white dark:bg-card rounded-xl shadow-md border border-gray-200 dark:border-border p-5 relative">
                 <div className="absolute top-4 right-4" ref={menuRef}>
                   <button
@@ -306,7 +343,7 @@ export default function MyPetProfilePage() {
                   ref={qrWrapRef}
                   className="bg-white dark:bg-background p-6 rounded-lg border-2 border-gray-200 dark:border-border mb-6 flex items-center justify-center"
                 >
-                  <QRCode value={publicPetUrl} size={220} level="M" />
+                  <QRCode value={publicPetQrUrl || publicPetUrl} size={220} level="M" />
                 </div>
                 <div className="space-y-3">
                   <button

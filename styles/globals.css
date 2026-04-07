@@ -233,6 +233,15 @@ html.dark {
   background-color: white;
 }
 
+html.dark .leaflet-popup-content-wrapper {
+  background: var(--card);
+  color: var(--foreground);
+}
+
+html.dark .leaflet-popup-tip {
+  background-color: var(--card);
+}
+
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;

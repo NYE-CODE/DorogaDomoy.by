@@ -11,6 +11,7 @@ import {
   LogOut,
   LogIn,
   User,
+  BookOpen,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useI18n } from '../../context/I18nContext';
@@ -116,6 +117,10 @@ export function MobileMenuDrawer({ open, onClose }: MobileMenuDrawerProps) {
           <button type="button" onClick={() => go('/search')} className={linkCls('/search')}>
             <Search size={20} />
             <span>{t.header.searchAds ?? t.common.search}</span>
+          </button>
+          <button type="button" onClick={() => go('/blog')} className={linkCls('/blog')}>
+            <BookOpen size={20} />
+            <span>{t.header.blog}</span>
           </button>
 
           {isAuthenticated && (

@@ -8,7 +8,7 @@ from database import get_db
 from models import User, Pet, Notification, NotificationSettings
 from schemas import UserResponse, UserUpdate
 from auth import get_current_user, require_admin
-from utils import user_to_response
+from mappers.user import user_to_response
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -18,6 +18,8 @@ def list_users(
     search: str | None = Query(None),
     role: str | None = Query(None),
     is_blocked: bool | None = Query(None),
+    limit: int | None = Query(None, ge=1, le=2000),
+    offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
     _: User = Depends(require_admin),
 ):
@@ -30,6 +32,8 @@ def list_users(
         stmt = stmt.where(User.role == role)
     if is_blocked is not None:
         stmt = stmt.where(User.is_blocked == is_blocked)
+    if limit is not None:
+        stmt = stmt.offset(offset).limit(limit)
     users = db.scalars(stmt).all()
     return [user_to_response(u) for u in users]
 
@@ -82,7 +86,10 @@ def update_user(
     except Exception as e:
         db.rollback()
         logging.exception("Ошибка при обновлении пользователя %s: %s", user_id, e)
-        raise HTTPException(status_code=500, detail=f"Не удалось обновить пользователя: {type(e).__name__}") from e
+        raise HTTPException(
+            status_code=500,
+            detail="Не удалось обновить пользователя. Попробуйте позже.",
+        ) from e
     return user_to_response(user)
 
 
@@ -109,4 +116,7 @@ def delete_user(
     except Exception as e:
         db.rollback()
         logging.exception("Ошибка при удалении пользователя %s: %s", user_id, e)
-        raise HTTPException(status_code=500, detail=f"Не удалось удалить: {type(e).__name__}") from e
+        raise HTTPException(
+            status_code=500,
+            detail="Не удалось удалить пользователя. Попробуйте позже.",
+        ) from e

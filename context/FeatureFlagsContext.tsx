@@ -5,12 +5,14 @@ export interface FeatureFlagsState {
   ff_landing_show_stats: boolean;
   ff_landing_show_help: boolean;
   ff_landing_show_pets_feature: boolean;
+  ff_landing_show_faq: boolean;
 }
 
 const defaultFlags: FeatureFlagsState = {
   ff_landing_show_stats: true,
   ff_landing_show_help: true,
   ff_landing_show_pets_feature: true,
+  ff_landing_show_faq: true,
 };
 
 const FeatureFlagsContext = createContext<FeatureFlagsState>(defaultFlags);
@@ -27,6 +29,7 @@ export function FeatureFlagsProvider({ children }: { children: React.ReactNode }
           ff_landing_show_help: ff.ff_landing_show_help === "true",
           ff_landing_show_pets_feature:
             (ff.ff_landing_show_pets_feature ?? "true") === "true",
+          ff_landing_show_faq: (ff.ff_landing_show_faq ?? "true") === "true",
         })
       )
       .catch(() => {});

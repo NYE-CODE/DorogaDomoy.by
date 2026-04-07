@@ -29,6 +29,8 @@ const PublicPetProfilePage = lazy(() => import('./pages/PublicPetProfilePage.tsx
 const TermsPage = lazy(() =>
   import('./components/terms-page').then((module) => ({ default: module.TermsPage }))
 );
+const BlogListPage = lazy(() => import('./pages/BlogListPage.tsx'));
+const BlogPostPage = lazy(() => import('./pages/BlogPostPage.tsx'));
 
 function GlobalToaster() {
   const { theme } = useTheme();
@@ -98,6 +100,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                   <Route path="/settings" element={<SettingsPageRoute />} />
                   <Route path="/admin" element={<AdminPage />} />
                   <Route path="/terms" element={<TermsRoute />} />
+                  <Route path="/blog" element={<BlogListPage />} />
+                  <Route path="/blog/:slug" element={<BlogPostPage />} />
                   <Route path="*" element={<NotFoundPage />} />
                 </Routes>
               </Suspense>

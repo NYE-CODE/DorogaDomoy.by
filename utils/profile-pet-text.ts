@@ -19,6 +19,31 @@ type MyPetsFormTexts = {
   temperamentOptions: TemperamentOption[];
 };
 
+/**
+ * Целое число лет из поля профиля. Строки с дробью, текстом или нечисловые — null
+ * (показываем исходную строку как есть).
+ */
+export function parsePetAgeYears(age: string | null | undefined): number | null {
+  const raw = (age ?? '').trim();
+  if (raw === '') return null;
+  if (!/^-?\d+$/.test(raw)) return null;
+  const n = parseInt(raw, 10);
+  if (!Number.isFinite(n) || n < 0) return null;
+  return n;
+}
+
+/** Возраст для карточки: плюрализация для целых лет, иначе сырой текст или «—». */
+export function formatPetAgeDisplay(
+  age: string | null | undefined,
+  locale: Locale,
+  pp: PublicPetProfileTexts,
+): string {
+  const years = parsePetAgeYears(age);
+  if (years !== null) return formatPetAge(years, locale, pp);
+  const raw = (age ?? '').trim();
+  return raw || '—';
+}
+
 export function formatPetAge(n: number, locale: Locale, pp: PublicPetProfileTexts): string {
   if (locale === 'en') {
     return n === 1

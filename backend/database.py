@@ -57,8 +57,11 @@ def get_db():
 
 
 def init_db():
-    """Create all tables."""
-    import models  # noqa: F401 - registers ORM models
+    """Create all tables.
+
+    Перед вызовом нужно импортировать пакет ``models``, чтобы все ORM-классы
+    зарегистрировались в ``Base.metadata`` (см. ``main`` / ``seed``).
+    """
     Base.metadata.create_all(bind=engine)
     logger.info("Database URL: %s", SQLALCHEMY_DATABASE_URL)
 
