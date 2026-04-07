@@ -21,21 +21,24 @@ import {
   Save,
   Newspaper,
   Plus,
-  Handshake
+  Handshake,
+  PawPrint
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Pet } from '../types/pet';
 import { User } from '../context/AuthContext';
 import { Report, AdminStats, reportReasonLabels } from '../types/admin';
 import { formatDate, statusLabels } from '../utils/pet-helpers';
+import { BELARUS_MOBILE_PHONE_PLACEHOLDER } from '../utils/belarus-phone';
 import { settingsApi, featureFlagsApi, API_BASE } from '../api/client';
-import type { MediaArticle, Partner } from '../api/client';
+import type { MediaArticle, Partner, ProfilePetResponse } from '../api/client';
 import { ModerationPanel } from './moderation-panel';
 import { PetsAdminPanel } from './pets-admin-panel';
+import { ProfilePetsAdminPanel } from './profile-pets-admin-panel';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Switch } from './ui/switch';
 
-type AdminTab = 'dashboard' | 'moderation' | 'pets' | 'users' | 'reports' | 'media' | 'partners' | 'featureFlags' | 'settings';
+type AdminTab = 'dashboard' | 'moderation' | 'pets' | 'profilePets' | 'users' | 'reports' | 'media' | 'partners' | 'featureFlags' | 'settings';
 
 const ADMIN_PLACEHOLDER_PHOTO =
   'data:image/svg+xml;utf8,' +
@@ -48,7 +51,8 @@ const ADMIN_PLACEHOLDER_PHOTO =
   );
 
 function getAdminPetPreviewPhoto(pet: Pet): string {
-  return pet.photos[0] || ADMIN_PLACEHOLDER_PHOTO;
+  const first = pet.photos?.[0];
+  return first || ADMIN_PLACEHOLDER_PHOTO;
 }
 
 interface AdminPanelProps {
@@ -57,6 +61,7 @@ interface AdminPanelProps {
   reports: Report[];
   mediaArticles: MediaArticle[];
   partners: Partner[];
+  profilePets: ProfilePetResponse[];
   onBack: () => void;
   onUpdatePet: (pet: Pet) => void;
   onDeletePet: (petId: string) => void;
@@ -70,6 +75,7 @@ interface AdminPanelProps {
   onPartnerCreate: (data: { logo_url?: string; name: string; link?: string }) => void;
   onPartnerUpdate: (id: string, data: Partial<{ logo_url: string; name: string; link: string }>) => void;
   onPartnerDelete: (id: string) => void;
+  onDeleteProfilePet: (id: string) => void;
 }
 
 export function AdminPanel({ 
@@ -78,6 +84,7 @@ export function AdminPanel({
   reports,
   mediaArticles,
   partners,
+  profilePets,
   onBack,
   onUpdatePet,
   onDeletePet,
@@ -91,6 +98,7 @@ export function AdminPanel({
   onPartnerCreate,
   onPartnerUpdate,
   onPartnerDelete,
+  onDeleteProfilePet,
 }: AdminPanelProps) {
   const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
 
@@ -215,6 +223,7 @@ export function AdminPanel({
     { id: 'dashboard' as const, label: 'Дашборд', icon: LayoutDashboard },
     { id: 'moderation' as const, label: 'Модерация', icon: ClipboardCheck },
     { id: 'pets' as const, label: 'Объявления', icon: FileText },
+    { id: 'profilePets' as const, label: 'Питомцы', icon: PawPrint },
     { id: 'users' as const, label: 'Пользователи', icon: Users },
     { id: 'reports' as const, label: 'Жалобы', icon: AlertTriangle },
     { id: 'media' as const, label: 'СМИ о нас', icon: Newspaper },
@@ -568,7 +577,7 @@ export function AdminPanel({
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Телефон</label>
-                  <input type="tel" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} placeholder="+375..." className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
+                  <input type="tel" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} placeholder={BELARUS_MOBILE_PHONE_PLACEHOLDER} className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Вайбер</label>
@@ -1320,6 +1329,7 @@ export function AdminPanel({
           />
         )}
         {activeTab === 'pets' && <PetsAdminPanel pets={pets} onDeletePet={onDeletePet} onOpenPet={(petId) => window.open(`/pet/${petId}`, '_blank')} />}
+        {activeTab === 'profilePets' && <ProfilePetsAdminPanel profilePets={profilePets} onDeleteProfilePet={onDeleteProfilePet} />}
         {activeTab === 'users' && renderUsers()}
         {activeTab === 'reports' && renderReports()}
         {activeTab === 'media' && renderMedia()}

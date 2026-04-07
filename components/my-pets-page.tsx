@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router";
-import { Plus, QrCode, Edit, PawPrint, MoreVertical, AlertCircle } from "lucide-react";
+import { Plus, QrCode, Edit, PawPrint, MoreVertical, AlertCircle, Trash2, X } from "lucide-react";
+import { toast } from "sonner";
 import { useI18n } from "../context/I18nContext";
 import { profilePetsApi } from "../api/client";
 import { profilePetToListCard, type ProfilePetListCard } from "../utils/profile-pet-display";
+import { useScrollLock } from "./ui/use-scroll-lock";
 
 export function MyPetsContent() {
   const { t } = useI18n();
@@ -12,6 +14,10 @@ export function MyPetsContent() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ProfilePetListCard | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  useScrollLock(!!deleteTarget);
 
   const loadPets = useCallback(() => {
     setLoading(true);
@@ -47,6 +53,21 @@ export function MyPetsContent() {
     };
   }, [openMenuId]);
 
+  const confirmDelete = async () => {
+    if (!deleteTarget || deleting) return;
+    setDeleting(true);
+    try {
+      await profilePetsApi.delete(deleteTarget.id);
+      setPets((prev) => prev.filter((p) => p.id !== deleteTarget.id));
+      toast.success(mp.toastPetDeleted);
+      setDeleteTarget(null);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : mp.toastPetDeleteError);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12">
@@ -57,6 +78,58 @@ export function MyPetsContent() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-4 sm:py-8">
+      {deleteTarget && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+          role="presentation"
+          onClick={() => !deleting && setDeleteTarget(null)}
+        >
+          <div
+            className="bg-white rounded-xl shadow-xl border border-gray-200 max-w-md w-full p-6"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-pet-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3 mb-4">
+              <h2 id="delete-pet-title" className="text-xl font-bold text-gray-900">
+                {mp.deletePetTitle}
+              </h2>
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={() => setDeleteTarget(null)}
+                className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 shrink-0"
+                aria-label={t.common.close}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <p className="text-gray-600 mb-6">
+              {mp.deletePetMessage.replace("{name}", deleteTarget.name)}
+            </p>
+            <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end">
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={() => setDeleteTarget(null)}
+                className="h-11 px-4 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium"
+              >
+                {t.common.cancel}
+              </button>
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={() => void confirmDelete()}
+                className="h-11 px-4 rounded-lg bg-red-600 text-white hover:bg-red-700 font-medium disabled:opacity-60"
+              >
+                {deleting ? t.common.loading : mp.deletePetConfirm}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
           <div>
@@ -111,10 +184,12 @@ export function MyPetsContent() {
                 pet={pet}
                 openMenuId={openMenuId}
                 setOpenMenuId={setOpenMenuId}
+                onRequestDelete={(p) => setDeleteTarget(p)}
                 labels={{
                   menuQr: mp.menuQr,
                   menuEdit: mp.menuEdit,
                   menuCreateAd: mp.menuCreateAd,
+                  menuDelete: mp.menuDelete,
                   menuAria: mp.cardMenuAria,
                 }}
               />
@@ -130,12 +205,20 @@ function PetCard({
   pet,
   openMenuId,
   setOpenMenuId,
+  onRequestDelete,
   labels,
 }: {
   pet: ProfilePetListCard;
   openMenuId: string | null;
   setOpenMenuId: (id: string | null) => void;
-  labels: { menuQr: string; menuEdit: string; menuCreateAd: string; menuAria: string };
+  onRequestDelete: (pet: ProfilePetListCard) => void;
+  labels: {
+    menuQr: string;
+    menuEdit: string;
+    menuCreateAd: string;
+    menuDelete: string;
+    menuAria: string;
+  };
 }) {
   return (
     <div className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-all border border-gray-200 overflow-hidden group relative">
@@ -183,6 +266,21 @@ function PetCard({
               <AlertCircle size={16} className="text-gray-600" />
               <span className="text-gray-700">{labels.menuCreateAd}</span>
             </Link>
+            <div className="border-t border-gray-100 mt-1 pt-1">
+              <button
+                type="button"
+                className="flex w-full items-center gap-3 px-4 py-2.5 hover:bg-red-50 transition-colors text-sm text-left text-red-600"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setOpenMenuId(null);
+                  onRequestDelete(pet);
+                }}
+              >
+                <Trash2 size={16} className="shrink-0" />
+                <span>{labels.menuDelete}</span>
+              </button>
+            </div>
           </div>
         )}
       </div>

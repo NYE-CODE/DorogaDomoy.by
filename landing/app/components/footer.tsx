@@ -8,7 +8,7 @@ export function Footer() {
   const { ff_landing_show_help } = useFeatureFlags();
   const f = t.landing.footer;
   return (
-    <footer className="bg-gray-800 dark:bg-gray-900 text-white py-16">
+    <footer className="bg-gray-800 dark:bg-gray-900 text-white py-16 pb-24 md:pb-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid md:grid-cols-4 gap-12 mb-12">
           <div>

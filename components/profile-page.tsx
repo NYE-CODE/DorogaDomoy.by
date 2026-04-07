@@ -9,6 +9,11 @@ import { Header } from './layout/Header';
 import { CitySelectModal } from './city-select-modal';
 import { useCity } from '../context/CityContext';
 import type { City } from '../utils/cities';
+import {
+  BELARUS_MOBILE_PHONE_PLACEHOLDER,
+  formatBelarusPhoneStorage,
+  isValidBelarusMobilePhoneOptional,
+} from '../utils/belarus-phone';
 
 const roleLabels: Record<string, string> = {
   user: 'Пользователь',
@@ -71,6 +76,14 @@ export default function ProfilePage() {
 
   const isTelegramLinked = !!user?.telegramId;
 
+  /** Telegram для API: не отправлять "@undefined" при привязке без username. */
+  const resolveTelegramContactForSave = useCallback((): string | undefined => {
+    if (!isTelegramLinked) return undefined;
+    const u = user?.telegramUsername?.trim();
+    if (u) return `@${u}`;
+    return user?.contacts?.telegram?.trim() || undefined;
+  }, [isTelegramLinked, user?.telegramUsername, user?.contacts?.telegram]);
+
   const saveUserLocation = useCallback((loc: { lat: number; lng: number }, city?: string) => {
     try {
       const toSave: { lat: number; lng: number; city?: string } = { lat: loc.lat, lng: loc.lng };
@@ -105,7 +118,10 @@ export default function ProfilePage() {
       notificationsApi.getSettings()
         .then((s) => {
           setNotifSettings(s);
-          setLocalRadius(s.notification_radius_km);
+          const r = Number(s.notification_radius_km);
+          setLocalRadius(
+            Number.isFinite(r) ? Math.min(10, Math.max(1, r)) : 5,
+          );
         })
         .catch(() => {})
         .finally(() => setNotifLoading(false));
@@ -162,11 +178,17 @@ export default function ProfilePage() {
 
   const handleSaveContacts = async (e: React.FormEvent) => {
     e.preventDefault();
-    const tgContact = isTelegramLinked ? `@${user?.telegramUsername}` : undefined;
+    const tgContact = resolveTelegramContactForSave();
     if (!phone && !tgContact && !viber) { toast.error(t.profile.atLeastOneContact); return; }
+    if (!isValidBelarusMobilePhoneOptional(phone)) { toast.error(t.profile.belarusPhoneInvalid); return; }
+    if (!isValidBelarusMobilePhoneOptional(viber)) { toast.error(t.profile.belarusPhoneInvalid); return; }
     setIsSavingContacts(true);
     try {
-      await updateContacts({ phone: phone || undefined, telegram: tgContact, viber: viber || undefined });
+      await updateContacts({
+        phone: phone.trim() ? (formatBelarusPhoneStorage(phone) ?? undefined) : undefined,
+        telegram: tgContact,
+        viber: viber.trim() ? (formatBelarusPhoneStorage(viber) ?? undefined) : undefined,
+      });
       toast.success(t.profile.contactsUpdated);
     } catch { toast.error(t.common.error); }
     finally { setIsSavingContacts(false); }
@@ -179,15 +201,21 @@ export default function ProfilePage() {
       toast.error(t.auth.nameMinLength);
       return;
     }
-    const tgContact = isTelegramLinked ? `@${user?.telegramUsername}` : undefined;
+    const tgContact = resolveTelegramContactForSave();
     if (!phone && !tgContact && !viber) {
       toast.error(t.profile.atLeastOneContact);
       return;
     }
+    if (!isValidBelarusMobilePhoneOptional(phone)) { toast.error(t.profile.belarusPhoneInvalid); return; }
+    if (!isValidBelarusMobilePhoneOptional(viber)) { toast.error(t.profile.belarusPhoneInvalid); return; }
     setIsSavingProfile(true);
     try {
       await updateProfile(name, email);
-      await updateContacts({ phone: phone || undefined, telegram: tgContact, viber: viber || undefined });
+      await updateContacts({
+        phone: phone.trim() ? (formatBelarusPhoneStorage(phone) ?? undefined) : undefined,
+        telegram: tgContact,
+        viber: viber.trim() ? (formatBelarusPhoneStorage(viber) ?? undefined) : undefined,
+      });
       toast.success(t.profile.profileUpdated);
     } catch {
       toast.error(t.profile.profileUpdateError);
@@ -204,8 +232,11 @@ export default function ProfilePage() {
       const resp = await telegramApi.requestLink();
       setLinkCode(resp.code);
       setBotUrl(resp.bot_url);
-      const expiresAt = Date.now() + resp.expires_in * 1000;
-      setTimeLeft(resp.expires_in);
+      const ttlRaw = Number(resp.expires_in);
+      const safeTtl =
+        Number.isFinite(ttlRaw) && ttlRaw > 0 ? ttlRaw : 300;
+      const expiresAt = Date.now() + safeTtl * 1000;
+      setTimeLeft(safeTtl);
       timerRef.current = setInterval(() => {
         const remaining = Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
         setTimeLeft(remaining);
@@ -278,14 +309,21 @@ export default function ProfilePage() {
   const handleSaveNotifSettings = async () => {
     setNotifSaving(true);
     try {
-      const updated = await notificationsApi.updateSettings({ notification_radius_km: localRadius });
+      const radius = Number.isFinite(localRadius)
+        ? Math.min(10, Math.max(1, localRadius))
+        : 5;
+      const updated = await notificationsApi.updateSettings({ notification_radius_km: radius });
       setNotifSettings(updated);
       toast.success(t.notifications.settingsSaved);
     } catch (e: any) { toast.error(e.message || t.common.error); }
     finally { setNotifSaving(false); }
   };
 
-  const formatTime = (sec: number) => `${Math.floor(sec / 60)}:${(sec % 60).toString().padStart(2, '0')}`;
+  const formatTime = (sec: number) => {
+    if (!Number.isFinite(sec) || sec < 0) return '0:00';
+    const s = Math.floor(sec);
+    return `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
+  };
 
   const hasAnyContact = phone || viber || isTelegramLinked || telegram;
 
@@ -407,14 +445,14 @@ export default function ProfilePage() {
                         </label>
                         <div className="relative">
                           <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
-                          <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+375 29 123-45-67" className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF9800] focus:border-[#FF9800] bg-white dark:bg-gray-800 text-gray-900 dark:text-white" />
+                          <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder={BELARUS_MOBILE_PHONE_PLACEHOLDER} className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF9800] focus:border-[#FF9800] bg-white dark:bg-gray-800 text-gray-900 dark:text-white" />
                         </div>
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t.profile.viber}</label>
                         <div className="relative">
                           <MessageCircle className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
-                          <input type="tel" value={viber} onChange={e => setViber(e.target.value)} placeholder="+375 29 123-45-67" className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF9800] focus:border-[#FF9800] bg-white dark:bg-gray-800 text-gray-900 dark:text-white" />
+                          <input type="tel" value={viber} onChange={e => setViber(e.target.value)} placeholder={BELARUS_MOBILE_PHONE_PLACEHOLDER} className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF9800] focus:border-[#FF9800] bg-white dark:bg-gray-800 text-gray-900 dark:text-white" />
                         </div>
                       </div>
                     </div>
@@ -565,7 +603,7 @@ export default function ProfilePage() {
                             <label className="font-medium text-black dark:text-white">{t.notifications.radius}</label>
                             <span className="text-[#FF9800] font-bold">{localRadius} {t.notifications.km}</span>
                           </div>
-                          <input type="range" min={1} max={10} step={0.5} value={localRadius} onChange={e => setLocalRadius(parseFloat(e.target.value))} className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-[#FF9800] [&::-webkit-slider-runnable-track]:bg-[length:100%_100%]" style={{ background: `linear-gradient(to right, rgb(255, 152, 0) 0%, rgb(255, 152, 0) ${((localRadius - 1) / 9) * 100}%, rgb(229, 231, 235) ${((localRadius - 1) / 9) * 100}%, rgb(229, 231, 235) 100%)` }} />
+                          <input type="range" min={1} max={10} step={0.5} value={localRadius} onChange={(e) => { const v = parseFloat(e.target.value); setLocalRadius(Number.isFinite(v) ? v : 1); }} className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-[#FF9800] [&::-webkit-slider-runnable-track]:bg-[length:100%_100%]" style={{ background: `linear-gradient(to right, rgb(255, 152, 0) 0%, rgb(255, 152, 0) ${((Number.isFinite(localRadius) ? localRadius : 1) - 1) / 9 * 100}%, rgb(229, 231, 235) ${((Number.isFinite(localRadius) ? localRadius : 1) - 1) / 9 * 100}%, rgb(229, 231, 235) 100%)` }} />
                           <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
                             <span>1 {t.notifications.km}</span>
                             <span>5 {t.notifications.km}</span>

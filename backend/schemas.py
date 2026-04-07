@@ -3,12 +3,37 @@ from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, Field, field_validator
 
+from belarus_phone import format_belarus_phone_storage
+
 
 # --- User ---
 class UserContacts(BaseModel):
+    """Контакты как в БД / в ответах API — без валидации (старые данные могут быть любыми)."""
     phone: Optional[str] = None
     telegram: Optional[str] = None
     viber: Optional[str] = None
+
+
+class UserContactsStrict(BaseModel):
+    """Контакты при создании/обновлении: телефон и Viber — только РБ мобильные."""
+    phone: Optional[str] = None
+    telegram: Optional[str] = None
+    viber: Optional[str] = None
+
+    @field_validator("phone", "viber", mode="before")
+    @classmethod
+    def belarus_mobile_phone(cls, v):
+        if v is None:
+            return None
+        s = str(v).strip()
+        if not s:
+            return None
+        normalized = format_belarus_phone_storage(s)
+        if normalized is None:
+            raise ValueError(
+                "Номер должен быть белорусским мобильным: +375 и код 25, 29, 33 или 44."
+            )
+        return normalized
 
 
 class UserBase(BaseModel):
@@ -21,7 +46,7 @@ class UserCreate(BaseModel):
     email: str
     name: str
     password: str
-    contacts: UserContacts = UserContacts()
+    contacts: UserContactsStrict = UserContactsStrict()
 
 
 class UserLogin(BaseModel):
@@ -46,7 +71,7 @@ class UserResponse(UserBase):
 class UserUpdate(BaseModel):
     name: Optional[str] = None
     email: Optional[str] = None
-    contacts: Optional[UserContacts] = None
+    contacts: Optional[UserContactsStrict] = None
     role: Optional[str] = None
     is_blocked: Optional[bool] = None
     blocked_reason: Optional[str] = None
@@ -76,7 +101,7 @@ class PetBase(BaseModel):
     description: str
     city: str
     location: PetLocation
-    contacts: UserContacts = UserContacts()
+    contacts: UserContacts = Field(default_factory=UserContacts)
 
     @field_validator("breed", mode="before")
     @classmethod
@@ -86,6 +111,7 @@ class PetBase(BaseModel):
 
 class PetCreate(PetBase):
     author_name: Optional[str] = None  # для отображения в объявлении при «другие контакты»
+    contacts: UserContactsStrict = Field(default_factory=UserContactsStrict)
 
 
 class PetUpdate(BaseModel):
@@ -99,7 +125,7 @@ class PetUpdate(BaseModel):
     description: Optional[str] = None
     city: Optional[str] = None
     location: Optional[PetLocation] = None
-    contacts: Optional[UserContacts] = None
+    contacts: Optional[UserContactsStrict] = None
     is_archived: Optional[bool] = None
     archive_reason: Optional[str] = None
     moderation_status: Optional[str] = None
