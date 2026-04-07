@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useLayoutEffect } from 'react';
 
 /** Минимальная высота: ручка + заголовок (можно опустить вниз) */
 const COLLAPSED_HEIGHT = 96;
@@ -8,6 +8,8 @@ const SNAP_THRESHOLD_FULL = 0.6; // если > 60% экрана — раскры
 const SNAP_THRESHOLD_PEEK = 0.25; // если < 25% экрана — свернуть до минимума
 /** Fallback отступ сверху, если измерение недоступно */
 const SITE_HEADER_SAFE_FALLBACK = 170;
+/** Запас снизу, если элемент навигации ещё не в DOM (≈ h-16 + safe area) */
+const BOTTOM_NAV_FALLBACK_PX = 96;
 /** Высота полки над ручкой — чтобы при раскрытии ручка не пряталась под шапкой (компактно) */
 const HANDLE_SPACER = 16;
 /** Порог движения (px), после которого считаем жест драгом, а не тапом */
@@ -18,10 +20,19 @@ interface MobileListSheetProps {
   children: React.ReactNode;
 }
 
+function measureBottomNavReserve(): number {
+  if (typeof window === 'undefined') return 0;
+  const nav = document.getElementById('mobile-bottom-nav');
+  if (!nav) return BOTTOM_NAV_FALLBACK_PX;
+  const top = nav.getBoundingClientRect().top;
+  return Math.max(0, Math.ceil(window.innerHeight - top));
+}
+
 export function MobileListSheet({ header, children }: MobileListSheetProps) {
   const [height, setHeight] = useState(PEEK_HEIGHT);
   const [isDragging, setIsDragging] = useState(false);
   const [headerSafeTop, setHeaderSafeTop] = useState(SITE_HEADER_SAFE_FALLBACK);
+  const [bottomReserve, setBottomReserve] = useState(0);
   const startYRef = useRef(0);
   const startHeightRef = useRef(PEEK_HEIGHT);
   const maxHeightRef = useRef(0);
@@ -32,28 +43,44 @@ export function MobileListSheet({ header, children }: MobileListSheetProps) {
   heightRef.current = height;
 
   const updateMaxHeight = useCallback(() => {
+    const reserve = measureBottomNavReserve();
+    setBottomReserve(reserve);
     const el = rootRef.current?.parentElement;
     if (el && typeof window !== 'undefined') {
       const rect = el.getBoundingClientRect();
       const top = Math.ceil(rect.top) + 8;
-      const max = Math.max(200, Math.floor(window.innerHeight - top));
+      const max = Math.max(200, Math.floor(window.innerHeight - top - reserve));
       maxHeightRef.current = max;
       setHeaderSafeTop(top);
     } else {
-      maxHeightRef.current = Math.max(200, Math.floor(window.innerHeight - SITE_HEADER_SAFE_FALLBACK));
+      maxHeightRef.current = Math.max(
+        200,
+        Math.floor(window.innerHeight - SITE_HEADER_SAFE_FALLBACK - reserve)
+      );
       setHeaderSafeTop(SITE_HEADER_SAFE_FALLBACK);
     }
+    setHeight((h) => Math.max(COLLAPSED_HEIGHT, Math.min(h, maxHeightRef.current)));
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     updateMaxHeight();
     const ro = new ResizeObserver(updateMaxHeight);
     const el = rootRef.current?.parentElement;
     if (el) ro.observe(el);
     window.addEventListener('resize', updateMaxHeight);
+    const nav = typeof document !== 'undefined' ? document.getElementById('mobile-bottom-nav') : null;
+    let navRo: ResizeObserver | null = null;
+    if (nav) {
+      navRo = new ResizeObserver(updateMaxHeight);
+      navRo.observe(nav);
+    }
+    const vv = typeof window !== 'undefined' ? window.visualViewport : null;
+    vv?.addEventListener('resize', updateMaxHeight);
     return () => {
       if (el) ro.unobserve(el);
       window.removeEventListener('resize', updateMaxHeight);
+      navRo?.disconnect();
+      vv?.removeEventListener('resize', updateMaxHeight);
     };
   }, [updateMaxHeight]);
 
@@ -132,8 +159,15 @@ export function MobileListSheet({ header, children }: MobileListSheetProps) {
   return (
     <div
       ref={rootRef}
-      className="absolute inset-x-0 bottom-0 z-30 flex flex-col bg-card border-t border-gray-200 dark:border-gray-700 rounded-t-2xl shadow-lg overflow-hidden"
-      style={{ height: `${height}px`, maxHeight: `calc(100vh - ${headerSafeTop}px)` }}
+      className="absolute inset-x-0 z-30 flex flex-col bg-card border-t border-gray-200 dark:border-gray-700 rounded-t-2xl shadow-lg overflow-hidden"
+      style={{
+        height: `${height}px`,
+        bottom: bottomReserve || 0,
+        maxHeight:
+          bottomReserve > 0
+            ? `calc(100vh - ${headerSafeTop}px - ${bottomReserve}px)`
+            : `calc(100vh - ${headerSafeTop}px)`,
+      }}
       onPointerMove={isDragging ? handlePointerMove : undefined}
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}

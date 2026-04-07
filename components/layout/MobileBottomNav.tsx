@@ -42,6 +42,7 @@ export function MobileBottomNav() {
 
   return (
     <nav
+      id="mobile-bottom-nav"
       className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-background border-t border-border"
       style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 8px)', transform: 'translateZ(0)' }}
     >
