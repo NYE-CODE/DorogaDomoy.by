@@ -75,6 +75,12 @@ export function Header(props: HeaderProps = {}) {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex gap-4 items-center">
+            <Link
+              to="/blog"
+              className="hidden md:inline-flex items-center px-3 h-12 rounded-lg text-foreground hover:bg-muted transition-colors text-sm font-medium shrink-0"
+            >
+              {t.landing.header.blog}
+            </Link>
             <Button asChild>
               <Link to="/create" className="bg-[#FF9800] text-white hover:bg-[#F57C00] rounded-lg px-6 h-12 flex items-center justify-center gap-2 text-lg">
                 <span className="text-xl">+</span>

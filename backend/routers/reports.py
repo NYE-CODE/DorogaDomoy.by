@@ -1,7 +1,7 @@
 """Reports API."""
 import logging
 import uuid
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -10,6 +10,7 @@ from models import Report, Pet, User
 from schemas import ReportCreate, ReportUpdate, ReportResponse
 from auth import get_current_user_required, require_admin
 from time_utils import utc_now
+from rate_limit import limiter
 
 router = APIRouter(prefix="/reports", tags=["reports"])
 
@@ -34,6 +35,8 @@ def report_to_response(r: Report) -> ReportResponse:
 def list_reports(
     status: str | None = Query(None),
     reason: str | None = Query(None),
+    limit: int | None = Query(None, ge=1, le=2000),
+    offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
     _: User = Depends(require_admin),
 ):
@@ -42,12 +45,17 @@ def list_reports(
         stmt = stmt.where(Report.status == status)
     if reason:
         stmt = stmt.where(Report.reason == reason)
-    reports = db.scalars(stmt.order_by(Report.created_at.desc())).all()
+    stmt = stmt.order_by(Report.created_at.desc())
+    if limit is not None:
+        stmt = stmt.offset(offset).limit(limit)
+    reports = db.scalars(stmt).all()
     return [report_to_response(r) for r in reports]
 
 
 @router.post("", response_model=ReportResponse, status_code=201)
+@limiter.limit("40/minute")
 def create_report(
+    request: Request,
     data: ReportCreate,
     user: User = Depends(get_current_user_required),
     db: Session = Depends(get_db),
@@ -72,7 +80,10 @@ def create_report(
     except Exception as e:
         db.rollback()
         logging.exception("Ошибка при создании жалобы: %s", e)
-        raise HTTPException(status_code=500, detail=f"Не удалось отправить жалобу: {type(e).__name__}") from e
+        raise HTTPException(
+            status_code=500,
+            detail="Не удалось отправить жалобу. Попробуйте позже.",
+        ) from e
     return report_to_response(report)
 
 
@@ -98,7 +109,10 @@ def update_report(
     except Exception as e:
         db.rollback()
         logging.exception("Ошибка при обновлении жалобы %s: %s", report_id, e)
-        raise HTTPException(status_code=500, detail=f"Не удалось обновить жалобу: {type(e).__name__}") from e
+        raise HTTPException(
+            status_code=500,
+            detail="Не удалось обновить жалобу. Попробуйте позже.",
+        ) from e
     return report_to_response(report)
 
 
@@ -119,6 +133,6 @@ def delete_report(
         logging.exception("Ошибка при удалении жалобы %s: %s", report_id, e)
         raise HTTPException(
             status_code=500,
-            detail=f"Не удалось удалить жалобу: {type(e).__name__}",
+            detail="Не удалось удалить жалобу. Попробуйте позже.",
         ) from e
     return None

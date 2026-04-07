@@ -28,7 +28,7 @@ export function Media() {
 
   useEffect(() => {
     mediaApi
-      .list()
+      .list({ limit: 200 })
       .then(setArticles)
       .catch(() => setArticles([]))
       .finally(() => setLoading(false));

@@ -8,6 +8,7 @@ from database import get_db
 from models import PlatformSettings, User
 from auth import require_admin
 from platform_settings import FEATURE_FLAG_DEFAULTS, get_settings_with_defaults
+from ttl_cache import invalidate_settings_cache
 
 router = APIRouter(prefix="/feature-flags", tags=["feature-flags"])
 
@@ -28,6 +29,7 @@ class FeatureFlagsUpdate(BaseModel):
     ff_landing_show_stats: bool | None = None
     ff_landing_show_help: bool | None = None
     ff_landing_show_pets_feature: bool | None = None
+    ff_landing_show_faq: bool | None = None
 
 
 @router.patch("")
@@ -48,4 +50,5 @@ def update_feature_flags(
         else:
             db.add(PlatformSettings(key=k, value=val_str))
     db.commit()
+    invalidate_settings_cache()
     return _get_all(db)

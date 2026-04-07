@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import { User, Mail, Phone, MessageCircle, Save, Lock, Link2, Unlink, Bell, BellOff, Copy, Check, ExternalLink, Camera, Send, X, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useI18n } from '../context/I18nContext';
@@ -14,6 +14,20 @@ import {
   formatBelarusPhoneStorage,
   isValidBelarusMobilePhoneOptional,
 } from '../utils/belarus-phone';
+
+/** Только https://t.me / telegram.me — без javascript: и посторонних доменов. */
+function sanitizeTelegramBotUrl(raw: string): string | null {
+  try {
+    const u = new URL(raw.trim());
+    if (u.protocol !== 'https:') return null;
+    if (u.username || u.password) return null;
+    const h = u.hostname.toLowerCase();
+    if (h !== 't.me' && h !== 'telegram.me' && h !== 'www.telegram.me') return null;
+    return u.toString();
+  } catch {
+    return null;
+  }
+}
 
 const roleLabels: Record<string, string> = {
   user: 'Пользователь',
@@ -31,6 +45,7 @@ const roleColors: Record<string, string> = {
 
 export default function ProfilePage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user, updateContacts, updateProfile, changePassword, uploadAvatar, refreshUser } = useAuth();
   const { t } = useI18n();
   
@@ -73,6 +88,16 @@ export default function ProfilePage() {
 
   type ProfileTab = 'personal' | 'security' | 'notifications';
   const [activeTab, setActiveTab] = useState<ProfileTab>('personal');
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'notifications' || tab === 'security' || tab === 'personal') {
+      setActiveTab(tab);
+    } else {
+      // Нет параметра или неверное значение (например после перехода /profile?tab=notifications → /profile)
+      setActiveTab('personal');
+    }
+  }, [searchParams]);
 
   const isTelegramLinked = !!user?.telegramId;
 
@@ -230,8 +255,14 @@ export default function ProfilePage() {
     setIsLinking(true);
     try {
       const resp = await telegramApi.requestLink();
+      const safeBotUrl = sanitizeTelegramBotUrl(resp.bot_url);
+      if (!safeBotUrl) {
+        toast.error(t.profile.linkCodeError);
+        setIsLinking(false);
+        return;
+      }
       setLinkCode(resp.code);
-      setBotUrl(resp.bot_url);
+      setBotUrl(safeBotUrl);
       const ttlRaw = Number(resp.expires_in);
       const safeTtl =
         Number.isFinite(ttlRaw) && ttlRaw > 0 ? ttlRaw : 300;
@@ -252,8 +283,9 @@ export default function ProfilePage() {
           }
         } catch {}
       }, 3000);
-    } catch (err: any) {
-      toast.error(err.message || t.profile.linkCodeError);
+    } catch (err) {
+      if (import.meta.env.DEV && err instanceof Error) console.warn('[telegram requestLink]', err);
+      toast.error(t.profile.linkCodeError);
       setIsLinking(false);
     }
   };

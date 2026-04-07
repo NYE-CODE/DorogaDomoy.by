@@ -4,7 +4,7 @@ import logging
 import uuid
 from pathlib import Path
 from typing import Optional
-from fastapi import APIRouter, Depends, File, HTTPException, Body, Response, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Body, Response, UploadFile, Request
 from PIL import Image
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -21,7 +21,8 @@ from auth import (
     get_current_user_required,
     set_auth_cookie,
 )
-from utils import user_to_response
+from mappers.user import user_to_response
+from rate_limit import limiter
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -32,8 +33,24 @@ MAX_AVATAR_BYTES = 5 * 1024 * 1024  # 5 MB
 AVATAR_SIZE = 256
 
 
+def _is_allowed_avatar_url(url: str) -> bool:
+    """Только загруженный файл на сайте или дефолтный Dicebear."""
+    u = (url or "").strip()
+    if not u or len(u) > 512:
+        return False
+    if ".." in u or "\n" in u or "\r" in u:
+        return False
+    if u.startswith("/uploads/"):
+        return True
+    if u.startswith("https://api.dicebear.com/"):
+        return True
+    return False
+
+
 @router.post("/register", response_model=Token)
+@limiter.limit("15/minute")
 def register(
+    request: Request,
     data: UserCreate,
     response: Response,
     db: Session = Depends(get_db),
@@ -58,14 +75,19 @@ def register(
     except Exception as e:
         db.rollback()
         logging.exception("Ошибка при регистрации пользователя: %s", e)
-        raise HTTPException(status_code=500, detail=f"Не удалось зарегистрироваться: {type(e).__name__}") from e
+        raise HTTPException(
+            status_code=500,
+            detail="Не удалось зарегистрироваться. Попробуйте позже.",
+        ) from e
     token = create_access_token(data={"sub": user.id})
     set_auth_cookie(response, token)
     return Token(access_token=token, user=user_to_response(user))
 
 
 @router.post("/login", response_model=Token)
+@limiter.limit("30/minute")
 def login(
+    request: Request,
     data: UserLogin,
     response: Response,
     db: Session = Depends(get_db),
@@ -137,6 +159,7 @@ def upload_avatar(
     raw = file.file.read()
     if len(raw) > MAX_AVATAR_BYTES:
         raise HTTPException(status_code=400, detail="Файл слишком большой (макс. 5 МБ)")
+    filepath: Optional[Path] = None
     try:
         img = Image.open(io.BytesIO(raw))
         if img.mode in ("RGBA", "P"):
@@ -165,7 +188,7 @@ def upload_avatar(
         db.refresh(user)
     except Exception as e:
         db.rollback()
-        if filepath.exists():
+        if filepath is not None and filepath.exists():
             filepath.unlink()
         logging.exception("Ошибка сохранения аватара %s: %s", user.id, e)
         raise HTTPException(status_code=500, detail="Не удалось сохранить аватар") from e
@@ -184,7 +207,9 @@ def update_me(
         if body.avatar is None and (not user.avatar or "dicebear" in (user.avatar or "")):
             user.avatar = f"https://api.dicebear.com/7.x/avataaars/svg?seed={body.name}"
     if body.avatar is not None:
-        user.avatar = body.avatar
+        if not _is_allowed_avatar_url(body.avatar):
+            raise HTTPException(status_code=400, detail="Недопустимый URL аватара")
+        user.avatar = body.avatar.strip()
     if body.email is not None and body.email != user.email:
         existing = db.scalar(select(User).where(User.email == body.email, User.id != user.id))
         if existing:
@@ -198,5 +223,8 @@ def update_me(
     except Exception as e:
         db.rollback()
         logging.exception("Ошибка при обновлении профиля %s: %s", user.id, e)
-        raise HTTPException(status_code=500, detail=f"Не удалось обновить профиль: {type(e).__name__}") from e
+        raise HTTPException(
+            status_code=500,
+            detail="Не удалось обновить профиль. Попробуйте позже.",
+        ) from e
     return user_to_response(user)

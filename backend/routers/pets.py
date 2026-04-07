@@ -5,19 +5,20 @@ from datetime import timedelta
 from pathlib import Path
 from typing import Optional
 import uuid
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
-from sqlalchemy import func, select
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
+from sqlalchemy import delete, func, select
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
 from database import get_db
-from models import Pet, User
-from schemas import PetCreate, PetUpdate, PetResponse, StatisticsResponse, ARCHIVE_HAPPY_KEYWORDS
+from models import Pet, Report, User
+from schemas import PetCreate, PetUpdate, PetResponse, StatisticsResponse
 from auth import get_current_user, get_current_user_required, require_admin
 from platform_settings import DEFAULT_MAX_PHOTOS, get_bool_setting, get_int_setting
-from telegram_bot import send_notifications_for_pet
+from integrations.telegram import send_notifications_for_pet
 from time_utils import utc_now
 from upload_utils import save_data_image
+from rate_limit import limiter
 
 
 def _moderation_required(db: Session) -> bool:
@@ -102,6 +103,8 @@ def list_pets(
     south: Optional[float] = Query(None),
     east: Optional[float] = Query(None),
     west: Optional[float] = Query(None),
+    limit: Optional[int] = Query(None, ge=1, le=500),
+    offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
     user: Optional[User] = Depends(get_current_user),
 ):
@@ -120,8 +123,22 @@ def list_pets(
             stmt = stmt.where(Pet.status.in_(status_values))
     if days:
         stmt = stmt.where(Pet.published_at >= utc_now() - timedelta(days=days))
-    if moderation_status:
-        stmt = stmt.where(Pet.moderation_status == moderation_status)
+
+    is_admin = user is not None and user.role == "admin"
+    viewing_own_ads = (
+        user is not None
+        and author_id is not None
+        and author_id == user.id
+    )
+    if is_admin:
+        if moderation_status:
+            stmt = stmt.where(Pet.moderation_status == moderation_status)
+    elif viewing_own_ads:
+        if moderation_status:
+            stmt = stmt.where(Pet.moderation_status == moderation_status)
+    else:
+        stmt = stmt.where(Pet.moderation_status == "approved")
+
     if is_archived is not None:
         stmt = stmt.where(Pet.is_archived == is_archived)
     if search:
@@ -139,7 +156,10 @@ def list_pets(
             Pet.location_lng >= west,
             Pet.location_lng <= east,
         )
-    pets = db.scalars(stmt.order_by(Pet.published_at.desc())).all()
+    stmt = stmt.order_by(Pet.published_at.desc())
+    if limit is not None:
+        stmt = stmt.offset(offset).limit(limit)
+    pets = db.scalars(stmt).all()
     return [pet_to_response(p) for p in pets]
 
 
@@ -147,21 +167,36 @@ def list_pets(
 def get_statistics(db: Session = Depends(get_db)):
     from schemas import _is_happy_archive
 
-    # Активные объявления (не архив, одобрены)
-    active = db.scalars(
-        select(Pet).where(
-            Pet.is_archived.is_(False),
-            Pet.moderation_status == "approved",
+    active_base = (
+        Pet.is_archived.is_(False),
+        Pet.moderation_status == "approved",
+    )
+    searching = db.scalar(
+        select(func.count()).select_from(Pet).where(*active_base, Pet.status == "searching")
+    ) or 0
+    found = db.scalar(
+        select(func.count()).select_from(Pet).where(*active_base, Pet.status == "found")
+    ) or 0
+    cities_count = db.scalar(
+        select(func.count(func.distinct(Pet.city)))
+        .select_from(Pet)
+        .where(
+            *active_base,
+            Pet.city.is_not(None),
+            Pet.city != "",
         )
-    ).all()
-    searching = sum(1 for p in active if p.status == "searching")
-    found = sum(1 for p in active if p.status == "found")
-    cities_count = len({p.city for p in active if p.city})
+    ) or 0
 
-    # Архив: найденные (счастливый конец) vs не найденные
-    archived = db.scalars(select(Pet).where(Pet.is_archived.is_(True))).all()
-    found_pets = sum(1 for p in archived if _is_happy_archive(p.archive_reason))
-    not_found = sum(1 for p in archived if p.archive_reason and not _is_happy_archive(p.archive_reason))
+    archived_reasons = db.scalars(
+        select(Pet.archive_reason).where(Pet.is_archived.is_(True))
+    ).all()
+    found_pets = 0
+    not_found = 0
+    for r in archived_reasons:
+        if _is_happy_archive(r):
+            found_pets += 1
+        elif r:
+            not_found += 1
     total_with_outcome = found_pets + not_found
     # Процент только при выборке >= 5, иначе вводит в заблуждение
     success_rate = (
@@ -186,15 +221,25 @@ def get_statistics(db: Session = Depends(get_db)):
 
 
 @router.get("/{pet_id}", response_model=PetResponse)
-def get_pet(pet_id: str, db: Session = Depends(get_db)):
+def get_pet(
+    pet_id: str,
+    db: Session = Depends(get_db),
+    user: Optional[User] = Depends(get_current_user),
+):
     pet = db.scalar(select(Pet).where(Pet.id == pet_id))
     if not pet:
+        raise HTTPException(status_code=404, detail="Объявление не найдено")
+    is_admin = user is not None and user.role == "admin"
+    is_author = user is not None and user.id == pet.author_id
+    if pet.moderation_status != "approved" and not is_admin and not is_author:
         raise HTTPException(status_code=404, detail="Объявление не найдено")
     return pet_to_response(pet)
 
 
 @router.post("", response_model=PetResponse, status_code=201)
+@limiter.limit("45/minute")
 async def create_pet(
+    request: Request,
     data: PetCreate,
     background_tasks: BackgroundTasks,
     user: User = Depends(get_current_user_required),
@@ -240,11 +285,17 @@ async def create_pet(
     except OperationalError as e:
         db.rollback()
         logging.exception("Ошибка при создании объявления: %s", e)
-        raise HTTPException(status_code=500, detail=f"Ошибка БД: {str(e)}") from e
+        raise HTTPException(
+            status_code=500,
+            detail="Не удалось создать объявление. Попробуйте позже.",
+        ) from e
     except Exception as e:
         db.rollback()
         logging.exception("Ошибка при создании объявления: %s", e)
-        raise HTTPException(status_code=500, detail=f"Не удалось создать объявление: {type(e).__name__}") from e
+        raise HTTPException(
+            status_code=500,
+            detail="Не удалось создать объявление. Попробуйте позже.",
+        ) from e
 
     if initial_status == "approved":
         background_tasks.add_task(_send_notifications_bg, pet.id)
@@ -328,7 +379,10 @@ async def update_pet(
     except Exception as e:
         db.rollback()
         logging.exception("Ошибка при обновлении объявления %s: %s", pet_id, e)
-        raise HTTPException(status_code=500, detail=f"Не удалось обновить объявление: {type(e).__name__}") from e
+        raise HTTPException(
+            status_code=500,
+            detail="Не удалось обновить объявление. Попробуйте позже.",
+        ) from e
 
     if old_moderation_status != "approved" and pet.moderation_status == "approved":
         background_tasks.add_task(_send_notifications_bg, pet.id)
@@ -348,8 +402,7 @@ def delete_pet(
     if pet.author_id != user.id and user.role != "admin":
         raise HTTPException(status_code=403, detail="Нет прав на удаление")
     try:
-        for report in list(pet.reports):
-            db.delete(report)
+        db.execute(delete(Report).where(Report.pet_id == pet_id))
         db.delete(pet)
         db.commit()
     except Exception as e:

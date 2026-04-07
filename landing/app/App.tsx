@@ -12,8 +12,12 @@ import { Footer } from "./components/footer";
 import { useFeatureFlags } from "../../context/FeatureFlagsContext";
 
 export default function App() {
-  const { ff_landing_show_help, ff_landing_show_stats, ff_landing_show_pets_feature } =
-    useFeatureFlags();
+  const {
+    ff_landing_show_help,
+    ff_landing_show_stats,
+    ff_landing_show_pets_feature,
+    ff_landing_show_faq,
+  } = useFeatureFlags();
   return (
     <div className="min-h-screen overflow-x-clip">
       <Header showCitySelector={false} />
@@ -24,7 +28,7 @@ export default function App() {
       <WhyUs />
       <Media />
       <Partners />
-      <FAQ />
+      {ff_landing_show_faq && <FAQ />}
       {(ff_landing_show_help || ff_landing_show_stats) && <Help />}
       <Footer />
     </div>

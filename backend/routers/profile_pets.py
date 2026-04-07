@@ -1,20 +1,29 @@
 """Profile Pets CRUD API — профили питомцев (адресник / QR)."""
+import hashlib
 import uuid
 import logging
+from datetime import timedelta
 from pathlib import Path
 from typing import Optional
 from urllib.parse import urlparse
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from database import get_db
-from models import ProfilePet, User
-from schemas import ProfilePetCreate, ProfilePetUpdate, ProfilePetResponse
+from models import ProfilePet, ProfilePetScanSignal, NotificationSettings, User
+from schemas import (
+    ProfilePetCreate,
+    ProfilePetUpdate,
+    ProfilePetResponse,
+    ProfilePetFoundSignalResponse,
+)
 from auth import get_current_user, get_current_user_required
+from integrations.telegram import send_profile_pet_signal_sync
 from time_utils import utc_now
 from upload_utils import save_data_image
+from rate_limit import limiter
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +33,14 @@ UPLOADS_DIR = Path(__file__).resolve().parent.parent / "uploads"
 UPLOADS_DIR.mkdir(exist_ok=True)
 
 MAX_PHOTOS = 5
+SIGNAL_COOLDOWN_MINUTES = 30
+
+
+def _get_ip_hash(request: Request) -> Optional[str]:
+    ip = request.client.host if request.client else None
+    if not ip:
+        return None
+    return hashlib.sha256(ip.encode()).hexdigest()[:16]
 
 
 def _save_base64(data_url: str) -> str:
@@ -68,6 +85,7 @@ def _to_response(p: ProfilePet, *, include_owner_contacts: bool = True) -> Profi
         owner_email=owner.email if owner and include_owner_contacts else None,
         owner_city=None,
         owner_viber=contacts.get("viber") if include_owner_contacts else None,
+        owner_telegram_linked=bool(owner and owner.telegram_id),
     )
 
 
@@ -82,10 +100,13 @@ def list_profile_pets(
     include_owner_contacts = current_user is not None and (
         current_user.role == "admin" or current_user.id == owner_id
     )
-    stmt = select(ProfilePet)
+    stmt = (
+        select(ProfilePet)
+        .options(joinedload(ProfilePet.owner))
+        .order_by(ProfilePet.created_at.desc())
+    )
     if owner_id:
         stmt = stmt.where(ProfilePet.owner_id == owner_id)
-    stmt = stmt.order_by(ProfilePet.created_at.desc())
     return [
         _to_response(p, include_owner_contacts=include_owner_contacts)
         for p in db.scalars(stmt).all()
@@ -99,6 +120,7 @@ def list_my_profile_pets(
 ):
     pets = db.scalars(
         select(ProfilePet)
+        .options(joinedload(ProfilePet.owner))
         .where(ProfilePet.owner_id == user.id)
         .order_by(ProfilePet.created_at.desc())
     ).all()
@@ -110,7 +132,11 @@ def get_profile_pet(
     pet_id: str,
     db: Session = Depends(get_db),
 ):
-    p = db.scalar(select(ProfilePet).where(ProfilePet.id == pet_id))
+    p = db.scalar(
+        select(ProfilePet)
+        .options(joinedload(ProfilePet.owner))
+        .where(ProfilePet.id == pet_id)
+    )
     if not p:
         raise HTTPException(status_code=404, detail="Профиль питомца не найден")
     return _to_response(p)
@@ -175,6 +201,97 @@ def update_profile_pet(
     db.commit()
     db.refresh(pet)
     return _to_response(pet)
+
+
+@router.post("/{pet_id}/found-signal", response_model=ProfilePetFoundSignalResponse)
+@limiter.limit("60/minute")
+def send_found_signal(
+    pet_id: str,
+    request: Request,
+    background_tasks: BackgroundTasks,
+    source: Optional[str] = Query("unknown"),
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user),
+):
+    pet = db.scalar(select(ProfilePet).where(ProfilePet.id == pet_id))
+    if not pet:
+        raise HTTPException(status_code=404, detail="Профиль питомца не найден")
+
+    owner = db.scalar(select(User).where(User.id == pet.owner_id))
+    if not owner or not owner.telegram_id:
+        raise HTTPException(
+            status_code=400,
+            detail="У владельца не подключён Telegram — уведомление о находке недоступно. Свяжитесь по контактам на странице.",
+        )
+
+    if current_user and current_user.id == pet.owner_id:
+        raise HTTPException(status_code=400, detail="Нельзя отправить сигнал по своему питомцу")
+
+    src = (source or "unknown").strip().lower()
+    if src not in {"qr", "nfc", "unknown"}:
+        src = "unknown"
+
+    ip_hash = _get_ip_hash(request)
+    reporter_id = current_user.id if current_user else None
+
+    cooldown_after = utc_now() - timedelta(minutes=SIGNAL_COOLDOWN_MINUTES)
+    if reporter_id:
+        recent = db.scalar(
+            select(ProfilePetScanSignal).where(
+                ProfilePetScanSignal.profile_pet_id == pet.id,
+                ProfilePetScanSignal.reporter_id == reporter_id,
+                ProfilePetScanSignal.created_at >= cooldown_after,
+            )
+        )
+    elif ip_hash:
+        recent = db.scalar(
+            select(ProfilePetScanSignal).where(
+                ProfilePetScanSignal.profile_pet_id == pet.id,
+                ProfilePetScanSignal.ip_hash == ip_hash,
+                ProfilePetScanSignal.created_at >= cooldown_after,
+            )
+        )
+    else:
+        recent = None
+
+    if recent:
+        return ProfilePetFoundSignalResponse(
+            accepted=True,
+            throttled=True,
+            telegram_sent=False,
+            detail="cooldown",
+        )
+
+    signal = ProfilePetScanSignal(
+        id=f"pps-{uuid.uuid4().hex[:12]}",
+        profile_pet_id=pet.id,
+        owner_id=pet.owner_id,
+        reporter_id=reporter_id,
+        ip_hash=ip_hash if not reporter_id else None,
+        source=src,
+        telegram_sent=False,
+        created_at=utc_now(),
+    )
+    db.add(signal)
+    db.commit()
+    db.refresh(signal)
+
+    should_send = True
+    settings = db.scalar(
+        select(NotificationSettings).where(NotificationSettings.user_id == pet.owner_id)
+    )
+    if settings and not settings.notifications_enabled:
+        should_send = False
+
+    if should_send:
+        background_tasks.add_task(send_profile_pet_signal_sync, signal.id, pet.id)
+
+    return ProfilePetFoundSignalResponse(
+        accepted=True,
+        throttled=False,
+        telegram_sent=bool(should_send),
+        detail="ok",
+    )
 
 
 @router.delete("/{pet_id}", status_code=204)

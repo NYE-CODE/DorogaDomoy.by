@@ -10,7 +10,7 @@ export default function NotFoundPage() {
           <div className="absolute inset-0 flex items-center justify-center text-8xl">
             🐾
           </div>
-          <div className="absolute -bottom-1 -right-1 w-14 h-14 bg-red-100 rounded-full flex items-center justify-center">
+          <div className="absolute -bottom-1 -right-1 w-14 h-14 bg-red-100 dark:bg-red-950/50 rounded-full flex items-center justify-center">
             <Search className="w-7 h-7 text-red-500" />
           </div>
         </div>

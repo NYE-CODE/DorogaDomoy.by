@@ -5,7 +5,7 @@ import { useFeatureFlags } from "../../../context/FeatureFlagsContext";
 
 export function Footer() {
   const { t } = useI18n();
-  const { ff_landing_show_help } = useFeatureFlags();
+  const { ff_landing_show_help, ff_landing_show_faq } = useFeatureFlags();
   const f = t.landing.footer;
   return (
     <footer className="bg-gray-800 dark:bg-gray-900 text-white py-16 pb-24 md:pb-16">
@@ -61,8 +61,11 @@ export function Footer() {
             <ul className="space-y-3">
               <li><Link to="/#how-it-works" className="text-gray-400 hover:text-[#FDB913] transition-colors">{f.howItWorks}</Link></li>
               <li><Link to="/#why-us" className="text-gray-400 hover:text-[#FDB913] transition-colors">{f.whyUs}</Link></li>
+              <li><Link to="/blog" className="text-gray-400 hover:text-[#FDB913] transition-colors">{f.blog}</Link></li>
               <li><Link to="/#announcements" className="text-gray-400 hover:text-[#FDB913] transition-colors">{f.ads}</Link></li>
-              <li><Link to="/#faq" className="text-gray-400 hover:text-[#FDB913] transition-colors">{f.faq}</Link></li>
+              {ff_landing_show_faq && (
+                <li><Link to="/#faq" className="text-gray-400 hover:text-[#FDB913] transition-colors">{f.faq}</Link></li>
+              )}
               {ff_landing_show_help && <li><Link to="/#help" className="text-gray-400 hover:text-[#FDB913] transition-colors">{f.help}</Link></li>}
             </ul>
           </div>

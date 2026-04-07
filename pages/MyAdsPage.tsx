@@ -27,7 +27,12 @@ export default function MyAdsPageRoute() {
     const fromCreate = (location.state as { fromCreate?: boolean })?.fromCreate;
     if (fromCreate) {
       setDataLoading(true);
-      petsApi.list()
+      if (!user?.id) {
+        setDataLoading(false);
+        return;
+      }
+      petsApi
+        .list({ author_id: user.id })
         .then(setPets)
         .catch(() => setPets([]))
         .finally(() => setDataLoading(false));
@@ -38,12 +43,18 @@ export default function MyAdsPageRoute() {
       return;
     }
 
+    if (!user?.id) {
+      setDataLoading(false);
+      return;
+    }
+
     setDataLoading(true);
-    petsApi.list()
+    petsApi
+      .list({ author_id: user.id })
       .then(setPets)
       .catch(() => setPets([]))
       .finally(() => setDataLoading(false));
-  }, [isLoading, isAuthenticated, navigate, location.state]);
+  }, [isLoading, isAuthenticated, navigate, location.state, user?.id]);
 
   if (isLoading || dataLoading) {
     return (

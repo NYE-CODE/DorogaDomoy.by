@@ -1,6 +1,8 @@
 """Media articles API (СМИ о нас) — для лендинга и админ-панели."""
 import uuid
-from fastapi import APIRouter, Depends, HTTPException
+from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -24,9 +26,16 @@ def _to_response(m: MediaArticle) -> MediaArticleResponse:
 
 
 @router.get("", response_model=list[MediaArticleResponse])
-def list_articles(db: Session = Depends(get_db)):
+def list_articles(
+    limit: Optional[int] = Query(None, ge=1, le=500),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db),
+):
     """Публичный список статей СМИ — для секции «СМИ о нас» на лендинге."""
-    items = db.scalars(select(MediaArticle).order_by(MediaArticle.published_at.desc())).all()
+    stmt = select(MediaArticle).order_by(MediaArticle.published_at.desc())
+    if limit is not None:
+        stmt = stmt.offset(offset).limit(limit)
+    items = db.scalars(stmt).all()
     return [_to_response(m) for m in items]
 
 
