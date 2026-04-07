@@ -111,7 +111,12 @@ export default function PublicPetProfilePage() {
       else toast.success(pp.signalSent);
     } catch (err) {
       if (import.meta.env.DEV && err instanceof Error) console.warn('[sendFoundSignal]', err);
-      toast.error(pp.signalSendError);
+      const msg = err instanceof Error ? err.message.toLowerCase() : '';
+      if (msg.includes('своему питомцу')) {
+        toast.error(pp.signalOwnPetError);
+      } else {
+        toast.error(pp.signalSendError);
+      }
     } finally {
       setSendingFoundSignal(false);
     }
