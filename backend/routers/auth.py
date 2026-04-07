@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from models import User
-from schemas import UserCreate, UserLogin, UserResponse, Token
+from schemas import UserCreate, UserLogin, UserResponse, Token, UserContactsStrict
 from auth import (
     clear_auth_cookie,
     get_password_hash,
@@ -94,7 +94,7 @@ def me(user: User = Depends(get_current_user_required)):
 class UpdateProfileBody(BaseModel):
     name: Optional[str] = None
     email: Optional[str] = None
-    contacts: Optional[dict] = None
+    contacts: Optional[UserContactsStrict] = None
     avatar: Optional[str] = None
 
 
@@ -191,7 +191,7 @@ def update_me(
             raise HTTPException(status_code=400, detail="Этот email уже используется")
         user.email = body.email
     if body.contacts is not None:
-        user.contacts = {**(user.contacts or {}), **body.contacts}
+        user.contacts = {**(user.contacts or {}), **body.contacts.model_dump(exclude_unset=True)}
     try:
         db.commit()
         db.refresh(user)

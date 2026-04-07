@@ -8,8 +8,8 @@ import { CityProvider } from './context/CityContext.tsx'
 import { ThemeProvider, useTheme } from './context/ThemeContext.tsx'
 import { I18nProvider } from './context/I18nContext.tsx'
 import './styles/globals.css';
-// Стили лендинга (шрифты и т.п.) — theme-scoped подключается в LandingPage
 import './landing/styles/fonts.css'
+import { MobileBottomNav } from './components/layout/MobileBottomNav'
 
 const LandingPage = lazy(() => import('./pages/LandingPage.tsx'));
 const SearchPage = lazy(() => import('./pages/SearchPage.tsx'));
@@ -101,6 +101,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                   <Route path="*" element={<NotFoundPage />} />
                 </Routes>
               </Suspense>
+              <MobileBottomNav />
             </CityProvider>
           </AuthProvider>
         </BrowserRouter>

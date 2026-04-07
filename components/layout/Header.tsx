@@ -11,6 +11,7 @@ export interface HeaderProps {
   /** При клике на выбор города — открыть модалку родителя (SearchPage/ProfilePage) */
   onCityClick?: () => void;
   onCreateClick?: () => void;
+  showCitySelector?: boolean;
 }
 
 /** Хедер лендинга: логотип, кнопка создания, выбор региона, профиль/авторизация */
@@ -19,6 +20,7 @@ export function Header(props?: HeaderProps) {
     <LandingHeader
       selectedCity={props?.selectedCity}
       onCityClick={props?.onCityClick}
+      showCitySelector={props?.showCitySelector}
     />
   );
 }

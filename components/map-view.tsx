@@ -76,7 +76,7 @@ function createPreviewContent(pet: Pet): HTMLDivElement {
   container.style.width = '12rem';
 
   const image = document.createElement('img');
-  image.src = getSafeImageSrc(pet.photos[0]);
+  image.src = getSafeImageSrc(pet.photos?.[0]);
   image.alt = animalTypeLabels[pet.animalType];
   image.loading = 'lazy';
   image.style.width = '100%';

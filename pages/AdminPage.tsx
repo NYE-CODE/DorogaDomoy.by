@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuth } from '../context/AuthContext';
 import { AdminPanel } from '../components/admin-panel';
-import { petsApi, usersApi, reportsApi, mediaApi, partnersApi } from '../api/client';
-import type { MediaArticle, Partner } from '../api/client';
+import { petsApi, usersApi, reportsApi, mediaApi, partnersApi, profilePetsApi } from '../api/client';
+import type { MediaArticle, Partner, ProfilePetResponse } from '../api/client';
 import { Pet } from '../types/pet';
 import { User } from '../context/AuthContext';
 import { Report, ReportReason, reportReasonLabels } from '../types/admin';
@@ -20,6 +20,7 @@ export default function AdminPage() {
   const [reports, setReports] = useState<Report[]>([]);
   const [mediaArticles, setMediaArticles] = useState<MediaArticle[]>([]);
   const [partners, setPartners] = useState<Partner[]>([]);
+  const [profilePets, setProfilePets] = useState<ProfilePetResponse[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
 
   const isAdmin = isAuthenticated && user?.role === 'admin';
@@ -38,12 +39,14 @@ export default function AdminPage() {
       reportsApi.list().catch(() => [] as Report[]),
       mediaApi.list().catch(() => [] as MediaArticle[]),
       partnersApi.list().catch(() => [] as Partner[]),
-    ]).then(([p, u, r, m, partnersList]) => {
+      profilePetsApi.list().catch(() => [] as ProfilePetResponse[]),
+    ]).then(([p, u, r, m, partnersList, pp]) => {
       setPets(p);
       setUsers(u);
       setReports(r);
       setMediaArticles(m);
       setPartners(partnersList);
+      setProfilePets(pp);
     }).finally(() => setDataLoading(false));
   }, [isLoading, isAdmin, navigate]);
 
@@ -230,6 +233,16 @@ export default function AdminPage() {
     }
   };
 
+  const handleDeleteProfilePet = async (id: string) => {
+    try {
+      await profilePetsApi.delete(id);
+      setProfilePets((prev) => prev.filter((p) => p.id !== id));
+      toast.success('Профиль питомца удалён');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Ошибка');
+    }
+  };
+
   return (
     <>
       <Toaster position="top-center" richColors theme={theme} />
@@ -239,6 +252,7 @@ export default function AdminPage() {
         reports={reports}
         mediaArticles={mediaArticles}
         partners={partners}
+        profilePets={profilePets}
         onBack={() => navigate('/search')}
         onUpdatePet={handleUpdatePet}
         onDeletePet={handleDeletePet}
@@ -252,6 +266,7 @@ export default function AdminPage() {
         onPartnerCreate={handlePartnerCreate}
         onPartnerUpdate={handlePartnerUpdate}
         onPartnerDelete={handlePartnerDelete}
+        onDeleteProfilePet={handleDeleteProfilePet}
       />
     </>
   );

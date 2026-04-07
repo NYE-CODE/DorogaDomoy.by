@@ -1,8 +1,9 @@
-import { MapPin, User, Settings, FileText, Shield, LogOut, ChevronDown, PawPrint } from "lucide-react";
+import { MapPin, User, Settings, FileText, Shield, LogOut, ChevronDown, PawPrint, Menu } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router";
 import { Button } from "./ui/button";
 import { CitySelectModal } from "../../../components/city-select-modal";
+import { MobileMenuDrawer } from "../../../components/layout/MobileMenuDrawer";
 import { useAuth } from "../../../context/AuthContext";
 import { useI18n } from "../../../context/I18nContext";
 import { useCityOptional } from "../../../context/CityContext";
@@ -10,10 +11,11 @@ import { useCityOptional } from "../../../context/CityContext";
 interface HeaderProps {
   selectedCity?: string;
   onCityClick?: () => void;
+  showCitySelector?: boolean;
 }
 
 export function Header(props: HeaderProps = {}) {
-  const { selectedCity: propSelectedCity, onCityClick } = props || {};
+  const { selectedCity: propSelectedCity, onCityClick, showCitySelector = true } = props || {};
   const cityContext = useCityOptional();
   const selectedCityFromContext = cityContext?.selectedCity ?? '';
   const { t } = useI18n();
@@ -21,6 +23,7 @@ export function Header(props: HeaderProps = {}) {
   const navigate = useNavigate();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isRegionOpen, setIsRegionOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [selectedRegion, setSelectedRegion] = useState(t.landing.header.allBelarus);
 
   useEffect(() => {
@@ -79,14 +82,16 @@ export function Header(props: HeaderProps = {}) {
               </Link>
             </Button>
             
-            <button 
-              onClick={handleRegionClick}
-              className="flex items-center gap-2 px-4 h-12 rounded-lg border border-border"
-            >
-              <MapPin size={18} className="text-primary" />
-              <span className="text-foreground">{displayRegion}</span>
-              <ChevronDown size={16} className="text-muted-foreground" />
-            </button>
+            {showCitySelector && (
+              <button 
+                onClick={handleRegionClick}
+                className="flex items-center gap-2 px-4 h-12 rounded-lg border border-border"
+              >
+                <MapPin size={18} className="text-primary" />
+                <span className="text-foreground">{displayRegion}</span>
+                <ChevronDown size={16} className="text-muted-foreground" />
+              </button>
+            )}
 
             <div className="relative" ref={profileRef} data-profile-menu>
               {isAuthenticated && user ? (
@@ -153,89 +158,38 @@ export function Header(props: HeaderProps = {}) {
             </div>
           </nav>
 
-          {/* Mobile Navigation */}
-          <nav className="md:hidden flex gap-2 items-center">
-            <Button asChild className="bg-[#FF9800] text-white hover:bg-[#F57C00] rounded-lg w-12 h-12 flex items-center justify-center text-2xl">
-              <Link to="/create">+</Link>
-            </Button>
-
-            <div className="relative" data-profile-menu>
-              {isAuthenticated && user ? (
-                <>
-                  <button 
-                    onClick={() => setIsProfileOpen(!isProfileOpen)}
-                    className="w-12 h-12 bg-card rounded-lg border border-border flex items-center justify-center hover:border-primary transition-colors"
-                  >
-                    <div className="w-7 h-7 bg-[#FF9800] rounded-full flex items-center justify-center">
-                      <User size={16} className="text-white" />
-                    </div>
-                  </button>
-                  {isProfileOpen && (
-                    <div className="absolute right-0 mt-2 w-64 bg-card rounded-lg shadow-lg border border-border py-2 z-[100]">
-                      <div className="px-4 py-3 border-b border-border">
-                        <p className="font-bold text-foreground">{user.name}</p>
-                        <p className="text-sm text-muted-foreground truncate">{user.email}</p>
-                      </div>
-                      <div className="py-2">
-                        <button onClick={() => { navigate("/profile"); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted transition-colors text-left">
-                          <User size={18} className="text-muted-foreground" />
-                          <span className="text-foreground">{t.landing.header.profile}</span>
-                        </button>
-                        <button onClick={() => { navigate("/my-pets"); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted transition-colors text-left">
-                          <PawPrint size={18} className="text-muted-foreground" />
-                          <span className="text-foreground">{t.landing.header.myPets}</span>
-                        </button>
-                        <button onClick={() => { navigate("/my-ads"); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted transition-colors text-left">
-                          <FileText size={18} className="text-muted-foreground" />
-                          <span className="text-foreground">{t.landing.header.myAds}</span>
-                        </button>
-                        <button onClick={() => { navigate("/settings"); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted transition-colors text-left">
-                          <Settings size={18} className="text-muted-foreground" />
-                          <span className="text-foreground">{t.landing.header.settings}</span>
-                        </button>
-                        {user.role === "admin" && (
-                          <button onClick={() => { navigate("/admin"); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-primary/10 transition-colors text-left">
-                            <Shield size={18} className="text-primary" />
-                            <span className="text-primary font-medium">{t.landing.header.adminPanel}</span>
-                          </button>
-                        )}
-                        <div className="border-t border-border mt-2 pt-2">
-                          <button onClick={() => { logout(); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-destructive/10 transition-colors text-left">
-                            <LogOut size={18} className="text-destructive" />
-                            <span className="text-destructive font-medium">{t.landing.header.logout}</span>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <button
-                  onClick={openAuthModal}
-                  className="w-12 h-12 bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg flex items-center justify-center"
-                >
-                  <User size={20} className="text-white" />
-                </button>
-              )}
-            </div>
+          {/* Mobile Navigation — burger only, rest moved to MobileBottomNav */}
+          <nav className="md:hidden flex items-center">
+            <button
+              type="button"
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="w-12 h-12 rounded-lg border border-border flex items-center justify-center hover:bg-muted transition-colors"
+              aria-label={t.header.menu ?? 'Menu'}
+            >
+              <Menu size={22} className="text-foreground" />
+            </button>
           </nav>
+
+          <MobileMenuDrawer open={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
         </div>
 
         {/* Mobile Region Selector - Full Width Below */}
-        <div className="md:hidden pb-4">
-          <button 
-            onClick={handleRegionClick}
-            className="w-full flex items-center justify-center gap-2 px-4 h-12 rounded-lg border border-border"
-          >
-            <MapPin size={18} className="text-primary" />
-            <span className="text-foreground">{displayRegion}</span>
-            <ChevronDown size={16} className="text-muted-foreground" />
-          </button>
-        </div>
+        {showCitySelector && (
+          <div className="md:hidden pb-4">
+            <button 
+              onClick={handleRegionClick}
+              className="w-full flex items-center justify-center gap-2 px-4 h-12 rounded-lg border border-border"
+            >
+              <MapPin size={18} className="text-primary" />
+              <span className="text-foreground">{displayRegion}</span>
+              <ChevronDown size={16} className="text-muted-foreground" />
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* City Select Modal — когда город не управляется родителем (лендинг) */}
-      {!hasCityControl && cityContext && (
+      {/* City Select Modal — когда город не управляется родителем (страницы без onCityClick) */}
+      {!hasCityControl && cityContext && showCitySelector && (
         <CitySelectModal
           open={isRegionOpen}
           onClose={() => setIsRegionOpen(false)}

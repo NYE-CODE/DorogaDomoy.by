@@ -36,7 +36,10 @@ export function Help() {
               </p>
             </div>
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
-              {([Share2, Users, Heart, DollarSign] as const).map((Icon, index) => (
+              {([Share2, Users, Heart, DollarSign] as const).map((Icon, index) => {
+                const w = ways[index];
+                if (!w) return null;
+                return (
                 <div
                   key={index}
                   className="bg-card rounded-3xl p-8 text-center shadow-md hover:shadow-xl transition-all duration-300 flex flex-col"
@@ -44,13 +47,14 @@ export function Help() {
                   <div className="w-16 h-16 bg-primary rounded-2xl mx-auto mb-6 flex items-center justify-center">
                     <Icon size={32} className="text-primary-foreground" />
                   </div>
-                  <h3 className="text-xl font-bold text-foreground mb-4">{ways[index].title}</h3>
-                  <p className="text-muted-foreground mb-6 leading-relaxed flex-grow">{ways[index].desc}</p>
+                  <h3 className="text-xl font-bold text-foreground mb-4">{w.title}</h3>
+                  <p className="text-muted-foreground mb-6 leading-relaxed flex-grow">{w.desc}</p>
                   <Button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg w-full text-lg mt-auto">
-                    {ways[index].action}
+                    {w.action}
                   </Button>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </>
         )}

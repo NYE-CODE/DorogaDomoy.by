@@ -15,8 +15,8 @@ export default function App() {
   const { ff_landing_show_help, ff_landing_show_stats, ff_landing_show_pets_feature } =
     useFeatureFlags();
   return (
-    <div className="min-h-screen">
-      <Header />
+    <div className="min-h-screen overflow-x-clip">
+      <Header showCitySelector={false} />
       <Hero />
       <HowItWorks />
       {ff_landing_show_pets_feature && <PetsFeature />}

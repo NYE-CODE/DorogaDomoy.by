@@ -6,13 +6,19 @@ import { useScrollLock } from './ui/use-scroll-lock';
 import { BreedCombobox } from './breed-combobox';
 import { CAT_BREEDS, DOG_BREEDS } from '../utils/breeds';
 import { useAuth } from '../context/AuthContext';
+import { useCity } from '../context/CityContext';
 import { useI18n } from '../context/I18nContext';
 import { useIsMobile } from './ui/use-mobile';
 import { LocationPicker } from './location-picker';
-import { DEFAULT_CITY } from '../utils/cities';
+import { DEFAULT_CITY, findCityByName } from '../utils/cities';
 import { geocode } from '../utils/geocode';
 import { toast } from 'sonner';
 import { settingsApi } from '../api/client';
+import {
+  BELARUS_MOBILE_PHONE_PLACEHOLDER,
+  formatBelarusPhoneStorage,
+  isValidBelarusMobilePhoneOptional,
+} from '../utils/belarus-phone';
 
 const MAX_DESCRIPTION = 500;
 
@@ -71,6 +77,28 @@ export interface PetFormData {
   agreeToPrivacy?: boolean;
 }
 
+/** Город и точка на карте по выбранному в фильтре городу (иначе Минск). */
+function defaultsFromSelectedCity(selectedCity: string): Pick<PetFormData, 'city' | 'location'> {
+  const trimmed = selectedCity.trim();
+  if (!trimmed) {
+    return {
+      city: DEFAULT_CITY.name,
+      location: { lat: DEFAULT_CITY.coordinates[0], lng: DEFAULT_CITY.coordinates[1] },
+    };
+  }
+  const found = findCityByName(trimmed);
+  if (found) {
+    return {
+      city: found.name,
+      location: { lat: found.coordinates[0], lng: found.coordinates[1] },
+    };
+  }
+  return {
+    city: trimmed,
+    location: { lat: DEFAULT_CITY.coordinates[0], lng: DEFAULT_CITY.coordinates[1] },
+  };
+}
+
 const defaultFormData: PetFormData = {
   photos: [],
   animalType: 'cat',
@@ -80,7 +108,7 @@ const defaultFormData: PetFormData = {
   approximateAge: '',
   status: 'searching',
   description: '',
-  city: 'Минск',
+  city: DEFAULT_CITY.name,
   location: { lat: DEFAULT_CITY.coordinates[0], lng: DEFAULT_CITY.coordinates[1] },
   contacts: {},
   useProfileContacts: true,
@@ -99,8 +127,11 @@ function formDataFromPet(pet: Pet): PetFormData {
     approximateAge: pet.approximateAge || '',
     status: pet.status,
     description: pet.description,
-    city: pet.city ?? 'Минск',
-    location: pet.location ?? defaultFormData.location,
+    city: pet.city ?? DEFAULT_CITY.name,
+    location: pet.location ?? {
+      lat: DEFAULT_CITY.coordinates[0],
+      lng: DEFAULT_CITY.coordinates[1],
+    },
     contacts: pet.contacts ?? {},
     useProfileContacts: true,
     contactName: pet.authorName ?? '',
@@ -138,6 +169,7 @@ export function PetForm({
   prefillPartial = null,
 }: PetFormProps) {
   const { user } = useAuth();
+  const { selectedCity } = useCity();
   const { t } = useI18n();
   const isMobile = useIsMobile();
   useScrollLock(variant === 'modal');
@@ -154,7 +186,13 @@ export function PetForm({
 
   const [formData, setFormData] = useState<PetFormData>(() => {
     if (initialData) return formDataFromPet(initialData);
-    return { ...defaultFormData, status: initialStatus ?? 'searching' };
+    const fromFilter = defaultsFromSelectedCity(selectedCity);
+    return {
+      ...defaultFormData,
+      status: initialStatus ?? 'searching',
+      city: fromFilter.city,
+      location: fromFilter.location,
+    };
   });
 
   const [step, setStep] = useState(1);
@@ -174,8 +212,8 @@ export function PetForm({
 
   useEffect(() => {
     settingsApi.get().then((s) => {
-      const val = parseInt(s.max_photos, 10);
-      if (val > 0) setMaxPhotos(val);
+      const val = parseInt(String(s.max_photos ?? ''), 10);
+      if (Number.isFinite(val) && val > 0 && val <= 50) setMaxPhotos(val);
     }).catch(() => {});
   }, []);
 
@@ -183,7 +221,13 @@ export function PetForm({
     if (initialData) {
       setFormData(formDataFromPet(initialData));
     } else {
-      const base = { ...defaultFormData, status: initialStatus ?? 'searching' };
+      const fromFilter = defaultsFromSelectedCity(selectedCity);
+      const base: PetFormData = {
+        ...defaultFormData,
+        status: initialStatus ?? 'searching',
+        city: fromFilter.city,
+        location: fromFilter.location,
+      };
       if (user?.contacts) base.contacts = user.contacts;
       if (prefillPartial) {
         Object.assign(base, prefillPartial);
@@ -191,6 +235,13 @@ export function PetForm({
       setFormData(base);
     }
   }, [initialData?.id, user?.id, prefillPartial, initialStatus]);
+
+  /** Подстраиваем адрес шага 3 под смену города в фильтре (только создание объявления). */
+  useEffect(() => {
+    if (initialData || isEditing) return;
+    const fromFilter = defaultsFromSelectedCity(selectedCity);
+    setFormData((prev) => ({ ...prev, city: fromFilter.city, location: fromFilter.location }));
+  }, [selectedCity, initialData, isEditing]);
 
   const compressImage = (file: File, maxDim = 1200, quality = 0.8): Promise<string> =>
     new Promise((resolve, reject) => {
@@ -278,9 +329,28 @@ export function PetForm({
   const step5Errors = () => {
     const errs: Record<string, string> = {};
     if (!isEditing && !formData.agreeToPrivacy) errs.agreeToPrivacy = t.petForm.agreePrivacyRequired;
-    if (!formData.useProfileContacts) {
+    if (formData.useProfileContacts) {
+      if (!user) {
+        errs.profileContacts = t.petForm.profileContactsNeedAuth;
+      } else {
+        const p = user.contacts?.phone?.trim() ?? '';
+        const v = user.contacts?.viber?.trim() ?? '';
+        const tg = user.contacts?.telegram?.trim() ?? '';
+        const linked = !!user.telegramId;
+        if (!p && !v && !tg && !linked) {
+          errs.profileContacts = t.profile.atLeastOneContact;
+        } else if (p && !isValidBelarusMobilePhoneOptional(p)) {
+          errs.profileContacts = t.profile.belarusPhoneInvalid;
+        } else if (v && !isValidBelarusMobilePhoneOptional(v)) {
+          errs.profileContacts = t.profile.belarusPhoneInvalid;
+        }
+      }
+    } else {
       if (!formData.contactName?.trim()) errs.contactName = t.profile.nameLabel;
       if (!formData.contactPhone?.trim()) errs.contactPhone = t.profile.phone;
+      else if (!isValidBelarusMobilePhoneOptional(formData.contactPhone)) {
+        errs.contactPhone = t.profile.belarusPhoneInvalid;
+      }
     }
     return errs;
   };
@@ -309,8 +379,11 @@ export function PetForm({
     const dataToSubmit: PetFormData = { ...formData };
     if (formData.useProfileContacts && user) {
       dataToSubmit.contacts = { ...user.contacts };
-    } else if (!formData.useProfileContacts) {
-      dataToSubmit.contacts = { phone: formData.contactPhone?.trim() || undefined };
+    } else {
+      const trimmed = formData.contactPhone?.trim() || '';
+      dataToSubmit.contacts = {
+        phone: trimmed ? (formatBelarusPhoneStorage(trimmed) ?? undefined) : undefined,
+      };
       dataToSubmit.contactName = formData.contactName?.trim();
     }
     try {
@@ -323,6 +396,9 @@ export function PetForm({
 
   const stepTitles = [t.petForm.step1Title, t.petForm.step2Title, t.petForm.step3Title, t.petForm.step4Title, t.petForm.step5Title];
   const stepDescs = [t.petForm.step1Desc, t.petForm.step2Desc, t.petForm.step3Desc, t.petForm.step4Desc, t.petForm.step5Desc];
+  const safeStepIndex = Math.min(Math.max(step, 1), totalSteps) - 1;
+  const currentStepTitle = stepTitles[safeStepIndex] ?? '';
+  const currentStepDesc = stepDescs[safeStepIndex] ?? '';
 
   const getPageTitle = () => {
     if (isEditing) return t.petForm.editTitle;
@@ -343,8 +419,8 @@ export function PetForm({
       onStepChange({
         step,
         totalSteps,
-        stepTitle: stepTitles[step - 1],
-        stepDesc: stepDescs[step - 1] ?? '',
+        stepTitle: currentStepTitle,
+        stepDesc: currentStepDesc,
         pageTitle: getPageTitle(),
         onBack: () => (step > 1 ? setStep(step - 1) : onClose()),
       });
@@ -385,11 +461,11 @@ export function PetForm({
               />
             </div>
             <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              {t.petForm.step} {step} {t.petForm.of} {totalSteps}: {stepTitles[step - 1]}
+              {t.petForm.step} {step} {t.petForm.of} {totalSteps}: {currentStepTitle}
             </p>
-            {stepDescs[step - 1] && (
+            {currentStepDesc && (
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                {stepDescs[step - 1]}
+                {currentStepDesc}
               </p>
             )}
           </div>
@@ -421,8 +497,8 @@ export function PetForm({
 
         <form onSubmit={handleSubmit} className={variant === 'page' ? 'pt-8' : 'p-6'}>
           {/* stepDesc для шагов 2–5 — сверху формы, как в эталоне */}
-          {variant === 'page' && step >= 2 && stepDescs[step - 1] && (
-            <p className="text-gray-600 dark:text-muted-foreground mb-6">{stepDescs[step - 1]}</p>
+          {variant === 'page' && step >= 2 && currentStepDesc && (
+            <p className="text-gray-600 dark:text-muted-foreground mb-6">{currentStepDesc}</p>
           )}
           {/* Step 1: Тип питомца, пол, цвет, возраст */}
           {step === 1 && (
@@ -766,6 +842,9 @@ export function PetForm({
                     <span className="text-gray-700 dark:text-gray-300">{t.petForm.newContacts}</span>
                   </label>
                 </div>
+                {errors.profileContacts && (
+                  <p className="text-xs text-red-500 mt-2">{errors.profileContacts}</p>
+                )}
               </div>
               {!formData.useProfileContacts && (
                 <div className="space-y-4">
@@ -786,7 +865,7 @@ export function PetForm({
                       type="tel"
                       value={formData.contactPhone ?? ''}
                       onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
-                      placeholder="+375291234567"
+                      placeholder={BELARUS_MOBILE_PHONE_PLACEHOLDER}
                       className={variant === 'page' ? `w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF9800] focus:border-transparent ${errors.contactPhone ? 'border-red-300' : 'border-gray-300 dark:border-gray-600'}` : `w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${errors.contactPhone ? 'border-red-300' : 'border-gray-200 dark:border-gray-600'}`}
                     />
                     {errors.contactPhone && <p className="text-xs text-red-500 mt-1">{errors.contactPhone}</p>}
