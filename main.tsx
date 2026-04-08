@@ -1,6 +1,6 @@
 import React, { Suspense, lazy, useEffect } from 'react'
 import ReactDOM from 'react-dom/client'
-import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router'
+import { BrowserRouter, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router'
 import { Toaster } from 'sonner'
 import { AuthModal } from './components/auth/AuthModal'
 import { AuthProvider, useAuth } from './context/AuthContext.tsx'
@@ -54,6 +54,39 @@ function TermsRoute() {
   return <TermsPage onBack={() => navigate(-1)} />;
 }
 
+function RequireAuth({ children }: { children: React.ReactElement }) {
+  const location = useLocation();
+  const { isAuthenticated, isLoading, openAuthModal } = useAuth();
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      openAuthModal();
+    }
+  }, [isAuthenticated, isLoading, openAuthModal]);
+
+  if (isLoading) {
+    return <RouteLoader />;
+  }
+  if (!isAuthenticated) {
+    return (
+      <Navigate
+        to="/search"
+        replace
+        state={{ fromProtected: `${location.pathname}${location.search}${location.hash}` }}
+      />
+    );
+  }
+  return children;
+}
+
+function RequireAdmin({ children }: { children: React.ReactElement }) {
+  const { user, isAuthenticated, isLoading } = useAuth();
+  if (isLoading) return <RouteLoader />;
+  if (!isAuthenticated) return <Navigate to="/search" replace />;
+  if (user?.role !== 'admin') return <Navigate to="/search" replace />;
+  return children;
+}
+
 function AuthModalGlobal() {
   const navigate = useNavigate();
   const { closeAuthModal } = useAuth();
@@ -86,19 +119,19 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                 <Routes>
                   <Route path="/" element={<LandingPage />} />
                   <Route path="/search" element={<SearchPage />} />
-                  <Route path="/profile" element={<ProfilePage />} />
+                  <Route path="/profile" element={<RequireAuth><ProfilePage /></RequireAuth>} />
                   <Route path="/pet-profile/:id" element={<PublicPetProfilePage />} />
-                  <Route path="/my-pets/add" element={<AddEditPetPageRoute />} />
-                  <Route path="/my-pets/:id/edit" element={<AddEditPetPageRoute />} />
-                  <Route path="/my-pets/:id" element={<MyPetProfilePage />} />
-                  <Route path="/my-pets" element={<MyPetsPageRoute />} />
+                  <Route path="/my-pets/add" element={<RequireAuth><AddEditPetPageRoute /></RequireAuth>} />
+                  <Route path="/my-pets/:id/edit" element={<RequireAuth><AddEditPetPageRoute /></RequireAuth>} />
+                  <Route path="/my-pets/:id" element={<RequireAuth><MyPetProfilePage /></RequireAuth>} />
+                  <Route path="/my-pets" element={<RequireAuth><MyPetsPageRoute /></RequireAuth>} />
                   <Route path="/pet/:id" element={<PetDetailPage />} />
                   <Route path="/user/:id" element={<UserProfilePage />} />
-                  <Route path="/my-ads" element={<MyAdsPageRoute />} />
-                  <Route path="/create" element={<CreateAdPage />} />
-                  <Route path="/edit/:id" element={<EditAdPage />} />
-                  <Route path="/settings" element={<SettingsPageRoute />} />
-                  <Route path="/admin" element={<AdminPage />} />
+                  <Route path="/my-ads" element={<RequireAuth><MyAdsPageRoute /></RequireAuth>} />
+                  <Route path="/create" element={<RequireAuth><CreateAdPage /></RequireAuth>} />
+                  <Route path="/edit/:id" element={<RequireAuth><EditAdPage /></RequireAuth>} />
+                  <Route path="/settings" element={<RequireAuth><SettingsPageRoute /></RequireAuth>} />
+                  <Route path="/admin" element={<RequireAdmin><AdminPage /></RequireAdmin>} />
                   <Route path="/terms" element={<TermsRoute />} />
                   <Route path="/blog" element={<BlogListPage />} />
                   <Route path="/blog/:slug" element={<BlogPostPage />} />
