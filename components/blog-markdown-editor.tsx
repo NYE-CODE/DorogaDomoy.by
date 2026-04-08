@@ -58,7 +58,7 @@ export function BlogMarkdownEditor({ value, onChange, rows = 14, id }: BlogMarkd
   const { t } = useI18n();
   const b = t.landing.blog;
   const taRef = useRef<HTMLTextAreaElement>(null);
-  const selectionRef = useRef<{ start: number; end: number }>({ start: 0, end: 0 });
+  const selectionRef = useRef<{ start: number; end: number } | null>(null);
 
   const rememberSelection = useCallback(() => {
     const ta = taRef.current;
@@ -73,8 +73,8 @@ export function BlogMarkdownEditor({ value, onChange, rows = 14, id }: BlogMarkd
     (fn: (text: string, s: number, e: number) => { next: string; focusStart: number; focusEnd: number }) => {
       const text = value;
       const ta = taRef.current;
-      const fallbackStart = selectionRef.current.start ?? text.length;
-      const fallbackEnd = selectionRef.current.end ?? text.length;
+      const fallbackStart = selectionRef.current?.start ?? text.length;
+      const fallbackEnd = selectionRef.current?.end ?? text.length;
       const s = ta?.selectionStart ?? fallbackStart;
       const e = ta?.selectionEnd ?? fallbackEnd;
       const { next, focusStart, focusEnd } = fn(text, s, e);
@@ -100,6 +100,7 @@ export function BlogMarkdownEditor({ value, onChange, rows = 14, id }: BlogMarkd
           type="button"
           className={toolbarBtn}
           title={b.mdBold}
+          onPointerDown={(e) => e.preventDefault()}
           onMouseDown={(e) => e.preventDefault()}
           onClick={() =>
             apply((tx, s, e) => insertAround(tx, s, e, '**', '**', b.mdPhBold))
@@ -111,6 +112,7 @@ export function BlogMarkdownEditor({ value, onChange, rows = 14, id }: BlogMarkd
           type="button"
           className={toolbarBtn}
           title={b.mdItalic}
+          onPointerDown={(e) => e.preventDefault()}
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => apply((tx, s, e) => insertAround(tx, s, e, '*', '*', b.mdPhItalic))}
         >
@@ -120,6 +122,7 @@ export function BlogMarkdownEditor({ value, onChange, rows = 14, id }: BlogMarkd
           type="button"
           className={toolbarBtn}
           title={b.mdH2}
+          onPointerDown={(e) => e.preventDefault()}
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => apply((tx, s, e) => prefixLinesAtSelection(tx, s, e, '## '))}
         >
@@ -129,6 +132,7 @@ export function BlogMarkdownEditor({ value, onChange, rows = 14, id }: BlogMarkd
           type="button"
           className={toolbarBtn}
           title={b.mdH3}
+          onPointerDown={(e) => e.preventDefault()}
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => apply((tx, s, e) => prefixLinesAtSelection(tx, s, e, '### '))}
         >
@@ -138,6 +142,7 @@ export function BlogMarkdownEditor({ value, onChange, rows = 14, id }: BlogMarkd
           type="button"
           className={toolbarBtn}
           title={b.mdLink}
+          onPointerDown={(e) => e.preventDefault()}
           onMouseDown={(e) => e.preventDefault()}
           onClick={() =>
             apply((tx, s, e) => {
@@ -158,6 +163,7 @@ export function BlogMarkdownEditor({ value, onChange, rows = 14, id }: BlogMarkd
           type="button"
           className={toolbarBtn}
           title={b.mdList}
+          onPointerDown={(e) => e.preventDefault()}
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => apply((tx, s, e) => prefixLinesAtSelection(tx, s, e, '- '))}
         >
@@ -167,6 +173,7 @@ export function BlogMarkdownEditor({ value, onChange, rows = 14, id }: BlogMarkd
           type="button"
           className={toolbarBtn}
           title={b.mdOrderedList}
+          onPointerDown={(e) => e.preventDefault()}
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => apply((tx, s, e) => prefixLinesAtSelection(tx, s, e, '1. '))}
         >
@@ -176,6 +183,7 @@ export function BlogMarkdownEditor({ value, onChange, rows = 14, id }: BlogMarkd
           type="button"
           className={toolbarBtn}
           title={b.mdQuote}
+          onPointerDown={(e) => e.preventDefault()}
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => apply((tx, s, e) => prefixLinesAtSelection(tx, s, e, '> '))}
         >
@@ -185,6 +193,7 @@ export function BlogMarkdownEditor({ value, onChange, rows = 14, id }: BlogMarkd
           type="button"
           className={toolbarBtn}
           title={b.mdCode}
+          onPointerDown={(e) => e.preventDefault()}
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => apply((tx, s, e) => insertAround(tx, s, e, '`', '`', b.mdCodePh))}
         >
@@ -194,6 +203,7 @@ export function BlogMarkdownEditor({ value, onChange, rows = 14, id }: BlogMarkd
           type="button"
           className={toolbarBtn}
           title={b.mdHr}
+          onPointerDown={(e) => e.preventDefault()}
           onMouseDown={(e) => e.preventDefault()}
           onClick={() =>
             apply((tx, s, e) => {
