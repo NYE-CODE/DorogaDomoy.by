@@ -946,7 +946,7 @@ export function PetForm({
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[70]"
       onClick={onClose}
     >
       <div className={cardClass} onClick={(e) => e.stopPropagation()}>

@@ -755,7 +755,7 @@ export function AdminPanel({
 
         {/* Edit User Modal */}
         {editingUser && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setEditingUser(null)}>
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4" onClick={() => setEditingUser(null)}>
             <div className="bg-card rounded-xl shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center justify-between px-6 py-4 border-b dark:border-gray-700">
                 <h3 className="font-semibold text-gray-900 dark:text-white">{ap.users.modalTitle}</h3>
@@ -1320,7 +1320,7 @@ export function AdminPanel({
 
       {editingBlog && (
         <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4"
           onClick={() => setEditingBlog(null)}
         >
           <div
@@ -1567,7 +1567,7 @@ export function AdminPanel({
 
       {editingBlogCategory ? (
         <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4"
           onClick={() => setEditingBlogCategory(null)}
         >
           <div
@@ -1761,7 +1761,7 @@ export function AdminPanel({
 
       {/* Media Create/Edit Modal */}
       {editingMedia && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setEditingMedia(null)}>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4" onClick={() => setEditingMedia(null)}>
           <div className="bg-card rounded-xl shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 py-4 border-b dark:border-gray-700">
               <h3 className="font-semibold text-gray-900 dark:text-white">
@@ -1913,7 +1913,7 @@ export function AdminPanel({
       </div>
 
       {editingPartner && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setEditingPartner(null)}>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4" onClick={() => setEditingPartner(null)}>
           <div className="bg-card rounded-xl shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 py-4 border-b dark:border-gray-700">
               <h3 className="font-semibold text-gray-900 dark:text-white">
@@ -2072,7 +2072,7 @@ export function AdminPanel({
 
       {editingFaq && (
         <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4"
           onClick={() => setEditingFaq(null)}
         >
           <div

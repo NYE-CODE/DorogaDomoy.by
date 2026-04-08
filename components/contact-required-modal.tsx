@@ -15,7 +15,7 @@ export function ContactRequiredModal({ open, onClose, onGoToProfile }: ContactRe
 
   return (
     <div 
-      className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm"
+      className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[70] backdrop-blur-sm"
       onClick={onClose}
     >
       <div 

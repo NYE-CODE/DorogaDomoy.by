@@ -42,7 +42,7 @@ export function ConfirmDialog({
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+      className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[70]"
       onClick={handleBackdropClick}
     >
       <div className="bg-card rounded-lg max-w-md w-full p-6 shadow-xl">

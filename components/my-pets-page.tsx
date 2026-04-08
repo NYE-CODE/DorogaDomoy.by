@@ -80,7 +80,7 @@ export function MyPetsContent() {
     <div className="min-h-screen bg-gray-50 dark:bg-background py-4 sm:py-8">
       {deleteTarget && (
         <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+          className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[70]"
           role="presentation"
           onClick={() => !deleting && setDeleteTarget(null)}
         >
