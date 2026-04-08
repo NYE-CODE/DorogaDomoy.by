@@ -103,7 +103,8 @@ def login(
 
 
 @router.post("/logout", status_code=204)
-def logout(response: Response):
+def logout():
+    response = Response(status_code=204)
     clear_auth_cookie(response)
     return response
 
