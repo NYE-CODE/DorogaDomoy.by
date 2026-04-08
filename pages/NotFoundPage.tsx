@@ -1,8 +1,29 @@
+import { useEffect } from 'react';
 import { ArrowLeft, Search } from 'lucide-react';
 import { useI18n } from '../context/I18nContext';
+import {
+  applySeo,
+  canonicalUrlFromPath,
+  SEO_KEYWORDS,
+  SEO_ROBOTS_PRIVATE,
+  truncateMetaDescription,
+} from '../utils/seo';
 
 export default function NotFoundPage() {
   const { t } = useI18n();
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const path = window.location.pathname + window.location.search;
+    applySeo({
+      title: `${t.notFoundPage.title} | DorogaDomoy.by`,
+      description: truncateMetaDescription(`${t.notFoundPage.description} DorogaDomoy.by.`),
+      canonicalUrl: canonicalUrlFromPath(path.split('?')[0] || '/'),
+      robots: SEO_ROBOTS_PRIVATE,
+      keywords: SEO_KEYWORDS,
+    });
+  }, [t.notFoundPage.title, t.notFoundPage.description]);
+
   return (
     <div className="min-h-screen bg-background dark:bg-gray-900 flex items-center justify-center px-4">
       <div className="text-center max-w-md">

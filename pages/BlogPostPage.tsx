@@ -7,6 +7,14 @@ import { blogApi, API_BASE, type BlogPostPublic, type BlogPostListItem } from '.
 import { BlogBody } from '../components/blog-body';
 import { BlogRelatedSlider } from '../components/blog-related-slider';
 import { ArrowLeft, Calendar, MessageCircle } from 'lucide-react';
+import {
+  applySeo,
+  canonicalUrlFromPath,
+  SEO_KEYWORDS,
+  SEO_ROBOTS_PRIVATE,
+  SEO_ROBOTS_PUBLIC,
+  truncateMetaDescription,
+} from '../utils/seo';
 
 function coverSrc(url?: string | null): string | undefined {
   if (!url) return undefined;
@@ -43,15 +51,44 @@ export default function BlogPostPage() {
       setLoading(false);
       return;
     }
+    setLoading(true);
+    setPost(null);
     blogApi
       .getPublished(slug)
       .then((p) => {
         setPost(p);
-        document.title = `${p.title} — ${t.landing.blog.pageTitle}`;
+        const meta =
+          (p.meta_description && p.meta_description.trim()) ||
+          (p.excerpt && p.excerpt.trim()) ||
+          truncateMetaDescription(
+            p.body_md
+              .replace(/#{1,6}\s+[^\n]+\n?/g, '')
+              .replace(/\*\*/g, '')
+              .replace(/\[([^\]]+)]\([^)]+\)/g, '$1'),
+          );
+        applySeo({
+          title: `${p.title} — ${t.landing.blog.pageTitle} | DorogaDomoy.by`,
+          description: meta,
+          canonicalUrl: canonicalUrlFromPath(`/blog/${p.slug}`),
+          robots: SEO_ROBOTS_PUBLIC,
+          keywords: SEO_KEYWORDS,
+        });
       })
       .catch(() => setPost(null))
       .finally(() => setLoading(false));
   }, [slug, t.landing.blog.pageTitle]);
+
+  useEffect(() => {
+    if (loading || !slug) return;
+    if (post) return;
+    applySeo({
+      title: `${b.notFound} | DorogaDomoy.by`,
+      description: 'Статья не найдена или снята с публикации. Другие материалы — в блоге DorogaDomoy.by.',
+      canonicalUrl: canonicalUrlFromPath(`/blog/${slug}`),
+      robots: SEO_ROBOTS_PRIVATE,
+      keywords: SEO_KEYWORDS,
+    });
+  }, [loading, post, slug, b.notFound]);
 
   useEffect(() => {
     if (!slug) return;

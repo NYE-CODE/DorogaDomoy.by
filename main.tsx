@@ -10,6 +10,7 @@ import { I18nProvider } from './context/I18nContext.tsx'
 import './styles/globals.css';
 import './landing/styles/fonts.css'
 import { MobileBottomNav } from './components/layout/MobileBottomNav'
+import { SeoRouteSync } from './components/SeoRouteSync'
 
 const LandingPage = lazy(() => import('./pages/LandingPage.tsx'));
 const SearchPage = lazy(() => import('./pages/SearchPage.tsx'));
@@ -110,6 +111,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <ThemeProvider>
       <I18nProvider>
         <BrowserRouter>
+          <SeoRouteSync />
           <MetrikaTracker />
           <GlobalToaster />
           <AuthProvider>

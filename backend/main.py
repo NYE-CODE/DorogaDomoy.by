@@ -111,6 +111,21 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
+
+@app.middleware("http")
+async def x_robots_tag_middleware(request, call_next):
+    """Не индексировать служебные ответы API (Swagger, схема, корень JSON)."""
+    response = await call_next(request)
+    path = request.url.path
+    if (
+        path.startswith("/docs")
+        or path.startswith("/redoc")
+        or path == "/openapi.json"
+        or path == "/"
+    ):
+        response.headers["X-Robots-Tag"] = "noindex, nofollow"
+    return response
+
 ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001")
 
 app.add_middleware(

@@ -16,6 +16,14 @@ import {
 import { useI18n } from '../context/I18nContext';
 import { profilePetsApi, type ProfilePetResponse } from '../api/client';
 import { resolveProfilePetSpecies, speciesFullLabel } from '../utils/profile-pet-display';
+import {
+  applySeo,
+  canonicalUrlFromPath,
+  SEO_KEYWORDS,
+  SEO_ROBOTS_PRIVATE,
+  SEO_ROBOTS_PUBLIC,
+  truncateMetaDescription,
+} from '../utils/seo';
 import { formatPetAgeDisplay, genderLabel, temperamentLabel } from '../utils/profile-pet-text';
 import { toast } from 'sonner';
 
@@ -45,6 +53,7 @@ export default function PublicPetProfilePage() {
     }
     setLoading(true);
     setNotFound(false);
+    setPet(null);
     setMainPhotoIndex(0);
     profilePetsApi
       .get(id)
@@ -52,6 +61,36 @@ export default function PublicPetProfilePage() {
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false));
   }, [id]);
+
+  useEffect(() => {
+    if (loading || !id) return;
+    if (notFound || !pet) {
+      applySeo({
+        title: `${pp.notFound} | DorogaDomoy.by`,
+        description: truncateMetaDescription(`${pp.notFoundDesc} DorogaDomoy.by.`),
+        canonicalUrl: canonicalUrlFromPath(`/pet-profile/${id}`),
+        robots: SEO_ROBOTS_PRIVATE,
+        keywords: SEO_KEYWORDS,
+      });
+    }
+  }, [loading, notFound, pet, id, pp.notFound, pp.notFoundDesc]);
+
+  useEffect(() => {
+    if (!pet) return;
+    const species = speciesFullLabel(resolveProfilePetSpecies(pet.species, pet.breed), f);
+    const city = (pet.owner_city ?? '').trim();
+    const title = `${pet.name} — ${species}${city ? `, ${city}` : ''} | DorogaDomoy.by`;
+    const desc = truncateMetaDescription(
+      `${pet.name}, ${species}.${city ? ` ${pp.city}: ${city}.` : ''} ${pp.contactSubtitle} DorogaDomoy.by.`,
+    );
+    applySeo({
+      title,
+      description: desc,
+      canonicalUrl: canonicalUrlFromPath(`/pet-profile/${pet.id}`),
+      robots: SEO_ROBOTS_PUBLIC,
+      keywords: SEO_KEYWORDS,
+    });
+  }, [pet, f, pp.city, pp.contactSubtitle, locale]);
 
   const photosLength = pet?.photos?.length ?? 0;
   useEffect(() => {

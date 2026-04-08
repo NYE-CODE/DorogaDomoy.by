@@ -22,6 +22,14 @@ import { Footer } from '../components/layout/Footer';
 import { profilePetToListCard, type ProfilePetListCard } from '../utils/profile-pet-display';
 import { dateLocaleForUi } from '../utils/profile-pet-text';
 import { copyText } from '../utils/copy-text';
+import {
+  applySeo,
+  canonicalUrlFromPath,
+  SEO_KEYWORDS,
+  SEO_ROBOTS_PRIVATE,
+  SEO_ROBOTS_PUBLIC,
+  truncateMetaDescription,
+} from '../utils/seo';
 
 const ARCHIVE_SUCCESS_REASONS = [
   'Питомец вернулся домой / найден хозяин',
@@ -55,6 +63,7 @@ export default function UserProfilePage() {
     if (!id) return;
     setLoading(true);
     setError(false);
+    setUser(null);
 
     Promise.all([
       usersApi.get(id).catch(() => null),
@@ -104,6 +113,32 @@ export default function UserProfilePage() {
     const best = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
     return best ? `${best[0]}, Беларусь` : 'Беларусь';
   }, [activePets]);
+
+  useEffect(() => {
+    if (loading || !id) return;
+    if (error || !user) {
+      applySeo({
+        title: 'Пользователь не найден | DorogaDomoy.by',
+        description:
+          'Профиль не существует или недоступен. Поиск пропавших и найденных питомцев на DorogaDomoy.by.',
+        canonicalUrl: canonicalUrlFromPath(`/user/${id}`),
+        robots: SEO_ROBOTS_PRIVATE,
+        keywords: SEO_KEYWORDS,
+      });
+      return;
+    }
+    const role = getRoleName(user.role, t);
+    const geo = location ?? '';
+    applySeo({
+      title: `${user.name} — ${role} | DorogaDomoy.by`,
+      description: truncateMetaDescription(
+        `Профиль ${user.name} (${role}) на DorogaDomoy.by. Объявления о пропавших и найденных питомцах.${geo ? ` ${geo}.` : ''}`,
+      ),
+      canonicalUrl: canonicalUrlFromPath(`/user/${user.id}`),
+      robots: SEO_ROBOTS_PUBLIC,
+      keywords: SEO_KEYWORDS,
+    });
+  }, [loading, error, user, id, t, location]);
 
   const joinDate = useMemo(() => {
     if (allPets.length === 0) return null;

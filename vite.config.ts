@@ -15,7 +15,7 @@ export default defineConfig({
         name: 'DorogaDomoy.by — Дорога Домой',
         short_name: 'DorogaDomoy',
         description:
-          'Платформа для поиска пропавших питомцев и помощи животным в Беларуси.',
+          'Разместите объявление о пропаже или находке питомца. Карта по городам Беларуси, контакты, блог. DorogaDomoy.by.',
         theme_color: '#FF9800',
         background_color: '#ffffff',
         display: 'standalone',
