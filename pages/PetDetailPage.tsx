@@ -855,7 +855,7 @@ export default function PetDetailPage() {
 
       {showFlyerModal && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[70] p-4"
           onClick={() => setShowFlyerModal(false)}
         >
           <div
@@ -931,7 +931,7 @@ export default function PetDetailPage() {
 
       {instagramGuide && (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50"
+          className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/50"
           role="dialog"
           aria-modal="true"
           aria-labelledby="instagram-guide-title"

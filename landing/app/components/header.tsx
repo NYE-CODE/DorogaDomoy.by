@@ -60,7 +60,7 @@ export function Header(props: HeaderProps = {}) {
   }, [isProfileOpen]);
 
   return (
-    <header className="sticky top-0 z-50 bg-background shadow-sm">
+    <header className="sticky top-0 z-40 bg-background shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-6">
           <div className="flex items-center gap-3">
