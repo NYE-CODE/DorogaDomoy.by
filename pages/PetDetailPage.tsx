@@ -20,6 +20,15 @@ import {
   resolvePetImageUrlForShare,
 } from '../utils/instagram-web-share';
 import { copyText as copyToClipboard } from '../utils/copy-text';
+import {
+  applySeo,
+  canonicalUrlFromPath,
+  getSiteOrigin,
+  SEO_KEYWORDS,
+  SEO_ROBOTS_PRIVATE,
+  SEO_ROBOTS_PUBLIC,
+  truncateMetaDescription,
+} from '../utils/seo';
 
 const PRINT_PLACEHOLDER_IMAGE =
   'data:image/svg+xml;utf8,' +
@@ -203,7 +212,7 @@ export default function PetDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { user: currentUser, isAuthenticated, openAuthModal } = useAuth();
   const { theme } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [pet, setPet] = useState<Pet | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -224,11 +233,43 @@ export default function PetDetailPage() {
     if (!id) return;
     setLoading(true);
     setError(false);
-    petsApi.get(id)
+    setPet(null);
+    petsApi
+      .get(id)
       .then(setPet)
       .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, [id]);
+
+  useEffect(() => {
+    if (loading || !id) return;
+    if (error || !pet) {
+      applySeo({
+        title: 'Объявление не найдено | DorogaDomoy.by',
+        description:
+          'Объявление удалено или не существует. Поиск пропавших и найденных питомцев на DorogaDomoy.by.',
+        canonicalUrl: canonicalUrlFromPath(`/pet/${id}`),
+        robots: SEO_ROBOTS_PRIVATE,
+        keywords: SEO_KEYWORDS,
+      });
+    }
+  }, [loading, error, pet, id]);
+
+  useEffect(() => {
+    if (!pet) return;
+    const animal = t.pet.animalType[pet.animalType];
+    const headline = pet.status === 'searching' ? t.petDetail.lostPet : t.petDetail.foundPet;
+    const breedPart = pet.breed ? `, ${pet.breed}` : '';
+    const title = `${headline} — ${animal}${breedPart}, ${pet.city} | DorogaDomoy.by`;
+    const description = truncateMetaDescription(`${headline}. ${animal}, ${pet.city}. ${pet.description}`);
+    applySeo({
+      title,
+      description,
+      canonicalUrl: `${getSiteOrigin()}/pet/${pet.id}`,
+      robots: SEO_ROBOTS_PUBLIC,
+      keywords: SEO_KEYWORDS,
+    });
+  }, [pet, locale]);
 
   useEffect(() => {
     if (!showShareMenu) return;

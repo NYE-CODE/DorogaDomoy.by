@@ -5,6 +5,13 @@ import { Footer } from '../components/layout/Footer';
 import { useI18n } from '../context/I18nContext';
 import { blogApi, API_BASE, type BlogPostListItem } from '../api/client';
 import { ChevronRight, Calendar } from 'lucide-react';
+import {
+  applySeo,
+  canonicalUrlFromPath,
+  SEO_KEYWORDS,
+  SEO_ROBOTS_PUBLIC,
+  truncateMetaDescription,
+} from '../utils/seo';
 
 function coverSrc(url?: string | null): string | undefined {
   if (!url) return undefined;
@@ -38,8 +45,15 @@ export default function BlogListPage() {
   const [hasMore, setHasMore] = useState(true);
 
   useEffect(() => {
-    document.title = `${b.pageTitle} — DorogaDomoy.by`;
-  }, [b.pageTitle]);
+    const desc = truncateMetaDescription(`${b.pageSubtitle}. DorogaDomoy.by — поиск пропавших питомцев в Беларуси.`);
+    applySeo({
+      title: `${b.pageTitle} — DorogaDomoy.by`,
+      description: desc,
+      canonicalUrl: canonicalUrlFromPath('/blog'),
+      robots: SEO_ROBOTS_PUBLIC,
+      keywords: SEO_KEYWORDS,
+    });
+  }, [b.pageTitle, b.pageSubtitle]);
 
   useEffect(() => {
     blogApi

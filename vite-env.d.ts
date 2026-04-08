@@ -3,7 +3,8 @@
 
 interface ImportMetaEnv {
   readonly VITE_API_URL?: string;
-  // другие VITE_* переменные при необходимости
+  /** Публичный URL сайта (canonical, мета); без слэша в конце, напр. https://dorogadomoy.by */
+  readonly VITE_SITE_URL?: string;
 }
 
 interface ImportMeta {
