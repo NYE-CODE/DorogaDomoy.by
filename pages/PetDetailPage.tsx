@@ -15,6 +15,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { buildPetShareBundle, type PetShareDict } from '../utils/pet-share-text';
 import { copyText as copyToClipboard } from '../utils/copy-text';
+import { compressImageBlobForShare, tryShareImageFile } from '../utils/web-share-image';
 import {
   applySeo,
   canonicalUrlFromPath,
@@ -389,33 +390,6 @@ export default function PetDetailPage() {
     }
   };
 
-  /** Карточка + текст + ссылка через системное «Поделиться» (мобильные браузеры). */
-  const tryNavigatorShareCard = async (
-    blob: Blob,
-    filename: string,
-  ): Promise<'shared' | 'aborted' | 'unavailable'> => {
-    if (typeof navigator === 'undefined' || typeof navigator.share !== 'function') {
-      return 'unavailable';
-    }
-    const file = new File([blob], filename, { type: 'image/png' });
-    const shareData: ShareData = {
-      files: [file],
-      text: shareBundle.textFull,
-      url: shareBundle.url,
-      title: shareBundle.vkTitle,
-    };
-    const can =
-      typeof navigator.canShare !== 'function' || navigator.canShare(shareData);
-    if (!can) return 'unavailable';
-    try {
-      await navigator.share(shareData);
-      return 'shared';
-    } catch (e) {
-      if (e instanceof DOMException && e.name === 'AbortError') return 'aborted';
-      return 'unavailable';
-    }
-  };
-
   const handleShareTelegram = () => {
     const u = `https://t.me/share/url?url=${encodeURIComponent(shareBundle.url)}&text=${encodeURIComponent(shareBundle.textForMessenger)}`;
     window.open(u, '_blank', 'noopener,noreferrer,width=600,height=520');
@@ -457,7 +431,21 @@ export default function PetDetailPage() {
 
     await copyToClipboard(shareBundle.textFull);
 
-    const out = await tryNavigatorShareCard(blob, `dorogadomoy-${pet.id}-${cardFormat}.png`);
+    let shareBlob: Blob = blob;
+    let shareFilename = `dorogadomoy-${pet.id}-${cardFormat}.png`;
+    if (cardFormat === 'story') {
+      const jpeg = await compressImageBlobForShare(blob);
+      if (jpeg) {
+        shareBlob = jpeg;
+        shareFilename = `dorogadomoy-${pet.id}-story.jpg`;
+      }
+    }
+
+    const out = await tryShareImageFile(shareBlob, shareFilename, {
+      text: shareBundle.textFull,
+      url: shareBundle.url,
+      title: shareBundle.vkTitle,
+    });
     if (out === 'shared') {
       toast.success(t.petDetail.shareInstagramSystemOk, {
         description: t.petDetail.shareInstagramSystemOkDesc,

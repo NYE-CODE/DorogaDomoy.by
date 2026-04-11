@@ -351,7 +351,7 @@ export const translations = {
       shareInstagramModalStep3Post:
         'В открытом Instagram нажмите «Создать» слева или «+» внизу → «Публикация» → загрузите фото → в поле подписи вставьте текст (Ctrl+V).',
       shareInstagramModalStep3Story:
-        'Stories в браузере обычно недоступны: используйте приложение Instagram на телефоне или оформите обычный пост на сайте.',
+        'Откройте Instagram → «+» → «Сторис» и добавьте карточку с превью. Текст уже в буфере. Если это окно появилось на телефоне, значит системное «Поделиться» недоступно в этом браузере — на ПК сторис в веб-версии Instagram часто не работают.',
       shareInstagramModalStep3Dm:
         'В Instagram откройте Direct, выберите чат и вставьте текст из буфера.',
       shareInstagramModalCaptionLabel: 'Текст для подписи',
@@ -1296,7 +1296,7 @@ export const translations = {
       shareInstagramModalStep3Post:
         'У Instagram націсніце «Стварыць» або «+» → «Публікацыя» → загрузіце фота → у подпіс устаўце тэкст (Ctrl+V).',
       shareInstagramModalStep3Story:
-        'Stories у браўзеры звычайна недаступныя — выкарыстайце праграму на тэлефоне або звычайны пост на сайце.',
+        'Адкрыйце Instagram → «+» → «Stories» і дадайце картку з перадпрагляду. Тэкст ужо ў буферы. Калі гэта акно на тэлефоне — сістэмнае «Падзяліцца» ў гэтым браўзеры недаступнае; на ПК сторис у вэб часта не працуюць.',
       shareInstagramModalStep3Dm:
         'У Instagram адкрыйце Direct, абярыце чат і ўстаўце тэкст.',
       shareInstagramModalCaptionLabel: 'Тэкст для подпісу',
@@ -2241,7 +2241,7 @@ export const translations = {
       shareInstagramModalStep3Post:
         'In Instagram click Create (+) → Post → upload the photo → paste the caption (Ctrl+V).',
       shareInstagramModalStep3Story:
-        'Stories usually need the Instagram app on your phone, or use a regular post on the website.',
+        'Open Instagram → + → Story and add the card from the preview. Text is in the clipboard. If you see this on a phone, system Share was not available in this browser; on desktop, Stories in Instagram Web often do not work.',
       shareInstagramModalStep3Dm:
         'Open Instagram Direct, pick a chat, and paste the text.',
       shareInstagramModalCaptionLabel: 'Caption text',
