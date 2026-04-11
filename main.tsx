@@ -35,7 +35,18 @@ const BlogPostPage = lazy(() => import('./pages/BlogPostPage.tsx'));
 
 function GlobalToaster() {
   const { theme } = useTheme();
-  return <Toaster position="top-center" richColors theme={theme} />;
+  return (
+    <Toaster
+      position="top-center"
+      richColors
+      closeButton
+      theme={theme}
+      toastOptions={{
+        duration: 4500,
+        classNames: { toast: 'font-sans' },
+      }}
+    />
+  );
 }
 
 const YM_ID = 107705476;

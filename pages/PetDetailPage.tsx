@@ -3,10 +3,9 @@ import { useState, useEffect, useRef } from 'react';
 import { MapPin, Phone, MessageCircle, Calendar, Share2, Download, ChevronLeft, ChevronRight, User, Eye, AlertCircle, X, QrCode, FileText, Home, Heart, Building2, ArrowLeft, Send, Copy, Check, Printer, Image } from 'lucide-react';
 import { Pet } from '../types/pet';
 import { formatDate } from '../utils/pet-helpers';
-import { toast, Toaster } from 'sonner';
+import { toast } from 'sonner';
 import { petsApi, reportsApi, sightingsApi, type SightingItem, API_BASE } from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
 import { useI18n } from '../context/I18nContext';
 import { ReportModal } from '../components/report-modal';
 import { SightingForm } from '../components/SightingForm';
@@ -207,7 +206,6 @@ function ImageCarousel({ photos, alt }: { photos: string[]; alt: string }) {
 export default function PetDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { user: currentUser, isAuthenticated, openAuthModal } = useAuth();
-  const { theme } = useTheme();
   const { t, locale } = useI18n();
   const [pet, setPet] = useState<Pet | null>(null);
   const [loading, setLoading] = useState(true);
@@ -414,21 +412,35 @@ export default function PetDetailPage() {
 
     await copyToClipboard(shareBundle.textFull);
 
-    let shareBlob: Blob = blob;
-    let shareFilename = `dorogadomoy-${pet.id}-${cardFormat}.png`;
-    if (cardFormat === 'story') {
-      const jpeg = await compressImageBlobForShare(blob);
-      if (jpeg) {
-        shareBlob = jpeg;
-        shareFilename = `dorogadomoy-${pet.id}-story.jpg`;
-      }
-    }
-
-    const out = await tryShareImageFile(shareBlob, shareFilename, {
+    const meta = {
       text: shareBundle.textFull,
       url: shareBundle.url,
       title: shareBundle.vkTitle,
-    });
+    };
+
+    let out: 'shared' | 'aborted' | 'unavailable' = 'unavailable';
+
+    if (cardFormat === 'story') {
+      const jpeg = await compressImageBlobForShare(blob);
+      if (jpeg) {
+        out = await tryShareImageFile(jpeg, `dorogadomoy-${pet.id}-story.jpg`, meta);
+      }
+      if (out === 'unavailable') {
+        const jpegSmall = await compressImageBlobForShare(blob, {
+          maxLongSide: 720,
+          maxSizeBytes: 1_200_000,
+        });
+        if (jpegSmall) {
+          out = await tryShareImageFile(jpegSmall, `dorogadomoy-${pet.id}-story.jpg`, meta);
+        }
+      }
+      if (out === 'unavailable') {
+        out = await tryShareImageFile(blob, `dorogadomoy-${pet.id}-story.png`, meta);
+      }
+    } else {
+      out = await tryShareImageFile(blob, `dorogadomoy-${pet.id}-feed.png`, meta);
+    }
+
     if (out === 'shared') {
       toast.success(t.petDetail.shareInstagramSystemOk, {
         description: t.petDetail.shareInstagramSystemOkDesc,
@@ -1351,8 +1363,6 @@ export default function PetDetailPage() {
           }}
         />
       )}
-
-      <Toaster theme={theme} />
     </>
   );
 }

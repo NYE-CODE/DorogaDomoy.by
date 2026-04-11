@@ -3,13 +3,12 @@ import { useNavigate } from 'react-router';
 import { TermsPage } from '../components/terms-page';
 import { useAuth } from '../context/AuthContext';
 import { useCity } from '../context/CityContext';
-import { useTheme } from '../context/ThemeContext';
 import { useI18n } from '../context/I18nContext';
 import { Header } from '../components/layout/Header';
 import { Footer } from '../components/layout/Footer';
 import { AuthModal } from '../components/auth/AuthModal';
 import { ContactRequiredModal } from '../components/contact-required-modal';
-import { toast, Toaster } from 'sonner';
+import { toast } from 'sonner';
 import { DeleteReasonModal } from '../components/delete-reason-modal';
 import { City, findClosestCity, DEFAULT_CITY } from '../utils/cities';
 import { reverseGeocodeLocality } from '../utils/geocode';
@@ -35,7 +34,6 @@ export default function SearchPage() {
   const { user, closeAuthModal, isLoading } = useAuth();
   const { runWhenAuthed } = useAuthenticatedAction();
   const { selectedCity, saveCity, clearCity } = useCity();
-  const { theme } = useTheme();
   const { t } = useI18n();
   const routerNavigate = useNavigate();
   const [view, setViewRaw] = useState<View>(() => {
@@ -657,7 +655,6 @@ export default function SearchPage() {
         onReject={handleCityDetectReject}
       />
 
-      <Toaster theme={theme} />
     </div>
   );
 }
