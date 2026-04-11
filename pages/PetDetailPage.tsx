@@ -14,7 +14,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { buildPetShareBundle, type PetShareDict } from '../utils/pet-share-text';
 import { copyText as copyToClipboard } from '../utils/copy-text';
-import { compressImageBlobForShare, tryShareImageFile } from '../utils/web-share-image';
+import { tryShareImageFile } from '../utils/web-share-image';
 import {
   applySeo,
   canonicalUrlFromPath,
@@ -410,36 +410,13 @@ export default function PetDetailPage() {
       return;
     }
 
-    await copyToClipboard(shareBundle.textFull);
+    void copyToClipboard(shareBundle.textFull);
 
-    const meta = {
-      text: shareBundle.textFull,
-      url: shareBundle.url,
-      title: shareBundle.vkTitle,
-    };
-
-    let out: 'shared' | 'aborted' | 'unavailable' = 'unavailable';
-
-    if (cardFormat === 'story') {
-      const jpeg = await compressImageBlobForShare(blob);
-      if (jpeg) {
-        out = await tryShareImageFile(jpeg, `dorogadomoy-${pet.id}-story.jpg`, meta);
-      }
-      if (out === 'unavailable') {
-        const jpegSmall = await compressImageBlobForShare(blob, {
-          maxLongSide: 720,
-          maxSizeBytes: 1_200_000,
-        });
-        if (jpegSmall) {
-          out = await tryShareImageFile(jpegSmall, `dorogadomoy-${pet.id}-story.jpg`, meta);
-        }
-      }
-      if (out === 'unavailable') {
-        out = await tryShareImageFile(blob, `dorogadomoy-${pet.id}-story.png`, meta);
-      }
-    } else {
-      out = await tryShareImageFile(blob, `dorogadomoy-${pet.id}-feed.png`, meta);
-    }
+    const out = await tryShareImageFile(
+      blob,
+      `dorogadomoy-${pet.id}-${cardFormat}.png`,
+      { text: shareBundle.textFull, url: shareBundle.url, title: shareBundle.vkTitle },
+    );
 
     if (out === 'shared') {
       toast.success(t.petDetail.shareInstagramSystemOk, {
