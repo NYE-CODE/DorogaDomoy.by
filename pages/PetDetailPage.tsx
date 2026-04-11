@@ -4,7 +4,7 @@ import { MapPin, Phone, MessageCircle, Calendar, Share2, Download, ChevronLeft, 
 import { Pet } from '../types/pet';
 import { formatDate } from '../utils/pet-helpers';
 import { toast, Toaster } from 'sonner';
-import { petsApi, reportsApi, sightingsApi, type SightingItem } from '../api/client';
+import { petsApi, reportsApi, sightingsApi, type SightingItem, API_BASE } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useI18n } from '../context/I18nContext';
@@ -14,11 +14,6 @@ import { ReportReason } from '../types/admin';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { buildPetShareBundle, type PetShareDict } from '../utils/pet-share-text';
-import {
-  trySharePetForInstagram,
-  tryCopyImageToClipboard,
-  resolvePetImageUrlForShare,
-} from '../utils/instagram-web-share';
 import { copyText as copyToClipboard } from '../utils/copy-text';
 import {
   applySeo,
@@ -173,7 +168,7 @@ function ImageCarousel({ photos, alt }: { photos: string[]; alt: string }) {
               onClick={() => goTo(current + 1)}
               className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-colors"
             >
-              <ChevronRight className="w-5 h-5 text-gray-800 rotate-180" />
+              <ChevronRight className="w-5 h-5 text-gray-800" />
             </button>
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
               {photos.map((_, i) => (
@@ -226,8 +221,9 @@ export default function PetDetailPage() {
   const [instagramGuide, setInstagramGuide] = useState<null | {
     variant: 'post' | 'story' | 'dm';
     openPath: string;
-    includePhoto: boolean;
+    cardUrl: string | null;
   }>(null);
+  const [cardLoading, setCardLoading] = useState<null | 'feed' | 'story'>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -382,6 +378,44 @@ export default function PetDetailPage() {
     setShowShareMenu(false);
   };
 
+  const fetchCardBlob = async (format: 'feed' | 'story'): Promise<Blob | null> => {
+    try {
+      const url = `${API_BASE}/pets/${pet.id}/social-card?format=${format}&lang=${locale}&contacts=1&_=${Date.now()}`;
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) return null;
+      return await res.blob();
+    } catch {
+      return null;
+    }
+  };
+
+  /** Карточка + текст + ссылка через системное «Поделиться» (мобильные браузеры). */
+  const tryNavigatorShareCard = async (
+    blob: Blob,
+    filename: string,
+  ): Promise<'shared' | 'aborted' | 'unavailable'> => {
+    if (typeof navigator === 'undefined' || typeof navigator.share !== 'function') {
+      return 'unavailable';
+    }
+    const file = new File([blob], filename, { type: 'image/png' });
+    const shareData: ShareData = {
+      files: [file],
+      text: shareBundle.textFull,
+      url: shareBundle.url,
+      title: shareBundle.vkTitle,
+    };
+    const can =
+      typeof navigator.canShare !== 'function' || navigator.canShare(shareData);
+    if (!can) return 'unavailable';
+    try {
+      await navigator.share(shareData);
+      return 'shared';
+    } catch (e) {
+      if (e instanceof DOMException && e.name === 'AbortError') return 'aborted';
+      return 'unavailable';
+    }
+  };
+
   const handleShareTelegram = () => {
     const u = `https://t.me/share/url?url=${encodeURIComponent(shareBundle.url)}&text=${encodeURIComponent(shareBundle.textForMessenger)}`;
     window.open(u, '_blank', 'noopener,noreferrer,width=600,height=520');
@@ -407,35 +441,54 @@ export default function PetDetailPage() {
 
   const finishInstagramShare = async (
     variant: 'post' | 'story' | 'dm',
-    includePhoto: boolean,
     openPath: string,
   ) => {
-    await copyToClipboard(shareBundle.textFull);
     setShowShareMenu(false);
-    const photo = includePhoto ? pet.photos[0] : undefined;
-    const result = await trySharePetForInstagram(photo, shareBundle.textFull, shareBundle.vkTitle);
-    if (result === 'shared') {
+    const cardFormat = variant === 'story' ? 'story' : 'feed';
+    setCardLoading(cardFormat);
+
+    const blob = await fetchCardBlob(cardFormat);
+    setCardLoading(null);
+
+    if (!blob) {
+      toast.error(t.petDetail.shareCardError);
+      return;
+    }
+
+    await copyToClipboard(shareBundle.textFull);
+
+    const out = await tryNavigatorShareCard(blob, `dorogadomoy-${pet.id}-${cardFormat}.png`);
+    if (out === 'shared') {
       toast.success(t.petDetail.shareInstagramSystemOk, {
         description: t.petDetail.shareInstagramSystemOkDesc,
         duration: 9000,
       });
       return;
     }
-    if (result === 'aborted') return;
-    setInstagramGuide({ variant, openPath, includePhoto });
+    if (out === 'aborted') return;
+
+    const cardUrl = URL.createObjectURL(blob);
+    setInstagramGuide({ variant, openPath, cardUrl });
   };
 
-  const handleShareInstagramPost = () => void finishInstagramShare('post', true, '/');
+  const handleShareInstagramPost = () => void finishInstagramShare('post', '/');
 
-  const handleShareInstagramStory = () => void finishInstagramShare('story', true, '/');
+  const handleShareInstagramStory = () => void finishInstagramShare('story', '/');
 
-  const handleShareInstagramDm = () => void finishInstagramShare('dm', true, '/direct/inbox/');
+  const handleShareInstagramDm = () => void finishInstagramShare('dm', '/direct/inbox/');
 
   const petUrl = shareBundle.url;
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(petUrl)}`;
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=4&data=${encodeURIComponent(petUrl)}`;
   const safePhotoUrl = getSafeImageUrl(pet.photos[0]);
-  const flyerTitle = escapeHtml(pet.status === 'searching' ? t.petDetail.lostPet : t.petDetail.foundPet);
+  const flyerIsLost = pet.status === 'searching';
+  /** «Пропал» — фирменный оранжевый как на сайте (#FF9800); «найден» — зелёный. */
+  const flyerAccent = flyerIsLost ? '#FF9800' : '#166534';
+  const flyerAccentSoft = flyerIsLost ? '#FFF8F0' : '#ecfdf5';
+  const flyerAccentBorder = flyerIsLost ? '#FFCC80' : '#86efac';
+
+  const flyerTitle = escapeHtml(flyerIsLost ? t.petDetail.lostPet : t.petDetail.foundPet);
   const flyerSubtitle = escapeHtml(`${pet.city} · ${t.pet.animalType[pet.animalType]}`);
+  const flyerLocationLine = escapeHtml(`${t.pet.location}: ${pet.city}`);
   const flyerBreed = escapeHtml(pet.breed || t.pet.notSpecified);
   const flyerColors = escapeHtml(pet.colors.map(c => t.pet.color[c]).join(', '));
   const flyerGender = escapeHtml(t.pet.gender[pet.gender]);
@@ -445,33 +498,276 @@ export default function PetDetailPage() {
   const flyerAuthorName = escapeHtml(pet.authorName);
   const qrLabel = escapeHtml(t.petDetail.moreOnSite);
   const callAnytimeLabel = escapeHtml(t.petDetail.callAnytime);
+  const flyerDocTitle = escapeHtml(`DorogaDomoy.by — ${pet.city}`);
+  const flyerLang = escapeHtml(locale);
 
   const flyerCommonStyles = `
-    @page { size: A4 portrait; margin: 10mm; }
+    :root {
+      --accent: ${flyerAccent};
+      --accent-soft: ${flyerAccentSoft};
+      --accent-border: ${flyerAccentBorder};
+      --ink: #111827;
+      --muted: #4b5563;
+      --line: #e5e7eb;
+    }
+    @page { size: A4 portrait; margin: 8mm; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: system-ui, -apple-system, sans-serif; padding: 20px 24px; max-width: 800px; margin: 0 auto; color: #000; }
-    .header { text-align: center; border-bottom: 4px solid #ef4444; padding-bottom: 12px; margin-bottom: 16px; }
-    .title { font-size: 42px; font-weight: 900; color: #ef4444; line-height: 1; text-transform: uppercase; }
-    .subtitle { font-size: 20px; font-weight: bold; margin-top: 6px; text-transform: uppercase; }
-    .photo-container { text-align: center; margin-bottom: 16px; height: 340px; background: #f3f4f6; border-radius: 10px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
-    .photo { max-width: 100%; max-height: 100%; object-fit: contain; }
-    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 20px; margin-bottom: 14px; font-size: 18px; }
-    .label { font-weight: bold; color: #666; font-size: 13px; margin-bottom: 2px; text-transform: uppercase; }
-    .value { font-weight: 600; }
-    .description { font-size: 17px; line-height: 1.4; margin-bottom: 16px; padding: 12px 14px; background: #fff1f2; border-left: 5px solid #ef4444; }
-    .contact-box { border: 3px solid #000; padding: 16px; text-align: center; border-radius: 14px; }
-    .contact-label { font-size: 18px; font-weight: bold; text-transform: uppercase; margin-bottom: 4px; }
-    .phone { font-size: 38px; font-weight: 900; margin: 6px 0; letter-spacing: 1px; }
-    .footer { margin-top: 12px; text-align: center; font-size: 12px; color: #9ca3af; }
+    html { font-size: 15px; }
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      color: var(--ink);
+      background: #f3f4f6;
+      padding: 18px 14px 28px;
+      line-height: 1.45;
+      -webkit-font-smoothing: antialiased;
+    }
+    .sheet {
+      max-width: 720px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 14px;
+      padding: 26px 28px 30px;
+      border: 1px solid var(--line);
+      box-shadow: 0 8px 40px rgba(0,0,0,0.08);
+    }
+    @media print {
+      body { background: #fff !important; padding: 0; }
+      html { font-size: 12.5px; }
+      .sheet {
+        box-shadow: none !important;
+        border: none !important;
+        border-radius: 0;
+        max-width: none;
+        padding: 0;
+      }
+      .sheet, .flyer-header, .photo-frame, .info-grid, .description, .contact-box, .contact-qr {
+        page-break-inside: avoid;
+      }
+      .flyer-header {
+        margin-bottom: 8px;
+        padding-bottom: 8px;
+        border-bottom-width: 3px;
+      }
+      .brand-strip { font-size: 8px; margin-bottom: 4px; letter-spacing: 0.14em; }
+      .title { font-size: 24px !important; letter-spacing: -0.01em; }
+      .subtitle { font-size: 12.5px; margin-top: 4px; }
+      .loc-line { font-size: 11.5px; margin-top: 3px; }
+      .photo-frame {
+        height: 168px !important;
+        min-height: 0 !important;
+        margin-bottom: 8px;
+        border-radius: 8px;
+      }
+      .info-grid { font-size: 12px; gap: 5px 12px; margin-bottom: 8px; }
+      .label { font-size: 8.5px; margin-bottom: 1px; }
+      .description {
+        font-size: 11px;
+        line-height: 1.32;
+        padding: 8px 10px;
+        margin-bottom: 9px;
+        max-height: 68mm;
+        overflow: hidden;
+      }
+      .contact-box, .contact-qr {
+        padding: 10px 12px;
+        border-radius: 10px;
+        border-width: 2px;
+      }
+      .contact-qr { gap: 10px 14px; }
+      .contact-label { font-size: 10.5px; margin-bottom: 3px; }
+      .phone { font-size: 21px !important; margin: 4px 0; letter-spacing: 0.02em; }
+      .author-line { font-size: 12.5px; margin-top: 2px; }
+      .contact-qr .qr img { width: 100px !important; height: 100px !important; }
+      .contact-qr .qr-label { font-size: 9px; margin-top: 4px; max-width: 110px; }
+      .footer { margin-top: 6px; padding-top: 5px; font-size: 9px; }
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+    }
+    .flyer-header {
+      text-align: center;
+      padding-bottom: 10px;
+      margin-bottom: 12px;
+      border-bottom: 3px solid var(--accent);
+    }
+    .brand-strip {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      color: var(--muted);
+      margin-bottom: 10px;
+      text-transform: uppercase;
+    }
+    .title {
+      font-size: clamp(22px, 5vw, 34px);
+      font-weight: 900;
+      color: var(--accent);
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      text-transform: uppercase;
+    }
+    .subtitle {
+      font-size: 15px;
+      font-weight: 700;
+      margin-top: 6px;
+      color: var(--ink);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .loc-line {
+      font-size: 14px;
+      margin-top: 5px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .photo-frame {
+      text-align: center;
+      margin-bottom: 12px;
+      min-height: 200px;
+      height: clamp(200px, 32vh, 280px);
+      background: linear-gradient(180deg, #f9fafb 0%, #f3f4f6 100%);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .photo {
+      max-width: 100%;
+      max-height: 100%;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+    }
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 18px;
+      margin-bottom: 12px;
+      font-size: 14px;
+    }
+    .label {
+      font-weight: 700;
+      color: var(--muted);
+      font-size: 11px;
+      margin-bottom: 3px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .value { font-weight: 600; color: var(--ink); }
+    .description {
+      font-size: 13.5px;
+      line-height: 1.38;
+      margin-bottom: 12px;
+      padding: 10px 12px;
+      background: var(--accent-soft);
+      border-left: 4px solid var(--accent);
+      border-radius: 0 8px 8px 0;
+      white-space: pre-wrap;
+    }
+    .contact-box {
+      text-align: center;
+      border: 2px solid var(--accent);
+      padding: 14px 14px;
+      border-radius: 12px;
+      background: #fafafa;
+    }
+    .contact-qr {
+      display: flex;
+      align-items: stretch;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 14px 18px;
+      border: 2px solid var(--accent);
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: #fafafa;
+    }
+    .contact-qr .left {
+      flex: 1 1 200px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-width: 0;
+    }
+    .contact-qr .qr { flex: 0 0 auto; text-align: center; }
+    .contact-qr .qr img {
+      width: 112px;
+      height: 112px;
+      display: block;
+      margin: 0 auto;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+    }
+    .contact-qr .qr-label {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 6px;
+      font-weight: 600;
+      max-width: 140px;
+      margin-left: auto;
+      margin-right: auto;
+      line-height: 1.25;
+    }
+    .contact-label {
+      font-size: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+      color: var(--ink);
+      letter-spacing: 0.04em;
+    }
+    .phone {
+      font-size: clamp(22px, 6vw, 32px);
+      font-weight: 900;
+      margin: 4px 0;
+      letter-spacing: 0.03em;
+      color: var(--accent);
+      font-variant-numeric: tabular-nums;
+      word-break: break-all;
+    }
+    .author-line {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-top: 3px;
+    }
+    .footer {
+      margin-top: 12px;
+      padding-top: 8px;
+      border-top: 1px solid var(--line);
+      text-align: center;
+      font-size: 10px;
+      color: #9ca3af;
+      font-weight: 600;
+    }
   `;
 
+  const flyerPrintScript =
+    '<script>(function(){function p(){setTimeout(function(){window.focus();window.print();},300);}' +
+    'var imgs=document.getElementsByTagName("img"),i,img,n=0;' +
+    'for(i=0;i<imgs.length;i++){if(!imgs[i].complete)n++;}' +
+    'if(!n){p();return;}' +
+    'var l=n;' +
+    'for(i=0;i<imgs.length;i++){img=imgs[i];if(img.complete)continue;' +
+    'img.onload=img.onerror=function(){if(!--l)p();};}' +
+    '})();<\/script>';
+
+  const buildFlyerDocument = (bodyInner: string) =>
+    `<!DOCTYPE html><html lang="${flyerLang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${flyerDocTitle}</title><style>${flyerCommonStyles}</style></head><body><main class="sheet">${bodyInner}</main>${flyerPrintScript}</body></html>`;
+
   const flyerHeaderBody = `
-    <div class="header">
+    <header class="flyer-header">
+      <div class="brand-strip">DorogaDomoy.by</div>
       <h1 class="title">${flyerTitle}</h1>
       <div class="subtitle">${flyerSubtitle}</div>
-    </div>
-    <div class="photo-container">
-      <img src="${safePhotoUrl}" class="photo" />
+      <div class="loc-line">${flyerLocationLine}</div>
+    </header>
+    <div class="photo-frame">
+      <img src="${safePhotoUrl}" class="photo" alt="" decoding="async" loading="eager" />
     </div>
     <div class="info-grid">
       <div><div class="label">${escapeHtml(t.pet.breedLabel)}</div><div class="value">${flyerBreed}</div></div>
@@ -483,51 +779,53 @@ export default function PetDetailPage() {
   `;
 
   const openFlyer = (html: string) => {
-    const w = window.open('', '_blank', 'noopener,noreferrer');
+    // Нельзя передавать noopener в windowFeatures: тогда window.open возвращает null (спецификация),
+    // и document.write не выполняется — листовка «не скачивается» / не открывается.
+    const w = window.open('', '_blank');
     if (!w) return;
-    w.opener = null;
+    try {
+      w.opener = null;
+    } catch {
+      /* ignore */
+    }
     w.document.write(html);
     w.document.close();
   };
 
   const handleFlyerClassic = () => {
     setShowFlyerModal(false);
-    openFlyer(`<!DOCTYPE html><html><head><title>Листовка</title><style>${flyerCommonStyles}</style></head><body>
+    openFlyer(
+      buildFlyerDocument(`
       ${flyerHeaderBody}
       <div class="contact-box">
         <div class="contact-label">${callAnytimeLabel}</div>
         <div class="phone">${flyerContactPhone}</div>
-        <div class="value">${flyerAuthorName}</div>
+        <div class="author-line">${flyerAuthorName}</div>
       </div>
       <div class="footer">DorogaDomoy.by</div>
-      <script>window.onload = () => { setTimeout(() => window.print(), 500); }<\/script>
-    </body></html>`);
+    `.trim()),
+    );
   };
 
   const handleFlyerQR = () => {
     setShowFlyerModal(false);
-    openFlyer(`<!DOCTYPE html><html><head><title>Листовка с QR</title><style>${flyerCommonStyles}
-      .contact-qr { display: flex; align-items: center; gap: 20px; border: 3px solid #000; padding: 16px 20px; border-radius: 14px; }
-      .contact-qr .left { flex: 1; text-align: center; }
-      .contact-qr .qr { flex-shrink: 0; text-align: center; }
-      .contact-qr .qr img { width: 140px; height: 140px; }
-      .contact-qr .qr-label { font-size: 11px; color: #666; margin-top: 4px; }
-    </style></head><body>
+    openFlyer(
+      buildFlyerDocument(`
       ${flyerHeaderBody}
       <div class="contact-qr">
         <div class="left">
           <div class="contact-label">${callAnytimeLabel}</div>
           <div class="phone">${flyerContactPhone}</div>
-          <div class="value">${flyerAuthorName}</div>
+          <div class="author-line">${flyerAuthorName}</div>
         </div>
         <div class="qr">
-          <img src="${qrUrl}" alt="QR" />
+          <img src="${qrUrl}" alt="" width="112" height="112" decoding="async" loading="eager" />
           <div class="qr-label">${qrLabel}</div>
         </div>
       </div>
       <div class="footer">DorogaDomoy.by</div>
-      <script>window.onload = () => { setTimeout(() => window.print(), 800); }<\/script>
-    </body></html>`);
+    `.trim()),
+    );
   };
 
   const handleReportPet = () => {
@@ -664,25 +962,31 @@ export default function PetDetailPage() {
                   <div className="border-t border-gray-100 dark:border-gray-700 my-1" />
                   <div className="px-4 py-1.5"><span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">{t.petDetail.shareInstagramSection}</span></div>
 
-                  <button type="button" onClick={handleShareInstagramPost} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent dark:hover:bg-accent transition-colors text-left">
+                  <button type="button" onClick={handleShareInstagramPost} disabled={cardLoading !== null} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent dark:hover:bg-accent transition-colors text-left disabled:opacity-50">
                     <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 text-white shrink-0">
                       <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
                     </span>
-                    <span className="text-sm text-gray-700 dark:text-gray-300">{t.petDetail.shareInstagramPost}</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">
+                      {cardLoading === 'feed' ? t.petDetail.shareCardDownloading : t.petDetail.shareInstagramPost}
+                    </span>
                   </button>
 
-                  <button type="button" onClick={handleShareInstagramStory} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent dark:hover:bg-accent transition-colors text-left">
+                  <button type="button" onClick={handleShareInstagramStory} disabled={cardLoading !== null} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent dark:hover:bg-accent transition-colors text-left disabled:opacity-50">
                     <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 text-white shrink-0">
                       <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/></svg>
                     </span>
-                    <span className="text-sm text-gray-700 dark:text-gray-300">{t.petDetail.shareInstagramStory}</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">
+                      {cardLoading === 'story' ? t.petDetail.shareCardDownloading : t.petDetail.shareInstagramStory}
+                    </span>
                   </button>
 
-                  <button type="button" onClick={handleShareInstagramDm} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent dark:hover:bg-accent transition-colors text-left">
+                  <button type="button" onClick={handleShareInstagramDm} disabled={cardLoading !== null} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent dark:hover:bg-accent transition-colors text-left disabled:opacity-50">
                     <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 text-white shrink-0">
                       <MessageCircle className="w-4 h-4" />
                     </span>
-                    <span className="text-sm text-gray-700 dark:text-gray-300">{t.petDetail.shareInstagramDm}</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">
+                      {cardLoading === 'feed' ? t.petDetail.shareCardDownloading : t.petDetail.shareInstagramDm}
+                    </span>
                   </button>
 
                   <div className="border-t border-gray-100 dark:border-gray-700 my-1" />
@@ -710,7 +1014,7 @@ export default function PetDetailPage() {
               className="w-full flex items-center justify-center gap-2 h-12 bg-white border-2 border-[#FF9800] text-[#FF9800] rounded-lg hover:bg-orange-50 transition-colors font-medium text-lg dark:bg-gray-900 dark:border-[#FF9800] dark:text-[#FF9800] dark:hover:bg-orange-950/30"
             >
               <Download className="w-5 h-5" />
-              Скачать листовку
+              {t.petDetail.downloadFlyer}
             </button>
           </div>
         </div>
@@ -976,7 +1280,7 @@ export default function PetDetailPage() {
           role="dialog"
           aria-modal="true"
           aria-labelledby="instagram-guide-title"
-          onClick={() => setInstagramGuide(null)}
+          onClick={() => { if (instagramGuide.cardUrl) URL.revokeObjectURL(instagramGuide.cardUrl); setInstagramGuide(null); }}
         >
           <div
             className="bg-white dark:bg-card rounded-2xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-border"
@@ -992,7 +1296,7 @@ export default function PetDetailPage() {
                 </h2>
                 <button
                   type="button"
-                  onClick={() => setInstagramGuide(null)}
+                  onClick={() => { if (instagramGuide.cardUrl) URL.revokeObjectURL(instagramGuide.cardUrl); setInstagramGuide(null); }}
                   className="p-1 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-muted shrink-0"
                   aria-label={t.common.close}
                 >
@@ -1004,9 +1308,7 @@ export default function PetDetailPage() {
               </p>
               <ol className="list-decimal pl-5 space-y-2 text-sm text-gray-700 dark:text-gray-300 mb-4">
                 <li>{t.petDetail.shareInstagramModalStep1}</li>
-                {instagramGuide.includePhoto && pet.photos[0] ? (
-                  <li>{t.petDetail.shareInstagramModalStep2}</li>
-                ) : null}
+                <li>{t.petDetail.shareInstagramModalStep2}</li>
                 <li>
                   {instagramGuide.variant === 'story'
                     ? t.petDetail.shareInstagramModalStep3Story
@@ -1020,9 +1322,9 @@ export default function PetDetailPage() {
               </p>
               <textarea
                 readOnly
-                rows={6}
+                rows={4}
                 value={shareBundle.textFull}
-                className="w-full text-sm border border-gray-300 dark:border-border rounded-lg p-3 bg-gray-50 dark:bg-muted/50 text-gray-900 dark:text-gray-100 resize-y min-h-[120px]"
+                className="w-full text-sm border border-gray-300 dark:border-border rounded-lg p-3 bg-gray-50 dark:bg-muted/50 text-gray-900 dark:text-gray-100 resize-y min-h-[80px]"
                 onFocus={(e) => e.target.select()}
               />
               <button
@@ -1037,36 +1339,31 @@ export default function PetDetailPage() {
                 <Copy className="w-4 h-4" />
                 {t.petDetail.shareInstagramModalCopyText}
               </button>
-              {instagramGuide.includePhoto && pet.photos[0] ? (
+              {instagramGuide.cardUrl ? (
                 <div className="mt-5 pt-5 border-t border-gray-200 dark:border-border">
                   <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-                    {t.petDetail.shareInstagramPost}
+                    {t.petDetail.shareCardSection}
                   </p>
+                  <img
+                    src={instagramGuide.cardUrl}
+                    alt="Card preview"
+                    className="w-full rounded-lg border border-gray-200 dark:border-border mb-3"
+                  />
                   <div className="flex flex-col sm:flex-row flex-wrap gap-2">
                     <button
                       type="button"
                       className="inline-flex items-center justify-center gap-2 px-4 h-10 rounded-lg bg-gray-100 dark:bg-muted text-sm font-medium text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-muted/80"
-                      onClick={async () => {
-                        const ok = await tryCopyImageToClipboard(pet.photos[0]);
-                        if (ok) toast.success(t.petDetail.shareInstagramModalPhotoCopied);
-                        else toast.error(t.petDetail.shareInstagramModalPhotoFail);
+                      onClick={() => {
+                        if (!instagramGuide.cardUrl) return;
+                        const a = document.createElement('a');
+                        a.href = instagramGuide.cardUrl;
+                        a.download = `dorogadomoy-${pet.id}-${instagramGuide.variant === 'story' ? 'story' : 'feed'}.png`;
+                        a.click();
+                        toast.success(t.petDetail.shareCardSaved);
                       }}
                     >
-                      <Copy className="w-4 h-4" />
-                      {t.petDetail.shareInstagramModalCopyPhoto}
-                    </button>
-                    <button
-                      type="button"
-                      className="inline-flex items-center justify-center gap-2 px-4 h-10 rounded-lg border border-gray-300 dark:border-border text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-muted"
-                      onClick={() =>
-                        window.open(
-                          resolvePetImageUrlForShare(pet.photos[0]),
-                          '_blank',
-                          'noopener,noreferrer',
-                        )
-                      }
-                    >
-                      {t.petDetail.shareInstagramModalOpenPhoto}
+                      <Download className="w-4 h-4" />
+                      {t.petDetail.shareCardDownloadBtn}
                     </button>
                   </div>
                 </div>
