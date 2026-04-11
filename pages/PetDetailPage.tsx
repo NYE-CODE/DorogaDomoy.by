@@ -1,6 +1,6 @@
 import { useParams, Link } from 'react-router';
 import { useState, useEffect, useRef } from 'react';
-import { MapPin, Phone, MessageCircle, Calendar, Share2, Download, ChevronLeft, ChevronRight, User, Eye, AlertCircle, X, QrCode, FileText, Home, Heart, Building2, ArrowLeft, Send, Copy, Check, Printer } from 'lucide-react';
+import { MapPin, Phone, MessageCircle, Calendar, Share2, Download, ChevronLeft, ChevronRight, User, Eye, AlertCircle, X, QrCode, FileText, Home, Heart, Building2, ArrowLeft, Send, Copy, Check, Printer, Image } from 'lucide-react';
 import { Pet } from '../types/pet';
 import { formatDate } from '../utils/pet-helpers';
 import { toast, Toaster } from 'sonner';
@@ -220,7 +220,7 @@ export default function PetDetailPage() {
   const [sightings, setSightings] = useState<SightingItem[]>([]);
   const [showSightingForm, setShowSightingForm] = useState(false);
   const [instagramGuide, setInstagramGuide] = useState<null | {
-    variant: 'post' | 'story' | 'dm';
+    variant: 'post' | 'story';
     openPath: string;
     cardUrl: string | null;
   }>(null);
@@ -396,25 +396,8 @@ export default function PetDetailPage() {
     setShowShareMenu(false);
   };
 
-  const handleShareX = () => {
-    const u = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareBundle.textShort)}&url=${encodeURIComponent(shareBundle.url)}`;
-    window.open(u, '_blank', 'noopener,noreferrer,width=600,height=520');
-    setShowShareMenu(false);
-  };
-
-  const handleShareVk = () => {
-    const u = `https://vk.com/share.php?url=${encodeURIComponent(shareBundle.url)}&title=${encodeURIComponent(shareBundle.vkTitle)}&comment=${encodeURIComponent(shareBundle.vkComment)}`;
-    window.open(u, '_blank', 'noopener,noreferrer');
-    setShowShareMenu(false);
-  };
-
-  const handleShareWhatsApp = () => {
-    window.open(`https://wa.me/?text=${encodeURIComponent(shareBundle.textFull)}`, '_blank', 'noopener,noreferrer');
-    setShowShareMenu(false);
-  };
-
   const finishInstagramShare = async (
-    variant: 'post' | 'story' | 'dm',
+    variant: 'post' | 'story',
     openPath: string,
   ) => {
     setShowShareMenu(false);
@@ -462,8 +445,6 @@ export default function PetDetailPage() {
   const handleShareInstagramPost = () => void finishInstagramShare('post', '/');
 
   const handleShareInstagramStory = () => void finishInstagramShare('story', '/');
-
-  const handleShareInstagramDm = () => void finishInstagramShare('dm', '/direct/inbox/');
 
   const petUrl = shareBundle.url;
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=4&data=${encodeURIComponent(petUrl)}`;
@@ -928,31 +909,12 @@ export default function PetDetailPage() {
                     <span className="text-sm text-gray-700 dark:text-gray-300">{t.petDetail.shareTelegram}</span>
                   </button>
 
-                  <button type="button" onClick={handleShareX} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent dark:hover:bg-accent transition-colors text-left">
-                    <span className="w-8 h-8 flex items-center justify-center rounded-full bg-black/5 dark:bg-white/10 shrink-0">
-                      <svg viewBox="0 0 24 24" className="w-4 h-4 text-gray-900 dark:text-white" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-                    </span>
-                    <span className="text-sm text-gray-700 dark:text-gray-300">{t.petDetail.shareX}</span>
-                  </button>
-
-                  <button type="button" onClick={handleShareVk} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent dark:hover:bg-accent transition-colors text-left">
-                    <span className="w-8 h-8 flex items-center justify-center rounded-full bg-[#0077FF]/15 shrink-0 text-[#0077FF] font-bold text-xs">VK</span>
-                    <span className="text-sm text-gray-700 dark:text-gray-300">{t.petDetail.shareVk}</span>
-                  </button>
-
-                  <button type="button" onClick={handleShareWhatsApp} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent dark:hover:bg-accent transition-colors text-left">
-                    <span className="w-8 h-8 flex items-center justify-center rounded-full bg-[#25D366]/15 shrink-0">
-                      <svg viewBox="0 0 24 24" className="w-4 h-4 text-[#25D366]" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.435 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                    </span>
-                    <span className="text-sm text-gray-700 dark:text-gray-300">{t.petDetail.shareWhatsApp}</span>
-                  </button>
-
                   <div className="border-t border-gray-100 dark:border-gray-700 my-1" />
                   <div className="px-4 py-1.5"><span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">{t.petDetail.shareInstagramSection}</span></div>
 
                   <button type="button" onClick={handleShareInstagramPost} disabled={cardLoading !== null} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent dark:hover:bg-accent transition-colors text-left disabled:opacity-50">
-                    <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 text-white shrink-0">
-                      <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+                    <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 shrink-0">
+                      <Image className="w-4 h-4" aria-hidden />
                     </span>
                     <span className="text-sm text-gray-700 dark:text-gray-300">
                       {cardLoading === 'feed' ? t.petDetail.shareCardDownloading : t.petDetail.shareInstagramPost}
@@ -960,20 +922,11 @@ export default function PetDetailPage() {
                   </button>
 
                   <button type="button" onClick={handleShareInstagramStory} disabled={cardLoading !== null} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent dark:hover:bg-accent transition-colors text-left disabled:opacity-50">
-                    <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 text-white shrink-0">
-                      <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/></svg>
+                    <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 shrink-0">
+                      <Image className="w-4 h-4" aria-hidden />
                     </span>
                     <span className="text-sm text-gray-700 dark:text-gray-300">
                       {cardLoading === 'story' ? t.petDetail.shareCardDownloading : t.petDetail.shareInstagramStory}
-                    </span>
-                  </button>
-
-                  <button type="button" onClick={handleShareInstagramDm} disabled={cardLoading !== null} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent dark:hover:bg-accent transition-colors text-left disabled:opacity-50">
-                    <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 text-white shrink-0">
-                      <MessageCircle className="w-4 h-4" />
-                    </span>
-                    <span className="text-sm text-gray-700 dark:text-gray-300">
-                      {cardLoading === 'feed' ? t.petDetail.shareCardDownloading : t.petDetail.shareInstagramDm}
                     </span>
                   </button>
 
@@ -1300,9 +1253,7 @@ export default function PetDetailPage() {
                 <li>
                   {instagramGuide.variant === 'story'
                     ? t.petDetail.shareInstagramModalStep3Story
-                    : instagramGuide.variant === 'dm'
-                      ? t.petDetail.shareInstagramModalStep3Dm
-                      : t.petDetail.shareInstagramModalStep3Post}
+                    : t.petDetail.shareInstagramModalStep3Post}
                 </li>
               </ol>
               <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5">

@@ -319,19 +319,15 @@ export const translations = {
       shareCta: 'DorogaDomoy.by — поиск потерянных и найденных питомцев в Беларуси',
       shareAdButton: 'Поделиться объявлением',
       shareTelegram: 'Telegram',
-      shareX: 'X (Twitter)',
-      shareVk: 'ВКонтакте',
-      shareWhatsApp: 'WhatsApp',
-      shareInstagramSection: 'Instagram',
-      shareInstagramPost: 'Пост',
-      shareInstagramStory: 'Stories',
-      shareInstagramDm: 'Сообщение',
+      shareInstagramSection: 'Изображение объявления',
+      shareInstagramPost: 'Сгенерировать изображение (1080×1350, 4:5)',
+      shareInstagramStory: 'Изображение 9:16 (1080×1920)',
       shareCopyFull: 'Скопировать текст поста',
       shareCopyLinkOnly: 'Только ссылку',
       shareCopiedFull: 'Готовый текст скопирован — вставьте в соцсеть',
       shareCopiedLink: 'Ссылка скопирована',
       shareInstagramReady:
-        'Текст объявления скопирован. Вставьте его в подпись к посту, Stories или в сообщение.',
+        'Текст объявления скопирован. Вставьте его в подпись к посту или в Stories.',
       shareInstagramSystemOk: 'Готово',
       shareInstagramSystemOkDesc:
         'Если открылось меню «Поделиться», выберите Instagram — там можно оформить пост с фото и текстом.',
@@ -340,8 +336,6 @@ export const translations = {
         'Сайты не могут открыть в браузере окно «новая публикация» в Instagram — так устроена политика Meta. Во вкладке Instagram нажмите «+» или «Создать» → «Публикация», выберите фото с устройства и вставьте подпись из буфера (Ctrl+V или правая кнопка → Вставить).',
       shareInstagramWebStoryHelp:
         'Stories в браузере обычно недоступны. Откройте приложение Instagram: текст объявления уже в буфере — вставьте его в стикер или подпись к сторис.',
-      shareInstagramWebDmHelp:
-        'Откройте нужный чат в Instagram и вставьте текст из буфера (долгое нажатие → «Вставить»).',
       shareInstagramModalTitle: 'Публикация в Instagram',
       shareInstagramModalExplain:
         'С компьютера Instagram не позволяет открыть окно новой публикации с нашего сайта. Текст объявления уже скопирован в буфер — ниже можно скопировать ещё раз и работать с фото.',
@@ -352,8 +346,6 @@ export const translations = {
         'В открытом Instagram нажмите «Создать» слева или «+» внизу → «Публикация» → загрузите фото → в поле подписи вставьте текст (Ctrl+V).',
       shareInstagramModalStep3Story:
         'Откройте Instagram → «+» → «Сторис» и добавьте карточку с превью. Текст уже в буфере. Если это окно появилось на телефоне, значит системное «Поделиться» недоступно в этом браузере — на ПК сторис в веб-версии Instagram часто не работают.',
-      shareInstagramModalStep3Dm:
-        'В Instagram откройте Direct, выберите чат и вставьте текст из буфера.',
       shareInstagramModalCaptionLabel: 'Текст для подписи',
       shareInstagramModalCopyText: 'Скопировать текст',
       shareInstagramModalOpenPhoto: 'Открыть фото в новой вкладке',
@@ -1264,19 +1256,15 @@ export const translations = {
       shareCta: 'DorogaDomoy.by — пошук зніклых і знойдзеных жывёл у Беларусі',
       shareAdButton: 'Падзяліцца аб\'явай',
       shareTelegram: 'Telegram',
-      shareX: 'X (Twitter)',
-      shareVk: 'УКантакце',
-      shareWhatsApp: 'WhatsApp',
-      shareInstagramSection: 'Instagram',
-      shareInstagramPost: 'Пост',
-      shareInstagramStory: 'Stories',
-      shareInstagramDm: 'Паведамленне',
+      shareInstagramSection: 'Выява аб\'явы',
+      shareInstagramPost: 'Згенераваць выяву (1080×1350, 4:5)',
+      shareInstagramStory: 'Выява 9:16 (1080×1920)',
       shareCopyFull: 'Скапіраваць тэкст паста',
       shareCopyLinkOnly: 'Толькі спасылку',
       shareCopiedFull: 'Тэкст скапіраваны — устаўце ў сацсетку',
       shareCopiedLink: 'Спасылка скапіравана',
       shareInstagramReady:
-        'Тэкст аб\'явы скапіраваны. Устаўце яго ў подпіс да поста, Stories або ў паведамленне.',
+        'Тэкст аб\'явы скапіраваны. Устаўце яго ў подпіс да поста або ў Stories.',
       shareInstagramSystemOk: 'Гатова',
       shareInstagramSystemOkDesc:
         'Калі адкрылася меню «Падзяліцца», абярыце Instagram — там можна аформіць пост з фота і тэкстам.',
@@ -1285,8 +1273,6 @@ export const translations = {
         'Сайты не могуць у браўзеры адкрыць акно «новая публікацыя» ў Instagram. Укладцы Instagram націсніце «+» або «Стварыць» → «Публікацыя», дадайце фота з прылады і ўстаўце подпіс з буфера (Ctrl+V).',
       shareInstagramWebStoryHelp:
         'Stories у браўзеры звычайна недаступныя. Адкрыйце праграму Instagram: тэкст аб\'явы ужо ў буферы.',
-      shareInstagramWebDmHelp:
-        'Адкрыйце патрэбны чат у Instagram і ўстаўце тэкст з буфера.',
       shareInstagramModalTitle: 'Публікацыя ў Instagram',
       shareInstagramModalExplain:
         'З камп’ютара Instagram не дазваляе адкрыць акно новай публікацыі з нашага сайта. Тэкст аб\'явы ўжо ў буферы — ніжэй можна скапіраваць яшчэ раз і працаваць з фота.',
@@ -1297,8 +1283,6 @@ export const translations = {
         'У Instagram націсніце «Стварыць» або «+» → «Публікацыя» → загрузіце фота → у подпіс устаўце тэкст (Ctrl+V).',
       shareInstagramModalStep3Story:
         'Адкрыйце Instagram → «+» → «Stories» і дадайце картку з перадпрагляду. Тэкст ужо ў буферы. Калі гэта акно на тэлефоне — сістэмнае «Падзяліцца» ў гэтым браўзеры недаступнае; на ПК сторис у вэб часта не працуюць.',
-      shareInstagramModalStep3Dm:
-        'У Instagram адкрыйце Direct, абярыце чат і ўстаўце тэкст.',
       shareInstagramModalCaptionLabel: 'Тэкст для подпісу',
       shareInstagramModalCopyText: 'Скапіраваць тэкст',
       shareInstagramModalOpenPhoto: 'Адкрыць фота ў новай укладцы',
@@ -2209,19 +2193,15 @@ export const translations = {
       shareCta: 'DorogaDomoy.by — lost & found pets in Belarus',
       shareAdButton: 'Share ad',
       shareTelegram: 'Telegram',
-      shareX: 'X (Twitter)',
-      shareVk: 'VK',
-      shareWhatsApp: 'WhatsApp',
-      shareInstagramSection: 'Instagram',
-      shareInstagramPost: 'Post',
-      shareInstagramStory: 'Stories',
-      shareInstagramDm: 'Direct message',
+      shareInstagramSection: 'Ad image',
+      shareInstagramPost: 'Generate image (1080×1350, 4:5)',
+      shareInstagramStory: 'Image 9:16 (1080×1920)',
       shareCopyFull: 'Copy post text',
       shareCopyLinkOnly: 'Link only',
       shareCopiedFull: 'Post text copied — paste into your social app',
       shareCopiedLink: 'Link copied',
       shareInstagramReady:
-        'Ad text copied. Paste it into your caption, story, or message.',
+        'Ad text copied. Paste it into your post caption or story.',
       shareInstagramSystemOk: 'Done',
       shareInstagramSystemOkDesc:
         'If a share sheet opened, pick Instagram — you can publish the photo and caption there.',
@@ -2230,8 +2210,6 @@ export const translations = {
         'Websites cannot open Instagram’s “new post” screen in the browser — that’s how Meta restricts sharing. In the Instagram tab, tap Create (+) → Post, pick a photo from your device, and paste the caption (Ctrl+V / right‑click → Paste).',
       shareInstagramWebStoryHelp:
         'Stories usually require the Instagram app. The ad text is in your clipboard — open the app and paste it into your story.',
-      shareInstagramWebDmHelp:
-        'Open the chat in Instagram and paste the text from your clipboard.',
       shareInstagramModalTitle: 'Posting to Instagram',
       shareInstagramModalExplain:
         'Instagram does not let websites open the “new post” screen on desktop. The ad text is already in your clipboard — you can copy it again below and handle the photo.',
@@ -2242,8 +2220,6 @@ export const translations = {
         'In Instagram click Create (+) → Post → upload the photo → paste the caption (Ctrl+V).',
       shareInstagramModalStep3Story:
         'Open Instagram → + → Story and add the card from the preview. Text is in the clipboard. If you see this on a phone, system Share was not available in this browser; on desktop, Stories in Instagram Web often do not work.',
-      shareInstagramModalStep3Dm:
-        'Open Instagram Direct, pick a chat, and paste the text.',
       shareInstagramModalCaptionLabel: 'Caption text',
       shareInstagramModalCopyText: 'Copy text',
       shareInstagramModalOpenPhoto: 'Open photo in new tab',
