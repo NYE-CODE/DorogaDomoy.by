@@ -17,7 +17,7 @@ from slowapi.errors import RateLimitExceeded
 from database import init_db, check_db_writable
 import models  # noqa: F401 — регистрация ORM до init_db()
 from rate_limit import limiter
-from routers import auth, pets, users, reports, settings, telegram, notifications, sightings, media, partners, feature_flags, profile_pets, blog, faq
+from routers import auth, pets, users, reports, settings, telegram, notifications, sightings, media, partners, feature_flags, profile_pets, blog, faq, social_card
 from telegram_bot import BOT_TOKEN, process_telegram_update
 
 logging.basicConfig(
@@ -152,6 +152,7 @@ app.include_router(feature_flags.router)
 app.include_router(profile_pets.router)
 app.include_router(blog.router)
 app.include_router(faq.router)
+app.include_router(social_card.router)
 
 
 @app.get("/")

@@ -309,7 +309,7 @@ export const translations = {
       flyerClassicDesc: 'Стандартная листовка с фото и контактной информацией',
       flyerDownload: 'Скачать',
       flyerRecommended: 'Рекомендуется',
-      flyerHint: 'Листовка откроется в новом окне для печати. Рекомендуем печатать на листах формата A4. Версия с QR-кодом позволяет людям быстро получить доступ к полной информации об объявлении.',
+      flyerHint: 'Откроется новое окно: после загрузки фото появится диалог печати — сохраните в PDF или распечатайте на A4. Версия с QR ведёт на полное объявление на сайте.',
       shareHeadlineLost: '🆘 Потерян питомец — помогите найти!',
       shareHeadlineFound: '📣 Найден питомец — ищем хозяина!',
       shareLostLine: 'Потерян: {animal}{breed} — {city}',
@@ -347,7 +347,7 @@ export const translations = {
         'С компьютера Instagram не позволяет открыть окно новой публикации с нашего сайта. Текст объявления уже скопирован в буфер — ниже можно скопировать ещё раз и работать с фото.',
       shareInstagramModalStep1: 'Скопируйте текст подписи (кнопка или выделите поле и Ctrl+C).',
       shareInstagramModalStep2:
-        'Добавьте фото: «Скопировать фото в буфер» (если сработает — в Instagram вставьте Ctrl+V) или «Открыть фото» и сохраните файл (правый клик → «Сохранить изображение»).',
+        'Ниже превью готовой карточки: при необходимости скачайте PNG кнопкой «Скачать карточку».',
       shareInstagramModalStep3Post:
         'В открытом Instagram нажмите «Создать» слева или «+» внизу → «Публикация» → загрузите фото → в поле подписи вставьте текст (Ctrl+V).',
       shareInstagramModalStep3Story:
@@ -362,6 +362,13 @@ export const translations = {
       shareInstagramModalClose: 'Закрыть',
       shareInstagramModalPhotoCopied: 'Фото скопировано — в Instagram нажмите Ctrl+V в области публикации',
       shareInstagramModalPhotoFail: 'Не удалось скопировать фото (ограничение браузера). Откройте фото и сохраните файл.',
+      shareCardSection: 'Карточка для соцсетей',
+      shareCardFeed: 'Для поста (4:5)',
+      shareCardStory: 'Для Stories (9:16)',
+      shareCardDownloading: 'Генерируем карточку…',
+      shareCardSaved: 'Карточка сохранена — используйте её в соцсетях',
+      shareCardDownloadBtn: 'Скачать карточку',
+      shareCardError: 'Не удалось сгенерировать карточку',
     },
     sightings: {
       title: 'Видел похожее животное',
@@ -1247,7 +1254,7 @@ export const translations = {
       flyerClassicDesc: 'Стандартная лістоўка з фота і кантактнай інфармацыяй',
       flyerDownload: 'Спампаваць',
       flyerRecommended: 'Рэкамендуецца',
-      flyerHint: 'Лістоўка адкрыецца ў новым акне для друку. Рэкамендуем друкаваць на лістах фармату A4.',
+      flyerHint: 'Адкрыецца новае акно: пасля загрузкі фота з\'явіцца дыялог друку — захавайце ў PDF або надрукуйце на A4. Варыянт з QR вядзе на поўную аб\'яву на сайце.',
       shareHeadlineLost: '🆘 Знікла жывёла — дапамажыце знайсці!',
       shareHeadlineFound: '📣 Знойдзена жывёла — шукаем гаспадара!',
       shareLostLine: 'Знікла: {animal}{breed} — {city}',
@@ -1285,7 +1292,7 @@ export const translations = {
         'З камп’ютара Instagram не дазваляе адкрыць акно новай публікацыі з нашага сайта. Тэкст аб\'явы ўжо ў буферы — ніжэй можна скапіраваць яшчэ раз і працаваць з фота.',
       shareInstagramModalStep1: 'Скапіруйце тэкст подпісу (кнопка або вылучыце поле і Ctrl+C).',
       shareInstagramModalStep2:
-        'Дадайце фота: «Скапіраваць фота ў буфер» (калі спрацуе) або «Адкрыць фота» і захавайце файл.',
+        'Ніжэй перадпрагляд гатовай карткі: пры неабходнасці спампуйце PNG кнопкай «Спампаваць картку».',
       shareInstagramModalStep3Post:
         'У Instagram націсніце «Стварыць» або «+» → «Публікацыя» → загрузіце фота → у подпіс устаўце тэкст (Ctrl+V).',
       shareInstagramModalStep3Story:
@@ -1300,6 +1307,13 @@ export const translations = {
       shareInstagramModalClose: 'Зачыніць',
       shareInstagramModalPhotoCopied: 'Фота скапіравана — у Instagram націсніце Ctrl+V',
       shareInstagramModalPhotoFail: 'Не ўдалося скапіраваць фота. Адкрыйце фота і захавайце файл.',
+      shareCardSection: 'Картка для сацсетак',
+      shareCardFeed: 'Для поста (4:5)',
+      shareCardStory: 'Для Stories (9:16)',
+      shareCardDownloading: 'Генеруем картку…',
+      shareCardSaved: 'Картка захавана — выкарыстоўвайце яе ў сацсетках',
+      shareCardDownloadBtn: 'Спампаваць картку',
+      shareCardError: 'Не ўдалося згенераваць картку',
     },
     sightings: {
       title: 'Бачыў падобную жывёлу',
@@ -2185,7 +2199,7 @@ export const translations = {
       flyerClassicDesc: 'Standard flyer with photo and contact info',
       flyerDownload: 'Download',
       flyerRecommended: 'Recommended',
-      flyerHint: 'Flyer will open in a new window for printing. We recommend printing on A4 sheets.',
+      flyerHint: 'A new window opens; after photos load, the print dialog appears — save as PDF or print on A4. The QR version links to the full ad on the site.',
       shareHeadlineLost: '🆘 Lost pet — please help find them!',
       shareHeadlineFound: '📣 Pet found — looking for the owner!',
       shareLostLine: 'Lost: {animal}{breed} — {city}',
@@ -2223,7 +2237,7 @@ export const translations = {
         'Instagram does not let websites open the “new post” screen on desktop. The ad text is already in your clipboard — you can copy it again below and handle the photo.',
       shareInstagramModalStep1: 'Copy the caption (button below, or select the field and press Ctrl+C).',
       shareInstagramModalStep2:
-        'Add a photo: try “Copy photo to clipboard” (then paste with Ctrl+V in Instagram) or “Open photo” and save the file (right‑click → Save image).',
+        'Below is a preview of the generated card — use “Download image” if you need the PNG file.',
       shareInstagramModalStep3Post:
         'In Instagram click Create (+) → Post → upload the photo → paste the caption (Ctrl+V).',
       shareInstagramModalStep3Story:
@@ -2238,6 +2252,13 @@ export const translations = {
       shareInstagramModalClose: 'Close',
       shareInstagramModalPhotoCopied: 'Photo copied — in Instagram press Ctrl+V where you add the image',
       shareInstagramModalPhotoFail: 'Could not copy the photo. Open it in a new tab and save the file.',
+      shareCardSection: 'Share image',
+      shareCardFeed: 'Post format (4:5)',
+      shareCardStory: 'Stories format (9:16)',
+      shareCardDownloading: 'Generating image…',
+      shareCardSaved: 'Image saved',
+      shareCardDownloadBtn: 'Download image',
+      shareCardError: 'Could not generate the share image',
     },
     sightings: {
       title: 'Saw similar animal',
