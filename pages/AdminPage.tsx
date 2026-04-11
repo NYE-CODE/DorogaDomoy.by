@@ -7,13 +7,11 @@ import type { BlogPostAdmin, FaqItem, MediaArticle, Partner, ProfilePetResponse 
 import { Pet } from '../types/pet';
 import { User } from '../context/AuthContext';
 import { Report } from '../types/admin';
-import { toast, Toaster } from 'sonner';
-import { useTheme } from '../context/ThemeContext';
+import { toast } from 'sonner';
 import { useI18n } from '../context/I18nContext';
 
 export default function AdminPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
-  const { theme } = useTheme();
   const { t } = useI18n();
   const ap = t.adminPanel;
   const navigate = useNavigate();
@@ -327,7 +325,6 @@ export default function AdminPage() {
 
   return (
     <>
-      <Toaster position="top-center" richColors theme={theme} />
       <AdminPanel
         pets={pets}
         users={users}
