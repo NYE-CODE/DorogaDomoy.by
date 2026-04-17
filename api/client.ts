@@ -13,17 +13,6 @@ function clearLegacyToken() {
   localStorage.removeItem(LEGACY_TOKEN_KEY);
 }
 
-function resolveUploadsBase(): string {
-  const fallbackOrigin =
-    typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000';
-  const base = new URL(API_BASE, fallbackOrigin);
-  let pathname = base.pathname.replace(/\/+$/, '');
-  if (pathname.endsWith('/api')) {
-    pathname = pathname.slice(0, -4);
-  }
-  return `${base.origin}${pathname}`;
-}
-
 export async function api<T>(path: string, options: RequestInit = {}): Promise<T> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -178,7 +167,6 @@ interface PetResponse {
 
 function resolvePhotoUrl(url: string): string {
   if (!url || url.startsWith('http') || url.startsWith('data:')) return url;
-  if (url.startsWith('/uploads/')) return `${resolveUploadsBase()}${url}`;
   return `${API_BASE}${url}`;
 }
 
