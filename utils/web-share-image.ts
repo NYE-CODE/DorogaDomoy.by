@@ -107,6 +107,7 @@ export async function compressImageBlobForShare(
 }
 
 type ShareMeta = { text?: string; url?: string; title?: string };
+type ShareImageOptions = { fileOnly?: boolean };
 
 /**
  * Системное «Поделиться» с файлом изображения.
@@ -117,6 +118,7 @@ export async function tryShareImageFile(
   blob: Blob,
   filename: string,
   meta: ShareMeta,
+  options: ShareImageOptions = {},
 ): Promise<WebShareImageResult> {
   if (typeof navigator === 'undefined' || typeof navigator.share !== 'function') {
     return 'unavailable';
@@ -124,11 +126,13 @@ export async function tryShareImageFile(
 
   const makeFile = () => new File([blob], filename, { type: mimeFromFilename(filename, blob) });
 
-  const payloads: ShareData[] = [
-    { files: [makeFile()], text: meta.text, title: meta.title },
-    { files: [makeFile()], text: meta.text, url: meta.url, title: meta.title },
-    { files: [makeFile()] },
-  ];
+  const payloads: ShareData[] = options.fileOnly
+    ? [{ files: [makeFile()] }]
+    : [
+        { files: [makeFile()], text: meta.text, title: meta.title },
+        { files: [makeFile()], text: meta.text, url: meta.url, title: meta.title },
+        { files: [makeFile()] },
+      ];
 
   for (const data of payloads) {
     if (!data.files?.length) continue;
