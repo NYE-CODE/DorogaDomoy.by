@@ -53,10 +53,14 @@ def _get_ip_hash(request: Request) -> Optional[str]:
 def _save_base64(data_url: str) -> str:
     if data_url.startswith("/uploads/"):
         return data_url
+    if data_url.startswith("/api/uploads/"):
+        return data_url.replace("/api/uploads/", "/uploads/", 1)
     if data_url.startswith("http://") or data_url.startswith("https://"):
         parsed = urlparse(data_url)
         if parsed.path.startswith("/uploads/"):
             return parsed.path
+        if parsed.path.startswith("/api/uploads/"):
+            return parsed.path.replace("/api/uploads/", "/uploads/", 1)
         raise HTTPException(status_code=400, detail="Допустимы только ранее загруженные фото из /uploads")
     return save_data_image(data_url, UPLOADS_DIR)
 
