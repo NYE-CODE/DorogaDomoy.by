@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Optional
 from urllib.parse import urlparse
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Query, Request, UploadFile
 from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
 
@@ -34,6 +34,13 @@ UPLOADS_DIR.mkdir(exist_ok=True)
 
 MAX_PHOTOS = 5
 SIGNAL_COOLDOWN_MINUTES = 30
+MIME_TO_EXT = {
+    "image/jpeg": ".jpg",
+    "image/png": ".png",
+    "image/gif": ".gif",
+    "image/webp": ".webp",
+}
+MAX_UPLOAD_PHOTO_BYTES = 10 * 1024 * 1024
 
 
 def _get_ip_hash(request: Request) -> Optional[str]:
@@ -52,6 +59,26 @@ def _save_base64(data_url: str) -> str:
             return parsed.path
         raise HTTPException(status_code=400, detail="Допустимы только ранее загруженные фото из /uploads")
     return save_data_image(data_url, UPLOADS_DIR)
+
+
+@router.post("/upload-photo", response_model=dict)
+def upload_profile_pet_photo(
+    file: UploadFile = File(...),
+    user: User = Depends(get_current_user_required),
+):
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Поддерживаются только изображения")
+
+    raw = file.file.read()
+    if not raw:
+        raise HTTPException(status_code=400, detail="Файл пустой")
+    if len(raw) > MAX_UPLOAD_PHOTO_BYTES:
+        raise HTTPException(status_code=400, detail="Фото слишком большое (макс. 10 МБ)")
+
+    ext = MIME_TO_EXT.get(file.content_type, ".jpg")
+    filename = f"profile-pet-{user.id}-{uuid.uuid4().hex[:12]}{ext}"
+    (UPLOADS_DIR / filename).write_bytes(raw)
+    return {"photo": f"/uploads/{filename}"}
 
 
 def _to_response(p: ProfilePet, *, include_owner_contacts: bool = True) -> ProfilePetResponse:
