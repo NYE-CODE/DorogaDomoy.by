@@ -1,4 +1,4 @@
-"""Endpoint for generating social-media share cards (PNG)."""
+"""Endpoint for generating social-media share cards."""
 import os
 from typing import Optional
 
@@ -36,7 +36,7 @@ def get_social_card(
     pet_contacts = (pet.contacts or {}) if contacts else {}
 
     card_format: CardFormat = "story" if fmt == "story" else "feed"
-    png_bytes = generate_social_card(
+    card_bytes, media_type = generate_social_card(
         pet_id=pet.id,
         photo_url=(pet.photos or [None])[0],
         status=pet.status,
@@ -53,13 +53,14 @@ def get_social_card(
         card_format=card_format,
     )
 
-    filename = f"dorogadomoy-{pet.id}-{card_format}.png"
+    extension = "jpg" if media_type == "image/jpeg" else "png"
+    filename = f"dorogadomoy-{pet.id}-{card_format}.{extension}"
     return Response(
-        content=png_bytes,
-        media_type="image/png",
+        content=card_bytes,
+        media_type=media_type,
         headers={
             "Content-Disposition": f'inline; filename="{filename}"',
-            # PNG генерируется на лету — не кэшируем агрессивно, иначе после деплоя видна старая карточка
+            # Карточка генерируется на лету — не кэшируем агрессивно, иначе после деплоя видна старая версия
             "Cache-Control": "private, max-age=0, must-revalidate",
         },
     )

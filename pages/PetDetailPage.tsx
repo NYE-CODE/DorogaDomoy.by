@@ -416,12 +416,17 @@ export default function PetDetailPage() {
         maxSizeBytes: variant === 'story' ? 1_800_000 : 1_500_000,
       }) ?? blob;
 
-    void copyToClipboard(shareBundle.textFull);
+    if (variant !== 'story') {
+      void copyToClipboard(shareBundle.textFull);
+    }
 
     const out = await tryShareImageFile(
       shareBlob,
       `dorogadomoy-${pet.id}-${cardFormat}.${shareBlob.type === 'image/jpeg' ? 'jpg' : 'png'}`,
-      { text: shareBundle.textFull, url: shareBundle.url, title: shareBundle.vkTitle },
+      variant === 'story'
+        ? {}
+        : { text: shareBundle.textFull, url: shareBundle.url, title: shareBundle.vkTitle },
+      { fileOnly: variant === 'story' },
     );
 
     if (out === 'shared') {
@@ -1251,28 +1256,32 @@ export default function PetDetailPage() {
                     : t.petDetail.shareInstagramModalStep3Post}
                 </li>
               </ol>
-              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5">
-                {t.petDetail.shareInstagramModalCaptionLabel}
-              </p>
-              <textarea
-                readOnly
-                rows={4}
-                value={shareBundle.textFull}
-                className="w-full text-sm border border-gray-300 dark:border-border rounded-lg p-3 bg-gray-50 dark:bg-muted/50 text-gray-900 dark:text-gray-100 resize-y min-h-[80px]"
-                onFocus={(e) => e.target.select()}
-              />
-              <button
-                type="button"
-                className="mt-2 w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 h-10 rounded-lg border border-gray-300 dark:border-border text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-muted"
-                onClick={async () => {
-                  if (await copyToClipboard(shareBundle.textFull)) {
-                    toast.success(t.petDetail.shareCopiedFull);
-                  } else toast.error(t.common.error);
-                }}
-              >
-                <Copy className="w-4 h-4" />
-                {t.petDetail.shareInstagramModalCopyText}
-              </button>
+              {instagramGuide.variant !== 'story' && (
+                <>
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5">
+                    {t.petDetail.shareInstagramModalCaptionLabel}
+                  </p>
+                  <textarea
+                    readOnly
+                    rows={4}
+                    value={shareBundle.textFull}
+                    className="w-full text-sm border border-gray-300 dark:border-border rounded-lg p-3 bg-gray-50 dark:bg-muted/50 text-gray-900 dark:text-gray-100 resize-y min-h-[80px]"
+                    onFocus={(e) => e.target.select()}
+                  />
+                  <button
+                    type="button"
+                    className="mt-2 w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 h-10 rounded-lg border border-gray-300 dark:border-border text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-muted"
+                    onClick={async () => {
+                      if (await copyToClipboard(shareBundle.textFull)) {
+                        toast.success(t.petDetail.shareCopiedFull);
+                      } else toast.error(t.common.error);
+                    }}
+                  >
+                    <Copy className="w-4 h-4" />
+                    {t.petDetail.shareInstagramModalCopyText}
+                  </button>
+                </>
+              )}
               {instagramGuide.cardUrl ? (
                 <div className="mt-5 pt-5 border-t border-gray-200 dark:border-border">
                   <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">

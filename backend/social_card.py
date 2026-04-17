@@ -1,4 +1,4 @@
-"""Generate branded social-media share cards (PNG) for pet announcements."""
+"""Generate branded social-media share cards for pet announcements."""
 from __future__ import annotations
 
 import base64
@@ -83,6 +83,7 @@ TYPE_RU = {"cat": "Кот", "dog": "Собака", "other": "Другое"}
 TYPE_BE = {"cat": "Кот", "dog": "Сабака", "other": "Іншае"}
 
 CardFormat = Literal["feed", "story"]
+CardMediaType = Literal["image/png", "image/jpeg"]
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -298,7 +299,7 @@ def generate_social_card(
     site_url: str,
     lang: str = "ru",
     card_format: CardFormat = "feed",
-) -> bytes:
+) -> tuple[bytes, CardMediaType]:
     L = LABELS_BE if lang == "be" else LABELS_RU
     is_lost = status == "searching"
 
@@ -469,5 +470,8 @@ def generate_social_card(
               site, font=footer_f, fill=WHITE)
 
     buf = io.BytesIO()
+    if card_format == "story":
+        img.save(buf, format="JPEG", quality=88, optimize=True, progressive=True)
+        return buf.getvalue(), "image/jpeg"
     img.save(buf, format="PNG", optimize=True)
-    return buf.getvalue()
+    return buf.getvalue(), "image/png"
