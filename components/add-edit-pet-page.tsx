@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { useI18n } from "../context/I18nContext";
 import { profilePetsApi, type ProfilePetResponse } from "../api/client";
 import { resolveProfilePetSpecies } from "../utils/profile-pet-display";
+import { compressImageBlobForShare } from "../utils/web-share-image";
 
 interface ProfilePetFormData {
   name: string;
@@ -43,6 +44,28 @@ const emptyForm = (): ProfilePetFormData => ({
 });
 
 const MAX_PHOTOS = 5;
+const MAX_PROFILE_UPLOAD_BYTES = 750 * 1024;
+
+function buildCompressedPhotoName(file: File): string {
+  const baseName = file.name.replace(/\.[^.]+$/, "") || "photo";
+  return `${baseName}.jpg`;
+}
+
+async function prepareProfilePhotoForUpload(file: File): Promise<File> {
+  const compressed = await compressImageBlobForShare(file, {
+    maxLongSide: 1200,
+    maxSizeBytes: MAX_PROFILE_UPLOAD_BYTES,
+  });
+  if (!compressed) {
+    throw new Error("Не удалось обработать изображение");
+  }
+  if (compressed.size > MAX_PROFILE_UPLOAD_BYTES) {
+    throw new Error("Фото слишком большое. Выберите другое или уменьшите его.");
+  }
+  return new File([compressed], buildCompressedPhotoName(file), {
+    type: "image/jpeg",
+  });
+}
 
 function profilePetToForm(p: ProfilePetResponse): ProfilePetFormData {
   return {
@@ -163,7 +186,8 @@ export function AddEditPetContent() {
     try {
       for (const file of toUpload) {
         try {
-          const url = await profilePetsApi.uploadPhoto(file);
+          const preparedFile = await prepareProfilePhotoForUpload(file);
+          const url = await profilePetsApi.uploadPhoto(preparedFile);
           uploadedUrls.push(url);
         } catch (error) {
           failedUploads += 1;
