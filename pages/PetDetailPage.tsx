@@ -14,7 +14,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { buildPetShareBundle, type PetShareDict } from '../utils/pet-share-text';
 import { copyText as copyToClipboard } from '../utils/copy-text';
-import { tryShareImageFile } from '../utils/web-share-image';
+import { compressImageBlobForShare, tryShareImageFile } from '../utils/web-share-image';
 import {
   applySeo,
   canonicalUrlFromPath,
@@ -410,11 +410,17 @@ export default function PetDetailPage() {
       return;
     }
 
+    const shareBlob =
+      await compressImageBlobForShare(blob, {
+        maxLongSide: variant === 'story' ? 1080 : 1080,
+        maxSizeBytes: variant === 'story' ? 1_800_000 : 1_500_000,
+      }) ?? blob;
+
     void copyToClipboard(shareBundle.textFull);
 
     const out = await tryShareImageFile(
-      blob,
-      `dorogadomoy-${pet.id}-${cardFormat}.png`,
+      shareBlob,
+      `dorogadomoy-${pet.id}-${cardFormat}.${shareBlob.type === 'image/jpeg' ? 'jpg' : 'png'}`,
       { text: shareBundle.textFull, url: shareBundle.url, title: shareBundle.vkTitle },
     );
 
@@ -1313,7 +1319,10 @@ export default function PetDetailPage() {
                 <button
                   type="button"
                   className="flex-1 h-12 rounded-lg border border-gray-300 dark:border-border text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-muted"
-                  onClick={() => setInstagramGuide(null)}
+                  onClick={() => {
+                    if (instagramGuide.cardUrl) URL.revokeObjectURL(instagramGuide.cardUrl);
+                    setInstagramGuide(null);
+                  }}
                 >
                   {t.petDetail.shareInstagramModalClose}
                 </button>
