@@ -29,6 +29,9 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
     const msg = typeof err?.detail === 'string' ? err.detail : 'Сессия истекла';
     throw new Error(msg);
   }
+  if (res.status === 413) {
+    throw new Error("Слишком большой размер данных. Уменьшите фото и попробуйте снова.");
+  }
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
     throw new Error(typeof err.detail === 'string' ? err.detail : JSON.stringify(err));
@@ -820,6 +823,29 @@ export const profilePetsApi = {
       method: 'POST',
       body: JSON.stringify(data),
     }).then(resolveProfilePetPhotos),
+
+  uploadPhoto: async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await fetch(`${API_BASE}/profile-pets/upload-photo`, {
+      method: 'POST',
+      credentials: 'include',
+      body: formData,
+    });
+    if (res.status === 401) {
+      clearLegacyToken();
+      throw new Error('Сессия истекла');
+    }
+    if (res.status === 413) {
+      throw new Error('Файл слишком большой. Уменьшите фото и попробуйте снова.');
+    }
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: res.statusText }));
+      throw new Error(typeof err.detail === 'string' ? err.detail : JSON.stringify(err));
+    }
+    const data = await res.json() as { photo: string };
+    return resolvePhotoUrl(data.photo);
+  },
 
   update: (id: string, data: Partial<ProfilePetInput>) =>
     api<ProfilePetResponse>(`/profile-pets/${id}`, {

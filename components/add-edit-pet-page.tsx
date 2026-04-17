@@ -42,6 +42,8 @@ const emptyForm = (): ProfilePetFormData => ({
   photos: [],
 });
 
+const MAX_PHOTOS = 5;
+
 function profilePetToForm(p: ProfilePetResponse): ProfilePetFormData {
   return {
     name: p.name,
@@ -75,6 +77,8 @@ export function AddEditPetContent() {
   const [formData, setFormData] = useState<ProfilePetFormData>(emptyForm);
   const [isLoadingProfile, setIsLoadingProfile] = useState(isEditMode);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [isUploadingPhotos, setIsUploadingPhotos] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadProfilePet = useCallback(async () => {
@@ -139,33 +143,55 @@ export function AddEditPetContent() {
     });
   };
 
-  const handlePickPhotos = () => fileInputRef.current?.click();
+  const handlePickPhotos = () => {
+    if (isUploadingPhotos) return;
+    fileInputRef.current?.click();
+  };
 
-  const addPhotoFiles = (fileList: FileList | null) => {
-    if (!fileList?.length) return;
+  const addPhotoFiles = async (fileList: FileList | null) => {
+    if (!fileList?.length || isUploadingPhotos) return;
     const images = Array.from(fileList).filter((file) => file.type.startsWith("image/"));
     if (!images.length) return;
-    setFormData((prev) => {
-      const room = 5 - prev.photos.length;
-      if (room <= 0) return prev;
-      const toAdd = images.slice(0, room);
-      const urls = toAdd.map((file) => URL.createObjectURL(file));
-      if (urls.length) toast.success(f.toastPhotoAdded);
-      return { ...prev, photos: [...prev.photos, ...urls] };
-    });
+    const room = Math.max(0, MAX_PHOTOS - formData.photos.length);
+    if (room <= 0) return;
+    const toUpload = images.slice(0, room);
+    if (!toUpload.length) return;
+
+    setIsUploadingPhotos(true);
+    const uploadedUrls: string[] = [];
+    let failedUploads = 0;
+    try {
+      for (const file of toUpload) {
+        try {
+          const url = await profilePetsApi.uploadPhoto(file);
+          uploadedUrls.push(url);
+        } catch (error) {
+          failedUploads += 1;
+          toast.error(error instanceof Error ? error.message : t.common.error);
+        }
+      }
+      if (uploadedUrls.length) {
+        setFormData((prev) => ({
+          ...prev,
+          photos: [...prev.photos, ...uploadedUrls].slice(0, MAX_PHOTOS),
+        }));
+        toast.success(f.toastPhotoAdded);
+      }
+      if (failedUploads > 0 && uploadedUrls.length === 0) {
+        toast.error("Не удалось загрузить фото. Попробуйте другой файл.");
+      }
+    } finally {
+      setIsUploadingPhotos(false);
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    addPhotoFiles(e.target.files);
+    void addPhotoFiles(e.target.files);
     e.target.value = "";
   };
 
   const handleRemovePhoto = (index: number) => {
-    setFormData((prev) => {
-      const url = prev.photos[index];
-      if (url.startsWith("blob:")) URL.revokeObjectURL(url);
-      return { ...prev, photos: prev.photos.filter((_, i) => i !== index) };
-    });
+    setFormData((prev) => ({ ...prev, photos: prev.photos.filter((_, i) => i !== index) }));
   };
 
   const handleNext = () => {
@@ -176,6 +202,10 @@ export function AddEditPetContent() {
       }
     }
     if (currentStep === 2) {
+      if (isUploadingPhotos) {
+        toast.error("Дождитесь завершения загрузки фото");
+        return;
+      }
       if (formData.photos.length === 0) {
         toast.error(f.toastAddPhoto);
         return;
@@ -194,20 +224,11 @@ export function AddEditPetContent() {
       toast.error(loadError || mp.loadErrorDesc);
       return;
     }
-    const photoPromises = formData.photos.map(async (url) => {
-      if (url.startsWith("blob:")) {
-        const resp = await fetch(url);
-        const blob = await resp.blob();
-        return new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.readAsDataURL(blob);
-        });
-      }
-      return url;
-    });
-    const photos = await Promise.all(photoPromises);
-    formData.photos.forEach((url) => { if (url.startsWith("blob:")) URL.revokeObjectURL(url); });
+    if (isUploadingPhotos) {
+      toast.error("Дождитесь завершения загрузки фото");
+      return;
+    }
+    if (isSubmitting) return;
 
     const payload = {
       name: formData.name,
@@ -224,10 +245,11 @@ export function AddEditPetContent() {
       responds_to_name: formData.respondsToName === "yes",
       favorite_treats: formData.favoriteTreats || undefined,
       favorite_walks: formData.favoriteWalks || undefined,
-      photos,
+      photos: formData.photos,
     };
 
     try {
+      setIsSubmitting(true);
       if (isEditMode && id) {
         await profilePetsApi.update(id, payload);
       } else {
@@ -237,6 +259,8 @@ export function AddEditPetContent() {
       navigate("/my-pets");
     } catch (e: any) {
       toast.error(e?.message ?? t.common.error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -532,12 +556,19 @@ export function AddEditPetContent() {
                 ))}
               </div>
 
-              {formData.photos.length < 5 && (
+              {isUploadingPhotos && (
+                <p className="text-sm text-gray-500 dark:text-muted-foreground mb-4">
+                  Загрузка фото...
+                </p>
+              )}
+
+              {formData.photos.length < MAX_PHOTOS && (
                 <div
                   role="button"
                   tabIndex={0}
                   onClick={handlePickPhotos}
                   onKeyDown={(e) => {
+                    if (isUploadingPhotos) return;
                     if (e.key === "Enter" || e.key === " ") {
                       e.preventDefault();
                       handlePickPhotos();
@@ -550,9 +581,14 @@ export function AddEditPetContent() {
                   onDrop={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    addPhotoFiles(e.dataTransfer.files);
+                    if (isUploadingPhotos) return;
+                    void addPhotoFiles(e.dataTransfer.files);
                   }}
-                  className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-[#FF9800] hover:bg-gray-50 dark:hover:bg-muted/50 transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#FF9800]"
+                  className={`flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[#FF9800] ${
+                    isUploadingPhotos
+                      ? "opacity-60 cursor-not-allowed"
+                      : "hover:border-[#FF9800] hover:bg-gray-50 dark:hover:bg-muted/50 cursor-pointer"
+                  }`}
                 >
                   <Upload size={48} className="text-gray-400 dark:text-muted-foreground mb-4" />
                   <span className="text-gray-600 dark:text-foreground font-medium">{f.uploadTitle}</span>
@@ -746,9 +782,14 @@ export function AddEditPetContent() {
               <button
                 type="button"
                 onClick={handleSubmit}
-                className="w-full h-12 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium text-lg"
+                disabled={isUploadingPhotos || isSubmitting}
+                className={`w-full h-12 text-white rounded-lg transition-colors font-medium text-lg ${
+                  isUploadingPhotos || isSubmitting
+                    ? "bg-green-400 cursor-not-allowed"
+                    : "bg-green-600 hover:bg-green-700"
+                }`}
               >
-                {isEditMode ? f.submitSave : f.submitAdd}
+                {isSubmitting ? "Сохранение..." : (isEditMode ? f.submitSave : f.submitAdd)}
               </button>
             )}
           </div>
