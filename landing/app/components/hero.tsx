@@ -4,6 +4,12 @@ import { Button } from "./ui/button";
 import { petsApi } from "../../../api/client";
 import { useI18n } from "../../../context/I18nContext";
 import { useFeatureFlags } from "../../../context/FeatureFlagsContext";
+import {
+  landingContainerWide,
+  landingHeroY,
+  landingOutlineHeroCtaClass,
+  landingPrimaryCtaClass,
+} from "./landing-section-styles";
 
 export function Hero() {
   const { t } = useI18n();
@@ -23,8 +29,8 @@ export function Hero() {
     : null;
 
   return (
-    <section className="bg-background py-20 md:py-32 relative overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className={`relative overflow-hidden bg-background ${landingHeroY}`}>
+      <div className={landingContainerWide}>
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <div className="text-center md:text-left z-10">
             <h1 className="text-5xl md:text-7xl font-bold text-foreground mb-6 leading-tight">
@@ -41,12 +47,12 @@ export function Hero() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
               <Button asChild>
-                <Link to="/create" className="bg-primary text-primary-foreground hover:opacity-90 rounded-lg px-8 py-6 text-lg shadow-lg inline-flex items-center justify-center">
+                <Link to="/create" className={landingPrimaryCtaClass}>
                   {t.landing.hero.createAd}
                 </Link>
               </Button>
               <Button asChild variant="outline">
-                <Link to="/search" className="border-2 border-foreground bg-background text-foreground hover:bg-muted rounded-lg px-8 py-6 text-lg inline-flex items-center justify-center">
+                <Link to="/search" className={landingOutlineHeroCtaClass}>
                   {t.landing.hero.viewMap}
                 </Link>
               </Button>

@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { X, Mail, Lock, User, ArrowRight } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useI18n } from '../../context/I18nContext';
 import { toast } from 'sonner';
-import { useScrollLock } from '../ui/use-scroll-lock';
+import { Dialog, DialogContent } from '../ui/dialog';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
 
 interface AuthModalProps {
   onNavigateToTerms?: () => void;
@@ -11,7 +13,6 @@ interface AuthModalProps {
 
 export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
   const { isAuthModalOpen, closeAuthModal, login, register } = useAuth();
-  useScrollLock(isAuthModalOpen);
   const { t } = useI18n();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
@@ -60,21 +61,15 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
 
   return (
     <div 
-      className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[70] backdrop-blur-sm"
-      onClick={closeAuthModal}
+      className="contents"
     >
-      <div 
-        className="bg-card rounded-2xl w-full max-w-md overflow-hidden shadow-2xl transform transition-all"
-        onClick={e => e.stopPropagation()}
-      >
+      <Dialog open={isAuthModalOpen} onOpenChange={(next) => !next && closeAuthModal()}>
+        <DialogContent
+          className="w-full max-w-md overflow-hidden rounded-2xl p-0"
+          showCloseButton={false}
+        >
         {/* Header */}
         <div className="relative h-32 bg-gradient-to-r from-primary to-primary/80 flex items-center justify-center">
-          <button 
-            onClick={closeAuthModal}
-            className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
           <div className="text-center text-white">
             <h2 className="text-2xl font-bold mb-1">
               {mode === 'login' ? t.auth.loginTitle : t.auth.registerTitle}
@@ -92,15 +87,15 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
           <form onSubmit={handleSubmit} className="space-y-5">
             {mode === 'register' && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t.auth.yourName}</label>
+                <label className="block text-sm font-medium text-foreground mb-1.5">{t.auth.yourName}</label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
-                  <input
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Input
                     type="text"
                     required
                     value={name}
                     onChange={e => setName(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all bg-input-background text-foreground placeholder:text-muted-foreground hover:border-primary/50"
+                    className="pl-10"
                     placeholder={t.auth.namePlaceholder}
                   />
                 </div>
@@ -108,32 +103,32 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Email</label>
+              <label className="block text-sm font-medium text-foreground mb-1.5">Email</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
-                <input
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <Input
                   type="email"
                   autoComplete="username"
                   required
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all bg-input-background text-foreground placeholder:text-muted-foreground hover:border-primary/50"
+                  className="pl-10"
                   placeholder="name@example.by"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t.auth.password}</label>
+              <label className="block text-sm font-medium text-foreground mb-1.5">{t.auth.password}</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
-                <input
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <Input
                   type="password"
                   autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
                   required
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all bg-input-background text-foreground placeholder:text-muted-foreground hover:border-primary/50"
+                  className="pl-10"
                   placeholder="••••••••"
                 />
               </div>
@@ -163,10 +158,10 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
               </div>
             )}
 
-            <button
+            <Button
               type="submit"
               disabled={isLoading}
-              className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground py-3 rounded-lg hover:bg-primary/90 active:scale-[0.98] transition-all font-medium disabled:opacity-70"
+              className="h-11 w-full"
             >
               {isLoading ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -176,11 +171,11 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
-            </button>
+            </Button>
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-gray-600 dark:text-gray-400 text-sm">
+            <p className="text-muted-foreground text-sm">
               {mode === 'login' ? t.auth.noAccount : t.auth.hasAccount}
               <button 
                 type="button"
@@ -192,7 +187,8 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
             </p>
           </div>
         </div>
-      </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

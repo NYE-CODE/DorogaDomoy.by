@@ -22,6 +22,10 @@ class User(Base):
     telegram_id = Column(BigInteger, unique=True, nullable=True, index=True)
     telegram_username = Column(String, nullable=True)
     telegram_linked_at = Column(DateTime, nullable=True)
+    helper_code = Column(String, unique=True, nullable=True, index=True)
+    helper_confirmed_count = Column(Integer, default=0, nullable=False)
+    points_balance = Column(Integer, default=0, nullable=False)
+    points_earned_total = Column(Integer, default=0, nullable=False)
 
     pets = relationship("Pet", back_populates="author", foreign_keys="Pet.author_id")
     reports = relationship("Report", back_populates="reporter", foreign_keys="Report.reporter_id")
@@ -54,6 +58,11 @@ class Pet(Base):
     moderation_reason = Column(String, nullable=True)
     moderated_at = Column(DateTime, nullable=True)
     moderated_by = Column(String, nullable=True)
+    reward_mode = Column(String, default="points", nullable=False)  # points, money
+    reward_amount_byn = Column(Integer, nullable=True)  # owner-paid reward, off-platform
+    reward_points = Column(Integer, default=50, nullable=False)  # platform points for confirmed helper
+    reward_recipient_user_id = Column(String, ForeignKey("users.id"), nullable=True)
+    reward_points_awarded_at = Column(DateTime, nullable=True)
 
     author = relationship("User", back_populates="pets", foreign_keys=[author_id])
     reports = relationship(
@@ -154,6 +163,18 @@ class Notification(Base):
     pet = relationship("Pet")
 
 
+class PointsTransaction(Base):
+    __tablename__ = "points_transactions"
+
+    id = Column(String, primary_key=True, index=True)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    pet_id = Column(String, ForeignKey("pets.id", ondelete="SET NULL"), nullable=True, index=True)
+    amount = Column(Integer, nullable=False)
+    kind = Column(String, nullable=False)  # helper_reward, manual_adjustment, etc.
+    note = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 class MediaArticle(Base):
     """Публикации СМИ о платформе для секции «СМИ о нас» на лендинге."""
     __tablename__ = "media_articles"
@@ -174,6 +195,7 @@ class Partner(Base):
     logo_url = Column(String, nullable=True)  # URL логотипа
     name = Column(String, nullable=False)  # название компании
     link = Column(String, nullable=True)  # ссылка на сайт партнёра
+    is_medallion_partner = Column(Boolean, default=False, nullable=False)
 
 
 class FaqItem(Base):
@@ -216,6 +238,63 @@ class ProfilePet(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     owner = relationship("User", backref="profile_pets", foreign_keys=[owner_id])
+
+
+class InstagramAccount(Base):
+    """Instagram-аккаунт для региональной публикации объявлений."""
+    __tablename__ = "instagram_accounts"
+
+    id = Column(String, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    instagram_business_id = Column(String, nullable=False, index=True)
+    facebook_page_id = Column(String, nullable=True)
+    access_token = Column(Text, nullable=True)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class InstagramRegionRoute(Base):
+    """Маршрутизация региона (город/область) в Instagram-аккаунт."""
+    __tablename__ = "instagram_region_routes"
+
+    id = Column(String, primary_key=True, index=True)
+    region_key = Column(String, nullable=False, unique=True, index=True)
+    account_id = Column(String, ForeignKey("instagram_accounts.id", ondelete="CASCADE"), nullable=False, index=True)
+    is_fallback = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    account = relationship("InstagramAccount", foreign_keys=[account_id])
+
+
+class InstagramPublication(Base):
+    """Очередь публикаций объявлений в Instagram (авто/ручной режим)."""
+    __tablename__ = "instagram_publications"
+
+    id = Column(String, primary_key=True, index=True)
+    pet_id = Column(String, ForeignKey("pets.id", ondelete="CASCADE"), nullable=False, index=True)
+    account_id = Column(String, ForeignKey("instagram_accounts.id", ondelete="SET NULL"), nullable=True, index=True)
+    initiated_by = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    region_key = Column(String, nullable=True, index=True)
+    mode = Column(String, default="auto")  # auto, manual, boost
+    source = Column(String, default="auto")  # auto, manual_admin, boost_user
+    requested_by_user_id = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    requested_at = Column(DateTime, nullable=True)
+    format = Column(String, default="story")  # story
+    status = Column(String, default="pending")  # pending, processing, published, failed, cancelled
+    attempts = Column(Integer, default=0)
+    last_error = Column(Text, nullable=True)
+    external_media_id = Column(String, nullable=True)
+    idempotency_key = Column(String, nullable=False, unique=True, index=True)
+    payload = Column(JSON, default=dict)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    published_at = Column(DateTime, nullable=True)
+
+    pet = relationship("Pet", foreign_keys=[pet_id])
+    account = relationship("InstagramAccount", foreign_keys=[account_id])
+    initiator = relationship("User", foreign_keys=[initiated_by])
 
 
 class BlogCategory(Base):

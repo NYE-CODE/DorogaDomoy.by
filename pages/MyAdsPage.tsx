@@ -6,7 +6,7 @@ import { MyAdsPage as MyAdsList } from '../components/my-ads-page';
 import { DeleteReasonModal } from '../components/delete-reason-modal';
 import { ContactRequiredModal } from '../components/contact-required-modal';
 import { AuthModal } from '../components/auth/AuthModal';
-import { petsApi } from '../api/client';
+import { featureFlagsApi, instagramApi, petsApi } from '../api/client';
 import { Pet } from '../types/pet';
 import { toast } from 'sonner';
 
@@ -20,6 +20,18 @@ export default function MyAdsPageRoute() {
   const [dataLoading, setDataLoading] = useState(true);
   const [deletingPet, setDeletingPet] = useState<Pet | null>(null);
   const [showContactRequiredModal, setShowContactRequiredModal] = useState(false);
+  const [instagramBoostEnabled, setInstagramBoostEnabled] = useState(true);
+
+  useEffect(() => {
+    featureFlagsApi
+      .get()
+      .then((ff) =>
+        setInstagramBoostEnabled((ff.ff_instagram_boost_stories ?? 'true') === 'true')
+      )
+      .catch((e) => {
+        console.warn("[featureFlags] my-ads", e);
+      });
+  }, []);
 
   useEffect(() => {
     if (isLoading) return;
@@ -75,8 +87,9 @@ export default function MyAdsPageRoute() {
     navigate('/create');
   };
 
-  const handleDeletePet = async (reason: string) => {
+  const handleDeletePet = async (payload: { reason: string; rewardHelperCode?: string }) => {
     if (!deletingPet) return;
+    const reason = payload.reason;
     const archiveReasons = [
       'Питомец вернулся домой / найден хозяин',
       'Питомец пристроен в новую семью',
@@ -88,9 +101,14 @@ export default function MyAdsPageRoute() {
         const updated = await petsApi.update(deletingPet.id, {
           isArchived: true,
           archiveReason: reason,
+          rewardHelperCode: payload.rewardHelperCode,
         });
         setPets((prev) => prev.map((p) => (p.id === deletingPet.id ? updated : p)));
-        toast.success('Объявление перемещено в архив', { description: reason });
+        toast.success('Объявление перемещено в архив', {
+          description: payload.rewardHelperCode
+            ? `Начислены очки пользователю ${payload.rewardHelperCode}`
+            : reason,
+        });
       } else {
         await petsApi.delete(deletingPet.id);
         setPets((prev) => prev.filter((p) => p.id !== deletingPet.id));
@@ -102,6 +120,39 @@ export default function MyAdsPageRoute() {
     setDeletingPet(null);
   };
 
+  const handleBoostPet = async (pet: Pet) => {
+    try {
+      const eligibility = await instagramApi.boostEligibility(pet.id);
+      if (!eligibility.eligible) {
+        if (eligibility.reason === 'too_early') {
+          toast.error('Продвижение доступно через 7 дней после публикации.');
+          return;
+        }
+        if (eligibility.reason === 'limit_reached') {
+          const next = eligibility.next_available_at
+            ? new Date(eligibility.next_available_at).toLocaleString('ru-RU')
+            : '';
+          toast.error(next ? `Лимит буста исчерпан до ${next}` : 'Лимит буста исчерпан на 7 дней.');
+          return;
+        }
+        if (eligibility.reason === 'route_missing') {
+          toast.error('Для вашего региона пока не настроен Instagram-аккаунт.');
+          return;
+        }
+        if (eligibility.reason === 'feature_disabled') {
+          toast.error('Продвижение в Instagram Stories временно отключено.');
+          return;
+        }
+        toast.error('Сейчас невозможно продвигать это объявление.');
+        return;
+      }
+      await instagramApi.createBoostPublication(pet.id);
+      toast.success('Объявление отправлено в очередь на продвижение в Instagram Stories.');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t.common.error);
+    }
+  };
+
   return (
     <>
       <MyAdsList
@@ -110,12 +161,20 @@ export default function MyAdsPageRoute() {
         onCreateClick={handleCreateClick}
         onEditPet={(pet) => navigate(`/edit/${pet.id}`)}
         onDeletePet={setDeletingPet}
+        instagramBoostEnabled={instagramBoostEnabled}
+        onBoostPet={(pet) => {
+          void handleBoostPet(pet);
+        }}
       />
 
       {deletingPet && (
         <DeleteReasonModal
           onClose={() => setDeletingPet(null)}
           onConfirm={handleDeletePet}
+          enableRewardSection={
+            deletingPet.status === 'searching' && deletingPet.rewardMode === 'points'
+          }
+          rewardPoints={deletingPet.rewardPoints ?? 50}
           petDescription={`${deletingPet.animalType === 'cat' ? 'Кот' : deletingPet.animalType === 'dog' ? 'Собака' : 'Животное'} ${deletingPet.breed ? '(' + deletingPet.breed + ')' : ''} - ${deletingPet.city}`}
         />
       )}

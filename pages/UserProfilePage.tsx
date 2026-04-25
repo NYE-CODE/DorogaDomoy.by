@@ -1,5 +1,5 @@
 import { useParams, Link } from 'react-router';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   MapPin,
   Calendar,
@@ -16,6 +16,7 @@ import { User, useAuth } from '../context/AuthContext';
 import { Pet } from '../types/pet';
 import { API_BASE, usersApi, petsApi, profilePetsApi } from '../api/client';
 import { useI18n } from '../context/I18nContext';
+import { RewardBadge } from '../components/reward-badge';
 import { toast } from 'sonner';
 import { Header } from '../components/layout/Header';
 import { Footer } from '../components/layout/Footer';
@@ -146,6 +147,14 @@ export default function UserProfilePage() {
     return new Date(Math.min(...dates));
   }, [allPets]);
 
+  const copyResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (copyResetTimerRef.current) clearTimeout(copyResetTimerRef.current);
+    };
+  }, []);
+
   const handleToggleBlock = async () => {
     if (!user || !currentUser || currentUser.role !== 'admin') return;
     const newBlocked = !user.isBlocked;
@@ -166,7 +175,11 @@ export default function UserProfilePage() {
     const url = window.location.href;
     if (await copyText(url)) {
       setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 2000);
+      if (copyResetTimerRef.current) clearTimeout(copyResetTimerRef.current);
+      copyResetTimerRef.current = setTimeout(() => {
+        copyResetTimerRef.current = null;
+        setIsCopied(false);
+      }, 2000);
     }
   };
 
@@ -357,7 +370,7 @@ export default function UserProfilePage() {
             </div>
 
             {/* Stats Section */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 pt-6 border-t border-gray-200 dark:border-border">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-8 pt-6 border-t border-gray-200 dark:border-border">
               <div className="text-center">
                 <div className="text-2xl sm:text-3xl font-bold text-[#FF9800] mb-1">{stats.total}</div>
                 <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
@@ -380,6 +393,12 @@ export default function UserProfilePage() {
                 <div className="text-2xl sm:text-3xl font-bold text-[#FF9800] mb-1">{stats.pets}</div>
                 <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                   {t.userProfile.statPets}
+                </div>
+              </div>
+              <div className="text-center md:border-l border-gray-200 dark:border-border">
+                <div className="text-2xl sm:text-3xl font-bold text-[#16a34a] mb-1">{user.helperConfirmedCount ?? 0}</div>
+                <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                  {(t.userProfile as { statHelper?: string }).statHelper ?? 'Помог вернуть домой'}
                 </div>
               </div>
             </div>
@@ -469,6 +488,9 @@ export default function UserProfilePage() {
                             }`}
                           >
                             {pet.status === 'searching' ? t.userProfile.lostBadge : t.userProfile.foundBadge}
+                          </div>
+                          <div className="absolute top-4 left-4">
+                            <RewardBadge pet={pet} />
                           </div>
                         </div>
                         <div className="p-6">

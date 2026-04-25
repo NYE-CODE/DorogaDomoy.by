@@ -1,16 +1,47 @@
 /**
  * API client for DorogaDomoy.by backend.
- * Base URL: VITE_API_URL or http://localhost:8000
+ * `VITE_API_URL` — origin сервера (без `/api/v1`): статика `/uploads`, абсолютные пути фото.
+ * JSON API: `/api/v1` (см. `API_V1_BASE`).
  */
 import type { Pet } from '../types/pet';
 import type { User } from '../context/AuthContext';
 import type { Report, ReportReason } from '../types/admin';
 
-export const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+function trimTrailingSlash(s: string): string {
+  return s.replace(/\/+$/, '');
+}
+
+/** Origin бэкенда для `/uploads/…` и разрешения относительных URL фото */
+export const API_BASE = trimTrailingSlash(import.meta.env.VITE_API_URL || 'http://localhost:8000');
+
+/** Базовый URL REST API версии 1 */
+export const API_V1_BASE = `${API_BASE}/api/v1`;
 const LEGACY_TOKEN_KEY = 'pet_finder_token';
 
 function clearLegacyToken() {
   localStorage.removeItem(LEGACY_TOKEN_KEY);
+}
+
+/** Сообщение для UI из тела ошибки FastAPI без утечки полного JSON. */
+function formatApiErrorBody(errBody: unknown, fallback: string): string {
+  if (!errBody || typeof errBody !== 'object') return fallback;
+  const detail = (errBody as Record<string, unknown>).detail;
+  if (typeof detail === 'string') return detail;
+  if (Array.isArray(detail)) {
+    const parts: string[] = [];
+    for (const item of detail) {
+      if (typeof item === 'string') {
+        parts.push(item);
+        continue;
+      }
+      if (item && typeof item === 'object' && 'msg' in item) {
+        const m = (item as { msg?: unknown }).msg;
+        if (typeof m === 'string') parts.push(m);
+      }
+    }
+    if (parts.length > 0) return parts.join(' · ');
+  }
+  return fallback;
 }
 
 export async function api<T>(path: string, options: RequestInit = {}): Promise<T> {
@@ -18,7 +49,7 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
   };
-  const res = await fetch(`${API_BASE}${path}`, {
+  const res = await fetch(`${API_V1_BASE}${path}`, {
     ...options,
     credentials: 'include',
     headers,
@@ -26,15 +57,18 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
   if (res.status === 401) {
     clearLegacyToken();
     const err = await res.json().catch(() => ({}));
-    const msg = typeof err?.detail === 'string' ? err.detail : 'Сессия истекла';
-    throw new Error(msg);
+    throw new Error(formatApiErrorBody(err, 'Сессия истекла'));
   }
   if (res.status === 413) {
     throw new Error("Слишком большой размер данных. Уменьшите фото и попробуйте снова.");
   }
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new Error(typeof err.detail === 'string' ? err.detail : JSON.stringify(err));
+    const fallback =
+      res.status === 422
+        ? 'Проверьте введённые данные'
+        : `Запрос не выполнен (${res.status})`;
+    throw new Error(formatApiErrorBody(err, fallback));
   }
   if (res.status === 204) return undefined as T;
   return res.json();
@@ -47,6 +81,10 @@ export interface UserResponse {
   name: string;
   avatar?: string;
   role: string;
+  helper_code?: string | null;
+  helper_confirmed_count?: number;
+  points_balance?: number;
+  points_earned_total?: number;
   contacts: { phone?: string; telegram?: string; viber?: string };
   is_blocked?: boolean;
   blocked_reason?: string;
@@ -68,6 +106,10 @@ function toUser(u: UserResponse): User {
     name: u.name,
     avatar: u.avatar,
     role: u.role as User['role'],
+    helperCode: u.helper_code,
+    helperConfirmedCount: u.helper_confirmed_count ?? 0,
+    pointsBalance: u.points_balance ?? 0,
+    pointsEarnedTotal: u.points_earned_total ?? 0,
     contacts: u.contacts,
     isBlocked: u.is_blocked,
     blockedReason: u.blocked_reason,
@@ -113,7 +155,7 @@ export const authApi = {
   uploadAvatar: async (file: File) => {
     const formData = new FormData();
     formData.append('file', file);
-    const res = await fetch(`${API_BASE}/auth/avatar-upload`, {
+    const res = await fetch(`${API_V1_BASE}/auth/avatar-upload`, {
       method: 'POST',
       credentials: 'include',
       body: formData,
@@ -124,7 +166,9 @@ export const authApi = {
     }
     if (!res.ok) {
       const err = await res.json().catch(() => ({ detail: res.statusText }));
-      throw new Error(typeof err.detail === 'string' ? err.detail : JSON.stringify(err));
+      throw new Error(
+        formatApiErrorBody(err, `Не удалось загрузить аватар (${res.status})`)
+      );
     }
     const data = await res.json();
     return data.avatar as string;
@@ -163,6 +207,11 @@ interface PetResponse {
   moderation_reason?: string;
   moderated_at?: string;
   moderated_by?: string;
+  reward_mode?: 'points' | 'money';
+  reward_amount_byn?: number;
+  reward_points?: number;
+  reward_recipient_user_id?: string;
+  reward_points_awarded_at?: string;
 }
 
 function resolvePhotoUrl(url: string): string {
@@ -194,6 +243,13 @@ function toPet(p: PetResponse): Pet {
     moderationReason: p.moderation_reason,
     moderatedAt: p.moderated_at ? new Date(p.moderated_at) : undefined,
     moderatedBy: p.moderated_by,
+    rewardMode: (p.reward_mode as Pet['rewardMode']) || 'points',
+    rewardAmountByn: p.reward_amount_byn,
+    rewardPoints: p.reward_points ?? 50,
+    rewardRecipientUserId: p.reward_recipient_user_id,
+    rewardPointsAwardedAt: p.reward_points_awarded_at
+      ? new Date(p.reward_points_awarded_at)
+      : undefined,
   };
 }
 
@@ -209,6 +265,8 @@ export interface PetCreateInput {
   city: string;
   location: { lat: number; lng: number };
   contacts: Record<string, string>;
+  rewardMode?: 'points' | 'money';
+  rewardAmountByn?: number;
   /** Имя для отображения в объявлении (при «другие контакты») */
   author_name?: string;
 }
@@ -251,7 +309,8 @@ export const petsApi = {
     return api<PetResponse[]>(`/pets?${q}`, options).then((arr) => arr.map(toPet));
   },
 
-  get: (id: string) => api<PetResponse>(`/pets/${id}`).then(toPet),
+  get: (id: string, init?: RequestInit) =>
+    api<PetResponse>(`/pets/${id}`, init).then(toPet),
 
   create: (data: PetCreateInput) => {
     const body: Record<string, unknown> = {
@@ -266,6 +325,8 @@ export const petsApi = {
       city: data.city,
       location: data.location,
       contacts: data.contacts,
+      reward_mode: data.rewardMode ?? 'points',
+      reward_amount_byn: data.rewardAmountByn,
     };
     if (data.author_name != null && data.author_name.trim() !== '') {
       body.author_name = data.author_name.trim();
@@ -280,6 +341,8 @@ export const petsApi = {
       archiveReason?: string;
       moderationStatus?: string;
       moderationReason?: string;
+      rewardPoints?: number;
+      rewardHelperCode?: string;
     }
   ) => {
     const body: Record<string, unknown> = {};
@@ -299,6 +362,10 @@ export const petsApi = {
     if (data.archiveReason != null) body.archive_reason = data.archiveReason;
     if (data.moderationStatus != null) body.moderation_status = data.moderationStatus;
     if (data.moderationReason != null) body.moderation_reason = data.moderationReason;
+    if (data.rewardMode != null) body.reward_mode = data.rewardMode;
+    if (data.rewardAmountByn != null) body.reward_amount_byn = data.rewardAmountByn;
+    if (data.rewardPoints != null) body.reward_points = data.rewardPoints;
+    if (data.rewardHelperCode != null) body.reward_helper_code = data.rewardHelperCode;
     return api<PetResponse>(`/pets/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(body),
@@ -326,8 +393,38 @@ export const usersApi = {
 
   get: (id: string) => api<UserResponse>(`/users/${id}`).then(toUser),
 
+  findByHelperCode: (
+    helperCode: string
+  ) =>
+    api<{
+      id: string;
+      name: string;
+      avatar?: string | null;
+      helper_code: string;
+      helper_confirmed_count: number;
+    }>(`/users/helper-code/${encodeURIComponent(helperCode.trim())}`),
+
   delete: (userId: string) =>
     api<void>(`/users/${userId}`, { method: 'DELETE' }),
+};
+
+// --- Rewards ---
+export interface PointsTransactionItem {
+  id: string;
+  user_id: string;
+  pet_id?: string | null;
+  amount: number;
+  kind: string;
+  note?: string | null;
+  created_at: string;
+}
+
+export const rewardsApi = {
+  listPointsTransactions: (params?: { user_id?: string; pet_id?: string; kind?: string; limit?: number; offset?: number }) => {
+    const q = new URLSearchParams();
+    if (params) Object.entries(params).forEach(([k, v]) => v != null && q.set(k, String(v)));
+    return api<PointsTransactionItem[]>(`/rewards/points-transactions?${q}`);
+  },
 };
 
 // --- Reports ---
@@ -402,6 +499,12 @@ export interface FeatureFlags {
   ff_landing_show_pets_feature?: string;
   /** FAQ на лендинге; до миграции — true */
   ff_landing_show_faq?: string;
+  /** Продвижение в Instagram Stories из «Мои объявления»; до миграции — true */
+  ff_instagram_boost_stories?: string;
+  /** Включена ли система наград */
+  ff_reward_enabled?: string;
+  /** Разрешен ли денежный тип награды */
+  ff_reward_money_enabled?: string;
 }
 
 export const featureFlagsApi = {
@@ -412,6 +515,9 @@ export const featureFlagsApi = {
     ff_landing_show_help?: boolean;
     ff_landing_show_pets_feature?: boolean;
     ff_landing_show_faq?: boolean;
+    ff_instagram_boost_stories?: boolean;
+    ff_reward_enabled?: boolean;
+    ff_reward_money_enabled?: boolean;
   }) =>
     api<FeatureFlags>('/feature-flags', {
       method: 'PATCH',
@@ -424,10 +530,14 @@ export interface PlatformSettings {
   require_moderation: string;
   auto_archive_days: string;
   max_photos: string;
+  reward_default_points?: string;
   /** @username канала / супергруппы или -100… — куда слать анонсы блога */
   telegram_blog_chat_id?: string;
   /** Публичный username канала без @ — для ссылок на пост и комментарии */
   telegram_blog_public_username?: string;
+  instagram_autopublish_enabled?: string;
+  instagram_story_enabled?: string;
+  instagram_manual_when_auto_off?: string;
 }
 
 export const settingsApi = {
@@ -665,22 +775,24 @@ export interface Partner {
   logo_url?: string | null;
   name: string;
   link?: string | null;
+  is_medallion_partner?: boolean;
 }
 
 export const partnersApi = {
   list: () => api<Partner[]>('/partners'),
 
-  create: (data: { logo_url?: string; name: string; link?: string }) =>
+  create: (data: { logo_url?: string; name: string; link?: string; is_medallion_partner?: boolean }) =>
     api<Partner>('/partners', {
       method: 'POST',
       body: JSON.stringify({
         logo_url: data.logo_url || null,
         name: data.name,
         link: data.link || null,
+        is_medallion_partner: data.is_medallion_partner ?? false,
       }),
     }),
 
-  update: (id: string, data: Partial<{ logo_url: string; name: string; link: string }>) =>
+  update: (id: string, data: Partial<{ logo_url: string; name: string; link: string; is_medallion_partner: boolean }>) =>
     api<Partner>(`/partners/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
@@ -827,7 +939,7 @@ export const profilePetsApi = {
   uploadPhoto: async (file: File) => {
     const formData = new FormData();
     formData.append('file', file);
-    const res = await fetch(`${API_BASE}/profile-pets/upload-photo`, {
+    const res = await fetch(`${API_V1_BASE}/profile-pets/upload-photo`, {
       method: 'POST',
       credentials: 'include',
       body: formData,
@@ -841,7 +953,9 @@ export const profilePetsApi = {
     }
     if (!res.ok) {
       const err = await res.json().catch(() => ({ detail: res.statusText }));
-      throw new Error(typeof err.detail === 'string' ? err.detail : JSON.stringify(err));
+      throw new Error(
+        formatApiErrorBody(err, `Не удалось загрузить фото (${res.status})`)
+      );
     }
     const data = await res.json() as { photo: string };
     return resolvePhotoUrl(data.photo);
@@ -881,9 +995,143 @@ export const sightingsApi = {
       body: JSON.stringify(data),
     }),
 
-  listByPet: (petId: string, days = 7) =>
-    api<SightingItem[]>(`/sightings/pet/${petId}?days=${days}`),
+  listByPet: (petId: string, days = 7, init?: RequestInit) =>
+    api<SightingItem[]>(`/sightings/pet/${petId}?days=${days}`, init),
 
   getCounts: (petIds: string[]) =>
     api<Record<string, number>>(`/sightings/counts?pet_ids=${petIds.join(',')}`),
+};
+
+// --- Instagram publishing admin ---
+export interface InstagramAccountResponse {
+  id: string;
+  name: string;
+  instagram_business_id: string;
+  facebook_page_id?: string | null;
+  has_access_token: boolean;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface InstagramRegionRouteResponse {
+  id: string;
+  region_key: string;
+  account_id: string;
+  account_name: string;
+  is_fallback: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface InstagramPublicationResponse {
+  id: string;
+  pet_id: string;
+  account_id?: string | null;
+  account_name?: string | null;
+  initiated_by?: string | null;
+  region_key?: string | null;
+  mode: string;
+  source?: 'auto' | 'manual_admin' | 'boost_user';
+  requested_by_user_id?: string | null;
+  requested_at?: string | null;
+  format: 'story';
+  status: string;
+  attempts: number;
+  last_error?: string | null;
+  external_media_id?: string | null;
+  idempotency_key: string;
+  payload: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+  published_at?: string | null;
+}
+
+export interface InstagramBoostEligibilityResponse {
+  eligible: boolean;
+  reason:
+    | 'ok'
+    | 'pet_not_found'
+    | 'not_owner'
+    | 'not_approved'
+    | 'archived_or_found'
+    | 'too_early'
+    | 'route_missing'
+    | 'limit_reached';
+  next_available_at?: string | null;
+  pet_age_days?: number | null;
+}
+
+export const instagramApi = {
+  listAccounts: () => api<InstagramAccountResponse[]>('/instagram/accounts'),
+  createAccount: (data: {
+    name: string;
+    instagram_business_id: string;
+    facebook_page_id?: string;
+    access_token?: string;
+    is_active?: boolean;
+  }) =>
+    api<InstagramAccountResponse>('/instagram/accounts', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updateAccount: (accountId: string, data: Partial<{
+    name: string;
+    instagram_business_id: string;
+    facebook_page_id: string | null;
+    access_token: string | null;
+    is_active: boolean;
+  }>) =>
+    api<InstagramAccountResponse>(`/instagram/accounts/${accountId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+
+  listRoutes: () => api<InstagramRegionRouteResponse[]>('/instagram/routes'),
+  createRoute: (data: { region_key: string; account_id: string; is_fallback?: boolean }) =>
+    api<InstagramRegionRouteResponse>('/instagram/routes', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updateRoute: (routeId: string, data: Partial<{ account_id: string; is_fallback: boolean }>) =>
+    api<InstagramRegionRouteResponse>(`/instagram/routes/${routeId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+  deleteRoute: (routeId: string) =>
+    api<void>(`/instagram/routes/${routeId}`, { method: 'DELETE' }),
+
+  listPublications: (params?: { status?: string; pet_id?: string; limit?: number; offset?: number }) => {
+    const q = new URLSearchParams();
+    if (params?.status) q.set('status', params.status);
+    if (params?.pet_id) q.set('pet_id', params.pet_id);
+    if (params?.limit != null) q.set('limit', String(params.limit));
+    if (params?.offset != null) q.set('offset', String(params.offset));
+    const suffix = q.toString() ? `?${q}` : '';
+    return api<InstagramPublicationResponse[]>(`/instagram/publications${suffix}`);
+  },
+  createManualPublication: (data: { pet_id: string; format: 'story' }) =>
+    api<InstagramPublicationResponse[]>('/instagram/publications/manual', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  boostEligibility: (petId: string) =>
+    api<InstagramBoostEligibilityResponse>(`/instagram/boosts/eligibility?pet_id=${encodeURIComponent(petId)}`),
+  createBoostPublication: (pet_id: string) =>
+    api<InstagramPublicationResponse>('/instagram/publications/boost', {
+      method: 'POST',
+      body: JSON.stringify({ pet_id }),
+    }),
+  retryPublication: (publicationId: string) =>
+    api<InstagramPublicationResponse>(`/instagram/publications/${publicationId}/retry`, {
+      method: 'POST',
+    }),
+  cancelPublication: (publicationId: string) =>
+    api<InstagramPublicationResponse>(`/instagram/publications/${publicationId}/cancel`, {
+      method: 'POST',
+    }),
+  publishNow: (publicationId: string) =>
+    api<InstagramPublicationResponse>(`/instagram/publications/${publicationId}/publish-now`, {
+      method: 'POST',
+    }),
 };

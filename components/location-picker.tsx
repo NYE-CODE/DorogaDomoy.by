@@ -23,9 +23,16 @@ export function LocationPicker({ initialLocation, onLocationSelect, onAddressCha
   const onLocationSelectRef = useRef(onLocationSelect);
   const onAddressChangeRef = useRef(onAddressChange);
   const onLocationWithAddressRef = useRef(onLocationWithAddress);
+  const geoFallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   onLocationSelectRef.current = onLocationSelect;
   onAddressChangeRef.current = onAddressChange;
   onLocationWithAddressRef.current = onLocationWithAddress;
+
+  useEffect(() => {
+    return () => {
+      if (geoFallbackTimerRef.current) clearTimeout(geoFallbackTimerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (!mapContainerRef.current || mapInstanceRef.current) return;
@@ -100,6 +107,10 @@ export function LocationPicker({ initialLocation, onLocationSelect, onAddressCha
     const applyPosition = async (pos: GeolocationPosition) => {
       if (resolved) return;
       resolved = true;
+      if (geoFallbackTimerRef.current) {
+        clearTimeout(geoFallbackTimerRef.current);
+        geoFallbackTimerRef.current = null;
+      }
       const { latitude: lat, longitude: lng, accuracy } = pos.coords;
       const loc = { lat, lng };
       const address = await reverseGeocode(lat, lng);
@@ -121,6 +132,10 @@ export function LocationPicker({ initialLocation, onLocationSelect, onAddressCha
     const fail = (msg: string) => {
       if (resolved) return;
       resolved = true;
+      if (geoFallbackTimerRef.current) {
+        clearTimeout(geoFallbackTimerRef.current);
+        geoFallbackTimerRef.current = null;
+      }
       setLocating(false);
       alert(msg);
     };
@@ -142,7 +157,9 @@ export function LocationPicker({ initialLocation, onLocationSelect, onAddressCha
     );
 
     // страховка: если браузер завис и не вызвал callback — снимаем загрузку через 12 сек
-    setTimeout(() => {
+    if (geoFallbackTimerRef.current) clearTimeout(geoFallbackTimerRef.current);
+    geoFallbackTimerRef.current = setTimeout(() => {
+      geoFallbackTimerRef.current = null;
       if (!resolved) {
         resolved = true;
         setLocating(false);

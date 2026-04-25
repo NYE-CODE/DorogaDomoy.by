@@ -7,6 +7,7 @@ import { MobileMenuDrawer } from "../../../components/layout/MobileMenuDrawer";
 import { useAuth } from "../../../context/AuthContext";
 import { useI18n } from "../../../context/I18nContext";
 import { useCityOptional } from "../../../context/CityContext";
+import { landingContainerWide, landingHeaderPrimaryCtaClass } from "./landing-section-styles";
 
 interface HeaderProps {
   selectedCity?: string;
@@ -60,9 +61,10 @@ export function Header(props: HeaderProps = {}) {
   }, [isProfileOpen]);
 
   return (
-    <header className="sticky top-0 z-40 bg-background shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center py-6">
+    <>
+    <header className="sticky top-0 z-40 border-b border-border/80 bg-background/95 shadow-sm backdrop-blur-md supports-[backdrop-filter]:bg-background/80">
+      <div className={landingContainerWide}>
+        <div className="flex items-center justify-between py-4 md:py-5">
           <div className="flex items-center gap-3">
             <Link to="/" className="flex items-center gap-3 min-w-0">
               <img src="/logo.png" alt="DorogaDomoy.by" className="w-10 h-10 shrink-0 object-contain" />
@@ -77,21 +79,22 @@ export function Header(props: HeaderProps = {}) {
           <nav className="hidden md:flex gap-4 items-center">
             <Link
               to="/blog"
-              className="hidden md:inline-flex items-center px-3 h-12 rounded-lg text-foreground hover:bg-muted transition-colors text-sm font-medium shrink-0"
+              className="hidden h-11 shrink-0 items-center rounded-lg px-3 text-sm font-medium text-foreground transition-colors hover:bg-muted md:inline-flex md:h-12"
             >
               {t.landing.header.blog}
             </Link>
             <Button asChild>
-              <Link to="/create" className="bg-[#FF9800] text-white hover:bg-[#F57C00] rounded-lg px-6 h-12 flex items-center justify-center gap-2 text-lg">
-                <span className="text-xl">+</span>
+              <Link to="/create" className={`${landingHeaderPrimaryCtaClass} shrink-0`}>
+                <span className="text-xl leading-none">+</span>
                 <span>{t.landing.header.createAd}</span>
               </Link>
             </Button>
             
             {showCitySelector && (
-              <button 
+              <button
+                type="button"
                 onClick={handleRegionClick}
-                className="flex items-center gap-2 px-4 h-12 rounded-lg border border-border"
+                className="flex h-12 max-w-[220px] items-center gap-2 truncate rounded-lg border border-border px-4 transition-colors hover:bg-muted/80 lg:max-w-none"
               >
                 <MapPin size={18} className="text-primary" />
                 <span className="text-foreground">{displayRegion}</span>
@@ -102,48 +105,53 @@ export function Header(props: HeaderProps = {}) {
             <div className="relative" ref={profileRef} data-profile-menu>
               {isAuthenticated && user ? (
                 <>
-                  <button 
+                  <button
+                    type="button"
                     onClick={() => setIsProfileOpen(!isProfileOpen)}
-                    className="flex items-center gap-2 px-4 h-12 rounded-lg border border-border hover:border-primary transition-colors"
+                    className="flex h-12 items-center gap-2 rounded-lg border border-border px-4 transition-colors hover:border-primary hover:bg-muted/50"
                   >
-                    <div className="w-6 h-6 bg-[#FF9800] rounded-full flex items-center justify-center">
-                      <User size={14} className="text-white" />
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                      <User size={14} />
                     </div>
                     <span className="text-foreground hidden lg:inline">{t.landing.header.profile}</span>
                   </button>
 
                   {/* Profile Dropdown */}
                   {isProfileOpen && (
-                    <div className="absolute right-0 mt-2 w-64 bg-card rounded-lg shadow-lg border border-border py-2 z-[100]">
+                    <div className="absolute right-0 z-[100] mt-2 w-64 rounded-xl border border-border bg-card py-2 shadow-lg">
                       <div className="px-4 py-3 border-b border-border">
                         <p className="font-bold text-foreground">{user.name}</p>
                         <p className="text-sm text-muted-foreground truncate">{user.email}</p>
                       </div>
                       <div className="py-2">
-                        <button onClick={() => { navigate("/profile"); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted transition-colors text-left">
+                        <button type="button" onClick={() => { navigate("/profile"); setIsProfileOpen(false); }} className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-muted">
                           <User size={18} className="text-muted-foreground" />
                           <span className="text-foreground">{t.landing.header.profile}</span>
                         </button>
-                        <button onClick={() => { navigate("/my-pets"); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted transition-colors text-left">
+                        <button type="button" onClick={() => { navigate("/my-pets"); setIsProfileOpen(false); }} className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-muted">
                           <PawPrint size={18} className="text-muted-foreground" />
                           <span className="text-foreground">{t.landing.header.myPets}</span>
                         </button>
-                        <button onClick={() => { navigate("/my-ads"); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted transition-colors text-left">
+                        <button type="button" onClick={() => { navigate("/my-ads"); setIsProfileOpen(false); }} className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-muted">
                           <FileText size={18} className="text-muted-foreground" />
                           <span className="text-foreground">{t.landing.header.myAds}</span>
                         </button>
-                        <button onClick={() => { navigate("/settings"); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted transition-colors text-left">
+                        <button type="button" onClick={() => { navigate("/settings"); setIsProfileOpen(false); }} className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-muted">
                           <Settings size={18} className="text-muted-foreground" />
                           <span className="text-foreground">{t.landing.header.settings}</span>
                         </button>
                         {user.role === "admin" && (
-                          <button onClick={() => { navigate("/admin"); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-primary/10 transition-colors text-left">
-                            <Shield size={18} className="text-[#FF9800]" />
-                            <span className="text-[#FF9800] font-medium">{t.landing.header.adminPanel}</span>
+                          <button
+                            type="button"
+                            onClick={() => { navigate("/admin"); setIsProfileOpen(false); }}
+                            className="flex w-full items-center gap-3 px-4 py-2.5 text-left font-medium text-primary transition-colors hover:bg-primary/10"
+                          >
+                            <Shield size={18} className="text-primary" />
+                            <span>{t.landing.header.adminPanel}</span>
                           </button>
                         )}
                         <div className="border-t border-border mt-2 pt-2">
-                          <button onClick={() => { logout(); setIsProfileOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-destructive/10 transition-colors text-left">
+                          <button type="button" onClick={() => { logout(); setIsProfileOpen(false); }} className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-destructive/10">
                             <LogOut size={18} className="text-destructive" />
                             <span className="text-destructive font-medium">{t.landing.header.logout}</span>
                           </button>
@@ -153,11 +161,8 @@ export function Header(props: HeaderProps = {}) {
                   )}
                 </>
               ) : (
-                <button
-                  onClick={openAuthModal}
-                  className="bg-[#FF9800] text-white hover:bg-[#F57C00] rounded-lg px-6 h-12 flex items-center justify-center gap-2 text-lg"
-                >
-                  <User size={18} className="text-white" />
+                <button type="button" onClick={openAuthModal} className={landingHeaderPrimaryCtaClass}>
+                  <User size={18} className="text-primary-foreground" />
                   <span className="hidden lg:inline">{t.landing.header.login}</span>
                 </button>
               )}
@@ -175,16 +180,15 @@ export function Header(props: HeaderProps = {}) {
               <Menu size={22} className="text-foreground" />
             </button>
           </nav>
-
-          <MobileMenuDrawer open={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
         </div>
 
         {/* Mobile Region Selector - Full Width Below */}
         {showCitySelector && (
-          <div className="md:hidden pb-4">
-            <button 
+          <div className="border-t border-border/60 pb-3 pt-3 md:hidden">
+            <button
+              type="button"
               onClick={handleRegionClick}
-              className="w-full flex items-center justify-center gap-2 px-4 h-12 rounded-lg border border-border"
+              className="flex h-12 w-full items-center justify-center gap-2 rounded-lg border border-border px-4 transition-colors hover:bg-muted/80"
             >
               <MapPin size={18} className="text-primary" />
               <span className="text-foreground">{displayRegion}</span>
@@ -212,5 +216,9 @@ export function Header(props: HeaderProps = {}) {
         />
       )}
     </header>
+
+    {/* Вне шапки: иначе fixed+z-index заперты в контексте z-40 и меню оказывается под контентом */}
+    <MobileMenuDrawer open={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
+    </>
   );
 }

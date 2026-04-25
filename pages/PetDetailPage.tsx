@@ -2,14 +2,15 @@ import { useParams, Link } from 'react-router';
 import { useState, useEffect, useRef } from 'react';
 import { MapPin, Phone, MessageCircle, Calendar, Share2, Download, ChevronLeft, ChevronRight, User, Eye, AlertCircle, X, QrCode, FileText, Home, Heart, Building2, ArrowLeft, Send, Copy, Check, Printer, Image } from 'lucide-react';
 import { Pet } from '../types/pet';
-import { formatDate } from '../utils/pet-helpers';
+import { formatCalendarDate, formatRelativeTime } from '../utils/pet-helpers';
 import { toast } from 'sonner';
-import { petsApi, reportsApi, sightingsApi, type SightingItem, API_BASE } from '../api/client';
+import { petsApi, reportsApi, sightingsApi, type SightingItem, API_V1_BASE } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useI18n } from '../context/I18nContext';
 import { ReportModal } from '../components/report-modal';
 import { SightingForm } from '../components/SightingForm';
 import { ReportReason } from '../types/admin';
+import { RewardBadge } from '../components/reward-badge';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { buildPetShareBundle, type PetShareDict } from '../utils/pet-share-text';
@@ -24,6 +25,15 @@ import {
   SEO_ROBOTS_PUBLIC,
   truncateMetaDescription,
 } from '../utils/seo';
+import { PageLoader } from '../components/ui/page-loader';
+import { EmptyState } from '../components/ui/empty-state';
+import { Button } from '../components/ui/button';
+import { cn } from '../components/ui/utils';
+import {
+  appMessengerCtaSizingClass,
+  appOutlineCtaClass,
+  appPrimaryCtaClass,
+} from '../styles/cta-classes';
 
 const PRINT_PLACEHOLDER_IMAGE =
   'data:image/svg+xml;utf8,' +
@@ -42,6 +52,12 @@ function escapeHtml(value: string | null | undefined): string {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
+}
+
+function isAbortError(e: unknown): boolean {
+  if (e instanceof DOMException && e.name === 'AbortError') return true;
+  if (e instanceof Error && e.name === 'AbortError') return true;
+  return false;
 }
 
 function getSafeImageUrl(url?: string): string {
@@ -110,9 +126,10 @@ function SinglePetMap({ pet, sightings = [], seenLabel }: { pet: Pet; sightings?
     L.marker([pet.location.lat, pet.location.lng], { icon: petIcon }).addTo(map);
     markersLayerRef.current = L.layerGroup().addTo(map);
     mapInstanceRef.current = map;
-    setTimeout(() => map.invalidateSize(), 100);
+    const invalidateTimer = setTimeout(() => map.invalidateSize(), 100);
 
     return () => {
+      clearTimeout(invalidateTimer);
       map.remove();
       mapInstanceRef.current = null;
       markersLayerRef.current = null;
@@ -159,25 +176,32 @@ function ImageCarousel({ photos, alt }: { photos: string[]; alt: string }) {
         {photos.length > 1 && (
           <>
             <button
+              type="button"
               onClick={() => goTo(current - 1)}
-              className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-colors"
+              className="absolute left-3 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/30 bg-black/35 text-white shadow-lg backdrop-blur-sm transition-colors hover:bg-black/50 sm:left-4"
+              aria-label="Previous photo"
             >
-              <ChevronLeft className="w-5 h-5 text-gray-800" />
+              <ChevronLeft className="size-5" />
             </button>
             <button
+              type="button"
               onClick={() => goTo(current + 1)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-colors"
+              className="absolute right-3 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/30 bg-black/35 text-white shadow-lg backdrop-blur-sm transition-colors hover:bg-black/50 sm:right-4"
+              aria-label="Next photo"
             >
-              <ChevronRight className="w-5 h-5 text-gray-800" />
+              <ChevronRight className="size-5" />
             </button>
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+            <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
               {photos.map((_, i) => (
                 <button
                   key={i}
+                  type="button"
                   onClick={() => setCurrent(i)}
-                  className={`h-2 rounded-full transition-all ${
-                    i === current ? 'bg-[#FF9800] w-6' : 'w-2 bg-white/60 hover:bg-white'
-                  }`}
+                  className={cn(
+                    'h-2 rounded-full transition-all',
+                    i === current ? 'w-7 bg-primary shadow-sm' : 'w-2 bg-white/55 hover:bg-white/85',
+                  )}
+                  aria-label={`Photo ${i + 1}`}
                 />
               ))}
             </div>
@@ -185,16 +209,20 @@ function ImageCarousel({ photos, alt }: { photos: string[]; alt: string }) {
         )}
       </div>
       {photos.length > 1 && (
-        <div className="p-4 flex gap-2 overflow-x-auto">
+        <div className="flex gap-2 overflow-x-auto border-t border-border bg-muted/30 p-3 sm:p-4">
           {photos.map((src, i) => (
             <button
               key={i}
+              type="button"
               onClick={() => setCurrent(i)}
-              className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-colors ${
-                i === current ? 'border-[#FF9800]' : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
-              }`}
+              className={cn(
+                'h-20 w-20 shrink-0 overflow-hidden rounded-xl border-2 transition-colors',
+                i === current
+                  ? 'border-primary ring-2 ring-primary/25'
+                  : 'border-transparent ring-1 ring-border hover:border-muted-foreground/30',
+              )}
             >
-              <img src={src} alt={`${alt} — миниатюра ${i + 1}`} className="w-full h-full object-cover" />
+              <img src={src} alt={`${alt} — миниатюра ${i + 1}`} className="size-full object-cover" />
             </button>
           ))}
         </div>
@@ -223,17 +251,41 @@ export default function PetDetailPage() {
     cardUrl: string | null;
   }>(null);
   const [cardLoading, setCardLoading] = useState<null | 'feed' | 'story'>(null);
+  const copyResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const instagramCardUrlRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    instagramCardUrlRef.current = instagramGuide?.cardUrl ?? null;
+  }, [instagramGuide?.cardUrl]);
+
+  useEffect(() => {
+    return () => {
+      if (copyResetTimerRef.current) clearTimeout(copyResetTimerRef.current);
+      const u = instagramCardUrlRef.current;
+      if (u) URL.revokeObjectURL(u);
+    };
+  }, []);
 
   useEffect(() => {
     if (!id) return;
+    const ac = new AbortController();
     setLoading(true);
     setError(false);
     setPet(null);
     petsApi
-      .get(id)
-      .then(setPet)
-      .catch(() => setError(true))
-      .finally(() => setLoading(false));
+      .get(id, { signal: ac.signal })
+      .then((p) => {
+        if (ac.signal.aborted) return;
+        setPet(p);
+      })
+      .catch((e: unknown) => {
+        if (isAbortError(e)) return;
+        setError(true);
+      })
+      .finally(() => {
+        if (!ac.signal.aborted) setLoading(false);
+      });
+    return () => ac.abort();
   }, [id]);
 
   useEffect(() => {
@@ -279,35 +331,37 @@ export default function PetDetailPage() {
 
   useEffect(() => {
     if (!pet || pet.isArchived || pet.status !== 'searching') return;
-    sightingsApi.listByPet(pet.id).then(setSightings).catch(() => setSightings([]));
+    const ac = new AbortController();
+    sightingsApi
+      .listByPet(pet.id, 7, { signal: ac.signal })
+      .then((rows) => {
+        if (!ac.signal.aborted) setSightings(rows);
+      })
+      .catch((err: unknown) => {
+        if (isAbortError(err)) return;
+        console.warn('[PetDetailPage] sightings load failed', err);
+        setSightings([]);
+      });
+    return () => ac.abort();
   }, [pet?.id, pet?.isArchived, pet?.status]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-background dark:bg-gray-900 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
-          <p className="text-gray-600 dark:text-gray-400">{t.petDetail.loading}</p>
-        </div>
-      </div>
-    );
+    return <PageLoader label={t.petDetail.loading} />;
   }
 
   if (error || !pet) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-background flex items-center justify-center py-12">
-        <div className="text-center max-w-md mx-auto px-4">
-          <h1 className="text-2xl font-bold text-black dark:text-white mb-2">Объявление не найдено</h1>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
-            К сожалению, это объявление не существует или было удалено.
-          </p>
-          <Link
-            to="/"
-            className="inline-flex items-center justify-center h-12 px-6 bg-[#FF9800] text-white rounded-lg hover:bg-[#F57C00] transition-colors font-medium text-lg"
-          >
-            На главную
-          </Link>
-        </div>
+      <div className="flex min-h-screen flex-col bg-background px-4 pt-16 pb-24 md:py-16 dark:bg-gray-950">
+        <EmptyState
+          title={t.petDetail.notFound}
+          description={t.petDetail.notFoundDesc}
+          action={
+            <Button className={appPrimaryCtaClass} asChild>
+              <Link to="/">{t.petDetail.toMain}</Link>
+            </Button>
+          }
+          className="mx-auto max-w-lg border-dashed"
+        />
       </div>
     );
   }
@@ -363,7 +417,11 @@ export default function PetDetailPage() {
     if (await copyToClipboard(shareBundle.textFull)) {
       toast.success(t.petDetail.shareCopiedFull);
       setCopiedKind('full');
-      setTimeout(() => setCopiedKind(null), 2500);
+      if (copyResetTimerRef.current) clearTimeout(copyResetTimerRef.current);
+      copyResetTimerRef.current = setTimeout(() => {
+        copyResetTimerRef.current = null;
+        setCopiedKind(null);
+      }, 2500);
     } else toast.error(t.common.error);
     setShowShareMenu(false);
   };
@@ -372,14 +430,18 @@ export default function PetDetailPage() {
     if (await copyToClipboard(shareBundle.url)) {
       toast.success(t.petDetail.shareCopiedLink);
       setCopiedKind('link');
-      setTimeout(() => setCopiedKind(null), 2500);
+      if (copyResetTimerRef.current) clearTimeout(copyResetTimerRef.current);
+      copyResetTimerRef.current = setTimeout(() => {
+        copyResetTimerRef.current = null;
+        setCopiedKind(null);
+      }, 2500);
     } else toast.error(t.common.error);
     setShowShareMenu(false);
   };
 
   const fetchCardBlob = async (format: 'feed' | 'story'): Promise<Blob | null> => {
     try {
-      const url = `${API_BASE}/pets/${pet.id}/social-card?format=${format}&lang=${locale}&contacts=1&_=${Date.now()}`;
+      const url = `${API_V1_BASE}/pets/${pet.id}/social-card?format=${format}&lang=${locale}&contacts=1&_=${Date.now()}`;
       const res = await fetch(url, { cache: 'no-store' });
       if (!res.ok) return null;
       return await res.blob();
@@ -439,7 +501,10 @@ export default function PetDetailPage() {
     if (out === 'aborted') return;
 
     const cardUrl = URL.createObjectURL(blob);
-    setInstagramGuide({ variant, openPath, cardUrl });
+    setInstagramGuide((prev) => {
+      if (prev?.cardUrl) URL.revokeObjectURL(prev.cardUrl);
+      return { variant, openPath, cardUrl };
+    });
   };
 
   const handleShareInstagramPost = () => void finishInstagramShare('post', '/');
@@ -819,58 +884,41 @@ export default function PetDetailPage() {
     }
   };
 
-  const statusBg = pet.status === 'searching'
-    ? 'bg-primary/10 border-primary/30 dark:bg-red-900/20 dark:border-red-800'
-    : 'bg-green-100 border-green-200';
-
-  const statusText = pet.status === 'searching'
-    ? 'text-primary font-medium dark:text-red-400'
-    : 'text-green-700 font-medium';
-
   const canAddSighting = pet.status === 'searching' && !pet.isArchived
     && !(currentUser && (pet.authorId === currentUser.id || (currentUser.id === 'user-demo' && pet.authorId === 'current-user')));
 
-  const dateStr = pet.publishedAt.toISOString().slice(0, 10);
-  const daysAgo = Math.floor((Date.now() - pet.publishedAt.getTime()) / 86400000);
-  const daysAgoText =
-    daysAgo === 0 ? 'сегодня' : daysAgo === 1 ? '1 день назад' : daysAgo < 5 ? `${daysAgo} дня назад` : `${daysAgo} дней назад`;
-
   return (
     <>
-    <div className="min-h-screen bg-gray-50 dark:bg-background py-8">
-      <div className="max-w-7xl mx-auto px-4">
+    <div className="min-h-screen bg-background pt-8 pb-24 md:py-8">
+      <div className="mx-auto max-w-6xl px-4">
         {/* Breadcrumb */}
         <div className="mb-6">
           <Link
             to="/"
-            className="inline-flex items-center gap-1 text-gray-600 dark:text-gray-400 hover:text-[#FF9800] transition-colors"
+            className="inline-flex items-center gap-1 text-muted-foreground transition-colors hover:text-primary"
           >
-            <ChevronLeft size={20} />
-            Вернуться к объявлениям
+            <ChevronLeft size={20} aria-hidden />
+            {t.petDetail.backToAds}
           </Link>
         </div>
 
         {/* Alert Banner */}
         {pet.status === 'searching' && !pet.isArchived && (
-          <div className="bg-[#FFF4E5] border-2 border-[#FF9800] rounded-lg p-4 mb-6 flex items-start gap-3">
-            <AlertCircle size={24} className="text-[#FF9800] flex-shrink-0 mt-0.5" />
+          <div className="mb-6 flex items-start gap-3 rounded-xl border border-primary/35 bg-primary/5 p-4 dark:bg-primary/10">
+            <AlertCircle size={24} className="mt-0.5 shrink-0 text-primary" aria-hidden />
             <div>
-              <p className="text-[#FF9800] font-bold mb-1">ВНИМАНИЕ! Этого питомца ищут!</p>
-              <p className="text-gray-700 dark:text-gray-300">
-                Помогите найти потерявшееся животное. Если вы видели его, пожалуйста, свяжитесь с владельцем.
-              </p>
+              <p className="mb-1 font-semibold text-primary">{t.petDetail.lostBannerTitle}</p>
+              <p className="text-muted-foreground text-sm leading-relaxed">{t.petDetail.lostBannerBody}</p>
             </div>
           </div>
         )}
 
         {pet.status === 'found' && !pet.isArchived && (
-          <div className="bg-[#E8F5E9] border-2 border-[#4CAF50] rounded-lg p-4 mb-6 flex items-start gap-3">
-            <AlertCircle size={24} className="text-[#4CAF50] flex-shrink-0 mt-0.5" />
+          <div className="mb-6 flex items-start gap-3 rounded-xl border border-emerald-500/35 bg-emerald-50/80 p-4 dark:border-emerald-500/40 dark:bg-emerald-950/30">
+            <AlertCircle size={24} className="mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden />
             <div>
-              <p className="text-[#4CAF50] font-bold mb-1">Найдено животное!</p>
-              <p className="text-gray-700 dark:text-gray-300">
-                Это животное было найдено. Если это ваш питомец, пожалуйста, свяжитесь с нашедшим.
-              </p>
+              <p className="mb-1 font-semibold text-emerald-700 dark:text-emerald-400">{t.petDetail.foundBannerTitle}</p>
+              <p className="text-muted-foreground text-sm leading-relaxed">{t.petDetail.foundBannerBody}</p>
             </div>
           </div>
         )}
@@ -879,23 +927,26 @@ export default function PetDetailPage() {
           {/* Left Column */}
           <div className="lg:col-span-2 space-y-6">
             {/* Photo Gallery */}
-            <div className="bg-white dark:bg-card rounded-2xl overflow-hidden shadow-lg">
+            <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
               <ImageCarousel photos={pet.photos} alt={t.pet.animalType[pet.animalType]} />
             </div>
 
             {/* Action buttons */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="relative" ref={shareMenuRef}>
-            <button
+            <Button
+              type="button"
+              className={cn(appPrimaryCtaClass, 'w-full')}
               onClick={() => setShowShareMenu(!showShareMenu)}
-              className="w-full flex items-center justify-center gap-2 h-12 bg-[#FF9800] text-white rounded-lg hover:bg-[#F57C00] transition-colors font-medium text-lg"
+              aria-expanded={showShareMenu}
+              aria-haspopup="true"
             >
-              <Share2 className="w-5 h-5" />
+              <Share2 className="size-5" aria-hidden />
               {t.petDetail.shareAdButton}
-            </button>
+            </Button>
 
             {showShareMenu && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-card rounded-xl border border-gray-200 dark:border-gray-700 shadow-xl z-50 overflow-hidden max-h-[min(70vh,520px)] overflow-y-auto">
+              <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-[min(70vh,520px)] overflow-hidden overflow-y-auto rounded-xl border border-border bg-card shadow-lg">
                 <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between sticky top-0 bg-card z-10">
                   <span className="text-sm font-semibold text-gray-900 dark:text-white">{t.petDetail.share}</span>
                   <button type="button" onClick={() => setShowShareMenu(false)} className="p-1 hover:bg-accent dark:hover:bg-accent rounded-lg"><X className="w-4 h-4 text-gray-400 dark:text-gray-500" /></button>
@@ -950,40 +1001,42 @@ export default function PetDetailPage() {
             )}
           </div>
           <div>
-            <button
+            <Button
+              type="button"
+              className={cn(appOutlineCtaClass, 'w-full')}
               onClick={() => setShowFlyerModal(true)}
-              className="w-full flex items-center justify-center gap-2 h-12 bg-white border-2 border-[#FF9800] text-[#FF9800] rounded-lg hover:bg-orange-50 transition-colors font-medium text-lg dark:bg-gray-900 dark:border-[#FF9800] dark:text-[#FF9800] dark:hover:bg-orange-950/30"
             >
-              <Download className="w-5 h-5" />
+              <Download className="size-5" aria-hidden />
               {t.petDetail.downloadFlyer}
-            </button>
+            </Button>
           </div>
         </div>
 
             {/* Description - inside left column */}
-            <div className="bg-white dark:bg-card rounded-2xl p-6 shadow-lg">
-              <h2 className="text-2xl font-bold text-black dark:text-white mb-4">{t.pet.description}</h2>
-              <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">{pet.description}</p>
+            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+              <h2 className="mb-4 text-2xl font-bold text-foreground">{t.pet.description}</h2>
+              <p className="whitespace-pre-line leading-relaxed text-muted-foreground">{pet.description}</p>
             </div>
 
             {/* Map Section */}
-            <div className="bg-white dark:bg-card rounded-2xl overflow-hidden shadow-lg">
-              <div className="p-6 border-b border-gray-200 dark:border-gray-200">
-                <div className="flex items-center gap-3 mb-2">
-                  <MapPin size={24} className="text-[#FF9800]" />
-                  <h2 className="text-2xl font-bold text-black dark:text-white">{t.pet.location}</h2>
+            <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+              <div className="border-b border-border p-6">
+                <div className="mb-2 flex items-center gap-3">
+                  <MapPin size={24} className="text-primary" aria-hidden />
+                  <h2 className="text-2xl font-bold text-foreground">{t.pet.location}</h2>
                 </div>
-                <p className="text-gray-700 dark:text-gray-300 ml-9">{pet.city}</p>
+                <p className="ml-9 text-muted-foreground">{pet.city}</p>
               </div>
               {canAddSighting && pet.status === 'searching' && !pet.isArchived && (
-                <div className="p-6 bg-orange-50 dark:bg-orange-950/20 border-b border-gray-200 dark:border-gray-200">
-                  <button
+                <div className="border-b border-border bg-primary/5 p-6 dark:bg-primary/10">
+                  <Button
+                    type="button"
+                    className={cn(appPrimaryCtaClass, 'mb-3 w-full')}
                     onClick={() => setShowSightingForm(true)}
-                    className="w-full h-12 bg-[#FF9800] text-white rounded-lg hover:bg-[#F57C00] transition-colors font-medium text-lg mb-3"
                   >
                     {t.petDetail.sawSimilar}
-                  </button>
-                  <p className="text-gray-600 dark:text-gray-400 text-center">{t.petDetail.sightingHintForVisitors.replace(/^\s*\u{1F441}\s*/u, '')}</p>
+                  </Button>
+                  <p className="text-center text-sm text-muted-foreground">{t.petDetail.sightingHintForVisitors.replace(/^\s*\u{1F441}\s*/u, '')}</p>
                 </div>
               )}
               <div className="h-96">
@@ -995,55 +1048,73 @@ export default function PetDetailPage() {
           {/* Right Column */}
           <div className="space-y-6">
             {/* Информация о животном */}
-            <div className="bg-white dark:bg-card rounded-2xl p-6 shadow-lg">
-              <h2 className="text-2xl font-bold text-black dark:text-white mb-6">{t.pet.information}</h2>
+            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+              <h2 className="mb-6 text-2xl font-bold text-foreground">{t.pet.information}</h2>
               <div className="space-y-4">
                 <div>
-                  <div className="text-gray-500 dark:text-gray-400 text-sm mb-1">Статус</div>
-                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${
-                    pet.status === 'searching' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                  }`}>
-                    {pet.status === 'searching' ? 'Потеряно' : 'Найдено'}
+                  <div className="mb-1 text-sm text-muted-foreground">{t.filters.status}</div>
+                  <div
+                    className={cn(
+                      'inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-medium',
+                      pet.status === 'searching'
+                        ? 'bg-primary/15 text-primary dark:bg-primary/20'
+                        : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300',
+                    )}
+                  >
+                    {pet.status === 'searching' ? t.pet.status.searching : t.pet.status.found}
                   </div>
                 </div>
-                <div>
-                  <div className="text-gray-500 dark:text-gray-400 text-sm mb-1">{t.pet.animalTypeLabel || 'Тип животного'}</div>
-                  <div className="font-medium text-black dark:text-white">{t.pet.animalType[pet.animalType]}</div>
-                </div>
-                {pet.breed && (
+                {pet.status === 'searching' && (
                   <div>
-                    <div className="text-gray-500 dark:text-gray-400 text-sm mb-1">{t.pet.breedLabel}</div>
-                    <div className="font-medium text-black dark:text-white">{pet.breed}</div>
+                    <div className="mb-1 text-sm text-muted-foreground">Вознаграждение</div>
+                    <RewardBadge pet={pet} />
                   </div>
                 )}
                 <div>
-                  <div className="text-gray-500 dark:text-gray-400 text-sm mb-1">{t.pet.colorLabel}</div>
+                  <div className="mb-1 text-sm text-muted-foreground">{t.pet.animalTypeLabel || 'Тип животного'}</div>
+                  <div className="font-medium text-foreground">{t.pet.animalType[pet.animalType]}</div>
+                </div>
+                {pet.breed && (
+                  <div>
+                    <div className="mb-1 text-sm text-muted-foreground">{t.pet.breedLabel}</div>
+                    <div className="font-medium text-foreground">{pet.breed}</div>
+                  </div>
+                )}
+                <div>
+                  <div className="mb-1 text-sm text-muted-foreground">{t.pet.colorLabel}</div>
                   <div className="flex flex-wrap gap-2">
                     {pet.colors.map((c) => (
-                      <span key={c} className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-sm">
+                      <span
+                        key={c}
+                        className="rounded-full bg-muted px-3 py-1 text-sm text-muted-foreground"
+                      >
                         {t.pet.color[c]}
                       </span>
                     ))}
                   </div>
                 </div>
                 <div>
-                  <div className="text-gray-500 dark:text-gray-400 text-sm mb-1">{t.pet.genderLabel}</div>
-                  <div className="font-medium text-black dark:text-white">{t.pet.gender[pet.gender]}</div>
+                  <div className="mb-1 text-sm text-muted-foreground">{t.pet.genderLabel}</div>
+                  <div className="font-medium text-foreground">{t.pet.gender[pet.gender]}</div>
                 </div>
                 {pet.approximateAge && (
                   <div>
-                    <div className="text-gray-500 dark:text-gray-400 text-sm mb-1">{t.pet.ageLabel}</div>
-                    <div className="font-medium text-black dark:text-white">{pet.approximateAge}</div>
+                    <div className="mb-1 text-sm text-muted-foreground">{t.pet.ageLabel}</div>
+                    <div className="font-medium text-foreground">{pet.approximateAge}</div>
                   </div>
                 )}
-                <div className="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
-                  <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                    <MapPin className="w-[18px] h-[18px] flex-shrink-0" />
+                <div className="space-y-2 border-t border-border pt-4">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <MapPin className="size-[18px] shrink-0" aria-hidden />
                     <span>{pet.city}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                    <Calendar className="w-[18px] h-[18px] flex-shrink-0" />
-                    <span>{formatDate(pet.publishedAt)} {daysAgo > 0 && `(${daysAgoText})`}</span>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Calendar className="size-[18px] shrink-0" aria-hidden />
+                    <span>
+                      {formatCalendarDate(pet.publishedAt)}
+                      <span className="mx-1.5 text-border">·</span>
+                      {formatRelativeTime(pet.publishedAt)}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -1051,67 +1122,78 @@ export default function PetDetailPage() {
 
             {/* Контактная информация */}
             {!pet.isArchived && (
-              <div className="bg-white dark:bg-card rounded-2xl p-6 shadow-lg">
-                <h2 className="text-2xl font-bold text-black dark:text-white mb-4">{t.pet.contacts}</h2>
-                <div className="flex items-center gap-3 mb-6">
+              <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+                <h2 className="mb-4 text-2xl font-bold text-foreground">{t.pet.contacts}</h2>
+                <div className="mb-6 flex items-center gap-3">
                   <img
                     src={`https://ui-avatars.com/api/?name=${encodeURIComponent(pet.authorName)}&size=48`}
                     alt=""
-                    className="w-12 h-12 rounded-full object-cover"
+                    className="size-12 rounded-full object-cover"
                   />
                   <div>
-                    <Link to={`/user/${pet.authorId}`} className="font-medium text-black dark:text-white hover:text-[#FF9800] transition-colors">
+                    <Link
+                      to={`/user/${pet.authorId}`}
+                      className="font-medium text-foreground transition-colors hover:text-primary"
+                    >
                       {pet.authorName}
                     </Link>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">Автор объявления</div>
+                    <div className="text-sm text-muted-foreground">{t.petDetail.authorSubtitle}</div>
                   </div>
                 </div>
                 <div className="space-y-3">
                   {pet.contacts.phone && (
-                    <a
-                      href={`tel:${pet.contacts.phone}`}
-                      className="flex items-center justify-center gap-2 w-full h-12 bg-[#FF9800] text-white rounded-lg hover:bg-[#F57C00] transition-colors font-medium text-lg"
-                    >
-                      <Phone className="w-5 h-5" />
-                      {pet.contacts.phone}
-                    </a>
+                    <Button className={cn(appPrimaryCtaClass, 'w-full')} asChild>
+                      <a href={`tel:${pet.contacts.phone}`}>
+                        <Phone className="size-5" aria-hidden />
+                        {pet.contacts.phone}
+                      </a>
+                    </Button>
                   )}
                   {pet.contacts.telegram && (
-                    <a
-                      href={`https://t.me/${pet.contacts.telegram.replace('@', '')}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-center gap-2 w-full h-12 bg-[#0088cc] text-white rounded-lg hover:bg-[#006699] transition-colors font-medium text-lg"
+                    <Button
+                      className={cn(
+                        appMessengerCtaSizingClass,
+                        'w-full border-0 bg-[#0088cc] text-white hover:bg-[#006699]',
+                      )}
+                      asChild
                     >
-                      <Send className="w-5 h-5" />
-                      Написать в Telegram
-                    </a>
+                      <a
+                        href={`https://t.me/${pet.contacts.telegram.replace('@', '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Send className="size-5" aria-hidden />
+                        {t.petDetail.writeTelegram}
+                      </a>
+                    </Button>
                   )}
                   {pet.contacts.viber && (
-                    <a
-                      href={`viber://chat?number=${pet.contacts.viber.replace('+', '')}`}
-                      className="flex items-center justify-center gap-2 w-full h-12 bg-[#7360f2] text-white rounded-lg hover:bg-[#5a4dd4] transition-colors font-medium text-lg"
+                    <Button
+                      className={cn(
+                        appMessengerCtaSizingClass,
+                        'w-full border-0 bg-[#7360f2] text-white hover:bg-[#5a4dd4]',
+                      )}
+                      asChild
                     >
-                      <MessageCircle className="w-5 h-5" />
-                      {t.profile.viber}
-                    </a>
+                      <a href={`viber://chat?number=${pet.contacts.viber.replace('+', '')}`}>
+                        <MessageCircle className="size-5" aria-hidden />
+                        {t.profile.viber}
+                      </a>
+                    </Button>
                   )}
                 </div>
-                <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                  <Link
-                    to={`/user/${pet.authorId}`}
-                    className="flex items-center justify-center w-full h-12 bg-white dark:bg-gray-900 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors font-medium text-lg"
-                  >
-                    Все объявления автора
-                  </Link>
+                <div className="mt-6 border-t border-border pt-6">
+                  <Button className={cn(appOutlineCtaClass, 'w-full')} asChild>
+                    <Link to={`/user/${pet.authorId}`}>{t.petDetail.viewAuthorAds}</Link>
+                  </Button>
                 </div>
               </div>
             )}
 
             {pet.isArchived && (
-              <div className="bg-white dark:bg-card rounded-2xl p-6 shadow-lg">
-                <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg text-center">
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{t.petDetail.contactsHiddenArchived}</p>
+              <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+                <div className="rounded-lg bg-muted/50 p-4 text-center">
+                  <p className="mb-3 text-sm text-muted-foreground">{t.petDetail.contactsHiddenArchived}</p>
                   {archiveBadge && (
                     <div className="flex justify-center">
                       <div className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border ${archiveBadge.bgColor} ${archiveBadge.borderColor} ${archiveBadge.textColor}`}>
@@ -1125,14 +1207,17 @@ export default function PetDetailPage() {
             )}
 
             {/* Пожаловаться */}
-            <div className="bg-white dark:bg-card rounded-2xl p-6 shadow-lg">
-              <button
+            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+              <Button
+                type="button"
+                variant="ghost"
+                size="lg"
+                className="h-auto w-full gap-2 py-3 text-muted-foreground hover:text-destructive"
                 onClick={handleReportPet}
-                className="flex items-center justify-center gap-2 w-full text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
               >
-                <AlertCircle className="w-5 h-5" />
-                Пожаловаться на объявление
-              </button>
+                <AlertCircle className="size-5" aria-hidden />
+                {t.petDetail.report}
+              </Button>
             </div>
           </div>
           </div>
@@ -1353,7 +1438,12 @@ export default function PetDetailPage() {
           pet={pet}
           onClose={() => setShowSightingForm(false)}
           onSuccess={() => {
-            sightingsApi.listByPet(pet.id, 7).then(setSightings).catch(() => {});
+            sightingsApi
+              .listByPet(pet.id, 7)
+              .then(setSightings)
+              .catch((err: unknown) => {
+                console.warn('[PetDetailPage] sightings refresh after sighting failed', err);
+              });
             toast.success(t.petDetail.sightingSuccess);
           }}
         />

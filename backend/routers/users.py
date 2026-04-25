@@ -6,8 +6,8 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from models import User, Pet, Notification, NotificationSettings
-from schemas import UserResponse, UserUpdate
-from auth import get_current_user, require_admin
+from schemas import HelperLookupResponse, UserResponse, UserUpdate
+from auth import get_current_user, get_current_user_required, require_admin
 from mappers.user import user_to_response
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -38,6 +38,27 @@ def list_users(
     return [user_to_response(u) for u in users]
 
 
+@router.get("/helper-code/{helper_code}", response_model=HelperLookupResponse)
+def find_user_by_helper_code(
+    helper_code: str,
+    _current: User = Depends(get_current_user_required),
+    db: Session = Depends(get_db),
+):
+    code = helper_code.strip().upper()
+    if not code:
+        raise HTTPException(status_code=400, detail="ID помощника не указан")
+    user = db.scalar(select(User).where(User.helper_code == code))
+    if not user:
+        raise HTTPException(status_code=404, detail="Пользователь с таким ID не найден")
+    return HelperLookupResponse(
+        id=user.id,
+        name=user.name,
+        avatar=user.avatar,
+        helper_code=user.helper_code or code,
+        helper_confirmed_count=user.helper_confirmed_count or 0,
+    )
+
+
 @router.get("/{user_id}", response_model=UserResponse)
 def get_user(
     user_id: str,
@@ -52,6 +73,7 @@ def get_user(
         user,
         include_block_status=include_private,
         include_telegram=include_private,
+        include_points_balance=include_private,
     )
 
 

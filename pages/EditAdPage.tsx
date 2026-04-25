@@ -67,6 +67,12 @@ export default function EditAdPage() {
         city: formData.city,
         location: formData.location,
         contacts,
+        ...(formData.status === 'searching'
+          ? {
+              rewardMode: formData.rewardMode,
+              rewardAmountByn: formData.rewardAmountByn,
+            }
+          : {}),
         ...(authorName && { author_name: authorName }),
       });
       if (updatedPet.moderationStatus === 'pending') {

@@ -3,11 +3,61 @@ import { partnersApi } from "../../../api/client";
 import { useI18n } from "../../../context/I18nContext";
 import type { Partner } from "../../../api/client";
 import { API_BASE } from "../../../api/client";
+import { Skeleton } from "../../../components/ui/skeleton";
+import {
+  landingBandMuted,
+  landingContainerNarrow,
+  landingH2,
+  landingLeadCenter,
+  landingSectionHeader,
+  landingSectionY,
+} from "./landing-section-styles";
 
 function resolveLogoUrl(url?: string | null): string | null {
   if (!url) return null;
   if (url.startsWith("http") || url.startsWith("data:")) return url;
   return `${API_BASE}${url}`;
+}
+
+function PartnerTile({ partner }: { partner: Partner }) {
+  const logoUrl = resolveLogoUrl(partner.logo_url);
+  const [logoFailed, setLogoFailed] = useState(false);
+
+  const cardInner = (
+    <div className="flex min-h-[7rem] flex-col items-center justify-center rounded-xl bg-transparent p-4 transition-all duration-300 hover:-translate-y-0.5">
+      {logoUrl && !logoFailed ? (
+        <>
+          <img
+            src={logoUrl}
+            alt=""
+            className="max-h-12 max-w-[132px] object-contain grayscale opacity-85 transition-[filter,opacity] duration-300 group-hover:grayscale-0 group-hover:opacity-100"
+            onError={() => setLogoFailed(true)}
+          />
+          <span className="mt-2 line-clamp-2 text-center text-xs font-medium text-muted-foreground">
+            {partner.name}
+          </span>
+        </>
+      ) : (
+        <span className="text-center text-sm font-semibold leading-snug text-foreground line-clamp-3 px-1">
+          {partner.name}
+        </span>
+      )}
+    </div>
+  );
+
+  if (partner.link) {
+    return (
+      <a
+        href={partner.link}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="group block rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      >
+        {cardInner}
+      </a>
+    );
+  }
+  return <div className="group block rounded-xl">{cardInner}</div>;
 }
 
 export function Partners() {
@@ -24,90 +74,54 @@ export function Partners() {
   }, []);
 
   return (
-    <section className="py-20 md:py-32 bg-muted">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-20">
-          <h2 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
-            {t.landing.partners.title}
-          </h2>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            {t.landing.partners.subtitle}
-          </p>
+    <section id="partners" className={`relative ${landingSectionY} ${landingBandMuted}`}>
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+      <div className={landingContainerNarrow}>
+        <div className={landingSectionHeader}>
+          <h2 className={landingH2}>{t.landing.partners.title}</h2>
+          <p className={landingLeadCenter}>{t.landing.partners.subtitle}</p>
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-16 min-h-[120px] items-center justify-center text-muted-foreground">
-            {t.landing.partners.loading}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-10 md:mb-12">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div
+                key={i}
+                className="flex h-28 flex-col items-center justify-center rounded-xl bg-muted/30 p-4"
+              >
+                <Skeleton className="h-10 w-24 rounded-md" />
+                <Skeleton className="mt-3 h-3 w-16 rounded-md" />
+              </div>
+            ))}
           </div>
         ) : partners.length > 0 ? (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-16">
-          {partners.map((partner) => {
-            const logoUrl = resolveLogoUrl(partner.logo_url);
-            const content = (
-              <div className="flex flex-col items-center justify-center p-6 grayscale hover:grayscale-0 opacity-60 hover:opacity-100 transition-all duration-300 h-full">
-                {logoUrl ? (
-                  <img
-                    src={logoUrl}
-                    alt={partner.name}
-                    className="max-h-16 max-w-[140px] object-contain mb-2"
-                    onError={(e) => {
-                      e.currentTarget.style.display = "none";
-                      const fallback = e.currentTarget.nextElementSibling;
-                      if (fallback) (fallback as HTMLElement).style.display = "block";
-                    }}
-                  />
-                ) : null}
-                <span className="font-bold text-xl text-foreground text-center" style={{ display: logoUrl ? "none" : "block" }}>
-                  {partner.name}
-                </span>
-                {logoUrl && (
-                  <span className="font-bold text-lg text-foreground text-center mt-2">
-                    {partner.name}
-                  </span>
-                )}
-              </div>
-            );
-            if (partner.link) {
-              return (
-                <a
-                  key={partner.id}
-                  href={partner.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center"
-                >
-                  {content}
-                </a>
-              );
-            }
-            return (
-              <div key={partner.id} className="flex items-center justify-center">
-                {content}
-              </div>
-            );
-          })}
-        </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-10 md:mb-12">
+            {partners.map((partner) => (
+              <PartnerTile key={partner.id} partner={partner} />
+            ))}
+          </div>
         ) : null}
 
         <div className="text-center">
-          <div className="relative bg-gradient-to-r from-[#FDB913] to-[#FF9800] rounded-3xl p-12 md:p-16 shadow-xl max-w-4xl mx-auto overflow-hidden">
-            {/* Decorative geometric shapes */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32"></div>
-            <div className="absolute bottom-0 left-0 w-48 h-48 bg-black/10 rounded-full -ml-24 -mb-24"></div>
-            <div className="absolute top-1/2 right-1/4 w-32 h-32 bg-white/5 rounded-full"></div>
-            <div className="absolute bottom-1/4 right-1/3 w-20 h-20 bg-black/5 rotate-45"></div>
-            
-            {/* Content */}
+          <div className="relative mx-auto max-w-2xl overflow-hidden rounded-2xl border border-white/20 bg-gradient-to-br from-[#FDB913] via-[#f5a623] to-[#FF9800] p-8 md:p-10 shadow-lg">
+            <div
+              className="pointer-events-none absolute -right-16 -top-16 size-48 rounded-full bg-white/15 blur-2xl"
+              aria-hidden
+            />
+            <div
+              className="pointer-events-none absolute -bottom-12 -left-12 size-40 rounded-full bg-black/10 blur-2xl"
+              aria-hidden
+            />
             <div className="relative z-10">
-              <h3 className="text-3xl md:text-4xl font-bold text-white mb-4">
+              <h3 className="text-xl md:text-2xl font-bold text-white mb-2">
                 {t.landing.partners.ctaTitle}
               </h3>
-              <p className="text-lg md:text-xl text-white/90 mb-8 max-w-xl mx-auto">
+              <p className="text-sm md:text-base text-white/95 mb-6 max-w-lg mx-auto leading-relaxed">
                 {t.landing.partners.ctaSubtitle}
               </p>
               <a
                 href="mailto:contact@dorogadomoy.by"
-                className="inline-flex bg-white text-[#FF9800] px-10 py-4 rounded-lg font-bold hover:bg-white/90 dark:bg-card dark:text-primary dark:hover:bg-card/90 transition-colors shadow-lg text-lg"
+                className="inline-flex items-center justify-center rounded-lg bg-white px-7 py-3 text-base font-semibold text-[#c2410c] shadow-md transition-colors hover:bg-white/95 dark:bg-card dark:text-primary dark:hover:bg-card/95"
               >
                 {t.landing.partners.ctaButton}
               </a>

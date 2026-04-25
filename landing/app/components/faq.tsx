@@ -7,6 +7,14 @@ import {
 } from "./ui/accordion";
 import { useI18n } from "../../../context/I18nContext";
 import { faqApi, type FaqItem } from "../../../api/client";
+import { Skeleton } from "../../../components/ui/skeleton";
+import {
+  landingContainerReadable,
+  landingH2,
+  landingLeadCenter,
+  landingSectionHeader,
+  landingSectionY,
+} from "./landing-section-styles";
 
 type Locale = "ru" | "be" | "en";
 
@@ -57,31 +65,43 @@ export function FAQ() {
   }, [apiItems, locale, t.landing.faq.items]);
 
   return (
-    <section id="faq" className="py-20 md:py-32 bg-background">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-20">
-          <h2 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
-            {t.landing.faq.title}
-          </h2>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            {t.landing.faq.subtitle}
-          </p>
+    <section
+      id="faq"
+      className={`relative bg-gradient-to-b from-muted/40 via-background to-background ${landingSectionY}`}
+    >
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+      <div className={landingContainerReadable}>
+        <div className={landingSectionHeader}>
+          <h2 className={landingH2}>{t.landing.faq.title}</h2>
+          <p className={landingLeadCenter}>{t.landing.faq.subtitle}</p>
         </div>
 
         {faqs === null ? (
-          <p className="text-center text-muted-foreground py-8">{t.landing.faq.loading}</p>
+          <div className="space-y-3" aria-busy="true">
+            {[0, 1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="rounded-xl border border-border bg-card p-5 shadow-sm"
+              >
+                <Skeleton className="mb-3 h-5 w-[88%] max-w-md rounded-md" />
+                <Skeleton className="h-4 w-full rounded-md" />
+                <Skeleton className="mt-2 h-4 w-[70%] rounded-md" />
+              </div>
+            ))}
+            <p className="sr-only">{t.landing.faq.loading}</p>
+          </div>
         ) : (
-          <Accordion type="single" collapsible className="space-y-4">
+          <Accordion type="single" collapsible className="space-y-2.5">
             {faqs.map((faq, index) => (
               <AccordionItem
                 key={`faq-${index}`}
                 value={`item-${index}`}
-                className="bg-muted rounded-2xl px-8 overflow-hidden border-none"
+                className="rounded-xl border border-border/90 bg-card px-1 shadow-sm transition-shadow data-[state=open]:border-primary/25 data-[state=open]:shadow-md overflow-hidden border-b-0"
               >
-                <AccordionTrigger className="text-left text-lg font-bold text-foreground hover:no-underline py-6">
-                  {faq.q}
+                <AccordionTrigger className="text-left text-[15px] md:text-base font-semibold text-foreground hover:no-underline py-4 px-4 md:px-5 [&[data-state=open]]:pb-2">
+                  <span className="pr-2 leading-snug">{faq.q}</span>
                 </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground text-base leading-relaxed pb-6 whitespace-pre-wrap">
+                <AccordionContent className="text-muted-foreground text-sm md:text-[15px] leading-relaxed px-4 md:px-5 pb-5 pt-0 whitespace-pre-wrap">
                   {faq.a}
                 </AccordionContent>
               </AccordionItem>

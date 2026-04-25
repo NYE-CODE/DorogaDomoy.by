@@ -10,6 +10,7 @@ import {
   CheckCircle,
   XCircle,
   MoreVertical,
+  Rocket,
 } from 'lucide-react';
 import { Pet } from '../types/pet';
 import { useAuth } from '../context/AuthContext';
@@ -17,6 +18,11 @@ import { useI18n } from '../context/I18nContext';
 import { sightingsApi } from '../api/client';
 import { Header } from './layout/Header';
 import { Footer } from './layout/Footer';
+import { RewardBadge } from './reward-badge';
+import { Button } from './ui/button';
+import { EmptyState } from './ui/empty-state';
+import { cn } from './ui/utils';
+import { appPrimaryCtaClass } from '../styles/cta-classes';
 import type { ModerationStatus } from '../types/pet';
 
 const STATUS_TABS: {
@@ -35,6 +41,9 @@ interface MyAdsPageProps {
   onCreateClick: () => void;
   onEditPet: (pet: Pet) => void;
   onDeletePet: (pet: Pet) => void;
+  onBoostPet: (pet: Pet) => void;
+  /** Выключите через ff_instagram_boost_stories в админке */
+  instagramBoostEnabled?: boolean;
 }
 
 export function MyAdsPage({
@@ -43,9 +52,14 @@ export function MyAdsPage({
   onCreateClick,
   onEditPet,
   onDeletePet,
+  onBoostPet,
+  instagramBoostEnabled = true,
 }: MyAdsPageProps) {
   const { user } = useAuth();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+
+  const dateLocale =
+    locale === 'be' ? 'be-BY' : locale === 'en' ? 'en-GB' : 'ru-RU';
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [hoveredTooltipId, setHoveredTooltipId] = useState<string | null>(null);
 
@@ -131,7 +145,7 @@ export function MyAdsPage({
   };
 
   const formatDate = (date: Date) =>
-    date.toLocaleDateString('ru-RU', {
+    date.toLocaleDateString(dateLocale, {
       day: 'numeric',
       month: 'long',
       year: 'numeric',
@@ -151,51 +165,58 @@ export function MyAdsPage({
     onDeletePet(pet);
   };
 
+  const handleBoost = (e: React.MouseEvent, pet: Pet) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setOpenMenuId(null);
+    onBoostPet(pet);
+  };
+
+  const totalActive = publishedCount + pendingCount + rejectedCount;
+
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-background flex flex-col">
+    <div className="flex min-h-screen flex-col bg-background dark:bg-gray-950">
       <Header />
 
-      <main className="flex-1 py-4 sm:py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Header */}
-          <div className="mb-6 sm:mb-8">
-            <h1 className="text-2xl sm:text-3xl font-bold text-black dark:text-white mb-2">
-              {t.myAds.title}
-            </h1>
-            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-              {(t.myAds as { subtitle?: string }).subtitle ??
-                'Управляйте своими объявлениями о потерянных и найденных питомцах'}
-            </p>
+      <main className="flex-1 py-6 sm:py-10">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-6 flex flex-col gap-4 rounded-2xl border border-border bg-muted/25 p-6 sm:mb-8 sm:flex-row sm:items-end sm:justify-between sm:p-8">
+            <div className="min-w-0">
+              <button
+                type="button"
+                onClick={onBack}
+                className="mb-3 text-sm font-medium text-primary underline-offset-4 hover:underline"
+              >
+                ← {t.header.searchAds}
+              </button>
+              <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">{t.myAds.title}</h1>
+              <p className="mt-2 max-w-2xl text-sm text-muted-foreground sm:text-base">{t.myAds.subtitle}</p>
+            </div>
+            {totalActive > 0 ? (
+              <p className="shrink-0 text-sm tabular-nums text-muted-foreground">
+                {t.myAds.totalAds}{' '}
+                <span className="font-semibold text-foreground">{totalActive}</span>
+              </p>
+            ) : null}
           </div>
 
           {myAds.length === 0 ? (
-            /* Empty state — no ads at all */
-            <div className="bg-white dark:bg-card rounded-xl shadow-sm border border-gray-200 dark:border-border overflow-hidden">
-              <div className="text-center py-12 sm:py-16">
-                <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 bg-gray-100 dark:bg-muted rounded-full mb-4">
-                  <Plus size={28} className="sm:w-8 sm:h-8 text-gray-400" />
-                </div>
-                <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                  {t.myAds.noAds}
-                </h3>
-                <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto px-4">
-                  Если вы потеряли питомца или нашли чужого, создайте объявление, чтобы помочь ему
-                  вернуться домой.
-                </p>
-                <button
-                  onClick={onCreateClick}
-                  className="inline-flex items-center justify-center h-12 px-6 bg-[#FF9800] text-white rounded-lg hover:bg-[#F57C00] transition-colors font-medium text-base sm:text-lg"
-                >
-                  <span className="text-xl mr-2">+</span>
+            <EmptyState
+              title={t.myAds.noAds}
+              description={t.myAds.emptyNoAdsHint}
+              icon={<Plus className="size-7" />}
+              action={
+                <Button className={appPrimaryCtaClass} onClick={onCreateClick}>
+                  <Plus className="size-5" aria-hidden />
                   {t.myAds.createFirst}
-                </button>
-              </div>
-            </div>
+                </Button>
+              }
+              className="border-dashed shadow-sm"
+            />
           ) : (
             <>
-              {/* Tabs */}
-              <div className="bg-white dark:bg-card rounded-xl shadow-sm border border-gray-200 dark:border-border overflow-hidden">
-                <div className="flex border-b border-gray-200 dark:border-border">
+              <div className="overflow-visible rounded-2xl border border-border bg-card shadow-sm">
+                <div className="flex flex-wrap gap-1.5 border-b border-border bg-muted/40 p-2 sm:flex-nowrap sm:gap-1">
                   {STATUS_TABS.map((tab) => {
                     const Icon = tab.icon;
                     const count =
@@ -209,34 +230,28 @@ export function MyAdsPage({
                     return (
                       <button
                         key={tab.value}
+                        type="button"
                         onClick={() => setStatusTab(tab.value)}
-                        className={`flex-1 px-3 sm:px-6 py-3 sm:py-4 font-medium text-sm sm:text-base transition-colors relative ${
+                        className={cn(
+                          'flex min-w-[calc(33.333%-0.25rem)] flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition-all sm:min-w-0',
                           isActive
-                            ? 'text-[#FF9800] bg-orange-50 dark:bg-orange-950/30'
-                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-muted'
-                        }`}
+                            ? 'bg-card text-primary shadow-sm ring-1 ring-primary/20'
+                            : 'text-muted-foreground hover:bg-background/80 hover:text-foreground',
+                        )}
                       >
-                        <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2">
-                          <div className="flex items-center gap-1">
-                            <Icon size={20} className="flex-shrink-0" />
-                            {count > 0 && (
-                              <span
-                                className={`px-1.5 py-0.5 rounded-full text-xs ${
-                                  isActive
-                                    ? 'bg-[#FF9800] text-white'
-                                    : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300'
-                                }`}
-                              >
-                                {count}
-                              </span>
+                        <Icon className="size-[1.125rem] shrink-0 opacity-90" aria-hidden />
+                        <span className="truncate">{t.moderation[tab.labelKey]}</span>
+                        {count > 0 && (
+                          <span
+                            className={cn(
+                              'rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums',
+                              isActive
+                                ? 'bg-primary/15 text-primary'
+                                : 'bg-muted text-muted-foreground',
                             )}
-                          </div>
-                          <span className="text-xs sm:text-base">
-                            {t.moderation[tab.labelKey]}
+                          >
+                            {count}
                           </span>
-                        </div>
-                        {isActive && (
-                          <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#FF9800]" />
                         )}
                       </button>
                     );
@@ -246,49 +261,40 @@ export function MyAdsPage({
                 {/* Content */}
                 <div className="p-4 sm:p-6">
                   {filteredAds.length === 0 ? (
-                    /* Empty tab state */
-                    <div className="text-center py-12 sm:py-16">
-                      <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 bg-gray-100 dark:bg-muted rounded-full mb-4">
-                        {statusTab === 'approved' && (
-                          <CheckCircle size={28} className="sm:w-8 sm:h-8 text-gray-400" />
-                        )}
-                        {statusTab === 'pending' && (
-                          <Clock size={28} className="sm:w-8 sm:h-8 text-gray-400" />
-                        )}
-                        {statusTab === 'rejected' && (
-                          <XCircle size={28} className="sm:w-8 sm:h-8 text-gray-400" />
-                        )}
-                      </div>
-                      <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                        {statusTab === 'approved' &&
-                          ((t.myAds as { noPublished?: string }).noPublished ?? t.myAds.noAdsInTab)}
-                        {statusTab === 'pending' &&
-                          ((t.myAds as { noPending?: string }).noPending ?? t.myAds.noAdsInTabPending)}
-                        {statusTab === 'rejected' &&
-                          ((t.myAds as { noRejected?: string }).noRejected ??
-                            t.myAds.noAdsInTabRejected)}
-                      </h3>
-                      <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto px-4">
-                        {statusTab === 'approved' &&
-                          ((t.myAds as { emptyPublishedDesc?: string }).emptyPublishedDesc ??
-                            'Создайте первое объявление, чтобы помочь найти пропавшего питомца или вернуть найденного хозяину')}
-                        {statusTab === 'pending' &&
-                          ((t.myAds as { emptyPendingDesc?: string }).emptyPendingDesc ??
-                            'Все новые объявления проходят модерацию. Обычно это занимает не более 24 часов')}
-                        {statusTab === 'rejected' &&
-                          ((t.myAds as { emptyRejectedDesc?: string }).emptyRejectedDesc ??
-                            'Здесь будут отображаться объявления, которые не прошли модерацию')}
-                      </p>
-                      {statusTab === 'approved' && (
-                        <button
-                          onClick={onCreateClick}
-                          className="inline-flex items-center justify-center h-12 px-6 bg-[#FF9800] text-white rounded-lg hover:bg-[#F57C00] transition-colors font-medium text-base sm:text-lg"
-                        >
-                          <span className="text-xl mr-2">+</span>
-                          {t.myAds.createFirst}
-                        </button>
-                      )}
-                    </div>
+                    <EmptyState
+                      title={
+                        statusTab === 'approved'
+                          ? t.myAds.noPublished
+                          : statusTab === 'pending'
+                            ? t.myAds.noPending
+                            : t.myAds.noRejected
+                      }
+                      description={
+                        statusTab === 'approved'
+                          ? t.myAds.emptyPublishedDesc
+                          : statusTab === 'pending'
+                            ? t.myAds.emptyPendingDesc
+                            : t.myAds.emptyRejectedDesc
+                      }
+                      icon={
+                        statusTab === 'approved' ? (
+                          <CheckCircle className="size-7 text-muted-foreground" />
+                        ) : statusTab === 'pending' ? (
+                          <Clock className="size-7 text-muted-foreground" />
+                        ) : (
+                          <XCircle className="size-7 text-muted-foreground" />
+                        )
+                      }
+                      action={
+                        statusTab === 'approved' ? (
+                          <Button className={appPrimaryCtaClass} onClick={onCreateClick}>
+                            <Plus className="size-5" aria-hidden />
+                            {t.myAds.createFirst}
+                          </Button>
+                        ) : undefined
+                      }
+                      className="border-0 bg-transparent px-2 py-10 shadow-none md:px-4 md:py-14"
+                    />
                   ) : (
                     /* List of ads */
                     <div className="space-y-3 sm:space-y-4">
@@ -297,9 +303,7 @@ export function MyAdsPage({
                           pet.photos[0] ||
                           'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&h=400&fit=crop';
                         const statusLabel =
-                          pet.status === 'searching'
-                            ? (t.myAds as { statusLost?: string }).statusLost ?? 'Пропала'
-                            : (t.myAds as { statusFound?: string }).statusFound ?? 'Найдена';
+                          pet.status === 'searching' ? t.myAds.statusLost : t.myAds.statusFound;
                         const sightingCount = sightingCounts[pet.id] ?? 0;
                         const showRejectionTooltip =
                           pet.moderationStatus === 'rejected' &&
@@ -309,59 +313,65 @@ export function MyAdsPage({
                         return (
                           <div
                             key={pet.id}
-                            className="relative bg-white dark:bg-card border border-gray-200 dark:border-border rounded-xl p-3 sm:p-4 hover:shadow-md transition-shadow"
+                            className="group/card relative rounded-2xl border border-border bg-card p-3 transition-all hover:border-primary/30 hover:shadow-md sm:p-4"
                           >
-                            {/* Three-dot menu */}
                             <div
-                              className="absolute top-3 sm:top-4 right-3 sm:right-4 z-10"
+                              className="absolute right-2 top-2 z-30 sm:right-3 sm:top-3"
                               data-my-ads-menu
                             >
                               <button
+                                type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setOpenMenuId(openMenuId === pet.id ? null : pet.id);
                                 }}
-                                className="p-1.5 sm:p-2 hover:bg-gray-100 dark:hover:bg-muted rounded-lg transition-colors"
+                                className="rounded-xl p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                                aria-label={t.common.options}
                               >
-                                <MoreVertical
-                                  size={18}
-                                  className="sm:w-5 sm:h-5 text-gray-600 dark:text-gray-400"
-                                />
+                                <MoreVertical className="size-[1.125rem] sm:size-5" />
                               </button>
 
                               {openMenuId === pet.id && (
-                                <div className="absolute right-0 mt-1 w-48 sm:w-56 bg-white dark:bg-card rounded-lg shadow-lg border border-gray-200 dark:border-border py-1 z-20">
+                                <div className="absolute right-0 z-40 mt-1 w-52 overflow-hidden rounded-xl border border-border bg-popover py-1 text-popover-foreground shadow-lg sm:w-56">
                                   {pet.moderationStatus === 'rejected' && (
                                     <button
+                                      type="button"
                                       onClick={(e) => handleEdit(e, pet)}
-                                      className="w-full flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-2.5 hover:bg-gray-50 dark:hover:bg-muted transition-colors text-xs sm:text-sm text-left"
+                                      className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm transition-colors hover:bg-muted"
                                     >
-                                      <Edit size={14} className="sm:w-4 sm:h-4 text-gray-600 dark:text-gray-400" />
-                                      <span className="text-gray-700 dark:text-gray-300">
-                                        {(t.myAds as { fixAndResubmit?: string }).fixAndResubmit ??
-                                          'Исправить и отправить'}
-                                      </span>
+                                      <Edit className="size-4 shrink-0 text-muted-foreground" />
+                                      <span>{t.myAds.fixAndResubmit}</span>
                                     </button>
                                   )}
                                   {pet.moderationStatus !== 'pending' && (
                                     <>
+                                      {instagramBoostEnabled &&
+                                        pet.moderationStatus === 'approved' &&
+                                        pet.status === 'searching' && (
+                                        <button
+                                          type="button"
+                                          onClick={(e) => handleBoost(e, pet)}
+                                          className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm transition-colors hover:bg-primary/10"
+                                        >
+                                          <Rocket className="size-4 shrink-0 text-primary" />
+                                          <span className="font-medium text-primary">{t.myAds.boostInstagramStories}</span>
+                                        </button>
+                                      )}
                                       <button
+                                        type="button"
                                         onClick={(e) => handleEdit(e, pet)}
-                                        className="w-full flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-2.5 hover:bg-gray-50 dark:hover:bg-muted transition-colors text-xs sm:text-sm text-left"
+                                        className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm transition-colors hover:bg-muted"
                                       >
-                                        <Edit size={14} className="sm:w-4 sm:h-4 text-gray-600 dark:text-gray-400" />
-                                        <span className="text-gray-700 dark:text-gray-300">
-                                          {t.common.edit}
-                                        </span>
+                                        <Edit className="size-4 shrink-0 text-muted-foreground" />
+                                        <span>{t.common.edit}</span>
                                       </button>
                                       <button
+                                        type="button"
                                         onClick={(e) => handleDelete(e, pet)}
-                                        className="w-full flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-2.5 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors text-xs sm:text-sm text-left"
+                                        className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-destructive transition-colors hover:bg-destructive/10"
                                       >
-                                        <Trash2 size={14} className="sm:w-4 sm:h-4 text-red-600" />
-                                        <span className="text-red-600 dark:text-red-400">
-                                          {t.common.delete}
-                                        </span>
+                                        <Trash2 className="size-4 shrink-0" />
+                                        <span>{t.common.delete}</span>
                                       </button>
                                     </>
                                   )}
@@ -371,61 +381,60 @@ export function MyAdsPage({
 
                             <Link
                               to={`/pet/${pet.id}`}
-                              className="flex gap-3 sm:gap-4 items-start cursor-pointer no-underline text-inherit"
+                              className="flex cursor-pointer items-start gap-3 no-underline text-inherit sm:gap-4"
                               onClick={() => setOpenMenuId(null)}
                             >
-                              {/* Photo */}
-                              <div className="flex-shrink-0">
+                              <div className="relative size-24 shrink-0 overflow-hidden rounded-xl bg-muted ring-1 ring-border sm:size-28">
                                 <img
                                   src={photoUrl}
                                   alt={getStatusTitle(pet)}
-                                  className="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded-lg"
+                                  className="size-full object-cover transition duration-300 group-hover/card:scale-[1.03]"
                                 />
                               </div>
 
-                              {/* Info */}
-                              <div className="flex-1 min-w-0 pr-6 sm:pr-8">
-                                <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap mb-1.5 sm:mb-2">
+                              <div className="min-w-0 flex-1 pr-10 sm:pr-12">
+                                <div className="mb-1.5 flex flex-wrap items-center gap-1.5 sm:mb-2 sm:gap-2">
                                   <span
-                                    className={`px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-medium flex-shrink-0 ${
+                                    className={cn(
+                                      'shrink-0 rounded-full px-2 py-0.5 text-xs font-medium sm:px-3 sm:py-1',
                                       pet.status === 'searching'
-                                        ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
-                                        : 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
-                                    }`}
+                                        ? 'bg-red-100 text-red-800 dark:bg-red-950/40 dark:text-red-300'
+                                        : 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950/35 dark:text-emerald-300',
+                                    )}
                                   >
                                     {statusLabel}
                                   </span>
-                                  <h3 className="font-semibold text-black dark:text-white text-sm sm:text-base">
+                                  <RewardBadge pet={pet} compact />
+                                  <h3 className="text-sm font-semibold text-foreground sm:text-base">
                                     {getStatusTitle(pet)}
                                   </h3>
-                                  <span className="text-gray-400 hidden sm:inline">•</span>
-                                  <span className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm hidden sm:inline">
+                                  <span className="hidden text-muted-foreground sm:inline">•</span>
+                                  <span className="hidden text-xs text-muted-foreground sm:inline sm:text-sm">
                                     {getPetTypeLabel(pet)}
                                   </span>
                                   {pet.moderationStatus === 'approved' &&
                                     pet.status === 'searching' &&
                                     sightingCount > 0 && (
                                       <>
-                                        <span className="text-gray-400 hidden sm:inline">•</span>
-                                        <span className="flex items-center gap-1 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                                          <Eye size={14} className="sm:w-4 sm:h-4" />
+                                        <span className="hidden text-muted-foreground sm:inline">•</span>
+                                        <span className="flex items-center gap-1 text-xs text-muted-foreground sm:text-sm">
+                                          <Eye className="size-3.5 sm:size-4" aria-hidden />
                                           {sightingCount}
                                         </span>
                                       </>
                                     )}
                                 </div>
 
-                                <div className="text-xs text-gray-600 dark:text-gray-400 mb-1.5 sm:hidden">
+                                <div className="mb-1.5 text-xs text-muted-foreground sm:hidden">
                                   {getPetTypeLabel(pet)}
                                 </div>
 
-                                {/* Color tags + Rejection badge */}
-                                <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2 flex-wrap">
+                                <div className="mb-1.5 flex flex-wrap items-center gap-1.5 sm:mb-2 sm:gap-2">
                                   {pet.colors.length > 0 &&
                                     pet.colors.map((color, idx) => (
                                       <span
                                         key={idx}
-                                        className="px-2 sm:px-2.5 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-md text-xs"
+                                        className="rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground sm:px-2.5"
                                       >
                                         {t.pet.color[color as keyof typeof t.pet.color] ?? color}
                                       </span>
@@ -434,26 +443,23 @@ export function MyAdsPage({
                                   {pet.moderationStatus === 'rejected' && pet.moderationReason && (
                                     <div className="relative inline-flex">
                                       <span
-                                        className="px-2 sm:px-2.5 py-0.5 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-md text-xs font-medium flex items-center gap-1 cursor-help"
+                                        className="flex cursor-help items-center gap-1 rounded-md bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-950/40 dark:text-red-300 sm:px-2.5"
                                         onMouseEnter={() => setHoveredTooltipId(pet.id)}
                                         onMouseLeave={() => setHoveredTooltipId(null)}
                                       >
-                                        <AlertCircle size={12} />
+                                        <AlertCircle className="size-3 shrink-0" />
                                         <span className="hidden sm:inline">{t.moderation.rejected}</span>
-                                        <span className="sm:hidden">⚠️</span>
+                                        <span className="sm:hidden" aria-hidden>
+                                          ⚠️
+                                        </span>
                                       </span>
 
                                       {showRejectionTooltip && (
-                                        <div className="absolute bottom-full left-0 sm:left-1/2 sm:-translate-x-1/2 mb-2 w-56 sm:w-64 bg-gray-900 dark:bg-gray-800 text-white text-xs rounded-lg p-3 shadow-lg z-20 pointer-events-none">
-                                          <div className="font-medium mb-1">
-                                            {(t.myAds as { rejectionReasonTitle?: string })
-                                              .rejectionReasonTitle ?? 'Причина отклонения:'}
-                                          </div>
-                                          <div className="text-gray-200 dark:text-gray-300">
-                                            {pet.moderationReason}
-                                          </div>
-                                          <div className="absolute top-full left-4 sm:left-1/2 sm:-translate-x-1/2 -mt-px">
-                                            <div className="border-4 border-transparent border-t-gray-900 dark:border-t-gray-800" />
+                                        <div className="pointer-events-none absolute bottom-full left-0 z-20 mb-2 w-56 rounded-xl bg-foreground p-3 text-xs text-background shadow-lg sm:left-1/2 sm:w-64 sm:-translate-x-1/2">
+                                          <div className="mb-1 font-medium">{t.myAds.rejectionReasonTitle}</div>
+                                          <div className="text-background/90">{pet.moderationReason}</div>
+                                          <div className="absolute left-4 top-full -mt-px sm:left-1/2 sm:-translate-x-1/2">
+                                            <div className="border-4 border-transparent border-t-foreground" />
                                           </div>
                                         </div>
                                       )}
@@ -461,12 +467,10 @@ export function MyAdsPage({
                                   )}
                                 </div>
 
-                                <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-gray-500 dark:text-gray-400 flex-wrap">
+                                <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground sm:gap-2 sm:text-sm">
                                   <span className="truncate">{pet.city}</span>
-                                  <span className="flex-shrink-0">•</span>
-                                  <span className="flex-shrink-0">
-                                    {formatDate(pet.publishedAt)}
-                                  </span>
+                                  <span className="shrink-0">•</span>
+                                  <span className="shrink-0">{formatDate(pet.publishedAt)}</span>
                                 </div>
                               </div>
                             </Link>
@@ -478,17 +482,12 @@ export function MyAdsPage({
                 </div>
               </div>
 
-              {/* Create another button */}
               {filteredAds.length > 0 && (
-                <div className="mt-6 text-center">
-                  <button
-                    onClick={onCreateClick}
-                    className="inline-flex items-center justify-center h-12 px-6 bg-[#FF9800] text-white rounded-lg hover:bg-[#F57C00] transition-colors font-medium text-lg"
-                  >
-                    <span className="text-xl mr-2">+</span>
-                    {(t.myAds as { createAnother?: string }).createAnother ??
-                      'Создать ещё объявление'}
-                  </button>
+                <div className="mt-8 flex justify-center">
+                  <Button className={appPrimaryCtaClass} onClick={onCreateClick}>
+                    <Plus className="size-5" aria-hidden />
+                    {t.myAds.createAnother}
+                  </Button>
                 </div>
               )}
             </>

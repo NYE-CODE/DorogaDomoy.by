@@ -29,6 +29,8 @@ import {
   Wrench,
   Tags,
   HelpCircle,
+  Instagram,
+  Coins,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Pet } from '../types/pet';
@@ -36,8 +38,8 @@ import { User } from '../context/AuthContext';
 import { Report, AdminStats, type ReportReason } from '../types/admin';
 import { formatDate, statusLabels } from '../utils/pet-helpers';
 import { BELARUS_MOBILE_PHONE_PLACEHOLDER } from '../utils/belarus-phone';
-import { settingsApi, featureFlagsApi, blogApi, API_BASE } from '../api/client';
-import type { BlogCategory, BlogPostAdmin, FaqItem, MediaArticle, Partner, ProfilePetResponse } from '../api/client';
+import { settingsApi, featureFlagsApi, blogApi, rewardsApi, API_BASE } from '../api/client';
+import type { BlogCategory, BlogPostAdmin, FaqItem, MediaArticle, Partner, PointsTransactionItem, ProfilePetResponse } from '../api/client';
 import { ModerationPanel } from './moderation-panel';
 import { PetsAdminPanel } from './pets-admin-panel';
 import { ProfilePetsAdminPanel } from './profile-pets-admin-panel';
@@ -46,6 +48,7 @@ import { Switch } from './ui/switch';
 import { BlogMarkdownEditor } from './blog-markdown-editor';
 import { titleToBlogSlug } from '../utils/blog-slug';
 import { useI18n } from '../context/I18nContext';
+import { AdminInstagramPanel } from './admin-instagram-panel';
 
 type AdminTab =
   | 'dashboard'
@@ -53,12 +56,14 @@ type AdminTab =
   | 'pets'
   | 'profilePets'
   | 'users'
+  | 'rewards'
   | 'reports'
   | 'media'
   | 'blog'
   | 'blogCategories'
   | 'partners'
   | 'featureFlags'
+  | 'instagram'
   | 'telegramBlog'
   | 'faq'
   | 'settings';
@@ -71,6 +76,7 @@ const TAB_SECTION: Record<AdminTab, AdminSection> = {
   pets: 'operations',
   profilePets: 'operations',
   users: 'operations',
+  rewards: 'operations',
   reports: 'operations',
   blog: 'blog',
   blogCategories: 'blog',
@@ -79,6 +85,7 @@ const TAB_SECTION: Record<AdminTab, AdminSection> = {
   partners: 'content',
   faq: 'content',
   featureFlags: 'admin',
+  instagram: 'admin',
   settings: 'admin',
 };
 
@@ -114,8 +121,8 @@ interface AdminPanelProps {
   onMediaCreate: (data: { logo_url?: string; title: string; published_at: string; link?: string }) => void;
   onMediaUpdate: (id: string, data: Partial<{ logo_url: string; title: string; published_at: string; link: string }>) => void;
   onMediaDelete: (id: string) => void;
-  onPartnerCreate: (data: { logo_url?: string; name: string; link?: string }) => void;
-  onPartnerUpdate: (id: string, data: Partial<{ logo_url: string; name: string; link: string }>) => void;
+  onPartnerCreate: (data: { logo_url?: string; name: string; link?: string; is_medallion_partner?: boolean }) => void;
+  onPartnerUpdate: (id: string, data: Partial<{ logo_url: string; name: string; link: string; is_medallion_partner: boolean }>) => void;
   onPartnerDelete: (id: string) => void;
   onDeleteProfilePet: (id: string) => void;
   blogPosts: BlogPostAdmin[];
@@ -227,7 +234,7 @@ export function AdminPanel({
     if (TAB_SECTION[activeTab] !== section) {
       const order: AdminTab[] =
         section === 'operations'
-          ? ['dashboard', 'moderation', 'pets', 'profilePets', 'users', 'reports']
+          ? ['dashboard', 'moderation', 'pets', 'profilePets', 'users', 'rewards', 'reports']
           : section === 'content'
             ? ['media', 'partners', 'faq']
             : section === 'blog'
@@ -257,6 +264,7 @@ export function AdminPanel({
   const [reportsReasonFilter, setReportsReasonFilter] = useState<string>('all');
   const [reportsPage, setReportsPage] = useState(1);
   const reportsPerPage = 10;
+  const [rewardsKindFilter, setRewardsKindFilter] = useState<string>('all');
 
   // Media article modal (create/edit)
   const [editingMedia, setEditingMedia] = useState<MediaArticle | 'create' | null>(null);
@@ -282,6 +290,7 @@ export function AdminPanel({
   const [editPartnerLogoUrl, setEditPartnerLogoUrl] = useState('');
   const [editPartnerName, setEditPartnerName] = useState('');
   const [editPartnerLink, setEditPartnerLink] = useState('');
+  const [editPartnerMedallion, setEditPartnerMedallion] = useState(false);
 
   const [editingFaq, setEditingFaq] = useState<FaqItem | 'create' | null>(null);
   const [editFaqQr, setEditFaqQr] = useState('');
@@ -297,6 +306,7 @@ export function AdminPanel({
     requireModeration: true,
     autoArchiveDays: 90,
     maxPhotos: 5,
+    rewardDefaultPoints: 50,
   });
 
   const [featureFlags, setFeatureFlags] = useState({
@@ -304,10 +314,14 @@ export function AdminPanel({
     ff_landing_show_help: true,
     ff_landing_show_pets_feature: true,
     ff_landing_show_faq: true,
+    ff_instagram_boost_stories: true,
+    ff_reward_enabled: true,
+    ff_reward_money_enabled: true,
   });
 
   const [blogTelegramChatId, setBlogTelegramChatId] = useState('');
   const [blogTelegramPublicUsername, setBlogTelegramPublicUsername] = useState('');
+  const [pointsTransactions, setPointsTransactions] = useState<PointsTransactionItem[]>([]);
 
   const [blogCategories, setBlogCategories] = useState<BlogCategory[]>([]);
   const [editingBlogCategory, setEditingBlogCategory] = useState<BlogCategory | 'create' | null>(null);
@@ -326,10 +340,19 @@ export function AdminPanel({
         requireModeration: s.require_moderation === 'true',
         autoArchiveDays: parseInt(s.auto_archive_days, 10) || 90,
         maxPhotos: parseInt(s.max_photos, 10) || 5,
+        rewardDefaultPoints: parseInt(s.reward_default_points ?? '50', 10) || 50,
       });
       setBlogTelegramChatId(s.telegram_blog_chat_id ?? '');
       setBlogTelegramPublicUsername(s.telegram_blog_public_username ?? '');
-    }).catch(() => {});
+    }).catch((err: unknown) => {
+      console.warn('[AdminPanel] settings load failed', err);
+    });
+  }, []);
+
+  useEffect(() => {
+    rewardsApi.listPointsTransactions({ limit: 300 }).then(setPointsTransactions).catch(() => {
+      setPointsTransactions([]);
+    });
   }, []);
 
   useEffect(() => {
@@ -340,8 +363,13 @@ export function AdminPanel({
         ff_landing_show_pets_feature:
           (ff.ff_landing_show_pets_feature ?? 'true') === 'true',
         ff_landing_show_faq: (ff.ff_landing_show_faq ?? 'true') === 'true',
+        ff_instagram_boost_stories: (ff.ff_instagram_boost_stories ?? 'true') === 'true',
+        ff_reward_enabled: (ff.ff_reward_enabled ?? 'true') === 'true',
+        ff_reward_money_enabled: (ff.ff_reward_money_enabled ?? 'true') === 'true',
       });
-    }).catch(() => {});
+    }).catch((err: unknown) => {
+      console.warn('[AdminPanel] feature flags load failed', err);
+    });
   }, []);
 
   const handleSaveSettings = () => {
@@ -349,6 +377,7 @@ export function AdminPanel({
       require_moderation: settings.requireModeration ? 'true' : 'false',
       auto_archive_days: String(settings.autoArchiveDays),
       max_photos: String(settings.maxPhotos),
+      reward_default_points: String(settings.rewardDefaultPoints),
     }).then(() => {
       toast.success(ap.toasts.settingsSaved);
     }).catch(() => {
@@ -362,6 +391,9 @@ export function AdminPanel({
       ff_landing_show_help: featureFlags.ff_landing_show_help,
       ff_landing_show_pets_feature: featureFlags.ff_landing_show_pets_feature,
       ff_landing_show_faq: featureFlags.ff_landing_show_faq,
+      ff_instagram_boost_stories: featureFlags.ff_instagram_boost_stories,
+      ff_reward_enabled: featureFlags.ff_reward_enabled,
+      ff_reward_money_enabled: featureFlags.ff_reward_money_enabled,
     }).then(() => {
       toast.success(ap.toasts.flagsSaved);
     }).catch(() => {
@@ -418,6 +450,7 @@ export function AdminPanel({
         { id: 'pets' as const, label: ap.tabs.ads, icon: FileText },
         { id: 'profilePets' as const, label: ap.tabs.pets, icon: PawPrint },
         { id: 'users' as const, label: ap.tabs.users, icon: Users },
+        { id: 'rewards' as const, label: 'Награды', icon: Coins },
         { id: 'reports' as const, label: ap.tabs.reports, icon: AlertTriangle },
         { id: 'media' as const, label: ap.tabs.media, icon: Newspaper },
         { id: 'partners' as const, label: ap.tabs.partners, icon: Handshake },
@@ -426,6 +459,7 @@ export function AdminPanel({
         { id: 'blogCategories' as const, label: ap.tabs.categories, icon: Tags },
         { id: 'telegramBlog' as const, label: ap.tabs.telegram, icon: MessageCircle },
         { id: 'featureFlags' as const, label: ap.tabs.featureFlags, icon: Flag },
+        { id: 'instagram' as const, label: ap.tabs.instagram, icon: Instagram },
         { id: 'settings' as const, label: ap.tabs.settings, icon: Settings },
       ] as const,
     [locale],
@@ -650,14 +684,16 @@ export function AdminPanel({
           </div>
         </div>
 
-        <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg overflow-x-auto">
-          <table className="w-full min-w-[700px]">
+        <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg">
+          <table className="w-full table-fixed">
             <thead className="bg-muted dark:bg-accent border-b border-gray-200 dark:border-gray-600">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.users.colUser}</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.users.colEmail}</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.users.colRole}</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.users.colIntegration}</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">ID помощника</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Подтверждено</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Очки</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.users.colContacts}</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.users.colStatus}</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.users.colActions}</th>
@@ -666,7 +702,7 @@ export function AdminPanel({
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {paginatedUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                  <td colSpan={9} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                     {ap.users.empty}
                   </td>
                 </tr>
@@ -683,13 +719,13 @@ export function AdminPanel({
                           target="_blank"
                           rel="noopener noreferrer"
                           className="font-medium text-primary hover:text-primary/90 hover:underline text-sm truncate max-w-[120px]"
-                          title={ap.users.openProfile}
+                          title={user.name}
                         >
                           {user.name}
                         </a>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 truncate max-w-[180px]">{user.email}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 truncate" title={user.email}>{user.email}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex px-2 py-1 text-xs rounded-full ${
                         user.role === 'admin' ? 'bg-primary/10 dark:bg-primary/20 text-primary' :
@@ -698,13 +734,35 @@ export function AdminPanel({
                         {{ user: ap.users.roleUser, volunteer: ap.users.roleVolunteer, shelter: ap.users.roleShelter, admin: ap.users.roleAdmin }[user.role]}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 truncate max-w-[140px]">
-                      {user.telegramUsername
-                        ? `@${String(user.telegramUsername).replace(/^@/, '')}`
-                        : ap.users.telegramNone}
+                    <td className="px-4 py-3 text-xs text-gray-700 dark:text-gray-300 font-mono truncate" title={user.helperCode || '—'}>
+                      {user.helperCode || '—'}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 truncate max-w-[140px]">
-                      {user.contacts.phone || user.contacts.viber || '—'}
+                    <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                      {user.helperConfirmedCount ?? 0}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-gray-700 dark:text-gray-300">
+                      <div>Баланс: {user.pointsBalance ?? 0}</div>
+                      <div className="text-gray-500 dark:text-gray-400">Всего: {user.pointsEarnedTotal ?? 0}</div>
+                    </td>
+                    <td className="px-4 py-3 text-xs text-gray-600 dark:text-gray-400">
+                      <div
+                        className="truncate"
+                        title={
+                          user.telegramUsername
+                            ? `@${String(user.telegramUsername).replace(/^@/, '')}`
+                            : ap.users.telegramNone
+                        }
+                      >
+                        TG: {user.telegramUsername
+                          ? `@${String(user.telegramUsername).replace(/^@/, '')}`
+                          : ap.users.telegramNone}
+                      </div>
+                      <div
+                        className="truncate"
+                        title={user.contacts.phone || user.contacts.viber || '—'}
+                      >
+                        TEL/VB: {user.contacts.phone || user.contacts.viber || '—'}
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       {user.isBlocked ? (
@@ -931,19 +989,25 @@ export function AdminPanel({
                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{report.description}</p>
                     
                     {pet && (
-                      <a
-                        href={`/pet/${pet.id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-3 p-3 bg-muted dark:bg-accent rounded-lg hover:bg-accent dark:hover:bg-accent transition-colors group"
-                      >
-                        <img src={getAdminPetPreviewPhoto(pet)} alt="" className="w-12 h-12 object-cover rounded-lg" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400">{pet.breed || ap.breedUnknown}</p>
-                          <p className="text-xs text-gray-600 dark:text-gray-400">{pet.city} · {pet.authorName}</p>
+                      <div className="space-y-2">
+                        <a
+                          href={`/pet/${pet.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-3 p-3 bg-muted dark:bg-accent rounded-lg hover:bg-accent dark:hover:bg-accent transition-colors group"
+                        >
+                          <img src={getAdminPetPreviewPhoto(pet)} alt="" className="w-12 h-12 object-cover rounded-lg" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400">{pet.breed || ap.breedUnknown}</p>
+                            <p className="text-xs text-gray-600 dark:text-gray-400">{pet.city} · {pet.authorName}</p>
+                          </div>
+                          <ExternalLink className="w-4 h-4 text-gray-400 dark:text-gray-500 group-hover:text-primary shrink-0" />
+                        </a>
+                        <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-2 text-xs text-gray-600 dark:text-gray-300">
+                          Награда: {pet.rewardMode === 'money' ? `${pet.rewardAmountByn ?? 0} BYN` : `${pet.rewardPoints ?? 0} очков`} ·
+                          Начислено: {pet.rewardPointsAwardedAt ? formatDate(pet.rewardPointsAwardedAt) : 'нет'}
                         </div>
-                        <ExternalLink className="w-4 h-4 text-gray-400 dark:text-gray-500 group-hover:text-primary shrink-0" />
-                      </a>
+                      </div>
                     )}
                     
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
@@ -1810,6 +1874,7 @@ export function AdminPanel({
     setEditPartnerLogoUrl('');
     setEditPartnerName('');
     setEditPartnerLink('');
+    setEditPartnerMedallion(false);
   };
 
   const openPartnerEdit = (p: Partner) => {
@@ -1817,6 +1882,7 @@ export function AdminPanel({
     setEditPartnerLogoUrl(p.logo_url || '');
     setEditPartnerName(p.name);
     setEditPartnerLink(p.link || '');
+    setEditPartnerMedallion(!!p.is_medallion_partner);
   };
 
   const handleSavePartner = () => {
@@ -1825,12 +1891,14 @@ export function AdminPanel({
         logo_url: editPartnerLogoUrl.trim() || undefined,
         name: editPartnerName.trim(),
         link: editPartnerLink.trim() || undefined,
+        is_medallion_partner: editPartnerMedallion,
       });
     } else if (editingPartner && editingPartner !== 'create') {
       onPartnerUpdate(editingPartner.id, {
         logo_url: editPartnerLogoUrl.trim() || undefined,
         name: editPartnerName.trim(),
         link: editPartnerLink.trim() || undefined,
+        is_medallion_partner: editPartnerMedallion,
       });
     }
     setEditingPartner(null);
@@ -1855,13 +1923,14 @@ export function AdminPanel({
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.partners.colLogo}</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.partners.colName}</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.partners.colLink}</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.partners.colMedallions}</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.partners.colActions}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
             {partners.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                <td colSpan={5} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                   {ap.partners.empty}
                 </td>
               </tr>
@@ -1884,6 +1953,17 @@ export function AdminPanel({
                     ) : (
                       <span className="text-gray-400 text-sm">—</span>
                     )}
+                  </td>
+                  <td className="px-4 py-3 text-sm">
+                    <span
+                      className={`inline-flex px-2 py-1 text-xs rounded-full ${
+                        p.is_medallion_partner
+                          ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                      }`}
+                    >
+                      {p.is_medallion_partner ? ap.partners.medallionYes : ap.partners.medallionNo}
+                    </span>
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1">
@@ -1935,6 +2015,15 @@ export function AdminPanel({
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{ap.partners.linkLabel}</label>
                 <input type="url" value={editPartnerLink} onChange={(e) => setEditPartnerLink(e.target.value)} placeholder="https://..." className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
               </div>
+              <label className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
+                <input
+                  type="checkbox"
+                  checked={editPartnerMedallion}
+                  onChange={(e) => setEditPartnerMedallion(e.target.checked)}
+                  className="w-4 h-4 rounded border-gray-300 dark:border-gray-600"
+                />
+                <span>{ap.partners.medallionCheckbox}</span>
+              </label>
             </div>
             <div className="flex justify-end gap-3 px-6 py-4 border-t dark:border-gray-700">
               <button onClick={() => setEditingPartner(null)} className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-accent dark:hover:bg-accent">{t.common.cancel}</button>
@@ -2192,6 +2281,95 @@ export function AdminPanel({
     </div>
   );
 
+  const renderRewards = () => {
+    const txRows = pointsTransactions
+      .filter((tx) => (rewardsKindFilter === 'all' ? true : tx.kind === rewardsKindFilter))
+      .slice(0, 300);
+
+    return (
+      <div className="space-y-6">
+        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Журнал начислений очков</h2>
+        <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+          <div className="flex items-center gap-3">
+            <label className="text-sm text-gray-700 dark:text-gray-300">Тип операции</label>
+            <Select value={rewardsKindFilter} onValueChange={setRewardsKindFilter}>
+              <SelectTrigger className="w-[240px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Все</SelectItem>
+                <SelectItem value="helper_reward">Начисление за помощь</SelectItem>
+                <SelectItem value="manual_adjustment">Ручная корректировка</SelectItem>
+              </SelectContent>
+            </Select>
+            <button
+              type="button"
+              onClick={() => {
+                rewardsApi.listPointsTransactions({ limit: 300 }).then(setPointsTransactions).catch(() => {
+                  setPointsTransactions([]);
+                });
+              }}
+              className="ml-auto px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+            >
+              Обновить
+            </button>
+          </div>
+        </div>
+
+        <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg overflow-x-auto">
+          <table className="w-full min-w-[860px]">
+            <thead className="bg-muted dark:bg-accent border-b border-gray-200 dark:border-gray-600">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Дата</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Пользователь</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Объявление</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Очки</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Тип</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Комментарий</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+              {txRows.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                    Операции не найдены
+                  </td>
+                </tr>
+              ) : (
+                txRows.map((tx) => {
+                  const rewardUser = users.find((u) => u.id === tx.user_id);
+                  const rewardPet = tx.pet_id ? pets.find((p) => p.id === tx.pet_id) : undefined;
+                  return (
+                    <tr key={tx.id} className="hover:bg-accent dark:hover:bg-accent">
+                      <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{formatDate(new Date(tx.created_at))}</td>
+                      <td className="px-4 py-3 text-sm">
+                        <a href={`/user/${tx.user_id}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                          {rewardUser?.name || tx.user_id}
+                        </a>
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        {tx.pet_id ? (
+                          <a href={`/pet/${tx.pet_id}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                            {rewardPet?.breed || tx.pet_id}
+                          </a>
+                        ) : (
+                          <span className="text-gray-400">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{tx.amount}</td>
+                      <td className="px-4 py-3 text-xs text-gray-600 dark:text-gray-400 font-mono">{tx.kind}</td>
+                      <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{tx.note || '—'}</td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  };
+
   const renderFeatureFlags = () => (
     <div className="space-y-6">
       <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">{ap.featureFlags.title}</h2>
@@ -2246,7 +2424,41 @@ export function AdminPanel({
 
       <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-6">
         <h3 className="font-semibold text-gray-900 dark:text-white mb-4">{ap.featureFlags.siteTitle}</h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400">{ap.featureFlags.siteEmpty}</p>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{ap.featureFlags.ffInstagramBoost}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{ap.featureFlags.ffInstagramBoostDesc}</p>
+            </div>
+            <Switch
+              checked={featureFlags.ff_instagram_boost_stories}
+              onCheckedChange={(v) => setFeatureFlags((f) => ({ ...f, ff_instagram_boost_stories: v }))}
+            />
+          </div>
+          <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+            <div>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Включить систему наград</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Отключение скрывает и блокирует начисления наград.</p>
+            </div>
+            <Switch
+              checked={featureFlags.ff_reward_enabled}
+              onCheckedChange={(v) => setFeatureFlags((f) => ({ ...f, ff_reward_enabled: v }))}
+            />
+          </div>
+          <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+            <div>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Разрешить денежную награду</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Если выключено, остается только режим очков.</p>
+            </div>
+            <Switch
+              checked={featureFlags.ff_reward_money_enabled}
+              onCheckedChange={(v) => setFeatureFlags((f) => ({ ...f, ff_reward_money_enabled: v }))}
+            />
+          </div>
+          <p className="text-sm text-gray-500 dark:text-gray-400 pt-2 border-t border-gray-200 dark:border-gray-600">
+            {ap.featureFlags.siteEmpty}
+          </p>
+        </div>
       </div>
 
       <div className="flex justify-end">
@@ -2364,6 +2576,25 @@ export function AdminPanel({
               onChange={(e) => setSettings(s => ({ ...s, maxPhotos: Math.max(1, Math.min(20, parseInt(e.target.value) || 5)) }))}
               className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
             />
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+        <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Награды и очки</h3>
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Очки по умолчанию</label>
+              <input
+                type="number"
+                min={1}
+                max={10000}
+                value={settings.rewardDefaultPoints}
+                onChange={(e) => setSettings((s) => ({ ...s, rewardDefaultPoints: Math.max(1, parseInt(e.target.value, 10) || 50) }))}
+                className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -2495,9 +2726,10 @@ export function AdminPanel({
             }}
           />
         )}
-        {activeTab === 'pets' && <PetsAdminPanel pets={pets} onDeletePet={onDeletePet} onOpenPet={(petId) => window.open(`/pet/${petId}`, '_blank')} />}
+        {activeTab === 'pets' && <PetsAdminPanel pets={pets} users={users} onDeletePet={onDeletePet} onOpenPet={(petId) => window.open(`/pet/${petId}`, '_blank')} />}
         {activeTab === 'profilePets' && <ProfilePetsAdminPanel profilePets={profilePets} onDeleteProfilePet={onDeleteProfilePet} />}
         {activeTab === 'users' && renderUsers()}
+        {activeTab === 'rewards' && renderRewards()}
         {activeTab === 'reports' && renderReports()}
         {activeTab === 'media' && renderMedia()}
         {activeTab === 'blog' && renderBlog()}
@@ -2506,6 +2738,7 @@ export function AdminPanel({
         {activeTab === 'faq' && renderFaq()}
         {activeTab === 'featureFlags' && renderFeatureFlags()}
         {activeTab === 'telegramBlog' && renderTelegramBlogSettings()}
+        {activeTab === 'instagram' && <AdminInstagramPanel />}
         {activeTab === 'settings' && renderSettings()}
       </div>
     </div>

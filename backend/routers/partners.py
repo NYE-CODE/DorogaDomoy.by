@@ -19,6 +19,7 @@ def _to_response(p: Partner) -> PartnerResponse:
         logo_url=p.logo_url,
         name=p.name,
         link=p.link,
+        is_medallion_partner=bool(p.is_medallion_partner),
     )
 
 
@@ -41,6 +42,7 @@ def create_partner(
         logo_url=data.logo_url and data.logo_url.strip() or None,
         name=data.name.strip(),
         link=data.link and data.link.strip() or None,
+        is_medallion_partner=bool(data.is_medallion_partner),
     )
     db.add(p)
     db.commit()
@@ -65,6 +67,8 @@ def update_partner(
         p.name = data.name.strip()
     if data.link is not None:
         p.link = data.link.strip() if data.link else None
+    if data.is_medallion_partner is not None:
+        p.is_medallion_partner = bool(data.is_medallion_partner)
     db.commit()
     db.refresh(p)
     return _to_response(p)

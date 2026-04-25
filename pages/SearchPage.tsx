@@ -24,6 +24,9 @@ import { Filters } from '../components/filters';
 import { MobileListSheet } from '../components/mobile-list-sheet';
 import { useIsMobile } from '../components/ui/use-mobile';
 import { useAuthenticatedAction } from '../utils/use-authenticated-action';
+import { PageLoader } from '../components/ui/page-loader';
+import { EmptyState } from '../components/ui/empty-state';
+import { ActiveFilterChips } from '../components/search/active-filter-chips';
 const MapView = lazy(() => import('../components/map-view'));
 import { SlidersHorizontal } from 'lucide-react';
 import type { LatLngBounds } from 'leaflet';
@@ -42,12 +45,18 @@ export default function SearchPage() {
       if (saved && ['main', 'terms'].includes(saved)) {
         return saved as View;
       }
-    } catch {}
+    } catch (err: unknown) {
+      console.warn('[SearchPage] read pet_finder_view from sessionStorage failed', err);
+    }
     return 'main';
   });
   const setView = useCallback((v: View) => {
     setViewRaw(v);
-    try { sessionStorage.setItem('pet_finder_view', v); } catch {}
+    try {
+      sessionStorage.setItem('pet_finder_view', v);
+    } catch (err: unknown) {
+      console.warn('[SearchPage] write pet_finder_view to sessionStorage failed', err);
+    }
   }, []);
   const [allPets, setAllPets] = useState<Pet[]>([]);
   const [mapPets, setMapPets] = useState<Pet[]>([]);
@@ -64,9 +73,13 @@ export default function SearchPage() {
 
   const loadAllPets = useCallback((showLoading = false): Promise<void> => {
     if (showLoading) setDataLoading(true);
-    return petsApi.list()
+    return petsApi
+      .list()
       .then(setAllPets)
-      .catch(() => setAllPets([]))
+      .catch((err: unknown) => {
+        console.warn('[SearchPage] loadAllPets failed', err);
+        setAllPets([]);
+      })
       .finally(() => {
         if (showLoading) setDataLoading(false);
       });
@@ -118,12 +131,13 @@ export default function SearchPage() {
           setMapPets(list);
         }
       })
-      .catch((err) => {
+      .catch((err: unknown) => {
         if (controller.signal.aborted) return;
         if (requestId === mapRequestSeqRef.current) {
           setMapPets([]);
         }
         if (err instanceof Error && err.name === 'AbortError') return;
+        console.warn('[SearchPage] loadMapPets failed', err);
       })
       .finally(() => {
         if (showLoading) setDataLoading(false);
@@ -203,7 +217,9 @@ export default function SearchPage() {
       if (typeof lat === 'number' && typeof lng === 'number') {
         return { lat, lng, city: (data.city || '').trim() };
       }
-    } catch {}
+    } catch (err: unknown) {
+      console.warn('[SearchPage] getSavedLocation parse failed', err);
+    }
     return null;
   }, []);
 
@@ -211,7 +227,12 @@ export default function SearchPage() {
   const initialSavedLocRef = useRef(savedLoc);
 
   const cityConfirmed = (() => {
-    try { return localStorage.getItem('pet_finder_city_confirmed') === 'true'; } catch { return false; }
+    try {
+      return localStorage.getItem('pet_finder_city_confirmed') === 'true';
+    } catch (err: unknown) {
+      console.warn('[SearchPage] read pet_finder_city_confirmed failed', err);
+      return false;
+    }
   })();
 
   const belarusCenter: [number, number] = [53.7098, 27.9534];
@@ -229,7 +250,9 @@ export default function SearchPage() {
       const toSave: { lat: number; lng: number; city?: string } = { lat: loc.lat, lng: loc.lng };
       if (city) toSave.city = city;
       localStorage.setItem('pet_finder_user_location', JSON.stringify(toSave));
-    } catch {}
+    } catch (err: unknown) {
+      console.warn('[SearchPage] saveUserLocation storage failed', err);
+    }
   };
   const [showCityModal, setShowCityModal] = useState(false);
   const [showCityDetectPopup, setShowCityDetectPopup] = useState(false);
@@ -239,10 +262,16 @@ export default function SearchPage() {
   useEffect(() => {
     if (cityConfirmed) return;
 
+    const ac = new AbortController();
+    const timeoutMs = 5000;
+    const timeoutId = window.setTimeout(() => ac.abort(), timeoutMs);
+
     const detectCity = async () => {
       try {
-        const res = await fetch('https://ipapi.co/json/', { signal: AbortSignal.timeout(5000) });
+        const res = await fetch('https://ipapi.co/json/', { signal: ac.signal });
+        clearTimeout(timeoutId);
         const data = await res.json();
+        if (ac.signal.aborted) return;
         if (typeof data.latitude === 'number' && typeof data.longitude === 'number') {
           const closest = findClosestCity(data.latitude, data.longitude);
           detectedCityRef.current = closest;
@@ -250,14 +279,28 @@ export default function SearchPage() {
           setShowCityDetectPopup(true);
           return;
         }
-      } catch {}
+      } catch (err: unknown) {
+        clearTimeout(timeoutId);
+        if (
+          (err instanceof DOMException || err instanceof Error) &&
+          err.name === 'AbortError'
+        )
+          return;
+        console.warn('[SearchPage] IP geolocation (ipapi.co) failed', err);
+      }
 
+      if (ac.signal.aborted) return;
       detectedCityRef.current = DEFAULT_CITY;
       setDetectedCityName(DEFAULT_CITY.name);
       setShowCityDetectPopup(true);
     };
 
-    detectCity();
+    void detectCity();
+
+    return () => {
+      clearTimeout(timeoutId);
+      ac.abort();
+    };
   }, [cityConfirmed]);
 
   const [filters, setFilters] = useState<FilterState>({
@@ -363,12 +406,7 @@ export default function SearchPage() {
     return (
       <div className="min-h-screen bg-background dark:bg-gray-900 flex flex-col">
         {view === 'main' && <Header selectedCity={selectedCity} onCityClick={() => setShowCityModal(true)} />}
-        <div className="flex-1 flex items-center justify-center">
-          <div className="flex flex-col items-center gap-4">
-            <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-            <p className="text-gray-600 dark:text-gray-400">{t.common.loading}</p>
-          </div>
-        </div>
+        <PageLoader label={t.common.loading} className="min-h-0 flex-1" />
       </div>
     );
   }
@@ -402,8 +440,9 @@ export default function SearchPage() {
     }
   };
 
-  const handleDeletePet = async (reason: string) => {
+  const handleDeletePet = async (payload: { reason: string; rewardHelperCode?: string }) => {
     if (!deletingPet) return;
+    const reason = payload.reason;
     const archiveReasons = [
       'Питомец вернулся домой / найден хозяин',
       'Питомец пристроен в новую семью',
@@ -415,9 +454,14 @@ export default function SearchPage() {
         const updated = await petsApi.update(deletingPet.id, {
           isArchived: true,
           archiveReason: reason,
+          rewardHelperCode: payload.rewardHelperCode,
         });
         setAllPets((prev) => prev.map((p) => (p.id === deletingPet.id ? updated : p)));
-        toast.success('Объявление перемещено в архив', { description: reason });
+        toast.success('Объявление перемещено в архив', {
+          description: payload.rewardHelperCode
+            ? `Начислены очки пользователю ${payload.rewardHelperCode}`
+            : reason,
+        });
       } else {
         await petsApi.delete(deletingPet.id);
         setAllPets((prev) => prev.filter((p) => p.id !== deletingPet.id));
@@ -451,6 +495,7 @@ export default function SearchPage() {
     filters.colors.length > 0,
     filters.statuses.length > 0,
     filters.days !== 'all',
+    filters.searchQuery.trim() !== '',
   ].filter(Boolean).length;
 
   const renderContent = () => {
@@ -458,69 +503,95 @@ export default function SearchPage() {
       return <TermsPage onBack={() => setView('main')} />;
     }
 
-    const listHeaderContent = (
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <h3 className="font-semibold text-gray-900 dark:text-white">
-              {selectedCity.trim()
-                ? `${selectedCity}: ${listDisplayPets.length}`
-                : `${t.app.found} ${listDisplayPets.length}`
-              }
-            </h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              {t.stats.searching}: {statistics.searching} · {t.stats.found}: {statistics.found} · {t.stats.fostering}: {statistics.fostering}
-            </p>
-            {selectedCity.trim() && listDisplayPets.length === 0 && mapDisplayPets.length > 0 && (
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                {t.app.mapHasOtherCities}
-              </p>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={() => setListFilterOpen((o) => !o)}
-            className={`relative p-2 rounded-lg hover:bg-accent dark:hover:bg-accent text-gray-600 dark:text-gray-400 shrink-0 ${listFilterOpen ? 'bg-accent dark:bg-accent' : ''}`}
-            title={t.filters.filters}
-          >
-            <SlidersHorizontal className="w-5 h-5" />
-            {activeFilterCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-primary text-primary-foreground text-xs font-medium rounded-full">
-                {activeFilterCount}
-              </span>
-            )}
-          </button>
+    const listTitleRow = (
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="font-semibold text-foreground">
+            {selectedCity.trim()
+              ? `${selectedCity}: ${listDisplayPets.length}`
+              : `${t.app.found} ${listDisplayPets.length}`}
+          </h3>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {t.stats.searching}: {statistics.searching} · {t.stats.found}: {statistics.found} ·{' '}
+            {t.stats.fostering}: {statistics.fostering}
+          </p>
+          {selectedCity.trim() && listDisplayPets.length === 0 && mapDisplayPets.length > 0 && (
+            <p className="mt-1 text-xs text-muted-foreground">{t.app.mapHasOtherCities}</p>
+          )}
         </div>
-        {listFilterOpen && (
-          <div className="mt-4">
-            <Filters
-              filters={filters}
-              onFiltersChange={setFilters}
-              embedded
-              onClose={() => setListFilterOpen(false)}
-            />
-          </div>
-        )}
+        <button
+          type="button"
+          onClick={() => setListFilterOpen((o) => !o)}
+          aria-expanded={listFilterOpen}
+          aria-controls="search-list-filters-panel"
+          className={`relative inline-flex shrink-0 items-center gap-2 rounded-xl border border-transparent px-2 py-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground ${listFilterOpen ? 'border-border bg-accent text-foreground' : ''}`}
+          title={t.filters.filters}
+        >
+          <SlidersHorizontal className="size-5 shrink-0" aria-hidden />
+          <span className="hidden max-w-[7rem] truncate text-sm font-medium sm:inline">{t.filters.filters}</span>
+          {activeFilterCount > 0 && (
+            <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-xs font-semibold text-primary-foreground">
+              {activeFilterCount}
+            </span>
+          )}
+        </button>
       </div>
     );
 
+    const listFiltersPanel = listFilterOpen && (
+      <div id="search-list-filters-panel" className="mt-4" role="region" aria-label={t.filters.filters}>
+        <Filters
+          filters={filters}
+          onFiltersChange={setFilters}
+          embedded
+          onClose={() => setListFilterOpen(false)}
+        />
+      </div>
+    );
+
+    const listChips = (
+      <ActiveFilterChips
+        filters={filters}
+        labels={{
+          animalType: t.pet.animalType as Record<string, string>,
+          daysAll: t.common.all,
+          daysLabel: (days) => `${t.filters.period}: ${days}`,
+          color: t.pet.color as Record<string, string>,
+          status: t.pet.status as Record<string, string>,
+          reset: t.filters.reset,
+          searchChip: t.filters.searchChip,
+        }}
+        onRemove={(next) => setFilters((prev) => ({ ...prev, ...next }))}
+        onReset={() =>
+          setFilters({
+            animalType: 'all',
+            breed: '',
+            colors: [],
+            statuses: [],
+            days: 'all',
+            searchQuery: '',
+          })
+        }
+      />
+    );
+
     const listBodyContent = listDisplayPets.length === 0 ? (
-      <div className="p-4 text-center py-8">
-        <p className="text-gray-600 dark:text-gray-400">
-          {selectedCity.trim()
+      <div className="p-4">
+        <EmptyState
+          title={selectedCity.trim()
             ? t.app.noPetsInCity.replace('{city}', selectedCity)
-            : t.app.noPetsFound
-          }
-        </p>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          {selectedCity.trim()
-            ? 'Переместите карту к нужному городу или измените город в шапке'
-            : 'Попробуйте изменить масштаб карты или фильтры'
-          }
-        </p>
+            : t.app.noPetsFound}
+          description={selectedCity.trim()
+            ? 'В выбранном городе сейчас нет объявлений в видимой области карты.'
+            : 'По текущим фильтрам объявлений не найдено.'}
+          hint={selectedCity.trim()
+            ? 'Переместите карту к нужному городу или измените город в шапке.'
+            : 'Попробуйте изменить масштаб карты или сбросить часть фильтров.'}
+          className="p-6 md:p-8"
+        />
       </div>
     ) : (
-      <div className="p-4 space-y-3">
+      <div className="space-y-3 p-3 sm:space-y-4 sm:p-4">
         {listDisplayPets.map((pet) => (
           <PetCard
             key={pet.id}
@@ -530,6 +601,44 @@ export default function SearchPage() {
           />
         ))}
       </div>
+    );
+
+    /** Десктоп: фильтры в шапке карточки. Мобильная нижняя полка — см. listMobileSheetScroll. */
+    const listHeaderContent = (
+      <div className="border-b border-border p-4">
+        {listTitleRow}
+        {listFiltersPanel}
+        {listChips}
+      </div>
+    );
+
+    /** Мобильная полка: только заголовок и чипы; панель фильтров — в прокрутке со списком. */
+    const listMobileSheetHeader = (
+      <div className="border-b border-border p-4">
+        {listTitleRow}
+        {listChips}
+      </div>
+    );
+
+    const listMobileSheetScroll = (
+      <>
+        {listFilterOpen && (
+          <div
+            id="search-list-filters-panel"
+            className="border-b border-border px-4 pb-4 pt-2"
+            role="region"
+            aria-label={t.filters.filters}
+          >
+            <Filters
+              filters={filters}
+              onFiltersChange={setFilters}
+              embedded
+              onClose={() => setListFilterOpen(false)}
+            />
+          </div>
+        )}
+        {listBodyContent}
+      </>
     );
 
     if (isMobile) {
@@ -554,9 +663,7 @@ export default function SearchPage() {
                 />
               </Suspense>
             </div>
-            <MobileListSheet header={listHeaderContent}>
-              {listBodyContent}
-            </MobileListSheet>
+            <MobileListSheet header={listMobileSheetHeader}>{listMobileSheetScroll}</MobileListSheet>
           </div>
         </div>
       );
@@ -566,7 +673,7 @@ export default function SearchPage() {
       <div className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 flex flex-col gap-6">
         <div className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-6 min-h-0">
           <div className="md:col-span-5 lg:col-span-4 flex flex-col md:h-[700px]">
-            <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg flex flex-col h-full max-h-full">
+            <div className="flex h-full max-h-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
               {listHeaderContent}
               <div className="overflow-y-auto flex-1 min-h-0">
                 {listBodyContent}
@@ -628,6 +735,10 @@ export default function SearchPage() {
         <DeleteReasonModal
           onClose={() => setDeletingPet(null)}
           onConfirm={handleDeletePet}
+          enableRewardSection={
+            deletingPet.status === 'searching' && deletingPet.rewardMode === 'points'
+          }
+          rewardPoints={deletingPet.rewardPoints ?? 50}
           petDescription={`${deletingPet.animalType === 'cat' ? 'Кот' : deletingPet.animalType === 'dog' ? 'Собака' : 'Животное'} ${deletingPet.breed ? '(' + deletingPet.breed + ')' : ''} - ${deletingPet.city}`}
         />
       )}

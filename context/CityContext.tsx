@@ -18,7 +18,9 @@ function readFromStorage(): SavedLocation | null {
     if (typeof lat === 'number' && typeof lng === 'number') {
       return { lat, lng, city: (data.city || '').trim() };
     }
-  } catch {}
+  } catch (err: unknown) {
+    console.warn('[CityContext] readFromStorage parse failed', err);
+  }
   return null;
 }
 
@@ -43,7 +45,9 @@ export function CityProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
       localStorage.setItem(CONFIRMED_KEY, 'true');
       setSelectedCityState(city.trim());
-    } catch {}
+    } catch (err: unknown) {
+      console.warn('[CityContext] saveCity storage failed', err);
+    }
   }, []);
 
   const clearCity = useCallback(() => {
@@ -51,7 +55,9 @@ export function CityProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem(STORAGE_KEY);
       localStorage.setItem(CONFIRMED_KEY, 'true');
       setSelectedCityState('');
-    } catch {}
+    } catch (err: unknown) {
+      console.warn('[CityContext] clearCity storage failed', err);
+    }
   }, []);
 
   const setSelectedCity = useCallback((city: string) => {

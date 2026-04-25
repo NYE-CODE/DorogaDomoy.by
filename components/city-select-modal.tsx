@@ -1,8 +1,16 @@
-import { useState, useMemo } from 'react';
-import { X, Search, MapPin } from 'lucide-react';
-import { oblasts, City, searchCities, REGIONAL_CENTERS } from '../utils/cities';
-import { useScrollLock } from './ui/use-scroll-lock';
-import { useI18n } from '../context/I18nContext';
+import { useState, useMemo, useEffect } from "react";
+import { Search, MapPin, SearchX } from "lucide-react";
+import { oblasts, City, searchCities, REGIONAL_CENTERS } from "../utils/cities";
+import { useI18n } from "../context/I18nContext";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "./ui/dialog";
+import { Input } from "./ui/input";
+import { cn } from "./ui/utils";
 
 interface CitySelectModalProps {
   open: boolean;
@@ -11,13 +19,18 @@ interface CitySelectModalProps {
   currentCity?: string;
 }
 
-type OblastTab = string | 'all';
+type OblastTab = string | "all";
 
 export function CitySelectModal({ open, onClose, onSelect, currentCity }: CitySelectModalProps) {
   const { t } = useI18n();
-  useScrollLock(open);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<OblastTab>('all');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState<OblastTab>("all");
+
+  useEffect(() => {
+    if (!open) return;
+    setSearchQuery("");
+    setActiveTab("all");
+  }, [open]);
 
   const searchResults = useMemo(() => {
     const q = searchQuery.trim();
@@ -27,130 +40,136 @@ export function CitySelectModal({ open, onClose, onSelect, currentCity }: CitySe
 
   const displayCities = useMemo(() => {
     if (searchResults) return searchResults;
-    if (activeTab === 'all') return null;
-    const oblast = oblasts.find(o => o.name === activeTab);
+    if (activeTab === "all") return null;
+    const oblast = oblasts.find((o) => o.name === activeTab);
     return oblast?.cities ?? [];
   }, [searchResults, activeTab]);
 
-  if (!open) return null;
-
   const handleSelect = (city: City) => {
     onSelect(city);
-    setSearchQuery('');
-    setActiveTab('all');
+    setSearchQuery("");
+    setActiveTab("all");
   };
 
   const handleSelectAll = () => {
     onSelect(null);
-    setSearchQuery('');
-    setActiveTab('all');
+    setSearchQuery("");
+    setActiveTab("all");
   };
 
   const handleClose = () => {
-    setSearchQuery('');
+    setSearchQuery("");
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/50" onClick={handleClose} />
+    <Dialog open={open} onOpenChange={(next) => !next && handleClose()}>
+      <DialogContent
+        showCloseButton
+        className="flex max-h-[min(85vh,800px)] w-full max-w-2xl flex-col gap-0 overflow-hidden rounded-2xl border border-border p-0 shadow-xl sm:max-w-2xl"
+      >
+        <DialogHeader className="space-y-1 border-b border-border px-5 py-4 pr-14 text-left">
+          <DialogTitle className="text-xl font-semibold tracking-tight">{t.citySelect.title}</DialogTitle>
+          <DialogDescription className="text-sm leading-snug text-muted-foreground">
+            {(t.citySelect as { subtitle: string }).subtitle}
+          </DialogDescription>
+        </DialogHeader>
 
-      <div className="relative bg-card rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-        {/* Header */}
-        <div className="flex items-center justify-between p-5 pb-4 border-b border-gray-100 dark:border-gray-700">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{t.citySelect.title}</h2>
-          <button
-            onClick={handleClose}
-            className="p-2 hover:bg-accent dark:hover:bg-accent rounded-lg transition-colors text-gray-500 dark:text-gray-400"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Search */}
-        <div className="px-5 pt-4 pb-3">
+        <div className="shrink-0 px-5 pt-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
-            <input
-              type="text"
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+              aria-hidden
+            />
+            <Input
+              type="search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t.citySelect.searchPlaceholder}
-              className="w-full pl-10 pr-4 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-card text-foreground text-sm placeholder:text-muted-foreground"
+              className="h-11 rounded-xl border-border bg-muted/30 pl-10 pr-3 text-base shadow-none transition-colors focus-visible:bg-background"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
               autoFocus
             />
           </div>
         </div>
 
-        {/* Oblast tabs */}
         {!searchQuery && (
-          <div className="px-5 pb-3">
+          <div className="shrink-0 border-b border-border/60 bg-muted/20 px-5 py-3">
             <div className="flex flex-wrap gap-2">
-              {oblasts.map((oblast) => (
-                <button
-                  key={oblast.name}
-                  onClick={() => setActiveTab(activeTab === oblast.name ? 'all' : oblast.name)}
-                  className={`px-3 py-2.5 text-sm rounded-lg border transition-colors whitespace-nowrap ${
-                    activeTab === oblast.name
-                      ? 'bg-primary text-primary-foreground border-primary'
-                      : 'bg-card text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-accent dark:hover:bg-accent'
-                  }`}
-                >
-                  {oblast.name}
-                </button>
-              ))}
+              {oblasts.map((oblast) => {
+                const isOn = activeTab === oblast.name;
+                return (
+                  <button
+                    key={oblast.name}
+                    type="button"
+                    onClick={() => setActiveTab(isOn ? "all" : oblast.name)}
+                    className={cn(
+                      "rounded-full border px-3.5 py-2 text-sm font-medium transition-colors",
+                      isOn
+                        ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                        : "border-border bg-card text-foreground hover:bg-accent",
+                    )}
+                  >
+                    {oblast.name}
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
 
-        {/* Cities grid */}
-        <div className="flex-1 overflow-y-auto px-5 pb-5">
-          {/* "Вся Беларусь" option */}
-          {!searchQuery && activeTab === 'all' && (
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-5 pt-3">
+          {!searchQuery && activeTab === "all" && (
             <button
+              type="button"
               onClick={handleSelectAll}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg mb-4 transition-colors border ${
-                !(currentCity?.trim())
-                  ? 'bg-primary/10 border-primary/20 text-primary'
-                  : 'bg-card border-border text-foreground hover:bg-accent dark:hover:bg-accent'
-              }`}
+              className={cn(
+                "mb-5 flex w-full items-center gap-3 rounded-xl border px-4 py-3.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                !currentCity?.trim()
+                  ? "border-primary bg-primary/10 text-primary shadow-sm"
+                  : "border-border bg-card hover:bg-accent",
+              )}
             >
-              <MapPin className="w-5 h-5" />
-              <span className="font-medium">{t.citySelect.allBelarus}</span>
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-background/80 text-primary ring-1 ring-primary/15">
+                <MapPin className="h-5 w-5" aria-hidden />
+              </span>
+              <span className="font-semibold">{t.citySelect.allBelarus}</span>
             </button>
           )}
 
-          {/* When no tab selected and no search — show all oblasts */}
-          {!searchQuery && activeTab === 'all' && (
-            <div className="space-y-5">
+          {!searchQuery && activeTab === "all" && (
+            <div className="space-y-6">
               {oblasts.map((oblast) => (
                 <div key={oblast.name}>
                   {oblast.cities.length === 1 ? (
                     <button
                       type="button"
                       onClick={() => handleSelect(oblast.cities[0])}
-                      className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-colors ${
-                        (currentCity?.trim() || '') === oblast.cities[0].name.trim()
-                          ? 'bg-primary/10 text-primary font-medium'
-                          : 'text-gray-700 dark:text-gray-300 hover:bg-accent dark:hover:bg-accent'
-                      }`}
+                      className={cn(
+                        "flex w-full flex-col gap-0.5 rounded-xl border px-4 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:flex-row sm:items-baseline sm:gap-2",
+                        (currentCity?.trim() || "") === oblast.cities[0].name.trim()
+                          ? "border-primary/40 bg-primary/10 text-primary"
+                          : "border-transparent bg-muted/25 hover:bg-muted/50",
+                      )}
                     >
-                      <span className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                      <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                         {oblast.name}
                       </span>
-                      <span className="ml-2 font-medium">{oblast.cities[0].name}</span>
+                      <span className="text-sm font-semibold text-foreground">{oblast.cities[0].name}</span>
                     </button>
                   ) : (
                     <>
-                      <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
+                      <p className="mb-2.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                         {oblast.name}
                       </p>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                         {sortCitiesWithCentersFirst(oblast.cities).map((city) => (
                           <CityButton
                             key={city.name}
                             city={city}
-                            isActive={(currentCity?.trim() || '') === city.name.trim()}
+                            isActive={(currentCity?.trim() || "") === city.name.trim()}
                             onClick={() => handleSelect(city)}
                             isBold={REGIONAL_CENTERS.has(city.name.trim())}
                           />
@@ -163,14 +182,13 @@ export function CitySelectModal({ open, onClose, onSelect, currentCity }: CitySe
             </div>
           )}
 
-          {/* When a tab is selected */}
-          {!searchQuery && activeTab !== 'all' && displayCities && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
+          {!searchQuery && activeTab !== "all" && displayCities && (
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {sortCitiesWithCentersFirst(displayCities).map((city) => (
                 <CityButton
                   key={city.name}
                   city={city}
-                  isActive={(currentCity?.trim() || '') === city.name.trim()}
+                  isActive={(currentCity?.trim() || "") === city.name.trim()}
                   onClick={() => handleSelect(city)}
                   isBold={REGIONAL_CENTERS.has(city.name.trim())}
                 />
@@ -178,30 +196,29 @@ export function CitySelectModal({ open, onClose, onSelect, currentCity }: CitySe
             </div>
           )}
 
-          {/* Search results */}
-          {searchQuery && searchResults && (
-            searchResults.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
+          {searchQuery && searchResults &&
+            (searchResults.length > 0 ? (
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                 {sortCitiesWithCentersFirst(searchResults).map((city) => (
                   <CityButton
                     key={city.name}
                     city={city}
-                    isActive={(currentCity?.trim() || '') === city.name.trim()}
+                    isActive={(currentCity?.trim() || "") === city.name.trim()}
                     onClick={() => handleSelect(city)}
                     isBold={REGIONAL_CENTERS.has(city.name.trim())}
                   />
                 ))}
               </div>
             ) : (
-              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                <p>{t.citySelect.notFound}</p>
-                <p className="text-sm mt-1">{t.citySelect.tryAnother}</p>
+              <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/20 px-4 py-10 text-center">
+                <SearchX className="mb-3 h-10 w-10 text-muted-foreground/80" aria-hidden />
+                <p className="font-medium text-foreground">{t.citySelect.notFound}</p>
+                <p className="mt-1 max-w-xs text-sm text-muted-foreground">{t.citySelect.tryAnother}</p>
               </div>
-            )
-          )}
+            ))}
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -218,12 +235,15 @@ function CityButton({
 }) {
   return (
     <button
+      type="button"
       onClick={onClick}
-      className={`text-left px-3 py-2.5 rounded-lg text-sm transition-colors ${
+      className={cn(
+        "rounded-xl border px-3 py-2.5 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         isActive
-          ? 'bg-primary/10 text-primary font-medium'
-          : 'text-gray-700 dark:text-gray-300 hover:bg-accent dark:hover:bg-accent'
-      } ${isBold ? 'font-semibold' : ''}`}
+          ? "border-primary/40 bg-primary/10 font-semibold text-primary shadow-sm"
+          : "border-border bg-card font-normal text-foreground hover:border-primary/25 hover:bg-accent",
+        isBold && !isActive && "font-semibold text-foreground",
+      )}
     >
       {city.name}
     </button>

@@ -6,6 +6,15 @@ import { petsApi } from "../../../api/client";
 import { useI18n } from "../../../context/I18nContext";
 import type { Pet } from "../../../types/pet";
 import { formatRelativeTime } from "../../../utils/pet-helpers";
+import { getRewardBadgeMeta } from "../../../components/reward-badge";
+import {
+  landingContainerWide,
+  landingH2,
+  landingLeadCenter,
+  landingPrimaryCtaClass,
+  landingSectionHeader,
+  landingSectionY,
+} from "./landing-section-styles";
 
 const DEFAULT_PHOTO = "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&h=400&fit=crop";
 
@@ -34,21 +43,18 @@ export function Announcements() {
     location: pet.city,
     time: formatRelativeTime(pet.publishedAt),
     image: pet.photos[0] || DEFAULT_PHOTO,
+    reward: getRewardBadgeMeta(pet),
   }));
 
   return (
-    <section id="announcements" className="py-20 md:py-32 bg-background">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-20">
-          <h2 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
-            {t.landing.announcements.title}
-          </h2>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            {t.landing.announcements.subtitle}
-          </p>
+    <section id="announcements" className={`${landingSectionY} bg-background`}>
+      <div className={landingContainerWide}>
+        <div className={landingSectionHeader}>
+          <h2 className={landingH2}>{t.landing.announcements.title}</h2>
+          <p className={landingLeadCenter}>{t.landing.announcements.subtitle}</p>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6 mb-10 md:mb-12">
           {loading ? (
             <div className="col-span-full text-center py-12 text-muted-foreground">{t.landing.announcements.loading}</div>
           ) : cards.length === 0 ? (
@@ -58,41 +64,58 @@ export function Announcements() {
               <Link
                 key={announcement.id}
                 to={`/pet/${announcement.id}`}
-                className="bg-card rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 group block"
+                className="group block overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:border-primary/30"
               >
-              <div className="relative overflow-hidden">
-                <img
-                  src={announcement.image}
-                  alt={announcement.petType}
-                  className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-300"
-                />
-                <div className={`absolute top-4 right-4 px-4 py-2 rounded-full font-bold ${
-                  announcement.type === "lost" 
-                    ? "bg-secondary text-secondary-foreground" 
-                    : "bg-primary text-primary-foreground"
-                }`}>
-                  {announcement.type === "lost" ? t.landing.announcements.lost : t.landing.announcements.found}
+                <div className="relative overflow-hidden">
+                  <img
+                    src={announcement.image}
+                    alt={announcement.petType}
+                    className="h-52 w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                  <div className="absolute left-3 right-3 top-3 flex items-start justify-between gap-2">
+                    <span
+                      className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold shadow-sm ${
+                        announcement.type === "lost"
+                          ? "bg-secondary text-secondary-foreground"
+                          : "bg-primary text-primary-foreground"
+                      }`}
+                    >
+                      {announcement.type === "lost" ? t.landing.announcements.lost : t.landing.announcements.found}
+                    </span>
+                    {announcement.reward && (
+                      <span
+                        title={announcement.reward.tooltip}
+                        className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold shadow-sm ${announcement.reward.className.replace(" dark:bg-violet-900/30", " dark:bg-violet-900/85").replace(" dark:bg-emerald-900/30", " dark:bg-emerald-900/85")}`}
+                      >
+                        {announcement.reward.text}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-              <div className="p-6">
-                <h3 className="text-xl font-bold text-foreground mb-2">{announcement.petType} {announcement.breed}</h3>
-                <p className="text-muted-foreground mb-4">{announcement.color}</p>
-                <div className="flex items-center gap-2 text-muted-foreground mb-2 text-sm">
-                  <MapPin size={16} />
-                  <span>{announcement.location}</span>
+                <div className="p-4 md:p-5">
+                  <h3 className="mb-1 text-lg font-semibold leading-tight text-foreground line-clamp-1">
+                    {announcement.petType} {announcement.breed}
+                  </h3>
+                  <p className="mb-3 text-sm text-muted-foreground line-clamp-1">{announcement.color}</p>
+                  <div className="space-y-2">
+                    <div className="inline-flex max-w-full items-center gap-1.5 rounded-md bg-muted/70 px-2.5 py-1 text-xs text-muted-foreground">
+                      <MapPin size={14} className="shrink-0" />
+                      <span className="truncate">{announcement.location}</span>
+                    </div>
+                    <div className="inline-flex items-center gap-1.5 rounded-md bg-muted/70 px-2.5 py-1 text-xs text-muted-foreground">
+                      <Clock size={14} className="shrink-0" />
+                      <span>{announcement.time}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                  <Clock size={16} />
-                  <span>{announcement.time}</span>
-                </div>
-              </div>
-            </Link>
+              </Link>
           )))}
         </div>
 
         <div className="text-center">
           <Button asChild>
-            <Link to="/search" className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-10 py-6 text-lg shadow-lg inline-flex items-center justify-center">
+            <Link to="/search" className={landingPrimaryCtaClass}>
               {t.landing.announcements.viewAll}
             </Link>
           </Button>

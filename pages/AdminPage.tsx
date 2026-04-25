@@ -213,7 +213,7 @@ export default function AdminPage() {
     }
   };
 
-  const handlePartnerCreate = async (data: { logo_url?: string; name: string; link?: string }) => {
+  const handlePartnerCreate = async (data: { logo_url?: string; name: string; link?: string; is_medallion_partner?: boolean }) => {
     try {
       const p = await partnersApi.create(data);
       setPartners((prev) => [p, ...prev]);
@@ -223,7 +223,7 @@ export default function AdminPage() {
     }
   };
 
-  const handlePartnerUpdate = async (id: string, data: Partial<{ logo_url: string; name: string; link: string }>) => {
+  const handlePartnerUpdate = async (id: string, data: Partial<{ logo_url: string; name: string; link: string; is_medallion_partner: boolean }>) => {
     try {
       const p = await partnersApi.update(id, data);
       setPartners((prev) => prev.map((x) => (x.id === p.id ? p : x)));

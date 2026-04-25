@@ -5,7 +5,10 @@ import { toast } from "sonner";
 import { useI18n } from "../context/I18nContext";
 import { profilePetsApi } from "../api/client";
 import { profilePetToListCard, type ProfilePetListCard } from "../utils/profile-pet-display";
-import { useScrollLock } from "./ui/use-scroll-lock";
+import { PageLoader } from "./ui/page-loader";
+import { EmptyState } from "./ui/empty-state";
+import { ConfirmDialog } from "./confirm-dialog";
+import { Button } from "./ui/button";
 
 export function MyPetsContent() {
   const { t } = useI18n();
@@ -16,8 +19,6 @@ export function MyPetsContent() {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ProfilePetListCard | null>(null);
   const [deleting, setDeleting] = useState(false);
-
-  useScrollLock(!!deleteTarget);
 
   const loadPets = useCallback(() => {
     setLoading(true);
@@ -69,66 +70,25 @@ export function MyPetsContent() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-background flex items-center justify-center py-12">
-        <div className="w-12 h-12 border-4 border-[#FF9800]/30 border-t-[#FF9800] rounded-full animate-spin" />
-      </div>
-    );
+    return <PageLoader label={t.common.loading} />;
   }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-background py-4 sm:py-8">
-      {deleteTarget && (
-        <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[70]"
-          role="presentation"
-          onClick={() => !deleting && setDeleteTarget(null)}
-        >
-          <div
-            className="bg-white dark:bg-card rounded-xl shadow-xl border border-gray-200 dark:border-border max-w-md w-full p-6"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="delete-pet-title"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-start justify-between gap-3 mb-4">
-              <h2 id="delete-pet-title" className="text-xl font-bold text-gray-900 dark:text-white">
-                {mp.deletePetTitle}
-              </h2>
-              <button
-                type="button"
-                disabled={deleting}
-                onClick={() => setDeleteTarget(null)}
-                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-muted text-gray-500 dark:text-muted-foreground shrink-0"
-                aria-label={t.common.close}
-              >
-                <X size={20} />
-              </button>
-            </div>
-            <p className="text-gray-600 dark:text-muted-foreground mb-6">
-              {mp.deletePetMessage.replace("{name}", deleteTarget.name)}
-            </p>
-            <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end">
-              <button
-                type="button"
-                disabled={deleting}
-                onClick={() => setDeleteTarget(null)}
-                className="h-11 px-4 rounded-lg border border-gray-300 dark:border-border text-gray-700 dark:text-foreground hover:bg-gray-50 dark:hover:bg-muted font-medium"
-              >
-                {t.common.cancel}
-              </button>
-              <button
-                type="button"
-                disabled={deleting}
-                onClick={() => void confirmDelete()}
-                className="h-11 px-4 rounded-lg bg-red-600 text-white hover:bg-red-700 font-medium disabled:opacity-60"
-              >
-                {deleting ? t.common.loading : mp.deletePetConfirm}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => {
+          if (!open && !deleting) setDeleteTarget(null);
+        }}
+        title={mp.deletePetTitle}
+        description={deleteTarget ? mp.deletePetMessage.replace("{name}", deleteTarget.name) : ""}
+        onConfirm={() => {
+          void confirmDelete();
+        }}
+        cancelText={t.common.cancel}
+        confirmText={deleting ? t.common.loading : mp.deletePetConfirm}
+        confirmClass="bg-red-600 hover:bg-red-700 text-white disabled:opacity-60"
+      />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
@@ -146,36 +106,32 @@ export function MyPetsContent() {
         </div>
 
         {loadError ? (
-          <div className="bg-white dark:bg-card rounded-xl shadow-sm border border-gray-200 dark:border-border p-12 text-center">
-            <div className="w-20 h-20 bg-red-50 dark:bg-red-950/40 rounded-full flex items-center justify-center mx-auto mb-4">
-              <AlertCircle size={40} className="text-red-400 dark:text-red-300" />
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{mp.loadErrorTitle}</h2>
-            <p className="text-gray-600 dark:text-muted-foreground mb-3 max-w-md mx-auto">{mp.loadErrorDesc}</p>
-            <p className="text-sm text-gray-500 dark:text-muted-foreground mb-6 max-w-md mx-auto">{loadError}</p>
-            <button
-              type="button"
-              onClick={loadPets}
-              className="inline-flex items-center gap-2 bg-[#FF9800] text-white hover:bg-[#F57C00] rounded-lg px-6 h-12 text-lg transition-colors"
-            >
-              <span>{mp.retryLoad}</span>
-            </button>
-          </div>
+          <EmptyState
+            title={mp.loadErrorTitle}
+            description={mp.loadErrorDesc}
+            hint={loadError}
+            tone="danger"
+            icon={<AlertCircle size={32} />}
+            action={
+              <Button onClick={loadPets}>
+                {mp.retryLoad}
+              </Button>
+            }
+          />
         ) : pets.length === 0 ? (
-          <div className="bg-white dark:bg-card rounded-xl shadow-sm border border-gray-200 dark:border-border p-12 text-center">
-            <div className="w-20 h-20 bg-gray-100 dark:bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-              <PawPrint size={40} className="text-gray-400 dark:text-muted-foreground" />
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{mp.emptyTitle}</h2>
-            <p className="text-gray-600 dark:text-muted-foreground mb-6 max-w-md mx-auto">{mp.emptyDesc}</p>
-            <Link
-              to="/my-pets/add"
-              className="inline-flex items-center gap-2 bg-[#FF9800] text-white hover:bg-[#F57C00] rounded-lg px-6 h-12 text-lg transition-colors"
-            >
-              <Plus size={20} />
-              <span>{mp.addFirst}</span>
-            </Link>
-          </div>
+          <EmptyState
+            title={mp.emptyTitle}
+            description={mp.emptyDesc}
+            icon={<PawPrint size={32} />}
+            action={
+              <Button asChild>
+                <Link to="/my-pets/add">
+                  <Plus size={18} />
+                  <span>{mp.addFirst}</span>
+                </Link>
+              </Button>
+            }
+          />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {pets.map((pet) => (

@@ -30,6 +30,9 @@ class FeatureFlagsUpdate(BaseModel):
     ff_landing_show_help: bool | None = None
     ff_landing_show_pets_feature: bool | None = None
     ff_landing_show_faq: bool | None = None
+    ff_instagram_boost_stories: bool | None = None
+    ff_reward_enabled: bool | None = None
+    ff_reward_money_enabled: bool | None = None
 
 
 @router.patch("")

@@ -44,9 +44,17 @@ export const formatDate = (date: Date): string => {
   if (diffDays === 1) return 'Вчера';
   if (diffDays < 7) return `${diffDays} дн. назад`;
   if (diffDays < 30) return `${Math.floor(diffDays / 7)} нед. назад`;
-  
+
   return date.toLocaleDateString('ru-BY');
 };
+
+/** Полная календарная дата (без «вчера / N дн. назад») — чтобы не дублировать относительное время. */
+export const formatCalendarDate = (date: Date, locale = 'ru-BY'): string =>
+  date.toLocaleDateString(locale, {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
 
 /** Для лендинга: "2 ч. назад", "1 день назад" */
 export const formatRelativeTime = (date: Date): string => {

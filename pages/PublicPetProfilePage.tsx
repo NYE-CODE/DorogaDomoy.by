@@ -26,6 +26,11 @@ import {
 } from '../utils/seo';
 import { formatPetAgeDisplay, genderLabel, temperamentLabel } from '../utils/profile-pet-text';
 import { toast } from 'sonner';
+import { Header } from '../components/layout/Header';
+import { Footer } from '../components/layout/Footer';
+import { PageLoader } from '../components/ui/page-loader';
+import { EmptyState } from '../components/ui/empty-state';
+import { Button } from '../components/ui/button';
 
 export default function PublicPetProfilePage() {
   const { id } = useParams<{ id: string }>();
@@ -101,29 +106,28 @@ export default function PublicPetProfilePage() {
   }, [photosLength]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-background flex items-center justify-center py-12">
-        <div className="w-12 h-12 border-4 border-[#FF9800]/30 border-t-[#FF9800] rounded-full animate-spin" />
-      </div>
-    );
+    return <PageLoader label={t.common.loading} />;
   }
 
   if (notFound || !pet) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-background py-8 px-4 flex items-center justify-center">
-        <div className="text-center max-w-md">
-          <div className="w-14 h-14 bg-[#FDB913]/20 rounded-full flex items-center justify-center mx-auto mb-4">
-            <PawPrint className="text-[#FF9800]" size={28} />
+      <div className="min-h-screen bg-gray-50 dark:bg-background flex flex-col">
+        <Header showCitySelector={false} />
+        <div className="flex-1 px-4 py-8">
+          <div className="mx-auto max-w-md">
+            <EmptyState
+              title={pp.notFound}
+              description={pp.notFoundDesc}
+              icon={<PawPrint size={28} />}
+              action={
+                <Button asChild>
+                  <Link to="/">{pp.backHome}</Link>
+                </Button>
+              }
+            />
           </div>
-          <h1 className="text-xl font-bold text-black dark:text-white mb-2">{pp.notFound}</h1>
-          <p className="text-gray-600 dark:text-gray-400 text-sm mb-6">{pp.notFoundDesc}</p>
-          <Link
-            to="/"
-            className="inline-flex items-center justify-center h-12 px-6 bg-[#FF9800] text-white rounded-lg hover:bg-[#F57C00] transition-colors font-medium"
-          >
-            {pp.backHome}
-          </Link>
         </div>
+        <Footer />
       </div>
     );
   }
@@ -162,7 +166,9 @@ export default function PublicPetProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-background py-6 sm:py-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-background flex flex-col">
+      <Header showCitySelector={false} />
+      <div className="flex-1 py-6 sm:py-8">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-6">
           <Link
@@ -436,6 +442,8 @@ export default function PublicPetProfilePage() {
           {pp.idLine.replace('{id}', id ?? '')}
         </p>
       </div>
+      </div>
+      <Footer />
     </div>
   );
 }
