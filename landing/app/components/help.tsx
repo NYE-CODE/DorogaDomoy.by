@@ -23,7 +23,7 @@ export function Help() {
   ] as const;
 
   return (
-    <section id="help" className={`${landingSectionY} ${landingBandMuted}`}>
+    <section id="help" className={`${landingSectionY} ${landingBandMuted} scroll-mt-24`}>
       <div className={landingContainerWide}>
         {ff_landing_show_help && (
           <>

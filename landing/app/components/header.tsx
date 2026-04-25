@@ -1,4 +1,4 @@
-import { MapPin, User, Settings, FileText, Shield, LogOut, ChevronDown, PawPrint, Menu } from "lucide-react";
+import { MapPin, User, Settings, FileText, Shield, LogOut, ChevronDown, PawPrint, Menu, Heart } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router";
 import { Button } from "./ui/button";
@@ -135,6 +135,10 @@ export function Header(props: HeaderProps = {}) {
                         <button type="button" onClick={() => { navigate("/my-ads"); setIsProfileOpen(false); }} className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-muted">
                           <FileText size={18} className="text-muted-foreground" />
                           <span className="text-foreground">{t.landing.header.myAds}</span>
+                        </button>
+                        <button type="button" onClick={() => { navigate("/favorites"); setIsProfileOpen(false); }} className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-muted">
+                          <Heart size={16} className="text-rose-500" />
+                          <span className="text-foreground">{t.header.favorites}</span>
                         </button>
                         <button type="button" onClick={() => { navigate("/settings"); setIsProfileOpen(false); }} className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-muted">
                           <Settings size={18} className="text-muted-foreground" />

@@ -16,7 +16,7 @@ export function WhyUs() {
   const features = t.landing.whyUs.features;
 
   return (
-    <section id="why-us" className={`${landingSectionY} ${landingBandMuted}`}>
+    <section id="why-us" className={`${landingSectionY} ${landingBandMuted} scroll-mt-24`}>
       <div className={landingContainerWide}>
         <div className={landingSectionHeader}>
           <h2 className={landingH2}>{t.landing.whyUs.title}</h2>

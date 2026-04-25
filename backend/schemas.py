@@ -189,6 +189,16 @@ class PetResponse(PetBase):
         from_attributes = True
 
 
+class FavoriteImportBody(BaseModel):
+    """Импорт id из локального избранного после входа (до 150 за запрос)."""
+
+    pet_ids: list[str] = Field(default_factory=list, max_length=150)
+
+
+class FavoriteIdsResponse(BaseModel):
+    ids: list[str]
+
+
 # --- Report ---
 class ReportCreate(BaseModel):
     pet_id: str

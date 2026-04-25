@@ -42,6 +42,22 @@ export const translations = {
       all: 'Все',
       characters: 'символов',
     },
+    favorites: {
+      title: 'Избранное',
+      subtitle:
+        'Сохраняйте объявления, чтобы не потерять их. Без входа список хранится только в этом браузере.',
+      guestHint:
+        'Войдите в аккаунт — избранное синхронизируется на сервер и будет доступно с любого устройства.',
+      emptyTitle: 'Пока пусто',
+      emptyDescription: 'Нажмите сердечко на карточке или на странице объявления, чтобы добавить сюда.',
+      openSearch: 'К поиску объявлений',
+      added: 'Добавлено в избранное',
+      removed: 'Убрано из избранного',
+      limitReached: 'Не больше 200 объявлений в избранном без аккаунта. Удалите часть или войдите.',
+      countLabel: 'Сохранено: {n}',
+      ariaAdd: 'Добавить в избранное',
+      ariaRemove: 'Убрать из избранного',
+    },
     adminPanel: adminPanelLocales.ru,
     header: {
       tagline: 'Дорога Домой — поиск пропавших питомцев',
@@ -59,6 +75,7 @@ export const translations = {
       home: 'Главная',
       searchAds: 'Поиск объявлений',
       blog: 'Блог',
+      favorites: 'Избранное',
     },
     auth: {
       loginTitle: 'Вход в аккаунт',
@@ -832,6 +849,7 @@ export const translations = {
           { title: 'Корпоративная поддержка', desc: 'Станьте корпоративным партнером проекта', action: 'Узнать больше' },
         ],
         statsTitle: 'В цифрах',
+        statsActiveAds: 'Активных объявлений',
         statsFound: 'Найденных питомцев',
         statsUsers: 'Пользователей',
         statsCities: 'Городов Беларуси',
@@ -1025,6 +1043,22 @@ export const translations = {
       all: 'Усе',
       characters: 'сімвалаў',
     },
+    favorites: {
+      title: 'Абранае',
+      subtitle:
+        'Захоўвайце аб\'явы, каб не страціць. Без уваходу спіс толькі ў гэтым браўзеры.',
+      guestHint:
+        'Увайдзіце ў акаўнт — абранае захаваецца на серверы і будзе даступна з любой прылады.',
+      emptyTitle: 'Пакуль пуста',
+      emptyDescription: 'Націсніце сэрца на картцы або на старонцы аб\'явы.',
+      openSearch: 'Да пошуку аб\'яў',
+      added: 'Дададзена ў абранае',
+      removed: 'Выдалена з абранага',
+      limitReached: 'Не больш за 200 без акаўнта. Выдаліце частку або ўвайдзіце.',
+      countLabel: 'Захавана: {n}',
+      ariaAdd: 'Дадаць у абранае',
+      ariaRemove: 'Выдаліць з абранага',
+    },
     adminPanel: adminPanelLocales.be,
     header: {
       tagline: 'Дарога Дадому — пошук зніклых хатніх жывёл',
@@ -1042,6 +1076,7 @@ export const translations = {
       home: 'Галоўная',
       searchAds: 'Пошук аб\'яў',
       blog: 'Блог',
+      favorites: 'Абранае',
     },
     auth: {
       loginTitle: 'Уваход у акаўнт',
@@ -1806,6 +1841,7 @@ export const translations = {
           { title: 'Карпаратыўная падтрымка', desc: 'Станьце карпаратыўным партнёрам праекта', action: 'Даведацца больш' },
         ],
         statsTitle: 'У лічбах',
+        statsActiveAds: 'Актыўных аб\'яў',
         statsFound: 'Знойдзеных жывёл',
         statsUsers: 'Карыстальнікаў',
         statsCities: 'Гарадоў Беларусі',
@@ -1999,6 +2035,22 @@ export const translations = {
       all: 'All',
       characters: 'characters',
     },
+    favorites: {
+      title: 'Favorites',
+      subtitle:
+        'Save ads you want to revisit. Without an account, the list is stored only in this browser.',
+      guestHint:
+        'Sign in to sync favorites to your account and access them on any device.',
+      emptyTitle: 'Nothing saved yet',
+      emptyDescription: 'Tap the heart on a card or on the pet page to add it here.',
+      openSearch: 'Browse ads',
+      added: 'Added to favorites',
+      removed: 'Removed from favorites',
+      limitReached: 'At most 200 favorites without an account. Remove some or sign in.',
+      countLabel: 'Saved: {n}',
+      ariaAdd: 'Add to favorites',
+      ariaRemove: 'Remove from favorites',
+    },
     adminPanel: adminPanelLocales.en,
     header: {
       tagline: 'Doroga Domoy — lost pet search',
@@ -2016,6 +2068,7 @@ export const translations = {
       home: 'Home',
       searchAds: 'Search ads',
       blog: 'Blog',
+      favorites: 'Favorites',
     },
     auth: {
       loginTitle: 'Log in',
@@ -2779,6 +2832,7 @@ export const translations = {
           { title: 'Corporate support', desc: 'Become a corporate partner of the project', action: 'Learn more' },
         ],
         statsTitle: 'In numbers',
+        statsActiveAds: 'Active listings',
         statsFound: 'Pets found',
         statsUsers: 'Users',
         statsCities: 'Cities in Belarus',

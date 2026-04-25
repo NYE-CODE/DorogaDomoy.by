@@ -67,7 +67,7 @@ export function FAQ() {
   return (
     <section
       id="faq"
-      className={`relative bg-gradient-to-b from-muted/40 via-background to-background ${landingSectionY}`}
+      className={`relative scroll-mt-24 bg-gradient-to-b from-muted/40 via-background to-background ${landingSectionY}`}
     >
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
       <div className={landingContainerReadable}>

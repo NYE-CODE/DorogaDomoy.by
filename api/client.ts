@@ -297,6 +297,8 @@ export const petsApi = {
     is_archived?: boolean;
     search?: string;
     author_id?: string;
+    /** Список id через запятую (до 80), публичные одобренные — для гостевого избранного */
+    ids?: string;
     north?: number;
     south?: number;
     east?: number;
@@ -375,6 +377,26 @@ export const petsApi = {
   delete: (id: string) => api<void>(`/pets/${id}`, { method: 'DELETE' }),
 
   statistics: () => api<StatisticsResponse>('/pets/statistics'),
+};
+
+export interface FavoriteIdsResponse {
+  ids: string[];
+}
+
+export const favoritesApi = {
+  ids: () => api<FavoriteIdsResponse>('/favorites/ids'),
+  list: () => api<PetResponse[]>('/favorites').then((arr) => arr.map(toPet)),
+  add: (petId: string) =>
+    api<{ ok: boolean; already?: boolean }>(`/favorites/${encodeURIComponent(petId)}`, {
+      method: 'POST',
+    }),
+  remove: (petId: string) =>
+    api<void>(`/favorites/${encodeURIComponent(petId)}`, { method: 'DELETE' }),
+  importBatch: (petIds: string[]) =>
+    api<FavoriteIdsResponse>('/favorites/import', {
+      method: 'POST',
+      body: JSON.stringify({ pet_ids: petIds }),
+    }),
 };
 
 // --- Users ---

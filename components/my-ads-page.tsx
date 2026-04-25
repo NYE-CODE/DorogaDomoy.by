@@ -365,16 +365,16 @@ export function MyAdsPage({
                                         <Edit className="size-4 shrink-0 text-muted-foreground" />
                                         <span>{t.common.edit}</span>
                                       </button>
-                                      <button
-                                        type="button"
-                                        onClick={(e) => handleDelete(e, pet)}
-                                        className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-destructive transition-colors hover:bg-destructive/10"
-                                      >
-                                        <Trash2 className="size-4 shrink-0" />
-                                        <span>{t.common.delete}</span>
-                                      </button>
                                     </>
                                   )}
+                                  <button
+                                    type="button"
+                                    onClick={(e) => handleDelete(e, pet)}
+                                    className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm text-destructive transition-colors hover:bg-destructive/10"
+                                  >
+                                    <Trash2 className="size-4 shrink-0" />
+                                    <span>{t.common.delete}</span>
+                                  </button>
                                 </div>
                               )}
                             </div>

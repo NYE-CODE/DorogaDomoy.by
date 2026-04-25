@@ -13,6 +13,7 @@ import { MobileBottomNav } from './components/layout/MobileBottomNav'
 import { SeoRouteSync } from './components/SeoRouteSync'
 import { PageLoader } from './components/ui/page-loader';
 import { ScrollToTopOnRouteChange } from './components/ScrollToTopOnRouteChange';
+import { FavoritesProvider } from './context/FavoritesContext';
 
 const LandingPage = lazy(() => import('./pages/LandingPage.tsx'));
 const SearchPage = lazy(() => import('./pages/SearchPage.tsx'));
@@ -32,6 +33,7 @@ const PublicPetProfilePage = lazy(() => import('./pages/PublicPetProfilePage.tsx
 const TermsPage = lazy(() => import('./pages/TermsPage.tsx'));
 const BlogListPage = lazy(() => import('./pages/BlogListPage.tsx'));
 const BlogPostPage = lazy(() => import('./pages/BlogPostPage.tsx'));
+const FavoritesPage = lazy(() => import('./pages/FavoritesPage.tsx'));
 
 function GlobalToaster() {
   const { theme } = useTheme();
@@ -118,12 +120,14 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <MetrikaTracker />
           <GlobalToaster />
           <AuthProvider>
+            <FavoritesProvider>
             <CityProvider>
               <AuthModalGlobal />
               <Suspense fallback={<RouteLoader />}>
                 <Routes>
                   <Route path="/" element={<LandingPage />} />
                   <Route path="/search" element={<SearchPage />} />
+                  <Route path="/favorites" element={<FavoritesPage />} />
                   <Route path="/profile" element={<RequireAuth><ProfilePage /></RequireAuth>} />
                   <Route path="/pet-profile/:id" element={<PublicPetProfilePage />} />
                   <Route path="/my-pets/add" element={<RequireAuth><AddEditPetPageRoute /></RequireAuth>} />
@@ -145,6 +149,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
               </Suspense>
               <MobileBottomNav />
             </CityProvider>
+            </FavoritesProvider>
           </AuthProvider>
         </BrowserRouter>
       </I18nProvider>

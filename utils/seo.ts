@@ -107,6 +107,7 @@ export function isPrivateSeoPath(pathname: string): boolean {
   if (pathname.startsWith('/my-ads')) return true;
   if (pathname.startsWith('/my-pets')) return true;
   if (pathname.startsWith('/settings')) return true;
+  if (pathname === '/favorites') return true;
   if (pathname === '/create') return true;
   if (pathname.startsWith('/edit/')) return true;
   return false;

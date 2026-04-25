@@ -5,6 +5,7 @@ import 'leaflet.markercluster';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import { Pet } from '../types/pet';
 import { statusLabels, animalTypeLabels, statusColors, formatDate } from '../utils/pet-helpers';
+import { getPetPhotoCircleDivIcon, getSafePetPhotoSrc } from '../utils/leaflet-pet-photo-icon';
 
 interface MapViewProps {
   pets: Pet[];
@@ -14,69 +15,15 @@ interface MapViewProps {
   zoom?: number;
 }
 
-const markerColors: Record<string, string> = {
-  searching: '#ef4444',
-  spotted: '#f97316',
-  found: '#3b82f6',
-  fostering: '#a855f7',
-  shelter: '#6366f1',
-  returned: '#10b981',
-  adopted: '#059669',
-  transferred: '#14b8a6',
-};
-
-const iconCache = new Map<string, L.DivIcon>();
-
-const getMarkerIcon = (animalType: string, status: string): L.DivIcon => {
-  const key = `${animalType}:${status}`;
-  let icon = iconCache.get(key);
-  if (icon) return icon;
-
-  const color = markerColors[status] || '#6b7280';
-  const symbol = animalType === 'cat' ? '🐱' : animalType === 'dog' ? '🐕' : '🐾';
-
-  icon = L.divIcon({
-    html: `<div style="background:${color};width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.2);font-size:16px">${symbol}</div>`,
-    className: 'custom-marker-icon',
-    iconSize: [32, 32],
-    iconAnchor: [16, 16],
-    popupAnchor: [0, -16],
-  });
-
-  iconCache.set(key, icon);
-  return icon;
-};
-
 const isTouchDevice = typeof window !== 'undefined' &&
   ('ontouchstart' in window || navigator.maxTouchPoints > 0);
-
-const FALLBACK_IMAGE =
-  'data:image/svg+xml;utf8,' +
-  encodeURIComponent(
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 120">' +
-      '<rect width="160" height="120" fill="#f3f4f6"/>' +
-      '<path d="M42 78l18-20 22 24 16-14 20 24H42z" fill="#d1d5db"/>' +
-      '<circle cx="63" cy="44" r="10" fill="#d1d5db"/>' +
-    '</svg>'
-  );
-
-function getSafeImageSrc(url?: string): string {
-  if (!url) return FALLBACK_IMAGE;
-  if (url.startsWith('data:image/')) return url;
-  try {
-    const parsed = new URL(url, window.location.origin);
-    return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? parsed.toString() : FALLBACK_IMAGE;
-  } catch {
-    return FALLBACK_IMAGE;
-  }
-}
 
 function createPreviewContent(pet: Pet): HTMLDivElement {
   const container = document.createElement('div');
   container.style.width = '12rem';
 
   const image = document.createElement('img');
-  image.src = getSafeImageSrc(pet.photos?.[0]);
+  image.src = getSafePetPhotoSrc(pet.photos?.[0]);
   image.alt = animalTypeLabels[pet.animalType];
   image.loading = 'lazy';
   image.style.width = '100%';
@@ -209,7 +156,7 @@ export default function MapView({ pets, onPetClick, onBoundsChange, center = [53
     pets.forEach(pet => {
       const marker = L.marker(
         [pet.location.lat, pet.location.lng],
-        { icon: getMarkerIcon(pet.animalType, pet.status) }
+        { icon: getPetPhotoCircleDivIcon({ photoUrl: pet.photos?.[0], status: pet.status }) }
       );
 
       const previewContent = createPreviewContent(pet);

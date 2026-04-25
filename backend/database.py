@@ -103,6 +103,9 @@ def _ensure_bounty_and_helper_columns() -> None:
         return
 
     user_columns = {
+        "telegram_id": "BIGINT",
+        "telegram_username": "VARCHAR",
+        "telegram_linked_at": "DATETIME",
         "helper_code": "VARCHAR",
         "helper_confirmed_count": "INTEGER DEFAULT 0",
         "points_balance": "INTEGER DEFAULT 0",

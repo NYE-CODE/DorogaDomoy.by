@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Pet } from '../types/pet';
+import { getPetPhotoCircleDivIcon, SIGHTING_MARKER_BORDER_COLOR } from '../utils/leaflet-pet-photo-icon';
 import { sightingsApi } from '../api/client';
 import { useI18n } from '../context/I18nContext';
 
@@ -15,6 +16,16 @@ interface SightingFormProps {
 
 const COMMENT_MAX = 500;
 const CONTACT_MAX = 100;
+
+function sightingPickIcon(pet: Pet) {
+  return getPetPhotoCircleDivIcon({
+    photoUrl: pet.photos?.[0],
+    status: pet.status,
+    borderColor: SIGHTING_MARKER_BORDER_COLOR,
+    size: 32,
+    borderWidth: 3,
+  });
+}
 
 export function SightingForm({ pet, onClose, onSuccess }: SightingFormProps) {
   const { t } = useI18n();
@@ -38,11 +49,11 @@ export function SightingForm({ pet, onClose, onSuccess }: SightingFormProps) {
       attribution: '&copy; OpenStreetMap'
     }).addTo(map);
 
-    const petIcon = L.divIcon({
-      html: `<div style="background:#ef4444;width:24px;height:24px;border-radius:50%;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,.3)"></div>`,
-      className: '',
-      iconSize: [24, 24],
-      iconAnchor: [12, 12],
+    const petIcon = getPetPhotoCircleDivIcon({
+      photoUrl: pet.photos?.[0],
+      status: pet.status,
+      size: 36,
+      borderWidth: 2,
     });
     L.marker([pet.location.lat, pet.location.lng], { icon: petIcon }).addTo(map);
 
@@ -52,13 +63,7 @@ export function SightingForm({ pet, onClose, onSuccess }: SightingFormProps) {
       if (markerRef.current) {
         map.removeLayer(markerRef.current);
       }
-      const sightIcon = L.divIcon({
-        html: `<div style="background:#f59e0b;width:28px;height:28px;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;font-size:14px">👁</div>`,
-        className: '',
-        iconSize: [28, 28],
-        iconAnchor: [14, 14],
-      });
-      markerRef.current = L.marker([lat, lng], { icon: sightIcon }).addTo(map);
+      markerRef.current = L.marker([lat, lng], { icon: sightingPickIcon(pet) }).addTo(map);
     });
 
     mapRef.current = map;
@@ -79,13 +84,9 @@ export function SightingForm({ pet, onClose, onSuccess }: SightingFormProps) {
           mapRef.current.removeLayer(markerRef.current);
         }
         if (mapRef.current) {
-          const sightIcon = L.divIcon({
-            html: `<div style="background:#f59e0b;width:28px;height:28px;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;font-size:14px">👁</div>`,
-            className: '',
-            iconSize: [28, 28],
-            iconAnchor: [14, 14],
-          });
-          markerRef.current = L.marker([latitude, longitude], { icon: sightIcon }).addTo(mapRef.current);
+          markerRef.current = L.marker([latitude, longitude], {
+            icon: sightingPickIcon(pet),
+          }).addTo(mapRef.current);
           mapRef.current.setView([latitude, longitude], 15);
         }
       },
