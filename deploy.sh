@@ -75,4 +75,4 @@ sudo systemctl reload nginx
 echo ""
 echo "==> Деплой завершён."
 echo "    Проверка: curl -s https://dorogadomoy.by/health"
-echo "    API:      curl -s https://dorogadomoy.by/api/feature-flags"
+echo "    API:      curl -s https://dorogadomoy.by/api/v1/feature-flags"
