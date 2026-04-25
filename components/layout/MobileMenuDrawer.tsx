@@ -65,7 +65,7 @@ export function MobileMenuDrawer({ open, onClose }: MobileMenuDrawerProps) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] md:hidden">
+    <div className="fixed inset-0 z-[65] md:hidden">
       {/* Backdrop */}
       <div
         ref={overlayRef}

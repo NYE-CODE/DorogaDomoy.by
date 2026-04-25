@@ -8,7 +8,8 @@ REPO_DIR="${REPO_DIR:-/home/dorogado/DorogaDomoy.by}"
 FRONTEND_DIR="${FRONTEND_DIR:-/home/dorogado/DorogaDomoy.by/frontend}"
 DB_DIR="/var/lib/dorogadomoy"
 SERVICE_USER="${SERVICE_USER:-dorogado}"
-VITE_API_URL="${VITE_API_URL:-https://dorogadomoy.by/api}"
+# Origin бэкенда без /api/v1 (клиент добавляет /api/v1 к JSON; /uploads — от корня origin)
+VITE_API_URL="${VITE_API_URL:-https://dorogadomoy.by}"
 
 echo "==> Деплой DorogaDomoy.by"
 echo "    REPO_DIR=$REPO_DIR"

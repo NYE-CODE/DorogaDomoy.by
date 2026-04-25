@@ -75,6 +75,9 @@ export interface PetFormData {
   contactPhone?: string;
   /** Согласие с политикой конфиденциальности (только для создания) */
   agreeToPrivacy?: boolean;
+  /** Награда за помощь */
+  rewardMode?: 'points' | 'money';
+  rewardAmountByn?: number;
 }
 
 /** Город и точка на карте по выбранному в фильтре городу (иначе Минск). */
@@ -115,6 +118,8 @@ const defaultFormData: PetFormData = {
   contactName: '',
   contactPhone: '',
   agreeToPrivacy: false,
+  rewardMode: 'points',
+  rewardAmountByn: undefined,
 };
 
 function formDataFromPet(pet: Pet): PetFormData {
@@ -137,6 +142,8 @@ function formDataFromPet(pet: Pet): PetFormData {
     contactName: pet.authorName ?? '',
     contactPhone: pet.contacts?.phone ?? '',
     agreeToPrivacy: true,
+    rewardMode: pet.rewardMode ?? 'points',
+    rewardAmountByn: pet.rewardAmountByn,
   };
 }
 
@@ -214,7 +221,9 @@ export function PetForm({
     settingsApi.get().then((s) => {
       const val = parseInt(String(s.max_photos ?? ''), 10);
       if (Number.isFinite(val) && val > 0 && val <= 50) setMaxPhotos(val);
-    }).catch(() => {});
+    }).catch((err: unknown) => {
+      console.warn('[PetForm] settings (max_photos) load failed', err);
+    });
   }, []);
 
   useEffect(() => {
@@ -323,6 +332,12 @@ export function PetForm({
     const errs: Record<string, string> = {};
     if (!formData.description?.trim()) errs.description = t.petForm.enterDescription;
     else if (formData.description.length > MAX_DESCRIPTION) errs.description = `Макс. ${MAX_DESCRIPTION} символов`;
+    if (formData.status === 'searching' && formData.rewardMode === 'money') {
+      const amount = Number(formData.rewardAmountByn);
+      if (!Number.isFinite(amount) || amount <= 0) {
+        errs.rewardAmountByn = 'Укажите сумму в BYN';
+      }
+    }
     return errs;
   };
 
@@ -812,6 +827,89 @@ export function PetForm({
                 required
               />
               {errors.description && <p className="text-xs text-red-500 mt-1">{errors.description}</p>}
+
+              {formData.status === 'searching' && (
+              <div className="mt-8 border-t border-gray-200 dark:border-gray-700 pt-6">
+                <div className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-3">
+                  {(t.petForm as { rewardTitle?: string }).rewardTitle ?? 'Награда за помощь'}
+                </div>
+                <div className="space-y-3">
+                  <label className="flex items-center gap-3 p-4 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-50/10 transition-colors">
+                    <input
+                      type="radio"
+                      name="rewardMode"
+                      checked={(formData.rewardMode ?? 'points') === 'points'}
+                      onChange={() =>
+                        setFormData({
+                          ...formData,
+                          rewardMode: 'points',
+                          rewardAmountByn: undefined,
+                        })
+                      }
+                      className="w-4 h-4 text-[#FF9800]"
+                    />
+                    <span className="text-gray-700 dark:text-gray-300">
+                      {(t.petForm as { rewardPointsMode?: string }).rewardPointsMode ??
+                        'Награда платформы: очки'}
+                    </span>
+                  </label>
+                  <label className="flex items-center gap-3 p-4 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-50/10 transition-colors">
+                    <input
+                      type="radio"
+                      name="rewardMode"
+                      checked={formData.rewardMode === 'money'}
+                      onChange={() =>
+                        setFormData({
+                          ...formData,
+                          rewardMode: 'money',
+                          rewardAmountByn: formData.rewardAmountByn ?? 50,
+                        })
+                      }
+                      className="w-4 h-4 text-[#FF9800]"
+                    />
+                    <span className="text-gray-700 dark:text-gray-300">
+                      {(t.petForm as { rewardMoneyMode?: string }).rewardMoneyMode ??
+                        'Денежное вознаграждение (передача напрямую)'}
+                    </span>
+                  </label>
+                </div>
+
+                {formData.rewardMode === 'money' ? (
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      {(t.petForm as { rewardAmountLabel?: string }).rewardAmountLabel ??
+                        'Сумма вознаграждения, BYN'}
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      step={1}
+                      value={formData.rewardAmountByn ?? ''}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          rewardAmountByn: e.target.value ? Number(e.target.value) : undefined,
+                        })
+                      }
+                      placeholder="100"
+                      className={variant === 'page'
+                        ? `w-full px-4 py-3 border rounded-lg bg-[#f3f3f5] dark:bg-input-background text-foreground focus:outline-none focus:ring-2 focus:ring-[#FF9800] focus:border-transparent ${errors.rewardAmountByn ? 'border-red-300' : 'border-gray-300 dark:border-gray-600'}`
+                        : `w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${errors.rewardAmountByn ? 'border-red-300' : 'border-gray-200 dark:border-gray-600'}`}
+                    />
+                    {errors.rewardAmountByn && <p className="text-xs text-red-500 mt-1">{errors.rewardAmountByn}</p>}
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                      {(t.petForm as { rewardMoneyHint?: string }).rewardMoneyHint ??
+                        'Платформа не участвует в передаче средств: владелец передаёт вознаграждение лично.'}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
+                    {(t.petForm as { rewardPointsHint?: string }).rewardPointsHint ??
+                      'Если владелец подтвердит помощника по ID после закрытия объявления, система начислит очки.'}
+                  </p>
+                )}
+              </div>
+              )}
             </div>
           )}
 

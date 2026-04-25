@@ -11,11 +11,12 @@ from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
 from database import get_db
-from models import Pet, Report, User
-from schemas import PetCreate, PetUpdate, PetResponse, StatisticsResponse
+from models import Pet, PointsTransaction, Report, User
+from schemas import PetCreate, PetUpdate, PetResponse, StatisticsResponse, _is_happy_archive
 from auth import get_current_user, get_current_user_required, require_admin
 from platform_settings import DEFAULT_MAX_PHOTOS, get_bool_setting, get_int_setting
 from integrations.telegram import send_notifications_for_pet
+from instagram_publications import enqueue_autopublish_for_pet
 from time_utils import utc_now
 from upload_utils import save_data_image
 from rate_limit import limiter
@@ -24,14 +25,20 @@ from rate_limit import limiter
 def _moderation_required(db: Session) -> bool:
     try:
         return get_bool_setting(db, "require_moderation", default=True)
-    except Exception:
+    except Exception as e:
+        logging.getLogger(__name__).warning(
+            "require_moderation read failed, default True: %s", e
+        )
         return True
 
 
 def _max_photos(db: Session) -> int:
     try:
         return get_int_setting(db, "max_photos", default=DEFAULT_MAX_PHOTOS)
-    except Exception:
+    except Exception as e:
+        logging.getLogger(__name__).warning(
+            "max_photos read failed, default %s: %s", DEFAULT_MAX_PHOTOS, e
+        )
         return DEFAULT_MAX_PHOTOS
 
 router = APIRouter(prefix="/pets", tags=["pets"])
@@ -60,6 +67,38 @@ def save_base64_photo(data_url: str) -> str:
     return save_data_image(data_url, UPLOADS_DIR)
 
 
+def _normalize_reward(
+    *,
+    db: Session,
+    reward_mode: Optional[str],
+    reward_amount_byn: Optional[int],
+    reward_points: Optional[int],
+) -> tuple[str, Optional[int], int]:
+    reward_enabled = get_bool_setting(db, "ff_reward_enabled", default=True)
+    if not reward_enabled:
+        return "points", None, get_int_setting(db, "reward_default_points", default=50)
+
+    money_enabled = get_bool_setting(db, "ff_reward_money_enabled", default=True)
+    mode = (reward_mode or "points").strip().lower()
+    if mode not in {"points", "money"}:
+        raise HTTPException(status_code=400, detail="reward_mode должен быть points или money")
+    if mode == "money" and not money_enabled:
+        raise HTTPException(status_code=400, detail="Денежные награды временно отключены")
+
+    points_default = get_int_setting(db, "reward_default_points", default=50)
+    points = reward_points if reward_points is not None else points_default
+    if points < 1:
+        raise HTTPException(status_code=400, detail="reward_points должен быть больше 0")
+
+    amount = reward_amount_byn
+    if mode == "money":
+        if amount is None or amount <= 0:
+            raise HTTPException(status_code=400, detail="Укажите сумму вознаграждения в BYN")
+    else:
+        amount = None
+    return mode, amount, points
+
+
 def pet_to_response(p: Pet) -> PetResponse:
     return PetResponse(
         id=p.id,
@@ -84,6 +123,11 @@ def pet_to_response(p: Pet) -> PetResponse:
         moderation_reason=p.moderation_reason,
         moderated_at=p.moderated_at,
         moderated_by=p.moderated_by,
+        reward_mode=p.reward_mode or "points",
+        reward_amount_byn=p.reward_amount_byn,
+        reward_points=p.reward_points or 50,
+        reward_recipient_user_id=p.reward_recipient_user_id,
+        reward_points_awarded_at=p.reward_points_awarded_at,
     )
 
 
@@ -165,8 +209,6 @@ def list_pets(
 
 @router.get("/statistics", response_model=StatisticsResponse)
 def get_statistics(db: Session = Depends(get_db)):
-    from schemas import _is_happy_archive
-
     active_base = (
         Pet.is_archived.is_(False),
         Pet.moderation_status == "approved",
@@ -254,6 +296,12 @@ async def create_pet(
         raise HTTPException(status_code=400, detail="Описание не может быть длиннее 500 символов")
 
     photo_urls = [save_base64_photo(p) for p in data.photos]
+    reward_mode, reward_amount_byn, reward_points = _normalize_reward(
+        db=db,
+        reward_mode=data.reward_mode,
+        reward_amount_byn=data.reward_amount_byn,
+        reward_points=data.reward_points if user.role == "admin" else None,
+    )
 
     skip_moderation = user.role == "admin" or not _moderation_required(db)
     initial_status = "approved" if skip_moderation else "pending"
@@ -277,6 +325,9 @@ async def create_pet(
         author_name=author_name,
         contacts=_contacts_to_dict(data.contacts),
         moderation_status=initial_status,
+        reward_mode=reward_mode,
+        reward_amount_byn=reward_amount_byn,
+        reward_points=reward_points,
     )
     try:
         db.add(pet)
@@ -299,6 +350,10 @@ async def create_pet(
 
     if initial_status == "approved":
         background_tasks.add_task(_send_notifications_bg, pet.id)
+        try:
+            enqueue_autopublish_for_pet(db, pet=pet, initiated_by=user.id)
+        except Exception as e:
+            logging.exception("Instagram autopublish enqueue failed for pet %s: %s", pet.id, e)
 
     return pet_to_response(pet)
 
@@ -337,9 +392,12 @@ async def update_pet(
         "photos", "animal_type", "breed", "colors", "gender",
         "approximate_age", "status", "description", "city",
         "location", "contacts", "is_archived", "archive_reason",
+        "reward_mode", "reward_amount_byn", "reward_points", "reward_helper_code",
     }
     ADMIN_ONLY_FIELDS = {"moderation_status", "moderation_reason"}
     d = data.model_dump(exclude_unset=True)
+    if "reward_points" in d and user.role != "admin":
+        raise HTTPException(status_code=403, detail="Только администратор может изменять количество очков")
     allowed_fields = set(COMMON_FIELDS)
     if user.role == "admin":
         allowed_fields.update(ADMIN_ONLY_FIELDS)
@@ -360,8 +418,66 @@ async def update_pet(
             d["contacts"] = d["contacts"].model_dump()
         elif not isinstance(d["contacts"], dict):
             d["contacts"] = dict(d["contacts"])
+    helper_code = d.pop("reward_helper_code", None)
+    if (
+        "reward_mode" in d
+        or "reward_amount_byn" in d
+        or "reward_points" in d
+    ):
+        reward_mode_input = d.get("reward_mode", pet.reward_mode)
+        reward_amount_input = d.get("reward_amount_byn", pet.reward_amount_byn)
+        reward_points_input = d.get("reward_points", pet.reward_points)
+        reward_mode, reward_amount_byn, reward_points = _normalize_reward(
+            db=db,
+            reward_mode=reward_mode_input,
+            reward_amount_byn=reward_amount_input,
+            reward_points=reward_points_input,
+        )
+        d["reward_mode"] = reward_mode
+        d["reward_amount_byn"] = reward_amount_byn
+        d["reward_points"] = reward_points
+    helper_user = None
+    award_points_now = False
+    if helper_code:
+        if pet.reward_points_awarded_at:
+            raise HTTPException(status_code=400, detail="Очки за это объявление уже начислены")
+        normalized_code = helper_code.strip().upper()
+        helper_user = db.scalar(select(User).where(User.helper_code == normalized_code))
+        if not helper_user:
+            raise HTTPException(status_code=404, detail="Пользователь с таким ID помощника не найден")
+        if helper_user.id == pet.author_id:
+            raise HTTPException(status_code=400, detail="Нельзя начислить очки самому себе")
+        new_archive_reason = d.get("archive_reason", pet.archive_reason)
+        new_archived = d.get("is_archived", pet.is_archived)
+        new_reward_mode = d.get("reward_mode", pet.reward_mode) or "points"
+        if not new_archived or not _is_happy_archive(new_archive_reason):
+            raise HTTPException(
+                status_code=400,
+                detail="Очки можно начислить только при архивировании с успешной причиной",
+            )
+        if new_reward_mode != "points":
+            raise HTTPException(status_code=400, detail="Очки доступны только в режиме награды «очки»")
+        award_points_now = True
     for k, v in d.items():
         setattr(pet, k, v)
+    if award_points_now and helper_user is not None:
+        points = pet.reward_points or 50
+        pet.reward_recipient_user_id = helper_user.id
+        pet.reward_points_awarded_at = utc_now()
+        helper_user.helper_confirmed_count = (helper_user.helper_confirmed_count or 0) + 1
+        helper_user.points_balance = (helper_user.points_balance or 0) + points
+        helper_user.points_earned_total = (helper_user.points_earned_total or 0) + points
+        db.add(
+            PointsTransaction(
+                id=f"ptx-{uuid.uuid4().hex[:16]}",
+                user_id=helper_user.id,
+                pet_id=pet.id,
+                amount=points,
+                kind="helper_reward",
+                note=f"Помощь с объявлением {pet.id}",
+                created_at=utc_now(),
+            )
+        )
     pet.updated_at = utc_now()
     moderation_updated = any(field in d for field in ADMIN_ONLY_FIELDS)
     if moderation_updated:
@@ -386,6 +502,10 @@ async def update_pet(
 
     if old_moderation_status != "approved" and pet.moderation_status == "approved":
         background_tasks.add_task(_send_notifications_bg, pet.id)
+        try:
+            enqueue_autopublish_for_pet(db, pet=pet, initiated_by=user.id)
+        except Exception as e:
+            logging.exception("Instagram autopublish enqueue failed for pet %s: %s", pet.id, e)
 
     return pet_to_response(pet)
 

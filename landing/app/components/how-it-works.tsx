@@ -1,5 +1,13 @@
 import { FileText, Map, Heart } from "lucide-react";
 import { useI18n } from "../../../context/I18nContext";
+import {
+  landingBandMuted,
+  landingContainerWide,
+  landingH2,
+  landingLeadWideCenter,
+  landingSectionHeader,
+  landingSectionY,
+} from "./landing-section-styles";
 
 const stepIcons = [FileText, Map, Heart] as const;
 
@@ -8,35 +16,41 @@ export function HowItWorks() {
   const steps = t.landing.howItWorks.steps;
 
   return (
-    <section id="how-it-works" className="py-20 md:py-32 bg-muted">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-20">
-          <h2 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
-            {t.landing.howItWorks.title}
-          </h2>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            {t.landing.howItWorks.subtitle}
-          </p>
+    <section id="how-it-works" className={`${landingSectionY} ${landingBandMuted}`}>
+      <div className={landingContainerWide}>
+        <div className={landingSectionHeader}>
+          <h2 className={landingH2}>{t.landing.howItWorks.title}</h2>
+          <p className={landingLeadWideCenter}>{t.landing.howItWorks.subtitle}</p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-12">
+        <div className="relative">
+          <div className="grid md:grid-cols-3 gap-4 md:gap-5">
           {steps.map((step, index) => {
             const StepIcon = stepIcons[index];
             return (
-              <div key={index} className="relative text-center md:text-left">
-                <div className="mb-6">
-                  <div className="inline-flex items-center justify-center w-20 h-20 bg-primary rounded-2xl mb-4">
-                    <StepIcon size={36} className="text-primary-foreground" />
+              <div
+                key={index}
+                className="group relative rounded-2xl border border-border bg-card p-5 md:p-6 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
+              >
+                <div className="flex items-center gap-4 mb-4 md:mb-5">
+                  <div className="relative z-10 inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary text-primary-foreground ring-4 ring-primary/10">
+                    <StepIcon size={24} />
                   </div>
                 </div>
-                <div className="text-6xl font-bold text-muted/50 absolute top-0 right-4 md:right-0 -z-0">
-                  {step.number}
+                <h3 className="text-lg md:text-xl font-bold text-foreground mb-2 leading-tight">
+                  {step.title}
+                </h3>
+                <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
+                  {step.desc}
+                </p>
+                <div className="mt-5 flex items-center justify-end gap-2 text-xs font-medium text-primary">
+                  <span>Шаг {index + 1}</span>
+                  <span className="h-px w-8 bg-primary/30" />
                 </div>
-                <h3 className="text-2xl font-bold text-foreground mb-4">{step.title}</h3>
-                <p className="text-muted-foreground text-lg leading-relaxed">{step.desc}</p>
               </div>
             );
           })}
+          </div>
         </div>
       </div>
     </section>

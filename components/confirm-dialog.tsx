@@ -1,5 +1,12 @@
-import { X } from 'lucide-react';
-import { useScrollLock } from './ui/use-scroll-lock';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from './ui/dialog';
+import { Button } from './ui/button';
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -22,9 +29,6 @@ export function ConfirmDialog({
   cancelText = 'Отмена',
   confirmClass = 'bg-primary hover:bg-primary/90 text-primary-foreground',
 }: ConfirmDialogProps) {
-  useScrollLock(open);
-  if (!open) return null;
-
   const handleConfirm = () => {
     onConfirm();
     onOpenChange(false);
@@ -34,45 +38,22 @@ export function ConfirmDialog({
     onOpenChange(false);
   };
 
-  const handleBackdropClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      handleCancel();
-    }
-  };
-
   return (
-    <div
-      className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[70]"
-      onClick={handleBackdropClick}
-    >
-      <div className="bg-card rounded-lg max-w-md w-full p-6 shadow-xl">
-        <div className="flex items-start justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h2>
-          <button
-            onClick={handleCancel}
-            className="p-1 hover:bg-accent dark:hover:bg-accent rounded transition-colors"
-          >
-            <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-          </button>
-        </div>
-
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">{description}</p>
-
-        <div className="flex items-center justify-end gap-3">
-          <button
-            onClick={handleCancel}
-            className="px-4 py-3 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-accent dark:hover:bg-accent transition-colors"
-          >
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md rounded-2xl" onEscapeKeyDown={handleCancel}>
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={handleCancel}>
             {cancelText}
-          </button>
-          <button
-            onClick={handleConfirm}
-            className={`px-4 py-3 rounded-lg transition-colors ${confirmClass}`}
-          >
+          </Button>
+          <Button onClick={handleConfirm} className={confirmClass}>
             {confirmText}
-          </button>
-        </div>
-      </div>
-    </div>
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

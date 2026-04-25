@@ -11,10 +11,12 @@ import './styles/globals.css';
 import './landing/styles/fonts.css'
 import { MobileBottomNav } from './components/layout/MobileBottomNav'
 import { SeoRouteSync } from './components/SeoRouteSync'
+import { PageLoader } from './components/ui/page-loader';
+import { ScrollToTopOnRouteChange } from './components/ScrollToTopOnRouteChange';
 
 const LandingPage = lazy(() => import('./pages/LandingPage.tsx'));
 const SearchPage = lazy(() => import('./pages/SearchPage.tsx'));
-const ProfilePage = lazy(() => import('./components/profile-page.tsx'));
+const ProfilePage = lazy(() => import('./pages/ProfilePage.tsx'));
 const PetDetailPage = lazy(() => import('./pages/PetDetailPage.tsx'));
 const UserProfilePage = lazy(() => import('./pages/UserProfilePage.tsx'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage.tsx'));
@@ -27,9 +29,7 @@ const MyPetsPageRoute = lazy(() => import('./pages/MyPetsPage.tsx'));
 const MyPetProfilePage = lazy(() => import('./pages/MyPetProfilePage.tsx'));
 const AddEditPetPageRoute = lazy(() => import('./pages/AddEditPetPage.tsx'));
 const PublicPetProfilePage = lazy(() => import('./pages/PublicPetProfilePage.tsx'));
-const TermsPage = lazy(() =>
-  import('./components/terms-page').then((module) => ({ default: module.TermsPage }))
-);
+const TermsPage = lazy(() => import('./pages/TermsPage.tsx'));
 const BlogListPage = lazy(() => import('./pages/BlogListPage.tsx'));
 const BlogPostPage = lazy(() => import('./pages/BlogPostPage.tsx'));
 
@@ -59,11 +59,6 @@ function MetrikaTracker() {
     }
   }, [location.pathname, location.search]);
   return null;
-}
-
-function TermsRoute() {
-  const navigate = useNavigate();
-  return <TermsPage onBack={() => navigate(-1)} />;
 }
 
 function RequireAuth({ children }: { children: React.ReactElement }) {
@@ -110,11 +105,7 @@ function AuthModalGlobal() {
 }
 
 function RouteLoader() {
-  return (
-    <div className="min-h-screen bg-background flex items-center justify-center text-sm text-muted-foreground">
-      Загрузка...
-    </div>
-  );
+  return <PageLoader />;
 }
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
@@ -123,6 +114,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <I18nProvider>
         <BrowserRouter>
           <SeoRouteSync />
+          <ScrollToTopOnRouteChange />
           <MetrikaTracker />
           <GlobalToaster />
           <AuthProvider>
@@ -145,7 +137,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                   <Route path="/edit/:id" element={<RequireAuth><EditAdPage /></RequireAuth>} />
                   <Route path="/settings" element={<RequireAuth><SettingsPageRoute /></RequireAuth>} />
                   <Route path="/admin" element={<RequireAdmin><AdminPage /></RequireAdmin>} />
-                  <Route path="/terms" element={<TermsRoute />} />
+                  <Route path="/terms" element={<TermsPage />} />
                   <Route path="/blog" element={<BlogListPage />} />
                   <Route path="/blog/:slug" element={<BlogPostPage />} />
                   <Route path="*" element={<NotFoundPage />} />

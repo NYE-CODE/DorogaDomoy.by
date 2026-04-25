@@ -74,6 +74,9 @@ export default function ProfilePage() {
   const [timeLeft, setTimeLeft] = useState(0);
   const [isLinking, setIsLinking] = useState(false);
   const [codeCopied, setCodeCopied] = useState(false);
+  const [helperCopied, setHelperCopied] = useState(false);
+  const codeCopiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const helperCopiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -114,7 +117,9 @@ export default function ProfilePage() {
       const toSave: { lat: number; lng: number; city?: string } = { lat: loc.lat, lng: loc.lng };
       if (city) toSave.city = city;
       localStorage.setItem('pet_finder_user_location', JSON.stringify(toSave));
-    } catch {}
+    } catch (err: unknown) {
+      console.warn('[ProfilePage] saveUserLocation storage failed', err);
+    }
   }, []);
 
   const handleCityModalSelect = useCallback((city: City | null) => {
@@ -148,7 +153,9 @@ export default function ProfilePage() {
             Number.isFinite(r) ? Math.min(10, Math.max(1, r)) : 5,
           );
         })
-        .catch(() => {})
+        .catch((err: unknown) => {
+          console.warn('[ProfilePage] notification settings load failed', err);
+        })
         .finally(() => setNotifLoading(false));
     }
   }, [isTelegramLinked]);
@@ -162,6 +169,11 @@ export default function ProfilePage() {
 
   useEffect(() => () => cleanupLinking(), [cleanupLinking]);
 
+  useEffect(() => () => {
+    if (codeCopiedTimerRef.current) clearTimeout(codeCopiedTimerRef.current);
+    if (helperCopiedTimerRef.current) clearTimeout(helperCopiedTimerRef.current);
+  }, []);
+
   // --- Handlers ---
 
   const handleSaveProfile = async (e: React.FormEvent) => {
@@ -174,7 +186,8 @@ export default function ProfilePage() {
     try {
       await updateProfile(name, email);
       toast.success(t.profile.profileUpdated);
-    } catch {
+    } catch (err: unknown) {
+      console.warn('[ProfilePage] updateProfile failed', err);
       toast.error(t.profile.profileUpdateError);
     } finally {
       setIsSavingProfile(false);
@@ -215,7 +228,10 @@ export default function ProfilePage() {
         viber: viber.trim() ? (formatBelarusPhoneStorage(viber) ?? undefined) : undefined,
       });
       toast.success(t.profile.contactsUpdated);
-    } catch { toast.error(t.common.error); }
+    } catch (err: unknown) {
+      console.warn('[ProfilePage] updateContacts failed', err);
+      toast.error(t.common.error);
+    }
     finally { setIsSavingContacts(false); }
   };
 
@@ -242,7 +258,8 @@ export default function ProfilePage() {
         viber: viber.trim() ? (formatBelarusPhoneStorage(viber) ?? undefined) : undefined,
       });
       toast.success(t.profile.profileUpdated);
-    } catch {
+    } catch (err: unknown) {
+      console.warn('[ProfilePage] handleSavePersonal failed', err);
       toast.error(t.profile.profileUpdateError);
     } finally {
       setIsSavingProfile(false);
@@ -281,7 +298,9 @@ export default function ProfilePage() {
             await refreshUser();
             toast.success(t.profile.telegramLinked);
           }
-        } catch {}
+        } catch (err: unknown) {
+          console.warn('[ProfilePage] telegram link poll failed', err);
+        }
       }, 3000);
     } catch (err) {
       if (import.meta.env.DEV && err instanceof Error) console.warn('[telegram requestLink]', err);
@@ -325,7 +344,27 @@ export default function ProfilePage() {
     if (!linkCode) return;
     navigator.clipboard.writeText(`/link ${linkCode}`);
     setCodeCopied(true);
-    setTimeout(() => setCodeCopied(false), 2000);
+    if (codeCopiedTimerRef.current) clearTimeout(codeCopiedTimerRef.current);
+    codeCopiedTimerRef.current = setTimeout(() => {
+      codeCopiedTimerRef.current = null;
+      setCodeCopied(false);
+    }, 2000);
+  };
+
+  const handleCopyHelperCode = async () => {
+    const code = user?.helperCode?.trim();
+    if (!code) return;
+    try {
+      await navigator.clipboard.writeText(code);
+      setHelperCopied(true);
+      if (helperCopiedTimerRef.current) clearTimeout(helperCopiedTimerRef.current);
+      helperCopiedTimerRef.current = setTimeout(() => {
+        helperCopiedTimerRef.current = null;
+        setHelperCopied(false);
+      }, 2000);
+    } catch {
+      toast.error(t.common.error);
+    }
   };
 
   const handleToggleNotifications = async (enabled: boolean) => {
@@ -448,6 +487,39 @@ export default function ProfilePage() {
                         {(t.profile as { uploadPhoto?: string }).uploadPhoto ?? 'Загрузить фото'}
                         <input id="avatar-upload-btn" type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
                       </label>
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-4 bg-gray-50/60 dark:bg-gray-800/40">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                      <div>
+                        <div className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                          {(t.profile as { helperIdLabel?: string }).helperIdLabel ?? 'ID помощника'}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          {(t.profile as { helperIdHint?: string }).helperIdHint ??
+                            'Передайте этот ID владельцу объявления, чтобы он мог начислить вам очки за подтвержденную помощь.'}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => { void handleCopyHelperCode(); }}
+                        className="inline-flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-white dark:hover:bg-gray-700 transition-colors"
+                        disabled={!user?.helperCode}
+                      >
+                        {helperCopied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4 text-gray-500" />}
+                        <span className="font-mono text-sm">{user?.helperCode ?? '—'}</span>
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 mt-4">
+                      <div className="rounded-lg bg-white dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 p-3">
+                        <div className="text-xs text-gray-500 dark:text-gray-400">Подтверждено случаев помощи</div>
+                        <div className="text-xl font-bold text-gray-900 dark:text-white">{user?.helperConfirmedCount ?? 0}</div>
+                      </div>
+                      <div className="rounded-lg bg-white dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 p-3">
+                        <div className="text-xs text-gray-500 dark:text-gray-400">Баланс очков</div>
+                        <div className="text-xl font-bold text-gray-900 dark:text-white">{user?.pointsBalance ?? 0}</div>
+                      </div>
                     </div>
                   </div>
 

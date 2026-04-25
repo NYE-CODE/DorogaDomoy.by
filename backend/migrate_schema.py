@@ -6,6 +6,7 @@
 """
 import sqlite3
 import sys
+import uuid
 from pathlib import Path
 
 from database import _resolve_db_url
@@ -29,6 +30,18 @@ USER_COLUMNS_TO_ADD = [
     ("telegram_id", "BIGINT"),
     ("telegram_username", "VARCHAR"),
     ("telegram_linked_at", "DATETIME"),
+    ("helper_code", "VARCHAR"),
+    ("helper_confirmed_count", "INTEGER DEFAULT 0"),
+    ("points_balance", "INTEGER DEFAULT 0"),
+    ("points_earned_total", "INTEGER DEFAULT 0"),
+]
+
+PET_BOUNTY_COLUMNS_TO_ADD = [
+    ("reward_mode", "VARCHAR DEFAULT 'points'"),
+    ("reward_amount_byn", "INTEGER"),
+    ("reward_points", "INTEGER DEFAULT 50"),
+    ("reward_recipient_user_id", "VARCHAR"),
+    ("reward_points_awarded_at", "DATETIME"),
 ]
 
 PROFILE_PET_COLUMNS_TO_ADD = [
@@ -47,6 +60,16 @@ PROFILE_PET_COLUMNS_TO_ADD = [
     ("photos", "JSON DEFAULT '[]'"),
     ("created_at", "DATETIME"),
     ("updated_at", "DATETIME"),
+]
+
+INSTAGRAM_PUBLICATION_COLUMNS_TO_ADD = [
+    ("source", "VARCHAR DEFAULT 'auto'"),
+    ("requested_by_user_id", "VARCHAR REFERENCES users(id) ON DELETE SET NULL"),
+    ("requested_at", "DATETIME"),
+]
+
+PARTNER_COLUMNS_TO_ADD = [
+    ("is_medallion_partner", "INTEGER DEFAULT 0"),
 ]
 
 NEW_TABLES = {
@@ -114,7 +137,8 @@ NEW_TABLES = {
             id VARCHAR PRIMARY KEY,
             logo_url VARCHAR,
             name VARCHAR NOT NULL,
-            link VARCHAR
+            link VARCHAR,
+            is_medallion_partner INTEGER DEFAULT 0
         )
     """,
     "faq_items": """
@@ -193,6 +217,62 @@ NEW_TABLES = {
             created_at DATETIME
         )
     """,
+    "instagram_accounts": """
+        CREATE TABLE instagram_accounts (
+            id VARCHAR PRIMARY KEY,
+            name VARCHAR NOT NULL,
+            instagram_business_id VARCHAR NOT NULL,
+            facebook_page_id VARCHAR,
+            access_token TEXT,
+            is_active INTEGER DEFAULT 1,
+            created_at DATETIME,
+            updated_at DATETIME
+        )
+    """,
+    "instagram_region_routes": """
+        CREATE TABLE instagram_region_routes (
+            id VARCHAR PRIMARY KEY,
+            region_key VARCHAR NOT NULL UNIQUE,
+            account_id VARCHAR NOT NULL REFERENCES instagram_accounts(id) ON DELETE CASCADE,
+            is_fallback INTEGER DEFAULT 0,
+            created_at DATETIME,
+            updated_at DATETIME
+        )
+    """,
+    "instagram_publications": """
+        CREATE TABLE instagram_publications (
+            id VARCHAR PRIMARY KEY,
+            pet_id VARCHAR NOT NULL REFERENCES pets(id) ON DELETE CASCADE,
+            account_id VARCHAR REFERENCES instagram_accounts(id) ON DELETE SET NULL,
+            initiated_by VARCHAR REFERENCES users(id) ON DELETE SET NULL,
+            region_key VARCHAR,
+            mode VARCHAR DEFAULT 'auto',
+            source VARCHAR DEFAULT 'auto',
+            requested_by_user_id VARCHAR REFERENCES users(id) ON DELETE SET NULL,
+            requested_at DATETIME,
+            format VARCHAR DEFAULT 'story',
+            status VARCHAR DEFAULT 'pending',
+            attempts INTEGER DEFAULT 0,
+            last_error TEXT,
+            external_media_id VARCHAR,
+            idempotency_key VARCHAR NOT NULL UNIQUE,
+            payload JSON DEFAULT '{}',
+            created_at DATETIME,
+            updated_at DATETIME,
+            published_at DATETIME
+        )
+    """,
+    "points_transactions": """
+        CREATE TABLE points_transactions (
+            id VARCHAR PRIMARY KEY,
+            user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            pet_id VARCHAR REFERENCES pets(id) ON DELETE SET NULL,
+            amount INTEGER NOT NULL,
+            kind VARCHAR NOT NULL,
+            note TEXT,
+            created_at DATETIME
+        )
+    """,
 }
 
 
@@ -211,9 +291,11 @@ def resolve_sqlite_db_path() -> Path:
 def migrate(conn):
     changes = []
     for table, col_defs in [
-        ("pets", PET_COLUMNS_TO_ADD),
+        ("pets", PET_COLUMNS_TO_ADD + PET_BOUNTY_COLUMNS_TO_ADD),
         ("users", USER_COLUMNS_TO_ADD),
         ("profile_pets", PROFILE_PET_COLUMNS_TO_ADD),
+        ("instagram_publications", INSTAGRAM_PUBLICATION_COLUMNS_TO_ADD),
+        ("partners", PARTNER_COLUMNS_TO_ADD),
     ]:
         try:
             existing = get_existing_columns(conn, table)
@@ -312,6 +394,16 @@ PERFORMANCE_INDEXES = [
         "CREATE INDEX IF NOT EXISTS ix_sightings_pet_ip_created "
         "ON sightings (pet_id, ip_hash, created_at)"
     ),
+    "CREATE UNIQUE INDEX IF NOT EXISTS ix_users_helper_code ON users (helper_code)",
+    "CREATE INDEX IF NOT EXISTS ix_points_transactions_user_id ON points_transactions (user_id)",
+    "CREATE INDEX IF NOT EXISTS ix_instagram_accounts_business_id ON instagram_accounts (instagram_business_id)",
+    "CREATE INDEX IF NOT EXISTS ix_instagram_routes_account_id ON instagram_region_routes (account_id)",
+    "CREATE INDEX IF NOT EXISTS ix_instagram_publications_status ON instagram_publications (status)",
+    "CREATE INDEX IF NOT EXISTS ix_instagram_publications_pet_id ON instagram_publications (pet_id)",
+    "CREATE INDEX IF NOT EXISTS ix_instagram_publications_account_id ON instagram_publications (account_id)",
+    "CREATE INDEX IF NOT EXISTS ix_instagram_publications_region_key ON instagram_publications (region_key)",
+    "CREATE INDEX IF NOT EXISTS ix_instagram_publications_source_requested ON instagram_publications (source, requested_by_user_id, created_at)",
+    "CREATE UNIQUE INDEX IF NOT EXISTS ix_instagram_publications_idempotency_key ON instagram_publications (idempotency_key)",
 ]
 
 
@@ -322,6 +414,19 @@ def ensure_performance_indexes(conn):
             conn.execute(ddl)
         except sqlite3.OperationalError as e:
             print(f"Warning: index skipped: {e}")
+
+
+def backfill_helper_codes(conn):
+    cur = conn.execute(
+        "SELECT id FROM users WHERE helper_code IS NULL OR TRIM(helper_code) = ''"
+    )
+    rows = cur.fetchall()
+    for (uid,) in rows:
+        code = f"DD-{uuid.uuid4().hex[:8].upper()}"
+        conn.execute(
+            "UPDATE users SET helper_code = ? WHERE id = ?",
+            (code, uid),
+        )
 
 
 if __name__ == "__main__":
@@ -337,6 +442,7 @@ if __name__ == "__main__":
         seed_blog_categories(conn)
         ensure_platform_settings(conn)
         ensure_performance_indexes(conn)
+        backfill_helper_codes(conn)
         conn.commit()
         if changes:
             print("Added columns:", ", ".join(changes))

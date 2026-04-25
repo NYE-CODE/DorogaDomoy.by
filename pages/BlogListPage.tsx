@@ -112,26 +112,32 @@ export default function BlogListPage() {
                           <img src={img} alt="" className="w-full h-full object-cover group-hover:opacity-95 transition-opacity" />
                         </div>
                       ) : null}
-                      <div className="flex-1 p-6 flex flex-col justify-center">
-                        <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground mb-2">
-                          <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
-                            {post.category_title || categoryLabel(post.category, t)}
-                          </span>
-                          <span className="inline-flex items-center gap-1">
-                            <Calendar className="w-3.5 h-3.5" />
-                            {date}
-                          </span>
-                          <span>
-                            {post.reading_minutes} {b.readingMin}
-                          </span>
+                      <div
+                        className={`flex flex-1 flex-col p-6 ${img ? 'sm:min-h-[200px]' : ''}`}
+                      >
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground mb-2">
+                            <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                              {post.category_title || categoryLabel(post.category, t)}
+                            </span>
+                            <span className="inline-flex items-center gap-1">
+                              <Calendar className="w-3.5 h-3.5" />
+                              {date}
+                            </span>
+                            <span>
+                              {post.reading_minutes} {b.readingMin}
+                            </span>
+                          </div>
+                          <h2 className="text-xl font-semibold text-foreground group-hover:text-primary transition-colors">
+                            {post.title}
+                          </h2>
+                          {post.excerpt ? (
+                            <p className="mt-2 text-muted-foreground line-clamp-2 text-sm sm:text-base">{post.excerpt}</p>
+                          ) : null}
                         </div>
-                        <h2 className="text-xl font-semibold text-foreground group-hover:text-primary transition-colors">
-                          {post.title}
-                        </h2>
-                        {post.excerpt ? (
-                          <p className="mt-2 text-muted-foreground line-clamp-2 text-sm sm:text-base">{post.excerpt}</p>
-                        ) : null}
-                        <span className="mt-4 inline-flex items-center gap-1 text-primary font-medium text-sm">
+                        <span
+                          className={`inline-flex shrink-0 items-center gap-1 self-end text-primary font-medium text-sm ${img ? 'mt-auto pt-4' : 'mt-4'}`}
+                        >
                           {b.readArticle}
                           <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                         </span>

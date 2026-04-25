@@ -4,6 +4,13 @@ import { mediaApi } from "../../../api/client";
 import { useI18n } from "../../../context/I18nContext";
 import type { MediaArticle } from "../../../api/client";
 import { API_BASE } from "../../../api/client";
+import {
+  landingContainerWide,
+  landingH2,
+  landingLeadCenter,
+  landingSectionHeader,
+  landingSectionY,
+} from "./landing-section-styles";
 
 function formatMediaDate(dateStr: string): string {
   const d = new Date(dateStr);
@@ -48,37 +55,40 @@ export function Media() {
 
   if (loading) {
     return (
-      <section className="py-20 md:py-32 bg-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-20">
-            <h2 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
-              {t.landing.media.title}
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              {t.landing.media.loading}
-            </p>
+      <section id="media" className={`${landingSectionY} bg-background scroll-mt-24`}>
+        <div className={landingContainerWide}>
+          <div className={landingSectionHeader}>
+            <h2 className={landingH2}>{t.landing.media.title}</h2>
+            <p className={landingLeadCenter}>{t.landing.media.loading}</p>
           </div>
         </div>
       </section>
     );
   }
 
-  if (articles.length === 0) return null;
+  if (articles.length === 0) {
+    return (
+      <section id="media" className={`${landingSectionY} bg-background scroll-mt-24`}>
+        <div className={landingContainerWide}>
+          <div className={landingSectionHeader}>
+            <h2 className={landingH2}>{t.landing.media.title}</h2>
+            <p className={landingLeadCenter}>{t.landing.media.empty}</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
-    <section className="py-20 md:py-32 bg-background">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-20">
-          <h2 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
-            {t.landing.media.title}
-          </h2>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            {t.landing.media.subtitle}
-          </p>
+    <section id="media" className={`${landingSectionY} bg-background scroll-mt-24`}>
+      <div className={landingContainerWide}>
+        <div className={landingSectionHeader}>
+          <h2 className={landingH2}>{t.landing.media.title}</h2>
+          <p className={landingLeadCenter}>{t.landing.media.subtitle}</p>
         </div>
 
         <div className="relative">
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid gap-6 md:grid-cols-3 md:gap-8">
             {visibleArticles.map((article) => {
               const logoUrl = resolveLogoUrl(article.logo_url);
               const content = (
@@ -125,7 +135,7 @@ export function Media() {
                     href={article.link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block bg-card border-2 border-border rounded-2xl p-8 hover:border-primary transition-all duration-300"
+                    className="block rounded-2xl border border-border bg-card p-6 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md md:p-7"
                   >
                     {content}
                   </a>
@@ -135,7 +145,7 @@ export function Media() {
               return (
                 <div
                   key={article.id}
-                  className="bg-card border-2 border-border rounded-2xl p-8 hover:border-primary transition-all duration-300"
+                  className="rounded-2xl border border-border bg-card p-6 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md md:p-7"
                 >
                   {content}
                 </div>
@@ -144,11 +154,12 @@ export function Media() {
           </div>
 
           {articles.length > itemsPerPage && (
-            <div className="flex justify-center items-center gap-4 mt-10">
+            <div className="mt-10 flex items-center justify-center gap-4">
               <button
+                type="button"
                 onClick={handlePrev}
                 disabled={currentIndex === 0}
-                className="bg-card border-2 border-border text-muted-foreground p-3 rounded-lg hover:border-primary hover:text-primary transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-border disabled:hover:text-muted-foreground"
+                className="rounded-lg border border-border bg-card p-3 text-muted-foreground transition-all hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:border-border disabled:hover:text-muted-foreground"
               >
                 <ChevronLeft size={24} />
               </button>
@@ -158,9 +169,10 @@ export function Media() {
               </span>
 
               <button
+                type="button"
                 onClick={handleNext}
                 disabled={currentIndex === maxIndex}
-                className="bg-card border-2 border-border text-muted-foreground p-3 rounded-lg hover:border-primary hover:text-primary transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-border disabled:hover:text-muted-foreground"
+                className="rounded-lg border border-border bg-card p-3 text-muted-foreground transition-all hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:border-border disabled:hover:text-muted-foreground"
               >
                 <ChevronRight size={24} />
               </button>

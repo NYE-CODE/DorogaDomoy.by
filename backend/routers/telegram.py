@@ -141,4 +141,8 @@ async def telegram_webhook(
         await process_telegram_update(update)
     except Exception as e:
         logger.exception("Error processing telegram webhook: %s", e)
+        raise HTTPException(
+            status_code=500,
+            detail="Ошибка обработки обновления Telegram",
+        ) from e
     return {"ok": True}

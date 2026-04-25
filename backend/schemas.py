@@ -59,6 +59,10 @@ class UserResponse(UserBase):
     id: str
     avatar: Optional[str] = None
     role: str = "user"
+    helper_code: Optional[str] = None
+    helper_confirmed_count: int = 0
+    points_balance: int = 0
+    points_earned_total: int = 0
     is_blocked: Optional[bool] = False
     blocked_reason: Optional[str] = None
     telegram_id: Optional[int] = None
@@ -76,6 +80,27 @@ class UserUpdate(BaseModel):
     role: Optional[str] = None
     is_blocked: Optional[bool] = None
     blocked_reason: Optional[str] = None
+
+
+class HelperLookupResponse(BaseModel):
+    id: str
+    name: str
+    avatar: Optional[str] = None
+    helper_code: str
+    helper_confirmed_count: int = 0
+
+
+class PointsTransactionResponse(BaseModel):
+    id: str
+    user_id: str
+    pet_id: Optional[str] = None
+    amount: int
+    kind: str
+    note: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
 
 
 # --- Pet ---
@@ -103,6 +128,9 @@ class PetBase(BaseModel):
     city: str
     location: PetLocation
     contacts: UserContacts = Field(default_factory=UserContacts)
+    reward_mode: str = "points"  # points | money
+    reward_amount_byn: Optional[int] = Field(None, ge=1, le=1_000_000)
+    reward_points: int = Field(50, ge=1)
 
     @field_validator("breed", mode="before")
     @classmethod
@@ -131,6 +159,10 @@ class PetUpdate(BaseModel):
     archive_reason: Optional[str] = None
     moderation_status: Optional[str] = None
     moderation_reason: Optional[str] = None
+    reward_mode: Optional[str] = None
+    reward_amount_byn: Optional[int] = Field(None, ge=1, le=1_000_000)
+    reward_points: Optional[int] = Field(None, ge=1)
+    reward_helper_code: Optional[str] = None
 
     @field_validator("breed", mode="before")
     @classmethod
@@ -150,6 +182,8 @@ class PetResponse(PetBase):
     moderation_reason: Optional[str] = None
     moderated_at: Optional[datetime] = None
     moderated_by: Optional[str] = None
+    reward_recipient_user_id: Optional[str] = None
+    reward_points_awarded_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
@@ -310,12 +344,14 @@ class PartnerCreate(BaseModel):
     logo_url: Optional[str] = None
     name: str = Field(..., min_length=1, max_length=100)
     link: Optional[str] = None
+    is_medallion_partner: bool = False
 
 
 class PartnerUpdate(BaseModel):
     logo_url: Optional[str] = None
     name: Optional[str] = Field(None, min_length=1, max_length=100)
     link: Optional[str] = None
+    is_medallion_partner: Optional[bool] = None
 
 
 class PartnerResponse(BaseModel):
@@ -323,6 +359,7 @@ class PartnerResponse(BaseModel):
     logo_url: Optional[str] = None
     name: str
     link: Optional[str] = None
+    is_medallion_partner: bool = False
 
     class Config:
         from_attributes = True
@@ -575,3 +612,107 @@ class BlogPostAdminResponse(BlogPostPublicResponse):
     author_id: Optional[str] = None
     telegram_message_id: Optional[int] = None
     telegram_channel_username: Optional[str] = None
+
+
+# --- Instagram Publications ---
+class InstagramAccountCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=120)
+    instagram_business_id: str = Field(..., min_length=1, max_length=120)
+    facebook_page_id: Optional[str] = Field(None, max_length=120)
+    access_token: Optional[str] = Field(None, max_length=4000)
+    is_active: bool = True
+
+
+class InstagramAccountUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=120)
+    instagram_business_id: Optional[str] = Field(None, min_length=1, max_length=120)
+    facebook_page_id: Optional[str] = Field(None, max_length=120)
+    access_token: Optional[str] = Field(None, max_length=4000)
+    is_active: Optional[bool] = None
+
+
+class InstagramAccountResponse(BaseModel):
+    id: str
+    name: str
+    instagram_business_id: str
+    facebook_page_id: Optional[str] = None
+    has_access_token: bool = False
+    is_active: bool = True
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class InstagramRegionRouteCreate(BaseModel):
+    region_key: str = Field(..., min_length=1, max_length=120)
+    account_id: str = Field(..., min_length=1, max_length=120)
+    is_fallback: bool = False
+
+
+class InstagramRegionRouteUpdate(BaseModel):
+    account_id: Optional[str] = Field(None, min_length=1, max_length=120)
+    is_fallback: Optional[bool] = None
+
+
+class InstagramRegionRouteResponse(BaseModel):
+    id: str
+    region_key: str
+    account_id: str
+    account_name: str
+    is_fallback: bool = False
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class InstagramPublicationCreateManual(BaseModel):
+    pet_id: str = Field(..., min_length=1, max_length=120)
+    format: str = Field(default="story")
+
+    @field_validator("format")
+    @classmethod
+    def format_ok(cls, v):
+        if v != "story":
+            raise ValueError("format: only story")
+        return v
+
+
+class InstagramPublicationResponse(BaseModel):
+    id: str
+    pet_id: str
+    account_id: Optional[str] = None
+    account_name: Optional[str] = None
+    initiated_by: Optional[str] = None
+    region_key: Optional[str] = None
+    mode: str
+    source: str = "auto"
+    requested_by_user_id: Optional[str] = None
+    requested_at: Optional[datetime] = None
+    format: str
+    status: str
+    attempts: int
+    last_error: Optional[str] = None
+    external_media_id: Optional[str] = None
+    idempotency_key: str
+    payload: dict = Field(default_factory=dict)
+    created_at: datetime
+    updated_at: datetime
+    published_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class InstagramBoostCreate(BaseModel):
+    pet_id: str = Field(..., min_length=1, max_length=120)
+
+
+class InstagramBoostEligibilityResponse(BaseModel):
+    eligible: bool
+    reason: str
+    next_available_at: Optional[datetime] = None
+    pet_age_days: Optional[int] = None

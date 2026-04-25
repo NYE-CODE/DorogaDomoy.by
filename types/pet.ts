@@ -44,4 +44,9 @@ export interface Pet {
   moderationReason?: string;
   moderatedAt?: Date;
   moderatedBy?: string;
+  rewardMode?: 'points' | 'money';
+  rewardAmountByn?: number;
+  rewardPoints?: number;
+  rewardRecipientUserId?: string;
+  rewardPointsAwardedAt?: Date;
 }

@@ -4,6 +4,8 @@ import { Pet } from '../types/pet';
 import { statusColors, formatDate, formatRelativeTime } from '../utils/pet-helpers';
 import { useAuth } from '../context/AuthContext';
 import { useI18n } from '../context/I18nContext';
+import { RewardBadge, getRewardBadgeMeta } from './reward-badge';
+import { cn } from './ui/utils';
 
 interface PetCardProps {
   pet: Pet;
@@ -123,41 +125,71 @@ export function PetCard({ pet, onClick, compact = false, onEdit, onDelete, sight
   if (compact) {
     const photoUrl = pet.photos[0] || 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&h=400&fit=crop';
     const colorStr = pet.colors.length ? pet.colors.map(c => t.pet.color[c as keyof typeof t.pet.color]).join(', ') : '—';
-    const breedStr = pet.breed || 'Дворовый';
+    const breedStr = pet.breed?.trim() || t.landing.announcements.breedDefault;
+    const isSearching = pet.status === 'searching';
+
     return (
       <div
-        className="bg-white dark:bg-card rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+        role="button"
+        tabIndex={0}
         onClick={onClick}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onClick?.();
+          }
+        }}
+        className={cn(
+          'group flex cursor-pointer overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all duration-300',
+          'hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+        )}
       >
-        <div className="flex gap-3 p-3">
+        <div
+          className={cn(
+            'relative isolate min-h-[100px] shrink-0 self-stretch overflow-hidden bg-muted',
+            'w-[104px] sm:w-[118px]',
+            'rounded-l-[14px] sm:rounded-l-2xl',
+          )}
+        >
           <img
             src={photoUrl}
-            alt={t.pet.animalType[pet.animalType]}
-            className="w-20 h-20 rounded-lg object-cover flex-shrink-0"
+            alt=""
+            loading="lazy"
+            decoding="async"
+            className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-[1.03]"
           />
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-2 mb-1">
-              <h3 className="font-bold text-black dark:text-white truncate">
-                {t.pet.animalType[pet.animalType]}
-              </h3>
-              <span className={`px-2 py-1 rounded-full text-xs font-bold flex-shrink-0 ${
-                pet.status === 'searching'
-                  ? 'bg-[#FF9800] text-white'
-                  : 'bg-[#FDB913] text-black'
-              }`}>
-                {t.pet.status[pet.status]}
-              </span>
+          <div className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-black/35 via-transparent to-transparent" />
+          <span
+            className={cn(
+              'absolute left-2 top-2 z-[2] inline-flex max-w-[calc(100%-1rem)] truncate rounded-full px-2 py-0.5 text-[10px] font-semibold shadow-sm sm:text-[11px]',
+              isSearching ? 'bg-secondary text-secondary-foreground' : 'bg-primary text-primary-foreground',
+            )}
+          >
+            {t.pet.status[pet.status]}
+          </span>
+        </div>
+
+        <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5 px-3 py-2.5 sm:px-4 sm:py-3">
+          <h3 className="line-clamp-1 text-[15px] font-semibold leading-tight text-foreground sm:text-base">
+            {t.pet.animalType[pet.animalType]} <span className="font-medium text-muted-foreground">·</span>{' '}
+            <span className="font-medium">{breedStr}</span>
+          </h3>
+          {getRewardBadgeMeta(pet) ? (
+            <div className="min-w-0 w-full">
+              <RewardBadge pet={pet} compact compactWrap />
             </div>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{breedStr}</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{colorStr}</p>
-            <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400 text-xs mb-1">
-              <MapPin size={12} />
+          ) : null}
+          <p className="line-clamp-1 text-xs text-muted-foreground sm:text-sm">{colorStr}</p>
+          <div className="mt-1 flex flex-wrap gap-1.5">
+            <span className="inline-flex max-w-full items-center gap-1 rounded-md bg-muted/80 px-2 py-0.5 text-[11px] text-muted-foreground">
+              <MapPin size={12} className="shrink-0 opacity-80" aria-hidden />
               <span className="truncate">{pet.city}</span>
-            </div>
-            <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400 text-xs">
-              <Clock size={12} />
-              <span>{formatRelativeTime(pet.publishedAt)}</span>
-            </div>
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-md bg-muted/80 px-2 py-0.5 text-[11px] text-muted-foreground">
+              <Clock size={12} className="shrink-0 opacity-80" aria-hidden />
+              {formatRelativeTime(pet.publishedAt)}
+            </span>
           </div>
         </div>
       </div>
@@ -223,12 +255,15 @@ export function PetCard({ pet, onClick, compact = false, onEdit, onDelete, sight
             <h3 className="font-semibold text-lg text-gray-900 dark:text-white">
               {t.pet.animalType[pet.animalType]} {pet.breed && `· ${pet.breed}`}
             </h3>
-            {sightingCount != null && sightingCount > 0 && pet.status === 'searching' && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 rounded-md text-xs font-medium shrink-0">
-                <Eye className="w-3.5 h-3.5" />
-                {sightingCount}
-              </span>
-            )}
+            <div className="flex items-center gap-2 shrink-0">
+              <RewardBadge pet={pet} />
+              {sightingCount != null && sightingCount > 0 && pet.status === 'searching' && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 rounded-md text-xs font-medium">
+                  <Eye className="w-3.5 h-3.5" />
+                  {sightingCount}
+                </span>
+              )}
+            </div>
           </div>
           
           <div className="flex flex-wrap gap-2 text-sm text-gray-600 dark:text-gray-400 mb-2">

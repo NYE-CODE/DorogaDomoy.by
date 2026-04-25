@@ -7,6 +7,10 @@ export interface User {
   name: string;
   avatar?: string;
   role: 'user' | 'volunteer' | 'shelter' | 'admin';
+  helperCode?: string | null;
+  helperConfirmedCount?: number;
+  pointsBalance?: number;
+  pointsEarnedTotal?: number;
   contacts: {
     phone?: string;
     telegram?: string;

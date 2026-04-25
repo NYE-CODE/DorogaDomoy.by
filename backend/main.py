@@ -8,16 +8,18 @@ from pathlib import Path
 from dotenv import load_dotenv
 load_dotenv(Path(__file__).resolve().parent / ".env")
 
-from fastapi import FastAPI
+from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 
 from database import init_db, check_db_writable
 import models  # noqa: F401 — регистрация ORM до init_db()
+from instagram_worker import process_single_publication
 from rate_limit import limiter
-from routers import auth, pets, users, reports, settings, telegram, notifications, sightings, media, partners, feature_flags, profile_pets, blog, faq, social_card
+from routers import auth, pets, users, reports, settings, telegram, notifications, sightings, media, partners, feature_flags, profile_pets, blog, faq, social_card, instagram_publish, rewards
 from telegram_bot import BOT_TOKEN, process_telegram_update
 
 logging.basicConfig(
@@ -77,6 +79,21 @@ async def _telegram_polling():
                 await asyncio.sleep(5)
 
 
+async def _instagram_publications_loop():
+    """Background loop: processes Instagram publication queue."""
+    interval = int(os.getenv("INSTAGRAM_WORKER_POLL_SECONDS", "8"))
+    logger.info("Instagram publications worker started (poll=%ss)", interval)
+    while True:
+        try:
+            did_work = await asyncio.to_thread(process_single_publication)
+            if did_work:
+                await asyncio.sleep(0.2)
+                continue
+        except Exception as e:
+            logger.exception("Instagram worker loop error: %s", e)
+        await asyncio.sleep(max(2, interval))
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     UPLOADS_DIR.mkdir(exist_ok=True)
@@ -92,12 +109,28 @@ async def lifespan(app: FastAPI):
     else:
         logger.warning("TELEGRAM_BOT_TOKEN not set — bot polling disabled")
 
+    instagram_worker_task = None
+    instagram_worker_enabled = (
+        os.getenv("INSTAGRAM_PUBLISHER_ENABLED", "true").strip().lower()
+        in {"1", "true", "yes", "on"}
+    )
+    if instagram_worker_enabled:
+        instagram_worker_task = asyncio.create_task(_instagram_publications_loop())
+    else:
+        logger.info("Instagram publications worker disabled by INSTAGRAM_PUBLISHER_ENABLED")
+
     yield
 
     if polling_task:
         polling_task.cancel()
         try:
             await polling_task
+        except asyncio.CancelledError:
+            pass
+    if instagram_worker_task:
+        instagram_worker_task.cancel()
+        try:
+            await instagram_worker_task
         except asyncio.CancelledError:
             pass
 
@@ -110,6 +143,7 @@ app = FastAPI(
 )
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
 
 
 @app.middleware("http")
@@ -138,29 +172,34 @@ app.add_middleware(
 
 app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
 
-app.include_router(auth.router)
-app.include_router(pets.router)
-app.include_router(users.router)
-app.include_router(reports.router)
-app.include_router(settings.router)
-app.include_router(telegram.router)
-app.include_router(notifications.router)
-app.include_router(sightings.router)
-app.include_router(media.router)
-app.include_router(partners.router)
-app.include_router(feature_flags.router)
-app.include_router(profile_pets.router)
-app.include_router(blog.router)
-app.include_router(faq.router)
-app.include_router(social_card.router)
+api_v1 = APIRouter(prefix="/api/v1")
+api_v1.include_router(auth.router)
+api_v1.include_router(pets.router)
+api_v1.include_router(users.router)
+api_v1.include_router(reports.router)
+api_v1.include_router(settings.router)
+api_v1.include_router(telegram.router)
+api_v1.include_router(notifications.router)
+api_v1.include_router(sightings.router)
+api_v1.include_router(media.router)
+api_v1.include_router(partners.router)
+api_v1.include_router(feature_flags.router)
+api_v1.include_router(profile_pets.router)
+api_v1.include_router(blog.router)
+api_v1.include_router(faq.router)
+api_v1.include_router(social_card.router)
+api_v1.include_router(instagram_publish.router)
+api_v1.include_router(rewards.router)
+app.include_router(api_v1)
 
 
 @app.get("/")
 def root():
-    return {"message": "DorogaDomoy.by API", "docs": "/docs"}
+    return {"message": "DorogaDomoy.by API", "docs": "/docs", "api_v1": "/api/v1"}
 
 
 @app.get("/health")
+@limiter.exempt
 def health():
     """Diagnostic endpoint: checks database read/write access."""
     info = check_db_writable()

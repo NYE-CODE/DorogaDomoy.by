@@ -33,6 +33,15 @@ MAX_AVATAR_BYTES = 5 * 1024 * 1024  # 5 MB
 AVATAR_SIZE = 256
 
 
+def _make_helper_code(db: Session) -> str:
+    for _ in range(10):
+        code = f"DD-{uuid.uuid4().hex[:8].upper()}"
+        exists = db.scalar(select(User).where(User.helper_code == code))
+        if not exists:
+            return code
+    return f"DD-{uuid.uuid4().hex[:12].upper()}"
+
+
 def _is_allowed_avatar_url(url: str) -> bool:
     """Только загруженный файл на сайте или дефолтный Dicebear."""
     u = (url or "").strip()
@@ -67,6 +76,7 @@ def register(
         avatar=f"https://api.dicebear.com/7.x/avataaars/svg?seed={data.name}",
         role="user",
         contacts=data.contacts.model_dump() if hasattr(data, 'contacts') and data.contacts else {},
+        helper_code=_make_helper_code(db),
     )
     try:
         db.add(user)

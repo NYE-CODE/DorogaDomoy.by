@@ -1,55 +1,64 @@
-import { useEffect, useState } from "react";
 import { Heart, Share2, DollarSign, Users } from "lucide-react";
 import { Button } from "./ui/button";
-import { petsApi } from "../../../api/client";
 import { useI18n } from "../../../context/I18nContext";
 import { useFeatureFlags } from "../../../context/FeatureFlagsContext";
+import {
+  landingBandMuted,
+  landingContainerWide,
+  landingH2,
+  landingLeadWideCenter,
+  landingSectionHeader,
+  landingSectionY,
+} from "./landing-section-styles";
 
 export function Help() {
   const { t } = useI18n();
-  const { ff_landing_show_help, ff_landing_show_stats } = useFeatureFlags();
-  const [stats, setStats] = useState<{
-    found_pets?: number;
-    cities_count?: number;
-    success_rate?: number | null;
-    users_count?: number;
-    searching?: number;
-    found?: number;
-  } | null>(null);
-
-  useEffect(() => {
-    petsApi.statistics().then(setStats).catch(() => setStats(null));
-  }, []);
+  const { ff_landing_show_help } = useFeatureFlags();
   const ways = t.landing.help.ways;
+  const cardTones = [
+    "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+    "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300",
+    "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300",
+    "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
+  ] as const;
 
   return (
-    <section id="help" className="py-20 md:py-32 bg-muted">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="help" className={`${landingSectionY} ${landingBandMuted}`}>
+      <div className={landingContainerWide}>
         {ff_landing_show_help && (
           <>
-            <div className="text-center mb-12 md:mb-20">
-              <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold text-foreground mb-4 md:mb-6">
-                {t.landing.help.title}
-              </h2>
-              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                {t.landing.help.subtitle}
-              </p>
+            <div className={landingSectionHeader}>
+              <h2 className={landingH2}>{t.landing.help.title}</h2>
+              <p className={landingLeadWideCenter}>{t.landing.help.subtitle}</p>
             </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
+
+            <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-5">
               {([Share2, Users, Heart, DollarSign] as const).map((Icon, index) => {
                 const w = ways[index];
                 if (!w) return null;
                 return (
                 <div
                   key={index}
-                  className="bg-card rounded-3xl p-8 text-center shadow-md hover:shadow-xl transition-all duration-300 flex flex-col"
+                  className="group relative flex flex-col rounded-2xl border border-border bg-card p-5 md:p-6 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
                 >
-                  <div className="w-16 h-16 bg-primary rounded-2xl mx-auto mb-6 flex items-center justify-center">
-                    <Icon size={32} className="text-primary-foreground" />
+                  <div className="flex items-start justify-between gap-4 mb-5">
+                    <div className={`inline-flex h-12 w-12 items-center justify-center rounded-xl ${cardTones[index]}`}>
+                      <Icon size={22} />
+                    </div>
+                    <span className="text-xs font-semibold text-muted-foreground">
+                      {(index + 1).toString().padStart(2, "0")}
+                    </span>
                   </div>
-                  <h3 className="text-xl font-bold text-foreground mb-4">{w.title}</h3>
-                  <p className="text-muted-foreground mb-6 leading-relaxed flex-grow">{w.desc}</p>
-                  <Button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg w-full text-lg mt-auto">
+                  <h3 className="text-lg md:text-xl font-bold text-foreground mb-2 leading-tight">
+                    {w.title}
+                  </h3>
+                  <p className="text-sm md:text-base text-muted-foreground mb-5 leading-relaxed flex-grow">
+                    {w.desc}
+                  </p>
+                  <Button
+                    className="w-full h-11 rounded-lg font-medium mt-auto"
+                    variant={index === 2 ? "default" : "secondary"}
+                  >
                     {w.action}
                   </Button>
                 </div>
@@ -59,46 +68,6 @@ export function Help() {
           </>
         )}
 
-        {/* Stats — показывается независимо от ff_landing_show_help */}
-        {ff_landing_show_stats && (
-        <>
-        {!ff_landing_show_help && (
-          <div className="text-center mb-8">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground">
-              {(t.landing.help as { statsTitle?: string }).statsTitle ?? 'В цифрах'}
-            </h2>
-          </div>
-        )}
-        <div className="bg-card rounded-2xl sm:rounded-3xl p-6 sm:p-8 md:p-12 shadow-xl">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 md:gap-8 text-center">
-            <div className="min-w-0">
-              <div className="text-2xl sm:text-3xl md:text-5xl font-bold text-foreground mb-1 sm:mb-2 truncate">
-                {stats ? (stats.found_pets ?? 0).toLocaleString("ru") : "10,000+"}
-              </div>
-              <div className="text-xs sm:text-sm md:text-base text-muted-foreground leading-tight">{t.landing.help.statsFound}</div>
-            </div>
-            <div className="min-w-0">
-              <div className="text-2xl sm:text-3xl md:text-5xl font-bold text-foreground mb-1 sm:mb-2 truncate">
-                {stats && stats.users_count != null ? stats.users_count.toLocaleString("ru") : "50,000+"}
-              </div>
-              <div className="text-xs sm:text-sm md:text-base text-muted-foreground leading-tight">{t.landing.help.statsUsers}</div>
-            </div>
-            <div className="min-w-0">
-              <div className="text-2xl sm:text-3xl md:text-5xl font-bold text-foreground mb-1 sm:mb-2 truncate">
-                {stats ? (stats.cities_count ?? 0).toLocaleString("ru") : "200+"}
-              </div>
-              <div className="text-xs sm:text-sm md:text-base text-muted-foreground leading-tight">{t.landing.help.statsCities}</div>
-            </div>
-            <div className="min-w-0">
-              <div className="text-2xl sm:text-3xl md:text-5xl font-bold text-foreground mb-1 sm:mb-2 truncate">
-                {stats && stats.success_rate != null ? `${stats.success_rate}%` : "—"}
-              </div>
-              <div className="text-xs sm:text-sm md:text-base text-muted-foreground leading-tight">{t.landing.help.statsSuccess}</div>
-            </div>
-          </div>
-        </div>
-        </>
-        )}
       </div>
     </section>
   );

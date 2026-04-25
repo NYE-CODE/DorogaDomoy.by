@@ -175,7 +175,8 @@ def _load_photo(url: str | None) -> Image.Image | None:
     if url.startswith("data:image/"):
         try:
             _, encoded = url.split(",", 1)
-            return Image.open(io.BytesIO(base64.b64decode(encoded))).convert("RGB")
+            with Image.open(io.BytesIO(base64.b64decode(encoded))) as im:
+                return im.convert("RGB").copy()
         except Exception:
             return None
     fn = _extract_uploads_filename(url)
@@ -183,7 +184,8 @@ def _load_photo(url: str | None) -> Image.Image | None:
         p = UPLOADS_DIR / fn
         if p.is_file():
             try:
-                return Image.open(p).convert("RGB")
+                with Image.open(p) as im:
+                    return im.convert("RGB").copy()
             except Exception:
                 return None
     return None

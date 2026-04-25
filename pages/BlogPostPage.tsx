@@ -182,13 +182,6 @@ export default function BlogPostPage() {
           <BlogBody markdown={post.body_md} />
         </article>
 
-        <BlogRelatedSlider
-          posts={relatedPosts}
-          sectionTitle={b.relatedTitle}
-          ariaPrev={b.sliderPrev}
-          ariaNext={b.sliderNext}
-        />
-
         <section className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 pt-2 w-full border-t border-border mt-2">
           <h2 className="text-lg font-semibold text-foreground mb-2">{b.commentsSectionTitle}</h2>
           <p className="text-sm text-muted-foreground mb-4 max-w-xl">
@@ -215,6 +208,13 @@ export default function BlogPostPage() {
             </button>
           )}
         </section>
+
+        <BlogRelatedSlider
+          posts={relatedPosts}
+          sectionTitle={b.relatedTitle}
+          ariaPrev={b.sliderPrev}
+          ariaNext={b.sliderNext}
+        />
       </main>
       <Footer />
     </div>
