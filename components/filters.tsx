@@ -189,13 +189,13 @@ export function Filters({ filters, onFiltersChange, onCreateClick, embedded, onC
 
       <div className="space-y-2">
         <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{t.filters.color}</span>
-        <div className="-mx-1 flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:thin]">
+        <div className="grid grid-cols-4 gap-1.5">
           {(Object.keys(colorLabels) as PetColor[]).map((color) => (
             <button
               key={color}
               type="button"
               onClick={() => toggleColor(color)}
-              className={`shrink-0 whitespace-nowrap rounded-lg border px-2.5 py-1.5 text-sm transition-all ${
+              className={`min-w-0 rounded-lg border px-1.5 py-1.5 text-center text-xs leading-tight transition-all sm:px-2 sm:text-sm sm:leading-snug ${
                 filters.colors.includes(color)
                   ? 'border-primary/45 bg-primary/12 text-primary shadow-sm'
                   : 'border-border bg-card text-foreground hover:bg-muted/80'

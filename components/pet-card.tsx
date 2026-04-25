@@ -5,6 +5,7 @@ import { statusColors, formatDate, formatRelativeTime } from '../utils/pet-helpe
 import { useAuth } from '../context/AuthContext';
 import { useI18n } from '../context/I18nContext';
 import { RewardBadge, getRewardBadgeMeta } from './reward-badge';
+import { FavoriteHeartButton } from './favorite-heart-button';
 import { cn } from './ui/utils';
 
 interface PetCardProps {
@@ -17,9 +18,20 @@ interface PetCardProps {
   sightingCount?: number;
   /** Скрыть статус (ищу/найден) и бейдж модерации — например в «Мои объявления» со вкладками */
   hideStatusBadge?: boolean;
+  /** Кнопка «в избранное» на превью (отключить на служебных списках) */
+  showFavoriteToggle?: boolean;
 }
 
-export function PetCard({ pet, onClick, compact = false, onEdit, onDelete, sightingCount, hideStatusBadge }: PetCardProps) {
+export function PetCard({
+  pet,
+  onClick,
+  compact = false,
+  onEdit,
+  onDelete,
+  sightingCount,
+  hideStatusBadge,
+  showFavoriteToggle = true,
+}: PetCardProps) {
   const { user } = useAuth();
   const { t } = useI18n();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -168,6 +180,11 @@ export function PetCard({ pet, onClick, compact = false, onEdit, onDelete, sight
           >
             {t.pet.status[pet.status]}
           </span>
+          {showFavoriteToggle && (
+            <div className="absolute right-2 top-2 z-[4]">
+              <FavoriteHeartButton petId={pet.id} size="sm" className="!p-1.5" />
+            </div>
+          )}
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5 px-3 py-2.5 sm:px-4 sm:py-3">
@@ -181,12 +198,12 @@ export function PetCard({ pet, onClick, compact = false, onEdit, onDelete, sight
             </div>
           ) : null}
           <p className="line-clamp-1 text-xs text-muted-foreground sm:text-sm">{colorStr}</p>
-          <div className="mt-1 flex flex-wrap gap-1.5">
-            <span className="inline-flex max-w-full items-center gap-1 rounded-md bg-muted/80 px-2 py-0.5 text-[11px] text-muted-foreground">
+          <div className="mt-1 flex flex-col gap-1.5">
+            <span className="inline-flex max-w-full items-center gap-1 self-start rounded-md bg-muted/80 px-2 py-0.5 text-[11px] text-muted-foreground">
               <MapPin size={12} className="shrink-0 opacity-80" aria-hidden />
               <span className="truncate">{pet.city}</span>
             </span>
-            <span className="inline-flex items-center gap-1 rounded-md bg-muted/80 px-2 py-0.5 text-[11px] text-muted-foreground">
+            <span className="inline-flex items-center gap-1 self-start rounded-md bg-muted/80 px-2 py-0.5 text-[11px] text-muted-foreground">
               <Clock size={12} className="shrink-0 opacity-80" aria-hidden />
               {formatRelativeTime(pet.publishedAt)}
             </span>
@@ -210,6 +227,11 @@ export function PetCard({ pet, onClick, compact = false, onEdit, onDelete, sight
         {!hideStatusBadge && (
           <div className={`absolute top-3 left-3 px-3 py-1.5 rounded-lg border ${statusColors[pet.status]} backdrop-blur-sm`}>
             {t.pet.status[pet.status]}
+          </div>
+        )}
+        {showFavoriteToggle && (
+          <div className="absolute bottom-3 right-3 z-10">
+            <FavoriteHeartButton petId={pet.id} />
           </div>
         )}
         
@@ -276,11 +298,15 @@ export function PetCard({ pet, onClick, compact = false, onEdit, onDelete, sight
             {pet.description}
           </p>
 
-          <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 mb-3">
-            <MapPin className="w-4 h-4" />
-            <span>{pet.city}</span>
-            <span className="mx-1">·</span>
-            <span>{formatDate(pet.publishedAt)}</span>
+          <div className="mb-3 space-y-1 text-sm text-gray-500 dark:text-gray-400">
+            <div className="flex min-w-0 items-center gap-1">
+              <MapPin className="h-4 w-4 shrink-0" aria-hidden />
+              <span className="min-w-0 truncate">{pet.city}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Clock className="h-4 w-4 shrink-0" aria-hidden />
+              <span>{formatDate(pet.publishedAt)}</span>
+            </div>
           </div>
           
           {/* Moderation Status Badge (shown to owner, hidden when hideStatusBadge e.g. in My Ads) */}

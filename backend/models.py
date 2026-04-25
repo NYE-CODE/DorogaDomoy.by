@@ -1,6 +1,6 @@
 """SQLAlchemy models for User, Pet, Report, Notifications."""
 from datetime import datetime
-from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Text, JSON, Float, BigInteger, Integer
+from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Text, JSON, Float, BigInteger, Integer, UniqueConstraint
 from sqlalchemy.orm import relationship
 from database import Base
 
@@ -28,6 +28,7 @@ class User(Base):
     points_earned_total = Column(Integer, default=0, nullable=False)
 
     pets = relationship("Pet", back_populates="author", foreign_keys="Pet.author_id")
+    pet_favorites = relationship("PetFavorite", back_populates="user", cascade="all, delete-orphan")
     reports = relationship("Report", back_populates="reporter", foreign_keys="Report.reporter_id")
     notification_settings = relationship("NotificationSettings", back_populates="user", uselist=False, cascade="all, delete-orphan")
 
@@ -72,6 +73,21 @@ class Pet(Base):
         cascade="all, delete-orphan",
     )
     sightings = relationship("Sighting", back_populates="pet", foreign_keys="Sighting.pet_id", cascade="all, delete-orphan")
+
+
+class PetFavorite(Base):
+    """Объявления в избранном пользователя (серверная синхронизация после входа)."""
+
+    __tablename__ = "pet_favorites"
+    __table_args__ = (UniqueConstraint("user_id", "pet_id", name="uq_pet_favorites_user_pet"),)
+
+    id = Column(String, primary_key=True, index=True)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    pet_id = Column(String, ForeignKey("pets.id", ondelete="CASCADE"), nullable=False, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", back_populates="pet_favorites")
+    pet = relationship("Pet")
 
 
 class PlatformSettings(Base):

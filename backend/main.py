@@ -19,7 +19,7 @@ from database import init_db, check_db_writable
 import models  # noqa: F401 — регистрация ORM до init_db()
 from instagram_worker import process_single_publication
 from rate_limit import limiter
-from routers import auth, pets, users, reports, settings, telegram, notifications, sightings, media, partners, feature_flags, profile_pets, blog, faq, social_card, instagram_publish, rewards
+from routers import auth, pets, users, reports, settings, telegram, notifications, sightings, media, partners, feature_flags, profile_pets, blog, faq, social_card, instagram_publish, rewards, favorites
 from telegram_bot import BOT_TOKEN, process_telegram_update
 
 logging.basicConfig(
@@ -190,6 +190,7 @@ api_v1.include_router(faq.router)
 api_v1.include_router(social_card.router)
 api_v1.include_router(instagram_publish.router)
 api_v1.include_router(rewards.router)
+api_v1.include_router(favorites.router)
 app.include_router(api_v1)
 
 

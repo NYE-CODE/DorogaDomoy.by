@@ -6,9 +6,10 @@ import { useI18n } from "../../../context/I18nContext";
 import { landingContainerWide, landingH2 } from "./landing-section-styles";
 
 interface StatsResponse {
+  searching: number;
+  found: number;
   found_pets?: number;
   cities_count?: number;
-  success_rate?: number | null;
   users_count?: number;
 }
 
@@ -22,10 +23,15 @@ export function Stats() {
 
   const items = [
     {
-      key: "found",
+      key: "active",
       icon: PawPrint,
-      value: stats ? (stats.found_pets ?? 0).toLocaleString("ru") : "10,000+",
-      label: t.landing.help.statsFound,
+      value:
+        stats
+          ? ((stats.searching ?? 0) + (stats.found ?? 0)).toLocaleString("ru")
+          : "0",
+      label:
+        (t.landing.help as { statsActiveAds?: string }).statsActiveAds ??
+        "Активных объявлений",
       iconClass:
         "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
     },
@@ -50,7 +56,7 @@ export function Stats() {
     {
       key: "success",
       icon: TrendingUp,
-      value: stats && stats.success_rate != null ? `${stats.success_rate}%` : "—",
+      value: stats ? (stats.found_pets ?? 0).toLocaleString("ru") : "0",
       label: t.landing.help.statsSuccess,
       iconClass:
         "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",

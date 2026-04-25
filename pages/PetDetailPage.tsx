@@ -1,5 +1,5 @@
 import { useParams, Link } from 'react-router';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, type ReactNode } from 'react';
 import { MapPin, Phone, MessageCircle, Calendar, Share2, Download, ChevronLeft, ChevronRight, User, Eye, AlertCircle, X, QrCode, FileText, Home, Heart, Building2, ArrowLeft, Send, Copy, Check, Printer, Image } from 'lucide-react';
 import { Pet } from '../types/pet';
 import { formatCalendarDate, formatRelativeTime } from '../utils/pet-helpers';
@@ -13,6 +13,7 @@ import { ReportReason } from '../types/admin';
 import { RewardBadge } from '../components/reward-badge';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { getPetPhotoCircleDivIcon, SIGHTING_MARKER_BORDER_COLOR } from '../utils/leaflet-pet-photo-icon';
 import { buildPetShareBundle, type PetShareDict } from '../utils/pet-share-text';
 import { copyText as copyToClipboard } from '../utils/copy-text';
 import { compressImageBlobForShare, tryShareImageFile } from '../utils/web-share-image';
@@ -28,6 +29,7 @@ import {
 import { PageLoader } from '../components/ui/page-loader';
 import { EmptyState } from '../components/ui/empty-state';
 import { Button } from '../components/ui/button';
+import { FavoriteHeartButton } from '../components/favorite-heart-button';
 import { cn } from '../components/ui/utils';
 import {
   appMessengerCtaSizingClass,
@@ -109,18 +111,10 @@ function SinglePetMap({ pet, sightings = [], seenLabel }: { pet: Pet; sightings?
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     }).addTo(map);
 
-    const colors: Record<string, string> = {
-      searching: '#ef4444',
-      found: '#3b82f6',
-    };
-    const color = colors[pet.status] || '#6b7280';
-    const symbol = pet.animalType === 'cat' ? '🐱' : pet.animalType === 'dog' ? '🐕' : '🐾';
-
-    const petIcon = L.divIcon({
-      html: `<div style="background-color:${color};width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);font-size:20px">${symbol}</div>`,
-      className: 'custom-marker-icon',
-      iconSize: [40, 40],
-      iconAnchor: [20, 20],
+    const petIcon = getPetPhotoCircleDivIcon({
+      photoUrl: pet.photos?.[0],
+      status: pet.status,
+      size: 40,
     });
 
     L.marker([pet.location.lat, pet.location.lng], { icon: petIcon }).addTo(map);
@@ -140,23 +134,33 @@ function SinglePetMap({ pet, sightings = [], seenLabel }: { pet: Pet; sightings?
     if (!markersLayerRef.current) return;
     markersLayerRef.current.clearLayers();
     sightings.forEach((s) => {
-      const icon = L.divIcon({
-        html: `<div style="background:#f59e0b;width:28px;height:28px;border-radius:50%;border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;font-size:12px">👁</div>`,
-        className: 'custom-marker-icon',
-        iconSize: [28, 28],
-        iconAnchor: [14, 14],
+      const icon = getPetPhotoCircleDivIcon({
+        photoUrl: pet.photos?.[0],
+        status: pet.status,
+        borderColor: SIGHTING_MARKER_BORDER_COLOR,
+        size: 32,
+        borderWidth: 3,
       });
       const m = L.marker([s.location_lat, s.location_lng], { icon }).addTo(markersLayerRef.current!);
       m.bindPopup(createSightingPopupContent(seenLabel, s));
     });
-  }, [sightings, seenLabel]);
+  }, [sightings, seenLabel, pet]);
 
   return (
     <div ref={mapContainerRef} className="h-full w-full z-0" />
   );
 }
 
-function ImageCarousel({ photos, alt }: { photos: string[]; alt: string }) {
+function ImageCarousel({
+  photos,
+  alt,
+  overlay,
+}: {
+  photos: string[];
+  alt: string;
+  /** Плавающий UI поверх основного кадра (например «в избранное») */
+  overlay?: ReactNode;
+}) {
   const [current, setCurrent] = useState(0);
 
   if (photos.length === 0) return null;
@@ -173,40 +177,45 @@ function ImageCarousel({ photos, alt }: { photos: string[]; alt: string }) {
           alt={photos.length > 1 ? `${alt} — фото ${current + 1}` : alt}
           className="w-full h-full object-contain"
         />
-        {photos.length > 1 && (
-          <>
-            <button
-              type="button"
-              onClick={() => goTo(current - 1)}
-              className="absolute left-3 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/30 bg-black/35 text-white shadow-lg backdrop-blur-sm transition-colors hover:bg-black/50 sm:left-4"
-              aria-label="Previous photo"
-            >
-              <ChevronLeft className="size-5" />
-            </button>
-            <button
-              type="button"
-              onClick={() => goTo(current + 1)}
-              className="absolute right-3 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/30 bg-black/35 text-white shadow-lg backdrop-blur-sm transition-colors hover:bg-black/50 sm:right-4"
-              aria-label="Next photo"
-            >
-              <ChevronRight className="size-5" />
-            </button>
-            <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
-              {photos.map((_, i) => (
+            {photos.length > 1 && (
+              <>
                 <button
-                  key={i}
                   type="button"
-                  onClick={() => setCurrent(i)}
-                  className={cn(
-                    'h-2 rounded-full transition-all',
-                    i === current ? 'w-7 bg-primary shadow-sm' : 'w-2 bg-white/55 hover:bg-white/85',
-                  )}
-                  aria-label={`Photo ${i + 1}`}
-                />
-              ))}
-            </div>
-          </>
-        )}
+                  onClick={() => goTo(current - 1)}
+                  className="absolute left-3 top-1/2 z-[5] flex size-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/30 bg-black/35 text-white shadow-lg backdrop-blur-sm transition-colors hover:bg-black/50 sm:left-4"
+                  aria-label="Previous photo"
+                >
+                  <ChevronLeft className="size-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => goTo(current + 1)}
+                  className="absolute right-3 top-1/2 z-[5] flex size-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/30 bg-black/35 text-white shadow-lg backdrop-blur-sm transition-colors hover:bg-black/50 sm:right-4"
+                  aria-label="Next photo"
+                >
+                  <ChevronRight className="size-5" />
+                </button>
+                <div className="absolute bottom-4 left-1/2 z-[5] flex -translate-x-1/2 gap-2">
+                  {photos.map((_, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setCurrent(i)}
+                      className={cn(
+                        'h-2 rounded-full transition-all',
+                        i === current ? 'w-7 bg-primary shadow-sm' : 'w-2 bg-white/55 hover:bg-white/85',
+                      )}
+                      aria-label={`Photo ${i + 1}`}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+        {overlay != null ? (
+          <div className="pointer-events-none absolute inset-0 z-[12]">
+            <div className="pointer-events-auto absolute bottom-3 right-3 sm:bottom-4 sm:right-4">{overlay}</div>
+          </div>
+        ) : null}
       </div>
       {photos.length > 1 && (
         <div className="flex gap-2 overflow-x-auto border-t border-border bg-muted/30 p-3 sm:p-4">
@@ -928,15 +937,19 @@ export default function PetDetailPage() {
           <div className="lg:col-span-2 space-y-6">
             {/* Photo Gallery */}
             <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-              <ImageCarousel photos={pet.photos} alt={t.pet.animalType[pet.animalType]} />
+              <ImageCarousel
+                photos={pet.photos}
+                alt={t.pet.animalType[pet.animalType]}
+                overlay={<FavoriteHeartButton petId={pet.id} />}
+              />
             </div>
 
             {/* Action buttons */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="relative" ref={shareMenuRef}>
+          <div className="relative flex min-w-0 gap-2" ref={shareMenuRef}>
             <Button
               type="button"
-              className={cn(appPrimaryCtaClass, 'w-full')}
+              className={cn(appPrimaryCtaClass, 'min-w-0 flex-1')}
               onClick={() => setShowShareMenu(!showShareMenu)}
               aria-expanded={showShareMenu}
               aria-haspopup="true"

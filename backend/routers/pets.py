@@ -143,6 +143,10 @@ def list_pets(
     is_archived: Optional[bool] = Query(None),
     search: Optional[str] = Query(None),
     author_id: Optional[str] = Query(None),
+    ids: Optional[str] = Query(
+        None,
+        description="Список id через запятую (до 80), например для страницы избранного без авторизации",
+    ),
     north: Optional[float] = Query(None),
     south: Optional[float] = Query(None),
     east: Optional[float] = Query(None),
@@ -193,6 +197,10 @@ def list_pets(
         )
     if author_id:
         stmt = stmt.where(Pet.author_id == author_id)
+    if ids:
+        id_list = [x.strip() for x in ids.split(",") if x.strip()][:80]
+        if id_list:
+            stmt = stmt.where(Pet.id.in_(id_list))
     if None not in (north, south, east, west):
         stmt = stmt.where(
             Pet.location_lat >= south,

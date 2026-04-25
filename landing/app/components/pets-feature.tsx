@@ -79,7 +79,7 @@ export function PetsFeature() {
   return (
     <section
       id="pets-feature"
-      className={`${landingSectionY} bg-gradient-to-br from-[#FDB913]/8 via-background to-[#FF9800]/10 dark:from-[#FDB913]/18 dark:via-[#15120f] dark:to-[#FF9800]/15`}
+      className={`${landingSectionY} scroll-mt-24 bg-gradient-to-br from-[#FDB913]/8 via-background to-[#FF9800]/10 dark:from-[#FDB913]/18 dark:via-[#15120f] dark:to-[#FF9800]/15`}
     >
       <div className={landingContainerNarrow}>
         <header className={landingSectionHeader}>

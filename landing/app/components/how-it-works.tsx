@@ -16,7 +16,7 @@ export function HowItWorks() {
   const steps = t.landing.howItWorks.steps;
 
   return (
-    <section id="how-it-works" className={`${landingSectionY} ${landingBandMuted}`}>
+    <section id="how-it-works" className={`${landingSectionY} ${landingBandMuted} scroll-mt-24`}>
       <div className={landingContainerWide}>
         <div className={landingSectionHeader}>
           <h2 className={landingH2}>{t.landing.howItWorks.title}</h2>

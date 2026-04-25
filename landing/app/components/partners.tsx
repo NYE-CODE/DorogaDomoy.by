@@ -74,7 +74,7 @@ export function Partners() {
   }, []);
 
   return (
-    <section id="partners" className={`relative ${landingSectionY} ${landingBandMuted}`}>
+    <section id="partners" className={`relative ${landingSectionY} ${landingBandMuted} scroll-mt-24`}>
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
       <div className={landingContainerNarrow}>
         <div className={landingSectionHeader}>
