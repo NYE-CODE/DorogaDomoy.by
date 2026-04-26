@@ -20,7 +20,7 @@ export function getRewardBadgeMeta(
       tooltip:
         "Денежное вознаграждение за помощь в поиске. Владелец передает его помощнику напрямую.",
       className:
-        "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-200",
+        "bg-amber-100 dark:bg-amber-900/35 text-amber-950 dark:text-amber-100",
     };
   }
 

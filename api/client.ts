@@ -2,6 +2,10 @@
  * API client for DorogaDomoy.by backend.
  * `VITE_API_URL` — origin сервера (без `/api/v1`): статика `/uploads`, абсолютные пути фото.
  * JSON API: `/api/v1` (см. `API_V1_BASE`).
+ *
+ * В production, если хост страницы совпадает с хостом из VITE (включая пара www ↔ apex),
+ * используется пустой origin → запросы идут на тот же host, что открыл пользователь.
+ * Так Safari не ломает CORS/куки из‑за рассинхрона www и канонического домена в билде.
  */
 import type { Pet } from '../types/pet';
 import type { User } from '../context/AuthContext';
@@ -11,11 +15,42 @@ function trimTrailingSlash(s: string): string {
   return s.replace(/\/+$/, '');
 }
 
-/** Origin бэкенда для `/uploads/…` и разрешения относительных URL фото */
-export const API_BASE = trimTrailingSlash(import.meta.env.VITE_API_URL || 'http://localhost:8000');
+function hostKey(hostname: string): string {
+  return hostname.replace(/^www\./i, '');
+}
+
+function resolveApiBase(): string {
+  const envRaw = (import.meta.env.VITE_API_URL as string | undefined)?.trim();
+  if (import.meta.env.DEV) {
+    return trimTrailingSlash(envRaw || 'http://localhost:8000');
+  }
+  if (typeof window === 'undefined') {
+    return envRaw ? trimTrailingSlash(envRaw) : '';
+  }
+  if (!envRaw) {
+    return '';
+  }
+  let envUrl: URL;
+  try {
+    envUrl = new URL(envRaw);
+  } catch {
+    return trimTrailingSlash(envRaw);
+  }
+  const page = window.location;
+  if (envUrl.origin === page.origin) {
+    return '';
+  }
+  if (hostKey(envUrl.hostname) === hostKey(page.hostname)) {
+    return '';
+  }
+  return trimTrailingSlash(envRaw);
+}
+
+/** Origin бэкенда для `/uploads/…` и разрешения относительных URL фото (в prod может быть '') */
+export const API_BASE = resolveApiBase();
 
 /** Базовый URL REST API версии 1 */
-export const API_V1_BASE = `${API_BASE}/api/v1`;
+export const API_V1_BASE = API_BASE ? `${API_BASE}/api/v1` : '/api/v1';
 const LEGACY_TOKEN_KEY = 'pet_finder_token';
 
 function clearLegacyToken() {

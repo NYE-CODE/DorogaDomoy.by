@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Search, SlidersHorizontal, ChevronDown, ChevronUp, RotateCcw, Plus, X } from 'lucide-react';
 import { AnimalType, PetStatus, PetColor } from '../types/pet';
-import { activeStatuses, colorLabels } from '../utils/pet-helpers';
+import { activeStatuses, colorLabels, petStatusFilterSelectedClass } from '../utils/pet-helpers';
 import { useIsMobile } from './ui/use-mobile';
 import { useI18n } from '../context/I18nContext';
 import { BreedCombobox } from './breed-combobox';
@@ -102,10 +102,8 @@ export function Filters({ filters, onFiltersChange, onCreateClick, embedded, onC
                 onClick={() => toggleStatus(status)}
                 className={`px-3 py-1.5 text-sm rounded-lg border transition-all ${
                   filters.statuses.includes(status)
-                    ? status === 'searching'
-                      ? 'border-primary/40 bg-primary/10 text-primary shadow-sm dark:border-red-800 dark:bg-red-950/35 dark:text-red-300'
-                      : 'border-emerald-500/35 bg-emerald-500/10 text-emerald-800 shadow-sm dark:border-emerald-800 dark:bg-emerald-950/35 dark:text-emerald-300'
-                  : 'border-border bg-card text-foreground hover:bg-muted/80'
+                    ? petStatusFilterSelectedClass[status]
+                    : 'border-border bg-card text-foreground hover:bg-muted/80'
                 }`}
               >
                 {(t.pet.status as Record<PetStatus, string>)[status]}

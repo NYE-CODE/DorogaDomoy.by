@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight, Home, Heart, Building2, Archive, ExternalLink, X } from 'lucide-react';
 import { Pet } from '../types/pet';
-import { formatDate, statusLabels } from '../utils/pet-helpers';
+import { formatDate, petStatusSoftPillClass, statusLabels } from '../utils/pet-helpers';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { User } from '../context/AuthContext';
 
@@ -224,7 +224,9 @@ export function PetsAdminPanel({ pets, users = [], onDeletePet, onOpenPet }: Pet
                     <p className="text-sm text-gray-900 dark:text-white">{pet.authorName}</p>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="inline-flex px-2 py-1 text-xs rounded-full bg-muted text-muted-foreground">
+                    <span
+                      className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${petStatusSoftPillClass[pet.status]}`}
+                    >
                       {statusLabels[pet.status]}
                     </span>
                   </td>

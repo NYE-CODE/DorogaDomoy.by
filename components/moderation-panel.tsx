@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { CheckCircle2, XCircle, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Pet } from '../types/pet';
-import { formatDate, statusLabels, animalTypeLabels } from '../utils/pet-helpers';
+import { formatDate, statusLabels, animalTypeLabels, petStatusSoftPillClass } from '../utils/pet-helpers';
 import { useI18n } from '../context/I18nContext';
 import { useScrollLock } from './ui/use-scroll-lock';
 
@@ -94,7 +94,9 @@ export function ModerationPanel({ pets, onApprovePet, onRejectPet }: ModerationP
                         <span>{pet.city}</span>
                         <span>·</span>
                         <span>{formatDate(pet.publishedAt)}</span>
-                        <span className="inline-flex px-2 py-0.5 bg-muted text-muted-foreground rounded text-xs">
+                        <span
+                          className={`inline-flex rounded px-2 py-0.5 text-xs font-medium ${petStatusSoftPillClass[pet.status]}`}
+                        >
                           {statusLabels[pet.status]}
                         </span>
                       </div>

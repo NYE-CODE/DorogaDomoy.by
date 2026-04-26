@@ -23,6 +23,8 @@ import { Footer } from '../components/layout/Footer';
 import { profilePetToListCard, type ProfilePetListCard } from '../utils/profile-pet-display';
 import { dateLocaleForUi } from '../utils/profile-pet-text';
 import { copyText } from '../utils/copy-text';
+import { petStatusPhotoPillClass } from '../utils/pet-helpers';
+import { cn } from '../components/ui/utils';
 import {
   applySeo,
   canonicalUrlFromPath,
@@ -481,11 +483,10 @@ export default function UserProfilePage() {
                             className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-300"
                           />
                           <div
-                            className={`absolute top-4 right-4 px-4 py-2 rounded-full font-bold ${
-                              pet.status === 'searching'
-                                ? 'bg-gray-800 text-white'
-                                : 'bg-[#FDB913] text-black'
-                            }`}
+                            className={cn(
+                              'absolute right-4 top-4 rounded-full px-4 py-2 text-sm font-bold',
+                              petStatusPhotoPillClass[pet.status],
+                            )}
                           >
                             {pet.status === 'searching' ? t.userProfile.lostBadge : t.userProfile.foundBadge}
                           </div>

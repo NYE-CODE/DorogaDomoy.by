@@ -5,7 +5,7 @@ import { Button } from "./ui/button";
 import { petsApi } from "../../../api/client";
 import { useI18n } from "../../../context/I18nContext";
 import type { Pet } from "../../../types/pet";
-import { formatRelativeTime } from "../../../utils/pet-helpers";
+import { formatRelativeTime, petStatusPhotoPillClass } from "../../../utils/pet-helpers";
 import { getRewardBadgeMeta } from "../../../components/reward-badge";
 import { FavoriteHeartButton } from "../../../components/favorite-heart-button";
 import {
@@ -79,10 +79,8 @@ export function Announcements() {
                     <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
                     <div className="absolute left-3 right-3 top-3 flex items-start justify-between gap-2">
                       <span
-                        className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold shadow-sm ${
-                          announcement.type === "lost"
-                            ? "bg-secondary text-secondary-foreground"
-                            : "bg-primary text-primary-foreground"
+                        className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+                          petStatusPhotoPillClass[announcement.type === "lost" ? "searching" : "found"]
                         }`}
                       >
                         {announcement.type === "lost" ? t.landing.announcements.lost : t.landing.announcements.found}
@@ -90,7 +88,7 @@ export function Announcements() {
                       {announcement.reward && (
                         <span
                           title={announcement.reward.tooltip}
-                          className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold shadow-sm ${announcement.reward.className.replace(" dark:bg-violet-900/30", " dark:bg-violet-900/85").replace(" dark:bg-emerald-900/30", " dark:bg-emerald-900/85")}`}
+                          className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold shadow-sm ${announcement.reward.className.replace(" dark:bg-violet-900/30", " dark:bg-violet-900/85").replace(" dark:bg-amber-900/35", " dark:bg-amber-900/85")}`}
                         >
                           {announcement.reward.text}
                         </span>
@@ -102,13 +100,13 @@ export function Announcements() {
                       {announcement.petType} {announcement.breed}
                     </h3>
                     <p className="mb-3 text-sm text-muted-foreground line-clamp-1">{announcement.color}</p>
-                    <div className="space-y-2">
-                      <div className="inline-flex max-w-full items-center gap-1.5 rounded-md bg-muted/70 px-2.5 py-1 text-xs text-muted-foreground">
-                        <MapPin size={14} className="shrink-0" />
-                        <span className="truncate">{announcement.location}</span>
+                    <div className="flex flex-col gap-2">
+                      <div className="flex max-w-full items-center gap-1.5 self-start rounded-md bg-muted/70 px-2.5 py-1 text-xs text-muted-foreground">
+                        <MapPin size={14} className="shrink-0" aria-hidden />
+                        <span className="min-w-0 truncate">{announcement.location}</span>
                       </div>
-                      <div className="inline-flex items-center gap-1.5 rounded-md bg-muted/70 px-2.5 py-1 text-xs text-muted-foreground">
-                        <Clock size={14} className="shrink-0" />
+                      <div className="flex items-center gap-1.5 self-start rounded-md bg-muted/70 px-2.5 py-1 text-xs text-muted-foreground">
+                        <Clock size={14} className="shrink-0" aria-hidden />
                         <span>{announcement.time}</span>
                       </div>
                     </div>

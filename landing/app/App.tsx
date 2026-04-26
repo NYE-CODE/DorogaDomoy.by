@@ -10,6 +10,7 @@ import { Partners } from "./components/partners";
 import { FAQ } from "./components/faq";
 import { Help } from "./components/help";
 import { Footer } from "./components/footer";
+import { ScrollToTop } from "./components/scroll-to-top";
 import { useFeatureFlags } from "../../context/FeatureFlagsContext";
 
 /** Условные секции должны совпадать с `landing-nav-config.ts` (навигация в футере). */
@@ -35,6 +36,7 @@ export default function App() {
       {ff_landing_show_help && <Help />}
       {ff_landing_show_faq && <FAQ />}
       <Footer />
+      <ScrollToTop />
     </div>
   );
 }

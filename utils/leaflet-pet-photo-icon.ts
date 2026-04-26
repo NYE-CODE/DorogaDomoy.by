@@ -1,10 +1,10 @@
 import L from 'leaflet';
+import { PET_STATUS_MARKER_BORDER_HEX } from './pet-helpers';
 
 /** Цвет обводки кружка маркера по статусу объявления */
 export const PET_STATUS_MARKER_COLORS: Record<string, string> = {
-  searching: '#ef4444',
+  ...PET_STATUS_MARKER_BORDER_HEX,
   spotted: '#f97316',
-  found: '#3b82f6',
   fostering: '#a855f7',
   shelter: '#6366f1',
   returned: '#10b981',

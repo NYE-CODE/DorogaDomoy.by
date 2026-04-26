@@ -2,7 +2,7 @@ import { useParams, Link } from 'react-router';
 import { useState, useEffect, useRef, type ReactNode } from 'react';
 import { MapPin, Phone, MessageCircle, Calendar, Share2, Download, ChevronLeft, ChevronRight, User, Eye, AlertCircle, X, QrCode, FileText, Home, Heart, Building2, ArrowLeft, Send, Copy, Check, Printer, Image } from 'lucide-react';
 import { Pet } from '../types/pet';
-import { formatCalendarDate, formatRelativeTime } from '../utils/pet-helpers';
+import { formatCalendarDate, formatRelativeTime, petStatusSoftPillClass } from '../utils/pet-helpers';
 import { toast } from 'sonner';
 import { petsApi, reportsApi, sightingsApi, type SightingItem, API_V1_BASE } from '../api/client';
 import { useAuth } from '../context/AuthContext';
@@ -913,20 +913,20 @@ export default function PetDetailPage() {
 
         {/* Alert Banner */}
         {pet.status === 'searching' && !pet.isArchived && (
-          <div className="mb-6 flex items-start gap-3 rounded-xl border border-primary/35 bg-primary/5 p-4 dark:bg-primary/10">
-            <AlertCircle size={24} className="mt-0.5 shrink-0 text-primary" aria-hidden />
+          <div className="mb-6 flex items-start gap-3 rounded-xl border border-rose-500/35 bg-rose-50/80 p-4 dark:border-rose-500/40 dark:bg-rose-950/30">
+            <AlertCircle size={24} className="mt-0.5 shrink-0 text-rose-600 dark:text-rose-400" aria-hidden />
             <div>
-              <p className="mb-1 font-semibold text-primary">{t.petDetail.lostBannerTitle}</p>
+              <p className="mb-1 font-semibold text-rose-800 dark:text-rose-200">{t.petDetail.lostBannerTitle}</p>
               <p className="text-muted-foreground text-sm leading-relaxed">{t.petDetail.lostBannerBody}</p>
             </div>
           </div>
         )}
 
         {pet.status === 'found' && !pet.isArchived && (
-          <div className="mb-6 flex items-start gap-3 rounded-xl border border-emerald-500/35 bg-emerald-50/80 p-4 dark:border-emerald-500/40 dark:bg-emerald-950/30">
-            <AlertCircle size={24} className="mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden />
+          <div className="mb-6 flex items-start gap-3 rounded-xl border border-sky-500/35 bg-sky-50/80 p-4 dark:border-sky-500/40 dark:bg-sky-950/30">
+            <AlertCircle size={24} className="mt-0.5 shrink-0 text-sky-600 dark:text-sky-400" aria-hidden />
             <div>
-              <p className="mb-1 font-semibold text-emerald-700 dark:text-emerald-400">{t.petDetail.foundBannerTitle}</p>
+              <p className="mb-1 font-semibold text-sky-900 dark:text-sky-200">{t.petDetail.foundBannerTitle}</p>
               <p className="text-muted-foreground text-sm leading-relaxed">{t.petDetail.foundBannerBody}</p>
             </div>
           </div>
@@ -1069,9 +1069,7 @@ export default function PetDetailPage() {
                   <div
                     className={cn(
                       'inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-medium',
-                      pet.status === 'searching'
-                        ? 'bg-primary/15 text-primary dark:bg-primary/20'
-                        : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300',
+                      petStatusSoftPillClass[pet.status],
                     )}
                   >
                     {pet.status === 'searching' ? t.pet.status.searching : t.pet.status.found}

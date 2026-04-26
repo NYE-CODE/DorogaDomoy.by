@@ -23,6 +23,7 @@ import { Button } from './ui/button';
 import { EmptyState } from './ui/empty-state';
 import { cn } from './ui/utils';
 import { appPrimaryCtaClass } from '../styles/cta-classes';
+import { petStatusSoftPillClass } from '../utils/pet-helpers';
 import type { ModerationStatus } from '../types/pet';
 
 const STATUS_TABS: {
@@ -397,9 +398,7 @@ export function MyAdsPage({
                                   <span
                                     className={cn(
                                       'shrink-0 rounded-full px-2 py-0.5 text-xs font-medium sm:px-3 sm:py-1',
-                                      pet.status === 'searching'
-                                        ? 'bg-red-100 text-red-800 dark:bg-red-950/40 dark:text-red-300'
-                                        : 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950/35 dark:text-emerald-300',
+                                      petStatusSoftPillClass[pet.status],
                                     )}
                                   >
                                     {statusLabel}
