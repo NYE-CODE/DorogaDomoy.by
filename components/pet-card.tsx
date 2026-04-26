@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { MapPin, Phone, MessageCircle, Edit2, Trash2, Home, Heart, Building2, Clock, CheckCircle2, XCircle, Eye, MoreVertical } from 'lucide-react';
 import { Pet } from '../types/pet';
-import { statusColors, formatDate, formatRelativeTime } from '../utils/pet-helpers';
+import { petStatusPhotoPillClass, statusColors, formatDate, formatRelativeTime } from '../utils/pet-helpers';
 import { useAuth } from '../context/AuthContext';
 import { useI18n } from '../context/I18nContext';
 import { RewardBadge, getRewardBadgeMeta } from './reward-badge';
@@ -138,8 +138,6 @@ export function PetCard({
     const photoUrl = pet.photos[0] || 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&h=400&fit=crop';
     const colorStr = pet.colors.length ? pet.colors.map(c => t.pet.color[c as keyof typeof t.pet.color]).join(', ') : '—';
     const breedStr = pet.breed?.trim() || t.landing.announcements.breedDefault;
-    const isSearching = pet.status === 'searching';
-
     return (
       <div
         role="button"
@@ -174,8 +172,8 @@ export function PetCard({
           <div className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-black/35 via-transparent to-transparent" />
           <span
             className={cn(
-              'absolute left-2 top-2 z-[2] inline-flex max-w-[calc(100%-1rem)] truncate rounded-full px-2 py-0.5 text-[10px] font-semibold shadow-sm sm:text-[11px]',
-              isSearching ? 'bg-secondary text-secondary-foreground' : 'bg-primary text-primary-foreground',
+              'absolute left-2 top-2 z-[2] inline-flex max-w-[calc(100%-1rem)] truncate rounded-full px-2 py-0.5 text-[10px] font-semibold sm:text-[11px]',
+              petStatusPhotoPillClass[pet.status],
             )}
           >
             {t.pet.status[pet.status]}
@@ -199,11 +197,11 @@ export function PetCard({
           ) : null}
           <p className="line-clamp-1 text-xs text-muted-foreground sm:text-sm">{colorStr}</p>
           <div className="mt-1 flex flex-col gap-1.5">
-            <span className="inline-flex max-w-full items-center gap-1 self-start rounded-md bg-muted/80 px-2 py-0.5 text-[11px] text-muted-foreground">
+            <span className="flex max-w-full items-center gap-1 self-start rounded-md bg-muted/80 px-2 py-0.5 text-[11px] text-muted-foreground">
               <MapPin size={12} className="shrink-0 opacity-80" aria-hidden />
-              <span className="truncate">{pet.city}</span>
+              <span className="min-w-0 truncate">{pet.city}</span>
             </span>
-            <span className="inline-flex items-center gap-1 self-start rounded-md bg-muted/80 px-2 py-0.5 text-[11px] text-muted-foreground">
+            <span className="flex items-center gap-1 self-start rounded-md bg-muted/80 px-2 py-0.5 text-[11px] text-muted-foreground">
               <Clock size={12} className="shrink-0 opacity-80" aria-hidden />
               {formatRelativeTime(pet.publishedAt)}
             </span>

@@ -529,9 +529,9 @@ export function PetForm({
                       <button
                         type="button"
                         onClick={() => setFormData({ ...formData, status: 'searching' })}
-                        className={`flex-1 px-6 py-3 rounded-lg font-medium transition-colors ${
+                        className={`flex-1 rounded-lg px-6 py-3 font-medium transition-colors ${
                           formData.status === 'searching'
-                            ? 'bg-[#FF9800] text-white'
+                            ? 'bg-rose-600 text-white shadow-sm hover:bg-rose-600/90'
                             : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-secondary dark:text-secondary-foreground dark:hover:bg-secondary/80'
                         }`}
                       >
@@ -540,9 +540,9 @@ export function PetForm({
                       <button
                         type="button"
                         onClick={() => setFormData({ ...formData, status: 'found' })}
-                        className={`flex-1 px-6 py-3 rounded-lg font-medium transition-colors ${
+                        className={`flex-1 rounded-lg px-6 py-3 font-medium transition-colors ${
                           formData.status === 'found'
-                            ? 'bg-[#FDB913] text-black'
+                            ? 'bg-sky-600 text-white shadow-sm hover:bg-sky-600/90'
                             : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-secondary dark:text-secondary-foreground dark:hover:bg-secondary/80'
                         }`}
                       >
