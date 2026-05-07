@@ -9,7 +9,8 @@ export default defineConfig({
     react(),
     ...VitePWA({
       registerType: 'autoUpdate',
-      injectRegister: 'script-defer',
+      /** Регистрация только из `main.tsx` через `virtual:pwa-register`, иначе новый SW не даёт вкладке перезагрузиться и пользователи видят старый билд. */
+      injectRegister: false,
       includeAssets: ['logo.png'],
       manifest: {
         name: 'DorogaDomoy.by — Дорога Домой',

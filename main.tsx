@@ -1,5 +1,6 @@
 import React, { Suspense, lazy, useEffect } from 'react'
 import ReactDOM from 'react-dom/client'
+import { registerSW } from 'virtual:pwa-register'
 import { BrowserRouter, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router'
 import { Toaster } from 'sonner'
 import { AuthModal } from './components/auth/AuthModal'
@@ -285,3 +286,14 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     </ThemeProvider>
   </React.StrictMode>,
 )
+
+registerSW({
+  immediate: true,
+  onRegistered(registration) {
+    if (!registration) return
+    /** Периодический запрос нового SW, чтобы вкладку не держали на старой версии сутками */
+    window.setInterval(() => {
+      void registration.update()
+    }, 60 * 60 * 1000)
+  },
+})
