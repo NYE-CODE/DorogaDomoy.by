@@ -3,18 +3,30 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { MapPin, Navigation } from 'lucide-react';
 import { toast } from 'sonner';
-import { reverseGeocode } from '../utils/geocode';
+import { reverseGeocodeStructured } from '../utils/geocode';
 
 interface LocationPickerProps {
   initialLocation: { lat: number; lng: number };
   onLocationSelect: (location: { lat: number; lng: number }) => void;
   onAddressChange?: (address: string) => void;
   onLocationWithAddress?: (location: { lat: number; lng: number }, address: string) => void;
+  /** Один reverse-запрос: подставить и адресную строку, и населённый пункт (напр. город). */
+  onLocationPlaceSync?: (
+    location: { lat: number; lng: number },
+    place: { formattedAddress: string; locality: string | null },
+  ) => void;
   /** Высота карты (по умолчанию h-48) */
   mapHeight?: string;
 }
 
-export function LocationPicker({ initialLocation, onLocationSelect, onAddressChange, onLocationWithAddress, mapHeight = 'h-48' }: LocationPickerProps) {
+export function LocationPicker({
+  initialLocation,
+  onLocationSelect,
+  onAddressChange,
+  onLocationWithAddress,
+  onLocationPlaceSync,
+  mapHeight = 'h-48',
+}: LocationPickerProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
@@ -23,10 +35,12 @@ export function LocationPicker({ initialLocation, onLocationSelect, onAddressCha
   const onLocationSelectRef = useRef(onLocationSelect);
   const onAddressChangeRef = useRef(onAddressChange);
   const onLocationWithAddressRef = useRef(onLocationWithAddress);
+  const onLocationPlaceSyncRef = useRef(onLocationPlaceSync);
   const geoFallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   onLocationSelectRef.current = onLocationSelect;
   onAddressChangeRef.current = onAddressChange;
   onLocationWithAddressRef.current = onLocationWithAddress;
+  onLocationPlaceSyncRef.current = onLocationPlaceSync;
 
   useEffect(() => {
     return () => {
@@ -62,12 +76,16 @@ export function LocationPicker({ initialLocation, onLocationSelect, onAddressCha
 
     const handleLocationChange = async (lat: number, lng: number) => {
       const loc = { lat, lng };
-      const address = await reverseGeocode(lat, lng);
-      if (address && onLocationWithAddressRef.current) {
-        onLocationWithAddressRef.current(loc, address);
+      const place = await reverseGeocodeStructured(lat, lng);
+      if (place && onLocationPlaceSyncRef.current) {
+        onLocationPlaceSyncRef.current(loc, place);
+        return;
+      }
+      if (place?.formattedAddress && onLocationWithAddressRef.current) {
+        onLocationWithAddressRef.current(loc, place.formattedAddress);
       } else {
         onLocationSelectRef.current(loc);
-        if (address) onAddressChangeRef.current?.(address);
+        if (place?.formattedAddress) onAddressChangeRef.current?.(place.formattedAddress);
       }
     };
 
@@ -113,12 +131,14 @@ export function LocationPicker({ initialLocation, onLocationSelect, onAddressCha
       }
       const { latitude: lat, longitude: lng, accuracy } = pos.coords;
       const loc = { lat, lng };
-      const address = await reverseGeocode(lat, lng);
-      if (address && onLocationWithAddressRef.current) {
-        onLocationWithAddressRef.current(loc, address);
+      const place = await reverseGeocodeStructured(lat, lng);
+      if (place && onLocationPlaceSyncRef.current) {
+        onLocationPlaceSyncRef.current(loc, place);
+      } else if (place?.formattedAddress && onLocationWithAddressRef.current) {
+        onLocationWithAddressRef.current(loc, place.formattedAddress);
       } else {
         onLocationSelectRef.current(loc);
-        if (address) onAddressChangeRef.current?.(address);
+        if (place?.formattedAddress) onAddressChangeRef.current?.(place.formattedAddress);
       }
       setLocating(false);
       if (mapInstanceRef.current) {

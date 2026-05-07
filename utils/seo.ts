@@ -7,7 +7,7 @@ export const SEO_PUBLISHER = 'DorogaDomoy.by';
 
 /** Релевантные формулировки для РБ / Яндекс; без переспама. */
 export const SEO_KEYWORDS =
-  'пропавшая собака, пропавший кот, потерялся питомец, найдена собака, найден кот, объявления животные Беларусь, Минск, поиск питомца, DorogaDomoy';
+  'пропавшая собака, пропавший кот, приюты Беларусь, питомцы из приютов, помощь животным, поиск питомца, объявления животные Беларусь, DorogaDomoy';
 
 export const SEO_ROBOTS_PUBLIC =
   'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';
@@ -16,14 +16,14 @@ export const SEO_ROBOTS_PRIVATE = 'noindex, nofollow';
 
 /** Заголовок главной (≈50–60 символов). */
 export const SEO_HOME_TITLE =
-  'Пропавшие и найденные животные в Беларуси — объявления и карта | DorogaDomoy.by';
+  'Экосистема помощи животным в Беларуси — поиск, приюты, поддержка | DorogaDomoy.by';
 
 /** Описание главной и дефолт (≈150–160 символов). */
 export const SEO_HOME_DESCRIPTION =
-  'Разместите объявление о пропаже или находке собаки или кошки. Карта по городам Беларуси, контакты владельца, блог с советами. Бесплатно на DorogaDomoy.by.';
+  'DorogaDomoy.by — экосистема помощи животным: поиск пропавших питомцев, приюты и питомцы, которым нужен дом, полезные материалы и поддержка сообщества.';
 
 export const SEO_SEARCH_TITLE =
-  'Объявления о пропавших и найденных животных — карта Беларуси | DorogaDomoy.by';
+  'Поиск пропавших и найденных питомцев — карта Беларуси | DorogaDomoy.by';
 
 export const SEO_SEARCH_DESCRIPTION =
   'Карта и список объявлений: пропали и нашли собак, кошек и других питомцев. Фильтр по городу, статусу и виду животного на DorogaDomoy.by.';
@@ -106,6 +106,7 @@ export function isPrivateSeoPath(pathname: string): boolean {
   if (pathname.startsWith('/profile')) return true;
   if (pathname.startsWith('/my-ads')) return true;
   if (pathname.startsWith('/my-pets')) return true;
+  if (pathname.startsWith('/my-shelters')) return true;
   if (pathname.startsWith('/settings')) return true;
   if (pathname === '/favorites') return true;
   if (pathname === '/create') return true;
@@ -119,5 +120,6 @@ export function isAsyncSeoPath(pathname: string): boolean {
   if (/^\/pet\/[^/]+$/.test(pathname)) return true;
   if (/^\/user\/[^/]+$/.test(pathname)) return true;
   if (/^\/pet-profile\/[^/]+$/.test(pathname)) return true;
+  if (/^\/shelters\/[^/]+$/.test(pathname)) return true;
   return false;
 }

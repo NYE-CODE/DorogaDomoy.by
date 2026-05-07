@@ -303,7 +303,7 @@ export default function PetDetailPage() {
       applySeo({
         title: 'Объявление не найдено | DorogaDomoy.by',
         description:
-          'Объявление удалено или не существует. Поиск пропавших и найденных питомцев на DorogaDomoy.by.',
+          'Объявление удалено или не существует. DorogaDomoy.by — экосистема помощи животным в Беларуси.',
         canonicalUrl: canonicalUrlFromPath(`/pet/${id}`),
         robots: SEO_ROBOTS_PRIVATE,
         keywords: SEO_KEYWORDS,
@@ -339,7 +339,7 @@ export default function PetDetailPage() {
   }, [showShareMenu]);
 
   useEffect(() => {
-    if (!pet || pet.isArchived || pet.status !== 'searching') return;
+    if (!pet || pet.isArchived || pet.status !== 'searching' || (pet.petScope ?? 'lost_found') === 'shelter_pet') return;
     const ac = new AbortController();
     sightingsApi
       .listByPet(pet.id, 7, { signal: ac.signal })
@@ -374,6 +374,8 @@ export default function PetDetailPage() {
       </div>
     );
   }
+
+  const isShelterPet = (pet.petScope ?? 'lost_found') === 'shelter_pet';
 
   const getArchiveReasonBadge = () => {
     if (!pet.isArchived || !pet.archiveReason) return null;
@@ -893,7 +895,7 @@ export default function PetDetailPage() {
     }
   };
 
-  const canAddSighting = pet.status === 'searching' && !pet.isArchived
+  const canAddSighting = !isShelterPet && pet.status === 'searching' && !pet.isArchived
     && !(currentUser && (pet.authorId === currentUser.id || (currentUser.id === 'user-demo' && pet.authorId === 'current-user')));
 
   return (
@@ -912,7 +914,7 @@ export default function PetDetailPage() {
         </div>
 
         {/* Alert Banner */}
-        {pet.status === 'searching' && !pet.isArchived && (
+        {!isShelterPet && pet.status === 'searching' && !pet.isArchived && (
           <div className="mb-6 flex items-start gap-3 rounded-xl border border-rose-500/35 bg-rose-50/80 p-4 dark:border-rose-500/40 dark:bg-rose-950/30">
             <AlertCircle size={24} className="mt-0.5 shrink-0 text-rose-600 dark:text-rose-400" aria-hidden />
             <div>
@@ -922,7 +924,7 @@ export default function PetDetailPage() {
           </div>
         )}
 
-        {pet.status === 'found' && !pet.isArchived && (
+        {!isShelterPet && pet.status === 'found' && !pet.isArchived && (
           <div className="mb-6 flex items-start gap-3 rounded-xl border border-sky-500/35 bg-sky-50/80 p-4 dark:border-sky-500/40 dark:bg-sky-950/30">
             <AlertCircle size={24} className="mt-0.5 shrink-0 text-sky-600 dark:text-sky-400" aria-hidden />
             <div>
@@ -1031,31 +1033,32 @@ export default function PetDetailPage() {
               <p className="whitespace-pre-line leading-relaxed text-muted-foreground">{pet.description}</p>
             </div>
 
-            {/* Map Section */}
-            <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-              <div className="border-b border-border p-6">
-                <div className="mb-2 flex items-center gap-3">
-                  <MapPin size={24} className="text-primary" aria-hidden />
-                  <h2 className="text-2xl font-bold text-foreground">{t.pet.location}</h2>
+            {!isShelterPet && (
+              <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+                <div className="border-b border-border p-6">
+                  <div className="mb-2 flex items-center gap-3">
+                    <MapPin size={24} className="text-primary" aria-hidden />
+                    <h2 className="text-2xl font-bold text-foreground">{t.pet.location}</h2>
+                  </div>
+                  <p className="ml-9 text-muted-foreground">{pet.city}</p>
                 </div>
-                <p className="ml-9 text-muted-foreground">{pet.city}</p>
-              </div>
-              {canAddSighting && pet.status === 'searching' && !pet.isArchived && (
-                <div className="border-b border-border bg-primary/5 p-6 dark:bg-primary/10">
-                  <Button
-                    type="button"
-                    className={cn(appPrimaryCtaClass, 'mb-3 w-full')}
-                    onClick={() => setShowSightingForm(true)}
-                  >
-                    {t.petDetail.sawSimilar}
-                  </Button>
-                  <p className="text-center text-sm text-muted-foreground">{t.petDetail.sightingHintForVisitors.replace(/^\s*\u{1F441}\s*/u, '')}</p>
+                {canAddSighting && pet.status === 'searching' && !pet.isArchived && (
+                  <div className="border-b border-border bg-primary/5 p-6 dark:bg-primary/10">
+                    <Button
+                      type="button"
+                      className={cn(appPrimaryCtaClass, 'mb-3 w-full')}
+                      onClick={() => setShowSightingForm(true)}
+                    >
+                      {t.petDetail.sawSimilar}
+                    </Button>
+                    <p className="text-center text-sm text-muted-foreground">{t.petDetail.sightingHintForVisitors.replace(/^\s*\u{1F441}\s*/u, '')}</p>
+                  </div>
+                )}
+                <div className="h-96">
+                  <SinglePetMap pet={pet} sightings={sightings} seenLabel={t.sightings.seenLabel} />
                 </div>
-              )}
-              <div className="h-96">
-                <SinglePetMap pet={pet} sightings={sightings} seenLabel={t.sightings.seenLabel} />
               </div>
-            </div>
+            )}
           </div>
 
           {/* Right Column */}
@@ -1444,7 +1447,7 @@ export default function PetDetailPage() {
         />
       )}
 
-      {showSightingForm && pet && (
+      {showSightingForm && pet && !isShelterPet && (
         <SightingForm
           pet={pet}
           onClose={() => setShowSightingForm(false)}

@@ -66,6 +66,9 @@ def init_db():
     Base.metadata.create_all(bind=engine)
     _ensure_instagram_publications_columns()
     _ensure_bounty_and_helper_columns()
+    _ensure_shelters_table()
+    _ensure_shelter_pet_details_table()
+    _ensure_shelter_campaigns_table()
     logger.info("Database URL: %s", SQLALCHEMY_DATABASE_URL)
 
 
@@ -117,6 +120,12 @@ def _ensure_bounty_and_helper_columns() -> None:
         "reward_points": "INTEGER DEFAULT 50",
         "reward_recipient_user_id": "VARCHAR",
         "reward_points_awarded_at": "DATETIME",
+        "pet_scope": "VARCHAR DEFAULT 'lost_found'",
+        "shelter_id": "VARCHAR",
+        "adoption_status": "VARCHAR",
+        "is_published": "INTEGER DEFAULT 1",
+        "published_by_user_id": "VARCHAR",
+        "updated_by_user_id": "VARCHAR",
     }
     partner_columns = {
         "is_medallion_partner": "INTEGER DEFAULT 0",
@@ -169,6 +178,13 @@ def _ensure_bounty_and_helper_columns() -> None:
             conn.execute(
                 text("UPDATE pets SET reward_points = 50 WHERE reward_points IS NULL OR reward_points <= 0")
             )
+            conn.execute(
+                text("UPDATE pets SET pet_scope = 'lost_found' WHERE pet_scope IS NULL OR TRIM(pet_scope) = ''")
+            )
+            conn.execute(
+                text("UPDATE pets SET is_published = 1 WHERE is_published IS NULL")
+            )
+            conn.execute(text("CREATE INDEX IF NOT EXISTS ix_pets_shelter_id ON pets(shelter_id)"))
 
         # partners.*
         partners_exists = conn.execute(
@@ -205,6 +221,218 @@ def _ensure_bounty_and_helper_columns() -> None:
                 "ON points_transactions(user_id)"
             )
         )
+
+
+def _ensure_shelters_table() -> None:
+    """Таблица приютов для существующих SQLite БД (create_all не меняет старые файлы)."""
+    if not SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
+        return
+    with engine.begin() as conn:
+        conn.execute(
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS shelters (
+                    id VARCHAR PRIMARY KEY,
+                    name VARCHAR NOT NULL,
+                    kind VARCHAR NOT NULL DEFAULT 'shelter',
+                    animal_focus VARCHAR NOT NULL DEFAULT 'mixed',
+                    description TEXT,
+                    city VARCHAR NOT NULL,
+                    address VARCHAR,
+                    location_lat FLOAT NOT NULL,
+                    location_lng FLOAT NOT NULL,
+                    contacts TEXT NOT NULL DEFAULT '{}',
+                    logo_url VARCHAR,
+                    cover_url VARCHAR,
+                    moderation_status VARCHAR NOT NULL DEFAULT 'draft',
+                    moderation_reason TEXT,
+                    moderated_at DATETIME,
+                    moderated_by VARCHAR,
+                    owner_user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    created_at DATETIME,
+                    updated_at DATETIME
+                )
+                """
+            )
+        )
+        conn.execute(text("CREATE INDEX IF NOT EXISTS ix_shelters_owner ON shelters(owner_user_id)"))
+        conn.execute(text("CREATE INDEX IF NOT EXISTS ix_shelters_status ON shelters(moderation_status)"))
+        conn.execute(text("CREATE INDEX IF NOT EXISTS ix_shelters_city ON shelters(city)"))
+        conn.execute(
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS shelter_memberships (
+                    id VARCHAR PRIMARY KEY,
+                    shelter_id VARCHAR NOT NULL REFERENCES shelters(id) ON DELETE CASCADE,
+                    user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    role VARCHAR NOT NULL DEFAULT 'volunteer',
+                    status VARCHAR NOT NULL DEFAULT 'active',
+                    invited_by_user_id VARCHAR REFERENCES users(id) ON DELETE SET NULL,
+                    joined_at DATETIME,
+                    removed_at DATETIME,
+                    created_at DATETIME,
+                    updated_at DATETIME
+                )
+                """
+            )
+        )
+        conn.execute(
+            text(
+                "CREATE UNIQUE INDEX IF NOT EXISTS uq_shelter_memberships_shelter_user "
+                "ON shelter_memberships(shelter_id, user_id)"
+            )
+        )
+        conn.execute(
+            text("CREATE INDEX IF NOT EXISTS ix_shelter_memberships_shelter ON shelter_memberships(shelter_id)")
+        )
+        conn.execute(
+            text("CREATE INDEX IF NOT EXISTS ix_shelter_memberships_user ON shelter_memberships(user_id)")
+        )
+        rows = conn.execute(text("PRAGMA table_info(shelters)")).fetchall()
+        existing_cols = {row[1] for row in rows}
+        if "animal_focus" not in existing_cols:
+            conn.execute(
+                text(
+                    "ALTER TABLE shelters ADD COLUMN animal_focus VARCHAR NOT NULL DEFAULT 'mixed'"
+                )
+            )
+            logger.warning("Auto-migrated column shelters.animal_focus")
+        if "cover_url" not in existing_cols:
+            conn.execute(text("ALTER TABLE shelters ADD COLUMN cover_url VARCHAR"))
+            logger.warning("Auto-migrated column shelters.cover_url")
+        # Backfill owner membership for shelters that don't have one yet.
+        conn.execute(
+            text(
+                """
+                INSERT INTO shelter_memberships (
+                    id, shelter_id, user_id, role, status, invited_by_user_id, joined_at, created_at, updated_at
+                )
+                SELECT
+                    'shm-' || substr(lower(hex(randomblob(16))), 1, 10),
+                    s.id,
+                    s.owner_user_id,
+                    'owner',
+                    'active',
+                    s.owner_user_id,
+                    s.created_at,
+                    s.created_at,
+                    s.updated_at
+                FROM shelters s
+                LEFT JOIN shelter_memberships m
+                    ON m.shelter_id = s.id AND m.user_id = s.owner_user_id
+                WHERE m.id IS NULL
+                """
+            )
+        )
+
+
+def _ensure_shelter_pet_details_table() -> None:
+    """Transition table for shelter domain fields with read-through backfill."""
+    if not SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
+        return
+    with engine.begin() as conn:
+        conn.execute(
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS shelter_pet_details (
+                    id VARCHAR PRIMARY KEY,
+                    pet_id VARCHAR NOT NULL UNIQUE REFERENCES pets(id) ON DELETE CASCADE,
+                    nickname VARCHAR,
+                    health_status VARCHAR,
+                    coat_type VARCHAR,
+                    adoption_status VARCHAR,
+                    is_published INTEGER NOT NULL DEFAULT 1,
+                    created_at DATETIME,
+                    updated_at DATETIME
+                )
+                """
+            )
+        )
+        conn.execute(
+            text(
+                "CREATE UNIQUE INDEX IF NOT EXISTS uq_shelter_pet_details_pet_id "
+                "ON shelter_pet_details(pet_id)"
+            )
+        )
+        conn.execute(
+            text(
+                "CREATE INDEX IF NOT EXISTS ix_shelter_pet_details_published "
+                "ON shelter_pet_details(is_published)"
+            )
+        )
+        rows = conn.execute(text("PRAGMA table_info(shelter_pet_details)")).fetchall()
+        existing_cols = {row[1] for row in rows}
+        if "nickname" not in existing_cols:
+            conn.execute(text("ALTER TABLE shelter_pet_details ADD COLUMN nickname VARCHAR"))
+            logger.warning("Auto-migrated column shelter_pet_details.nickname")
+        if "health_status" not in existing_cols:
+            conn.execute(text("ALTER TABLE shelter_pet_details ADD COLUMN health_status VARCHAR"))
+            logger.warning("Auto-migrated column shelter_pet_details.health_status")
+        if "coat_type" not in existing_cols:
+            conn.execute(text("ALTER TABLE shelter_pet_details ADD COLUMN coat_type VARCHAR"))
+            logger.warning("Auto-migrated column shelter_pet_details.coat_type")
+        conn.execute(
+            text(
+                """
+                INSERT INTO shelter_pet_details (
+                    id, pet_id, nickname, health_status, coat_type, adoption_status, is_published, created_at, updated_at
+                )
+                SELECT
+                    'spd-' || substr(lower(hex(randomblob(16))), 1, 10),
+                    p.id,
+                    NULL,
+                    NULL,
+                    NULL,
+                    p.adoption_status,
+                    COALESCE(p.is_published, 1),
+                    p.published_at,
+                    p.updated_at
+                FROM pets p
+                LEFT JOIN shelter_pet_details d ON d.pet_id = p.id
+                WHERE (p.pet_scope = 'shelter_pet') AND d.id IS NULL
+                """
+            )
+        )
+
+
+def _ensure_shelter_campaigns_table() -> None:
+    if not SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
+        return
+    with engine.begin() as conn:
+        conn.execute(
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS shelter_campaigns (
+                    id VARCHAR PRIMARY KEY,
+                    pet_id VARCHAR NOT NULL REFERENCES pets(id) ON DELETE CASCADE,
+                    shelter_id VARCHAR NOT NULL REFERENCES shelters(id) ON DELETE CASCADE,
+                    title VARCHAR NOT NULL,
+                    description TEXT,
+                    help_details TEXT,
+                    goal_amount INTEGER NOT NULL DEFAULT 0,
+                    collected_amount INTEGER NOT NULL DEFAULT 0,
+                    status VARCHAR NOT NULL DEFAULT 'draft',
+                    starts_at DATETIME,
+                    ends_at DATETIME,
+                    closed_at DATETIME,
+                    close_reason TEXT,
+                    created_by_user_id VARCHAR NOT NULL REFERENCES users(id),
+                    created_at DATETIME,
+                    updated_at DATETIME
+                )
+                """
+            )
+        )
+        conn.execute(text("CREATE INDEX IF NOT EXISTS ix_shelter_campaigns_pet_id ON shelter_campaigns(pet_id)"))
+        conn.execute(text("CREATE INDEX IF NOT EXISTS ix_shelter_campaigns_shelter_id ON shelter_campaigns(shelter_id)"))
+        rows = conn.execute(text("PRAGMA table_info(shelter_campaigns)")).fetchall()
+        existing_cols = {row[1] for row in rows}
+        if "help_details" not in existing_cols:
+            conn.execute(text("ALTER TABLE shelter_campaigns ADD COLUMN help_details TEXT"))
+            logger.warning("Auto-migrated column shelter_campaigns.help_details")
+        if "close_reason" not in existing_cols:
+            conn.execute(text("ALTER TABLE shelter_campaigns ADD COLUMN close_reason TEXT"))
+            logger.warning("Auto-migrated column shelter_campaigns.close_reason")
 
 
 def check_db_writable() -> dict:

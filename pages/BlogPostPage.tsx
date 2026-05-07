@@ -6,7 +6,8 @@ import { useI18n } from '../context/I18nContext';
 import { blogApi, API_BASE, type BlogPostPublic, type BlogPostListItem } from '../api/client';
 import { BlogBody } from '../components/blog-body';
 import { BlogRelatedSlider } from '../components/blog-related-slider';
-import { ArrowLeft, Calendar, MessageCircle } from 'lucide-react';
+import { Calendar, MessageCircle } from 'lucide-react';
+import { BackQuickMenu } from '../components/navigation/BackQuickMenu';
 import {
   applySeo,
   canonicalUrlFromPath,
@@ -144,14 +145,7 @@ export default function BlogPostPage() {
       <main className="flex-1 w-full flex flex-col">
         <article className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 w-full">
           <nav className="mb-6">
-            <button
-              type="button"
-              onClick={() => navigate('/blog')}
-              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              {b.backToList}
-            </button>
+            <BackQuickMenu />
           </nav>
 
           {img ? (

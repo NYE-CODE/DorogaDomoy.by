@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { CheckCircle2, XCircle, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { CheckCircle2, XCircle, X, Ban } from 'lucide-react';
 import { Pet } from '../types/pet';
 import { formatDate, statusLabels, animalTypeLabels, petStatusSoftPillClass } from '../utils/pet-helpers';
 import { useI18n } from '../context/I18nContext';
 import { useScrollLock } from './ui/use-scroll-lock';
+import { adm } from './admin-panel-chrome';
+import { AdminTablePagination } from './admin-table-pagination';
 
 interface ModerationPanelProps {
   pets: Pet[];
@@ -14,6 +16,7 @@ interface ModerationPanelProps {
 export function ModerationPanel({ pets, onApprovePet, onRejectPet }: ModerationPanelProps) {
   const { t } = useI18n();
   const m = t.adminPanel.moderation;
+  const pg = t.adminPanel.pagination;
   const [rejectingPet, setRejectingPet] = useState<Pet | null>(null);
   useScrollLock(!!rejectingPet);
   const [rejectReason, setRejectReason] = useState('');
@@ -45,18 +48,18 @@ export function ModerationPanel({ pets, onApprovePet, onRejectPet }: ModerationP
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white">
-          {m.title}
-        </h2>
+    <div className={adm.page}>
+      <div className={`${adm.headerRow} sm:items-center`}>
+        <div className={adm.headerText}>
+          <h2 className={adm.title}>{m.title}</h2>
+        </div>
         <div className="px-4 py-2 bg-primary/10 dark:bg-primary/20 text-primary rounded-lg border border-primary/20 dark:border-primary/30 font-medium text-sm self-start">
           {m.pendingBadge(pendingPets.length)}
         </div>
       </div>
 
       {pendingPets.length === 0 ? (
-        <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-12 text-center">
+        <div className={adm.emptyBox}>
           <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
             {m.emptyTitle}
@@ -71,7 +74,7 @@ export function ModerationPanel({ pets, onApprovePet, onRejectPet }: ModerationP
             {paginatedPets.map(pet => (
               <div
                 key={pet.id}
-                className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-6 hover:border-gray-300 dark:hover:border-gray-500 transition-colors"
+                className={`${adm.listCard} hover:border-gray-300 dark:hover:border-gray-500`}
               >
                 <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
                   {/* Pet Image */}
@@ -140,20 +143,24 @@ export function ModerationPanel({ pets, onApprovePet, onRejectPet }: ModerationP
                     )}
 
                     {/* Action Buttons */}
-                    <div className="flex gap-3">
+                    <div className="flex gap-2">
                       <button
+                        type="button"
+                        title={m.approve}
                         onClick={() => handleApprove(pet)}
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-3 border border-primary text-primary bg-card rounded-lg hover:bg-primary/10 dark:hover:bg-primary/20 transition-colors text-sm font-medium"
+                        className="inline-flex items-center justify-center p-3 border border-primary text-primary bg-card rounded-lg hover:bg-primary/10 dark:hover:bg-primary/20 transition-colors"
                       >
-                        <CheckCircle2 className="w-4 h-4" />
-                        {m.approve}
+                        <CheckCircle2 className="w-5 h-5" />
+                        <span className="sr-only">{m.approve}</span>
                       </button>
                       <button
+                        type="button"
+                        title={m.reject}
                         onClick={() => handleRejectClick(pet)}
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-3 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 bg-card rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-sm font-medium"
+                        className="inline-flex items-center justify-center p-3 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 bg-card rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                       >
-                        <XCircle className="w-4 h-4" />
-                        {m.reject}
+                        <XCircle className="w-5 h-5" />
+                        <span className="sr-only">{m.reject}</span>
                       </button>
                     </div>
                   </div>
@@ -162,28 +169,19 @@ export function ModerationPanel({ pets, onApprovePet, onRejectPet }: ModerationP
             ))}
           </div>
 
-          {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-              <button
-                onClick={() => setPage(page - 1)}
-                disabled={page === 1}
-                className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 bg-card border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-accent dark:hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                <ChevronLeft className="w-4 h-4" />
-                {m.prevPage}
-              </button>
-              
-              <span className="text-sm text-gray-700 dark:text-gray-300">{page} / {totalPages}</span>
-              
-              <button
-                onClick={() => setPage(page + 1)}
-                disabled={page === totalPages}
-                className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 bg-card border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-accent dark:hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {m.nextPage}
-                <ChevronRight className="w-4 h-4" />
-              </button>
+            <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <AdminTablePagination
+                currentPage={page}
+                totalPages={totalPages}
+                onPageChange={setPage}
+                labels={{ prev: m.prevPage, next: m.nextPage, goToPage: pg.goToPage }}
+                summary={
+                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                    {t.adminPanel.users.pageOf(page, totalPages)}
+                  </span>
+                }
+              />
             </div>
           )}
         </>
@@ -217,19 +215,25 @@ export function ModerationPanel({ pets, onApprovePet, onRejectPet }: ModerationP
               rows={4}
             />
 
-            <div className="flex gap-3 mt-6">
+            <div className="flex justify-end gap-2 mt-6">
               <button
+                type="button"
+                title={m.rejectCancel}
                 onClick={() => setRejectingPet(null)}
-                className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-accent dark:hover:bg-accent transition-colors"
+                className="inline-flex items-center justify-center p-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-accent dark:hover:bg-accent transition-colors"
               >
-                {m.rejectCancel}
+                <X className="w-5 h-5" />
+                <span className="sr-only">{m.rejectCancel}</span>
               </button>
               <button
+                type="button"
+                title={m.rejectConfirm}
                 onClick={handleRejectConfirm}
                 disabled={!rejectReason.trim()}
-                className="flex-1 px-4 py-3 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                className="inline-flex items-center justify-center p-3 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {m.rejectConfirm}
+                <Ban className="w-5 h-5" />
+                <span className="sr-only">{m.rejectConfirm}</span>
               </button>
             </div>
           </div>

@@ -6,16 +6,16 @@ from pathlib import Path
 from typing import Optional
 import uuid
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, func, or_, select
 from sqlalchemy.exc import OperationalError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from database import get_db
-from models import Pet, PointsTransaction, Report, User
+from models import Pet, PointsTransaction, Report, ShelterMembership, User
 from schemas import PetCreate, PetUpdate, PetResponse, StatisticsResponse, _is_happy_archive
 from auth import get_current_user, get_current_user_required, require_admin
 from platform_settings import DEFAULT_MAX_PHOTOS, get_bool_setting, get_int_setting
-from integrations.telegram import send_notifications_for_pet
+from integrations.telegram import send_notifications_for_pet, send_pending_moderation_alert_sync
 from instagram_publications import enqueue_autopublish_for_pet
 from time_utils import utc_now
 from upload_utils import save_data_image
@@ -99,6 +99,19 @@ def _normalize_reward(
     return mode, amount, points
 
 
+def _shelter_pet_nickname(p: Pet) -> Optional[str]:
+    if (p.pet_scope or "lost_found") != "shelter_pet":
+        return None
+    det = getattr(p, "shelter_details", None)
+    if det is None:
+        return None
+    nick = getattr(det, "nickname", None)
+    if nick is None:
+        return None
+    s = str(nick).strip()
+    return s if s else None
+
+
 def pet_to_response(p: Pet) -> PetResponse:
     return PetResponse(
         id=p.id,
@@ -128,7 +141,27 @@ def pet_to_response(p: Pet) -> PetResponse:
         reward_points=p.reward_points or 50,
         reward_recipient_user_id=p.reward_recipient_user_id,
         reward_points_awarded_at=p.reward_points_awarded_at,
+        pet_scope=p.pet_scope or "lost_found",
+        shelter_id=getattr(p, "shelter_id", None),
+        adoption_status=getattr(p, "adoption_status", None),
+        is_published=bool(getattr(p, "is_published", True)),
+        published_by_user_id=getattr(p, "published_by_user_id", None),
+        updated_by_user_id=getattr(p, "updated_by_user_id", None),
+        nickname=_shelter_pet_nickname(p),
     )
+
+
+def _is_active_shelter_member(db: Session, shelter_id: Optional[str], user_id: str) -> bool:
+    if not shelter_id:
+        return False
+    m = db.scalar(
+        select(ShelterMembership).where(
+            ShelterMembership.shelter_id == shelter_id,
+            ShelterMembership.user_id == user_id,
+            ShelterMembership.status == "active",
+        )
+    )
+    return m is not None
 
 
 @router.get("", response_model=list[PetResponse])
@@ -143,6 +176,9 @@ def list_pets(
     is_archived: Optional[bool] = Query(None),
     search: Optional[str] = Query(None),
     author_id: Optional[str] = Query(None),
+    pet_scope: Optional[str] = Query(None),
+    shelter_id: Optional[str] = Query(None),
+    adoption_status: Optional[str] = Query(None),
     ids: Optional[str] = Query(
         None,
         description="Список id через запятую (до 80), например для страницы избранного без авторизации",
@@ -156,7 +192,7 @@ def list_pets(
     db: Session = Depends(get_db),
     user: Optional[User] = Depends(get_current_user),
 ):
-    stmt = select(Pet)
+    stmt = select(Pet).options(selectinload(Pet.shelter_details))
     if animal_type:
         stmt = stmt.where(Pet.animal_type == animal_type)
     if breed:
@@ -186,6 +222,7 @@ def list_pets(
             stmt = stmt.where(Pet.moderation_status == moderation_status)
     else:
         stmt = stmt.where(Pet.moderation_status == "approved")
+        stmt = stmt.where(or_(Pet.pet_scope != "shelter_pet", Pet.is_published.is_(True)))
 
     if is_archived is not None:
         stmt = stmt.where(Pet.is_archived == is_archived)
@@ -197,6 +234,16 @@ def list_pets(
         )
     if author_id:
         stmt = stmt.where(Pet.author_id == author_id)
+    # В публичной «поисковой» ленте и на карте по умолчанию показываем только lost/found.
+    # Питомцы приютов выводятся в карточках приютов/профильных разделах.
+    if not pet_scope and not shelter_id and not ids:
+        stmt = stmt.where(or_(Pet.pet_scope.is_(None), Pet.pet_scope != "shelter_pet"))
+    if pet_scope:
+        stmt = stmt.where(Pet.pet_scope == pet_scope)
+    if shelter_id:
+        stmt = stmt.where(Pet.shelter_id == shelter_id)
+    if adoption_status:
+        stmt = stmt.where(Pet.adoption_status == adoption_status)
     if ids:
         id_list = [x.strip() for x in ids.split(",") if x.strip()][:80]
         if id_list:
@@ -276,12 +323,19 @@ def get_pet(
     db: Session = Depends(get_db),
     user: Optional[User] = Depends(get_current_user),
 ):
-    pet = db.scalar(select(Pet).where(Pet.id == pet_id))
+    pet = db.scalar(
+        select(Pet).options(selectinload(Pet.shelter_details)).where(Pet.id == pet_id)
+    )
     if not pet:
         raise HTTPException(status_code=404, detail="Объявление не найдено")
     is_admin = user is not None and user.role == "admin"
     is_author = user is not None and user.id == pet.author_id
+    is_member = False
+    if user is not None and (pet.pet_scope or "lost_found") == "shelter_pet" and pet.shelter_id:
+        is_member = _is_active_shelter_member(db, pet.shelter_id, user.id)
     if pet.moderation_status != "approved" and not is_admin and not is_author:
+        raise HTTPException(status_code=404, detail="Объявление не найдено")
+    if (pet.pet_scope or "lost_found") == "shelter_pet" and not pet.is_published and not (is_admin or is_author or is_member):
         raise HTTPException(status_code=404, detail="Объявление не найдено")
     return pet_to_response(pet)
 
@@ -311,7 +365,19 @@ async def create_pet(
         reward_points=data.reward_points if user.role == "admin" else None,
     )
 
+    pet_scope = (data.pet_scope or "lost_found").strip().lower()
+    shelter_id = data.shelter_id.strip() if data.shelter_id else None
+    if pet_scope not in {"lost_found", "shelter_pet"}:
+        raise HTTPException(status_code=400, detail="pet_scope: lost_found или shelter_pet")
+    if pet_scope == "shelter_pet":
+        if not shelter_id:
+            raise HTTPException(status_code=400, detail="Для питомца приюта обязателен shelter_id")
+        if user.role != "admin" and not _is_active_shelter_member(db, shelter_id, user.id):
+            raise HTTPException(status_code=403, detail="Нет прав добавлять питомцев этого приюта")
+
     skip_moderation = user.role == "admin" or not _moderation_required(db)
+    if pet_scope == "shelter_pet":
+        skip_moderation = True
     initial_status = "approved" if skip_moderation else "pending"
 
     pet_id = "pet-" + str(uuid.uuid4())[:8]
@@ -336,6 +402,12 @@ async def create_pet(
         reward_mode=reward_mode,
         reward_amount_byn=reward_amount_byn,
         reward_points=reward_points,
+        pet_scope=pet_scope,
+        shelter_id=shelter_id,
+        adoption_status=data.adoption_status,
+        is_published=bool(data.is_published),
+        published_by_user_id=user.id,
+        updated_by_user_id=user.id,
     )
     try:
         db.add(pet)
@@ -362,6 +434,8 @@ async def create_pet(
             enqueue_autopublish_for_pet(db, pet=pet, initiated_by=user.id)
         except Exception as e:
             logging.exception("Instagram autopublish enqueue failed for pet %s: %s", pet.id, e)
+    elif initial_status == "pending":
+        background_tasks.add_task(send_pending_moderation_alert_sync, pet.id)
 
     return pet_to_response(pet)
 
@@ -391,7 +465,10 @@ async def update_pet(
     pet = db.scalar(select(Pet).where(Pet.id == pet_id))
     if not pet:
         raise HTTPException(status_code=404, detail="Объявление не найдено")
-    if pet.author_id != user.id and user.role != "admin":
+    can_edit = user.role == "admin" or pet.author_id == user.id
+    if not can_edit and (pet.pet_scope or "lost_found") == "shelter_pet":
+        can_edit = _is_active_shelter_member(db, pet.shelter_id, user.id)
+    if not can_edit:
         raise HTTPException(status_code=403, detail="Нет прав на редактирование")
 
     old_moderation_status = pet.moderation_status
@@ -401,6 +478,7 @@ async def update_pet(
         "approximate_age", "status", "description", "city",
         "location", "contacts", "is_archived", "archive_reason",
         "reward_mode", "reward_amount_byn", "reward_points", "reward_helper_code",
+        "pet_scope", "shelter_id", "adoption_status", "is_published",
     }
     ADMIN_ONLY_FIELDS = {"moderation_status", "moderation_reason"}
     d = data.model_dump(exclude_unset=True)
@@ -468,6 +546,7 @@ async def update_pet(
         award_points_now = True
     for k, v in d.items():
         setattr(pet, k, v)
+    pet.updated_by_user_id = user.id
     if award_points_now and helper_user is not None:
         points = pet.reward_points or 50
         pet.reward_recipient_user_id = helper_user.id
@@ -492,14 +571,13 @@ async def update_pet(
         pet.moderated_at = utc_now()
         pet.moderated_by = user.id
     elif pet.author_id == user.id:
-        if _moderation_required(db) and user.role != "admin":
+        if _moderation_required(db) and user.role != "admin" and (pet.pet_scope or "lost_found") != "shelter_pet":
             pet.moderation_status = "pending"
             pet.moderation_reason = None
             pet.moderated_at = None
             pet.moderated_by = None
     try:
         db.commit()
-        db.refresh(pet)
     except Exception as e:
         db.rollback()
         logging.exception("Ошибка при обновлении объявления %s: %s", pet_id, e)
@@ -507,6 +585,12 @@ async def update_pet(
             status_code=500,
             detail="Не удалось обновить объявление. Попробуйте позже.",
         ) from e
+
+    pet = db.scalar(
+        select(Pet).options(selectinload(Pet.shelter_details)).where(Pet.id == pet_id)
+    )
+    if not pet:
+        raise HTTPException(status_code=404, detail="Объявление не найдено")
 
     if old_moderation_status != "approved" and pet.moderation_status == "approved":
         background_tasks.add_task(_send_notifications_bg, pet.id)

@@ -44,6 +44,37 @@ BOOST_MIN_AGE_DAYS = 7
 BOOST_LIMIT_DAYS = 7
 
 
+def _normalize_access_token(raw: Optional[str]) -> Optional[str]:
+    value = (raw or "").strip()
+    if not value:
+        return None
+    if value.lower().startswith("bearer "):
+        value = value[7:].strip()
+    # На случай вставки токена с переносами строк.
+    value = value.replace("\r", "").replace("\n", "").strip()
+    return value or None
+
+
+def _validate_access_token_shape(token: Optional[str]) -> None:
+    if token is None:
+        return
+    # Meta Graph OAuth tokens are long strings; short secrets/ids are common mispaste.
+    if len(token) < 60:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid Instagram access token format: token is too short",
+        )
+    # Instagram Basic/other token types are not accepted by Graph /{ig-user-id}/media publish flow.
+    if token.startswith("IGAA"):
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Unsupported token type (IGAA). "
+                "Use a Facebook Graph access token for Instagram Graph API publishing."
+            ),
+        )
+
+
 def _as_utc_naive(dt: datetime | None) -> datetime:
     if dt is None:
         return datetime.utcnow()
@@ -169,6 +200,8 @@ def create_account(
     db: Session = Depends(get_db),
     _: User = Depends(require_admin),
 ):
+    normalized_token = _normalize_access_token(data.access_token)
+    _validate_access_token_shape(normalized_token)
     exists = db.scalar(
         select(InstagramAccount).where(
             InstagramAccount.instagram_business_id == data.instagram_business_id.strip()
@@ -181,7 +214,7 @@ def create_account(
         name=data.name.strip(),
         instagram_business_id=data.instagram_business_id.strip(),
         facebook_page_id=(data.facebook_page_id or "").strip() or None,
-        access_token=encrypt_token(data.access_token),
+        access_token=encrypt_token(normalized_token),
         is_active=bool(data.is_active),
         created_at=utc_now(),
         updated_at=utc_now(),
@@ -210,7 +243,9 @@ def update_account(
     if "facebook_page_id" in d:
         row.facebook_page_id = (str(d["facebook_page_id"]).strip() if d["facebook_page_id"] else None)
     if "access_token" in d:
-        row.access_token = encrypt_token(str(d["access_token"]) if d["access_token"] else None)
+        normalized_token = _normalize_access_token(str(d["access_token"]) if d["access_token"] else None)
+        _validate_access_token_shape(normalized_token)
+        row.access_token = encrypt_token(normalized_token)
     if "is_active" in d and d["is_active"] is not None:
         row.is_active = bool(d["is_active"])
     row.updated_at = utc_now()
@@ -368,6 +403,14 @@ def retry_publication(
         raise HTTPException(status_code=404, detail="Publication not found")
     if row.status == "published":
         return _publication_to_response(db, row)
+    if not row.account_id:
+        pet = db.scalar(select(Pet).where(Pet.id == row.pet_id))
+        if pet:
+            region_key = (row.region_key or "").strip() or normalize_region_key(pet.city)
+            account = resolve_account_for_region(db, region_key)
+            if account:
+                row.account_id = account.id
+                row.region_key = region_key
     row.status = "pending"
     row.last_error = None
     row.updated_at = utc_now()

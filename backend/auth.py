@@ -129,3 +129,13 @@ def require_admin(user: User = Depends(get_current_user_required)) -> User:
     if user.role != "admin":
         raise HTTPException(status_code=403, detail="Доступ запрещён")
     return user
+
+
+def require_shelter_or_admin(user: User = Depends(get_current_user_required)) -> User:
+    """Создание и редактирование карточек приюта — только роль shelter или admin."""
+    if user.role not in ("shelter", "admin"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Нужна роль «приют» (shelter) или администратора",
+        )
+    return user

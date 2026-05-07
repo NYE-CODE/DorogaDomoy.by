@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useParams, useNavigate } from 'react-router';
 import QRCode from 'react-qr-code';
 import {
-  ArrowLeft,
   MoreVertical,
   Download,
   Share2,
@@ -21,6 +20,7 @@ import { Footer } from '../components/layout/Footer';
 import { useI18n } from '../context/I18nContext';
 import { useAuth } from '../context/AuthContext';
 import { profilePetsApi, partnersApi, type ProfilePetResponse, type Partner } from '../api/client';
+import { BackQuickMenu } from '../components/navigation/BackQuickMenu';
 import { resolveProfilePetSpecies, speciesPlainLabel } from '../utils/profile-pet-display';
 import { dateLocaleForUi, formatPetAgeDisplay, genderLabel, temperamentLabel } from '../utils/profile-pet-text';
 import { PageLoader } from '../components/ui/page-loader';
@@ -222,12 +222,7 @@ export default function MyPetProfilePage() {
       <main className="flex-1 py-6 sm:py-10">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-6 sm:mb-8">
-            <Button variant="ghost" size="sm" className="-ml-2 gap-2 text-muted-foreground hover:text-foreground" asChild>
-              <Link to="/my-pets">
-                <ArrowLeft size={18} />
-                <span>{op.backToPets}</span>
-              </Link>
-            </Button>
+            <BackQuickMenu />
           </div>
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">

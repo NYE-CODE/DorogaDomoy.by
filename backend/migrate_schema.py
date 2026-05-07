@@ -44,6 +44,21 @@ PET_BOUNTY_COLUMNS_TO_ADD = [
     ("reward_points_awarded_at", "DATETIME"),
 ]
 
+PET_SHELTER_COLUMNS_TO_ADD = [
+    ("pet_scope", "VARCHAR DEFAULT 'lost_found'"),
+    ("shelter_id", "VARCHAR"),
+    ("adoption_status", "VARCHAR"),
+    ("is_published", "INTEGER DEFAULT 1"),
+    ("published_by_user_id", "VARCHAR"),
+    ("updated_by_user_id", "VARCHAR"),
+]
+
+SHELTER_PET_DETAILS_COLUMNS_TO_ADD = [
+    ("nickname", "VARCHAR"),
+    ("health_status", "VARCHAR"),
+    ("coat_type", "VARCHAR"),
+]
+
 PROFILE_PET_COLUMNS_TO_ADD = [
     ("breed", "VARCHAR"),
     ("gender", "VARCHAR DEFAULT 'male'"),
@@ -273,6 +288,42 @@ NEW_TABLES = {
             created_at DATETIME
         )
     """,
+    "shelter_memberships": """
+        CREATE TABLE shelter_memberships (
+            id VARCHAR PRIMARY KEY,
+            shelter_id VARCHAR NOT NULL REFERENCES shelters(id) ON DELETE CASCADE,
+            user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            role VARCHAR NOT NULL DEFAULT 'volunteer',
+            status VARCHAR NOT NULL DEFAULT 'active',
+            invited_by_user_id VARCHAR REFERENCES users(id) ON DELETE SET NULL,
+            joined_at DATETIME,
+            removed_at DATETIME,
+            created_at DATETIME,
+            updated_at DATETIME
+        )
+    """,
+    "shelter_pet_details": """
+        CREATE TABLE shelter_pet_details (
+            id VARCHAR PRIMARY KEY,
+            pet_id VARCHAR NOT NULL UNIQUE REFERENCES pets(id) ON DELETE CASCADE,
+            nickname VARCHAR,
+            health_status VARCHAR,
+            coat_type VARCHAR,
+            adoption_status VARCHAR,
+            is_published INTEGER NOT NULL DEFAULT 1,
+            created_at DATETIME,
+            updated_at DATETIME
+        )
+    """,
+    "shelter_subscriptions": """
+        CREATE TABLE shelter_subscriptions (
+            id VARCHAR PRIMARY KEY,
+            user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            shelter_id VARCHAR NOT NULL REFERENCES shelters(id) ON DELETE CASCADE,
+            created_at DATETIME,
+            UNIQUE (user_id, shelter_id)
+        )
+    """,
 }
 
 
@@ -291,11 +342,12 @@ def resolve_sqlite_db_path() -> Path:
 def migrate(conn):
     changes = []
     for table, col_defs in [
-        ("pets", PET_COLUMNS_TO_ADD + PET_BOUNTY_COLUMNS_TO_ADD),
+        ("pets", PET_COLUMNS_TO_ADD + PET_BOUNTY_COLUMNS_TO_ADD + PET_SHELTER_COLUMNS_TO_ADD),
         ("users", USER_COLUMNS_TO_ADD),
         ("profile_pets", PROFILE_PET_COLUMNS_TO_ADD),
         ("instagram_publications", INSTAGRAM_PUBLICATION_COLUMNS_TO_ADD),
         ("partners", PARTNER_COLUMNS_TO_ADD),
+        ("shelter_pet_details", SHELTER_PET_DETAILS_COLUMNS_TO_ADD),
     ]:
         try:
             existing = get_existing_columns(conn, table)
@@ -404,6 +456,15 @@ PERFORMANCE_INDEXES = [
     "CREATE INDEX IF NOT EXISTS ix_instagram_publications_region_key ON instagram_publications (region_key)",
     "CREATE INDEX IF NOT EXISTS ix_instagram_publications_source_requested ON instagram_publications (source, requested_by_user_id, created_at)",
     "CREATE UNIQUE INDEX IF NOT EXISTS ix_instagram_publications_idempotency_key ON instagram_publications (idempotency_key)",
+    "CREATE INDEX IF NOT EXISTS ix_pets_shelter_id ON pets (shelter_id)",
+    "CREATE INDEX IF NOT EXISTS ix_pets_pet_scope ON pets (pet_scope)",
+    "CREATE UNIQUE INDEX IF NOT EXISTS uq_shelter_memberships_shelter_user ON shelter_memberships (shelter_id, user_id)",
+    "CREATE INDEX IF NOT EXISTS ix_shelter_memberships_shelter_id ON shelter_memberships (shelter_id)",
+    "CREATE INDEX IF NOT EXISTS ix_shelter_memberships_user_id ON shelter_memberships (user_id)",
+    "CREATE UNIQUE INDEX IF NOT EXISTS uq_shelter_pet_details_pet_id ON shelter_pet_details (pet_id)",
+    "CREATE INDEX IF NOT EXISTS ix_shelter_pet_details_published ON shelter_pet_details (is_published)",
+    "CREATE INDEX IF NOT EXISTS ix_shelter_subscriptions_shelter_id ON shelter_subscriptions (shelter_id)",
+    "CREATE INDEX IF NOT EXISTS ix_shelter_subscriptions_user_id ON shelter_subscriptions (user_id)",
 ]
 
 
@@ -429,6 +490,61 @@ def backfill_helper_codes(conn):
         )
 
 
+def backfill_shelter_owner_memberships(conn):
+    """Гарантирует наличие owner-membership у владельца каждого приюта."""
+    try:
+        conn.execute(
+            """
+            INSERT INTO shelter_memberships (
+                id, shelter_id, user_id, role, status, invited_by_user_id, joined_at, created_at, updated_at
+            )
+            SELECT
+                'shm-' || substr(lower(hex(randomblob(16))), 1, 10),
+                s.id,
+                s.owner_user_id,
+                'owner',
+                'active',
+                s.owner_user_id,
+                s.created_at,
+                s.created_at,
+                s.updated_at
+            FROM shelters s
+            LEFT JOIN shelter_memberships m
+                ON m.shelter_id = s.id AND m.user_id = s.owner_user_id
+            WHERE m.id IS NULL
+            """
+        )
+    except sqlite3.OperationalError:
+        return
+
+
+def backfill_shelter_pet_details(conn):
+    """Backfill details table from pets for shelter scope."""
+    try:
+        conn.execute(
+            """
+            INSERT INTO shelter_pet_details (
+                id, pet_id, nickname, health_status, coat_type, adoption_status, is_published, created_at, updated_at
+            )
+            SELECT
+                'spd-' || substr(lower(hex(randomblob(16))), 1, 10),
+                p.id,
+                NULL,
+                NULL,
+                NULL,
+                p.adoption_status,
+                COALESCE(p.is_published, 1),
+                p.published_at,
+                p.updated_at
+            FROM pets p
+            LEFT JOIN shelter_pet_details d ON d.pet_id = p.id
+            WHERE p.pet_scope = 'shelter_pet' AND d.id IS NULL
+            """
+        )
+    except sqlite3.OperationalError:
+        return
+
+
 if __name__ == "__main__":
     db_path = resolve_sqlite_db_path()
     if not db_path.exists():
@@ -443,6 +559,8 @@ if __name__ == "__main__":
         ensure_platform_settings(conn)
         ensure_performance_indexes(conn)
         backfill_helper_codes(conn)
+        backfill_shelter_owner_memberships(conn)
+        backfill_shelter_pet_details(conn)
         conn.commit()
         if changes:
             print("Added columns:", ", ".join(changes))

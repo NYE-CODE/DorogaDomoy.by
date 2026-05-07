@@ -131,9 +131,6 @@ export function Footer() {
               {f.privacyPolicy}
             </Link>
           </p>
-          <p className="mt-2">
-            {f.madeWith} <span className="text-primary">♥</span> {f.forPets}
-          </p>
         </div>
       </div>
     </footer>

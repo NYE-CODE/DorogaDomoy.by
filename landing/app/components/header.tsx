@@ -1,4 +1,4 @@
-import { MapPin, User, Settings, FileText, Shield, LogOut, ChevronDown, PawPrint, Menu, Heart } from "lucide-react";
+import { MapPin, User, Settings, FileText, Shield, LogOut, ChevronDown, PawPrint, Menu, Heart, Building2, Search } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router";
 import { Button } from "./ui/button";
@@ -8,15 +8,32 @@ import { useAuth } from "../../../context/AuthContext";
 import { useI18n } from "../../../context/I18nContext";
 import { useCityOptional } from "../../../context/CityContext";
 import { landingContainerWide, landingHeaderPrimaryCtaClass } from "./landing-section-styles";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import type { HomeMode } from "../App";
+import { trackYmGoal } from "../../../utils/ym";
+
+function trackHeaderNavClick(target: string, mode?: HomeMode) {
+  trackYmGoal("header_nav_click", { target, mode: mode ?? "unknown" });
+}
 
 interface HeaderProps {
   selectedCity?: string;
   onCityClick?: () => void;
   showCitySelector?: boolean;
+  showHomeModeToggle?: boolean;
+  homeMode?: HomeMode;
+  onHomeModeChange?: (mode: HomeMode) => void;
 }
 
 export function Header(props: HeaderProps = {}) {
-  const { selectedCity: propSelectedCity, onCityClick, showCitySelector = true } = props || {};
+  const {
+    selectedCity: propSelectedCity,
+    onCityClick,
+    showCitySelector = true,
+    showHomeModeToggle = false,
+    homeMode = "search",
+    onHomeModeChange,
+  } = props || {};
   const cityContext = useCityOptional();
   const selectedCityFromContext = cityContext?.selectedCity ?? '';
   const { t } = useI18n();
@@ -39,6 +56,10 @@ export function Header(props: HeaderProps = {}) {
     else setIsRegionOpen(true);
   };
   const profileRef = useRef<HTMLDivElement>(null);
+  const modeSearchLabel = t.common.search;
+  const modeSheltersLabel = t.header.shelters;
+  const isSheltersMode = showHomeModeToggle && homeMode === "shelters";
+  const ecosystemTagline = "Экосистема помощи животным";
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent | TouchEvent) => {
@@ -70,25 +91,77 @@ export function Header(props: HeaderProps = {}) {
               <img src="/logo.png" alt="DorogaDomoy.by" className="w-10 h-10 shrink-0 object-contain" />
               <div className="flex flex-col min-w-0">
                 <span className="text-xl font-bold text-foreground leading-tight">DorogaDomoy.by</span>
-                <span className="text-sm text-muted-foreground leading-tight hidden md:block">{t.landing.header.tagline}</span>
+                <span className="text-sm text-muted-foreground leading-tight hidden md:block">{ecosystemTagline}</span>
               </div>
             </Link>
           </div>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex gap-4 items-center">
-            <Link
-              to="/blog"
-              className="hidden h-11 shrink-0 items-center rounded-lg px-3 text-sm font-medium text-foreground transition-colors hover:bg-muted md:inline-flex md:h-12"
-            >
-              {t.landing.header.blog}
-            </Link>
-            <Button asChild>
-              <Link to="/create" className={`${landingHeaderPrimaryCtaClass} shrink-0`}>
-                <span className="text-xl leading-none">+</span>
-                <span>{t.landing.header.createAd}</span>
-              </Link>
-            </Button>
+            {showHomeModeToggle && (
+              <div
+                className="inline-flex h-12 items-center gap-1 rounded-full border border-border bg-card px-1.5"
+                role="group"
+                aria-label="Переключатель режима"
+              >
+                <button
+                  type="button"
+                  onClick={() => onHomeModeChange?.("search")}
+                  className={`inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors ${
+                    homeMode === "search"
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:bg-muted"
+                  }`}
+                  aria-label={modeSearchLabel}
+                >
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="inline-flex h-full w-full items-center justify-center">
+                        <Search size={18} />
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" sideOffset={8}>{`Режим: ${modeSearchLabel}`}</TooltipContent>
+                  </Tooltip>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onHomeModeChange?.("shelters")}
+                  className={`inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors ${
+                    homeMode === "shelters"
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:bg-muted"
+                  }`}
+                  aria-label={modeSheltersLabel}
+                >
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="inline-flex h-full w-full items-center justify-center">
+                        <Building2 size={18} />
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" sideOffset={8}>{`Режим: ${modeSheltersLabel}`}</TooltipContent>
+                  </Tooltip>
+                </button>
+              </div>
+            )}
+            {showHomeModeToggle ? (
+              <Button asChild>
+                <Link
+                  to={isSheltersMode ? "/shelters" : "/create"}
+                  className={`${landingHeaderPrimaryCtaClass} shrink-0`}
+                  onClick={() => trackHeaderNavClick(isSheltersMode ? "view_shelters" : "create_ad", homeMode)}
+                >
+                  {isSheltersMode ? (
+                    <span>Смотреть приюты</span>
+                  ) : (
+                    <>
+                      <span className="text-xl leading-none">+</span>
+                      <span>{t.landing.header.createAd}</span>
+                    </>
+                  )}
+                </Link>
+              </Button>
+            ) : null}
             
             {showCitySelector && (
               <button
@@ -132,6 +205,12 @@ export function Header(props: HeaderProps = {}) {
                           <PawPrint size={18} className="text-muted-foreground" />
                           <span className="text-foreground">{t.landing.header.myPets}</span>
                         </button>
+                        {user.role === "shelter" && (
+                          <button type="button" onClick={() => { navigate("/my-shelters"); setIsProfileOpen(false); }} className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-muted">
+                            <Building2 size={18} className="text-muted-foreground" />
+                            <span className="text-foreground">{t.landing.header.myShelterOrg}</span>
+                          </button>
+                        )}
                         <button type="button" onClick={() => { navigate("/my-ads"); setIsProfileOpen(false); }} className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-muted">
                           <FileText size={18} className="text-muted-foreground" />
                           <span className="text-foreground">{t.landing.header.myAds}</span>
@@ -144,17 +223,23 @@ export function Header(props: HeaderProps = {}) {
                           <Settings size={18} className="text-muted-foreground" />
                           <span className="text-foreground">{t.landing.header.settings}</span>
                         </button>
+                        <button type="button" onClick={() => { navigate("/blog"); setIsProfileOpen(false); trackHeaderNavClick("blog_profile_menu", homeMode); }} className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-muted">
+                          <FileText size={18} className="text-muted-foreground" />
+                          <span className="text-foreground">{t.landing.header.blog}</span>
+                        </button>
                         {user.role === "admin" && (
-                          <button
-                            type="button"
-                            onClick={() => { navigate("/admin"); setIsProfileOpen(false); }}
-                            className="flex w-full items-center gap-3 px-4 py-2.5 text-left font-medium text-primary transition-colors hover:bg-primary/10"
-                          >
-                            <Shield size={18} className="text-primary" />
-                            <span>{t.landing.header.adminPanel}</span>
-                          </button>
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => { navigate("/admin"); setIsProfileOpen(false); }}
+                              className="flex w-full items-center gap-3 px-4 py-2.5 text-left font-medium text-primary transition-colors hover:bg-primary/10"
+                            >
+                              <Shield size={18} className="text-primary" />
+                              <span>{t.landing.header.adminPanel}</span>
+                            </button>
+                          </>
                         )}
-                        <div className="border-t border-border mt-2 pt-2">
+                        <div className="mt-3 border-t border-border pt-2">
                           <button type="button" onClick={() => { logout(); setIsProfileOpen(false); }} className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-destructive/10">
                             <LogOut size={18} className="text-destructive" />
                             <span className="text-destructive font-medium">{t.landing.header.logout}</span>

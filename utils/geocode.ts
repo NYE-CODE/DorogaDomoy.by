@@ -112,15 +112,27 @@ async function fetchReverseData(lat: number, lng: number): Promise<{ addr: Nomin
   }
 }
 
-export async function reverseGeocode(lat: number, lng: number): Promise<string | null> {
+/** Один запрос reverse: строка для адреса + населённый пункт для поля «город». */
+export type ReverseGeocodePlace = {
+  formattedAddress: string;
+  locality: string | null;
+};
+
+export async function reverseGeocodeStructured(lat: number, lng: number): Promise<ReverseGeocodePlace | null> {
   const result = await fetchReverseData(lat, lng);
   if (!result) return null;
-  const short = formatShortAddress(result.addr);
-  return short || result.displayName || null;
+  const formattedAddress = formatShortAddress(result.addr) || result.displayName || null;
+  if (!formattedAddress) return null;
+  const locality = getLocalityName(result.addr) || null;
+  return { formattedAddress, locality };
+}
+
+export async function reverseGeocode(lat: number, lng: number): Promise<string | null> {
+  const s = await reverseGeocodeStructured(lat, lng);
+  return s?.formattedAddress ?? null;
 }
 
 export async function reverseGeocodeLocality(lat: number, lng: number): Promise<string | null> {
-  const result = await fetchReverseData(lat, lng);
-  if (!result) return null;
-  return getLocalityName(result.addr) || null;
+  const s = await reverseGeocodeStructured(lat, lng);
+  return s?.locality ?? null;
 }

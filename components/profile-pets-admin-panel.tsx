@@ -1,16 +1,20 @@
 import { useState } from 'react';
 import {
-  ChevronLeft,
-  ChevronRight,
   Trash2,
   ExternalLink,
   Eye,
   X,
   Search,
+  ArrowUpDown,
+  ChevronUp,
+  ChevronDown,
 } from 'lucide-react';
 import type { ProfilePetResponse } from '../api/client';
 import { API_BASE } from '../api/client';
+import { useI18n } from '../context/I18nContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { adm } from './admin-panel-chrome';
+import { AdminTablePagination } from './admin-table-pagination';
 
 interface ProfilePetsAdminPanelProps {
   profilePets: ProfilePetResponse[];
@@ -44,11 +48,19 @@ function resolvePhoto(url: string): string {
 }
 
 export function ProfilePetsAdminPanel({ profilePets, onDeleteProfilePet }: ProfilePetsAdminPanelProps) {
+  const { t } = useI18n();
+  const ap = t.adminPanel;
+  const pg = ap.pagination;
   const [speciesFilter, setSpeciesFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
   const [viewingPet, setViewingPet] = useState<ProfilePetResponse | null>(null);
+  const [sortByCreated, setSortByCreated] = useState(false);
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const perPage = 15;
+
+  const sortThBtn =
+    'w-full px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400 inline-flex items-center gap-1 hover:bg-muted/50 dark:hover:bg-muted/30 transition-colors';
 
   const filtered = profilePets
     .filter(p => {
@@ -66,18 +78,52 @@ export function ProfilePetsAdminPanel({ profilePets, onDeleteProfilePet }: Profi
       );
     });
 
-  const totalPages = Math.ceil(filtered.length / perPage);
-  const paginated = filtered.slice((page - 1) * perPage, page * perPage);
+  const sorted = [...filtered];
+  if (sortByCreated) {
+    sorted.sort((a, b) => {
+      const ta = new Date(a.created_at).getTime();
+      const tb = new Date(b.created_at).getTime();
+      return sortDir === 'asc' ? ta - tb : tb - ta;
+    });
+  }
+
+  const totalPages = Math.ceil(sorted.length / perPage);
+  const paginated = sorted.slice((page - 1) * perPage, page * perPage);
+
+  const toggleCreatedSort = () => {
+    setPage(1);
+    if (sortByCreated) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortByCreated(true);
+      setSortDir('desc');
+    }
+  };
+
+  const createdSortIcon = () => {
+    if (!sortByCreated) {
+      return <ArrowUpDown className="w-3.5 h-3.5 shrink-0 opacity-45" aria-hidden />;
+    }
+    return sortDir === 'asc' ? (
+      <ChevronUp className="w-3.5 h-3.5 shrink-0" aria-hidden />
+    ) : (
+      <ChevronDown className="w-3.5 h-3.5 shrink-0" aria-hidden />
+    );
+  };
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Профили питомцев</h2>
+    <div className={adm.page}>
+      <div className={adm.headerRow}>
+        <div className={adm.headerText}>
+          <h2 className={adm.title}>Профили питомцев</h2>
+        </div>
+      </div>
 
       {/* Filters */}
-      <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+      <div className={adm.filtersCard}>
         <div className="flex flex-wrap gap-4 items-end">
           <div className="flex-1 min-w-[250px]">
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Поиск</label>
+            <label className={adm.labelFilter}>Поиск</label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
@@ -91,7 +137,7 @@ export function ProfilePetsAdminPanel({ profilePets, onDeleteProfilePet }: Profi
           </div>
 
           <div className="min-w-[180px]">
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Вид животного</label>
+            <label className={adm.labelFilter}>Вид животного</label>
             <Select value={speciesFilter} onValueChange={(v) => { setSpeciesFilter(v); setPage(1); }}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Все виды" />
@@ -106,35 +152,46 @@ export function ProfilePetsAdminPanel({ profilePets, onDeleteProfilePet }: Profi
           </div>
 
           <div className="text-sm text-gray-600 dark:text-gray-400 ml-auto">
-            Найдено: {filtered.length} профилей
+            Найдено: {sorted.length} профилей
           </div>
         </div>
       </div>
 
       {/* Table */}
-      <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg overflow-x-auto">
-        <table className="w-full min-w-[800px]">
-          <thead className="bg-muted dark:bg-accent border-b border-gray-200 dark:border-gray-600">
+      <div className={adm.tableShell}>
+        <div className={adm.tableWrap}>
+        <table className={`${adm.table} min-w-[800px]`}>
+          <thead className={adm.thead}>
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Фото</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Питомец</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Вид / Порода</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Владелец</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Чип</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Создан</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Действия</th>
+              <th className={adm.th}>Фото</th>
+              <th className={adm.th}>Питомец</th>
+              <th className={adm.th}>Вид / Порода</th>
+              <th className={adm.th}>Владелец</th>
+              <th className={adm.th}>Чип</th>
+              <th className={`${adm.th} p-0`}>
+                <button
+                  type="button"
+                  className={sortThBtn}
+                  title="Сортировать по дате создания"
+                  onClick={toggleCreatedSort}
+                >
+                  Создан
+                  {createdSortIcon()}
+                </button>
+              </th>
+              <th className={adm.th}>Действия</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+          <tbody className={adm.tbody}>
             {paginated.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                <td colSpan={7} className={adm.tdEmpty}>
                   Профили питомцев не найдены
                 </td>
               </tr>
             ) : (
               paginated.map(pet => (
-                <tr key={pet.id} className="hover:bg-accent dark:hover:bg-accent">
+                <tr key={pet.id} className={adm.tr}>
                   <td className="px-4 py-3">
                     <img
                       src={pet.photos[0] ? resolvePhoto(pet.photos[0]) : PLACEHOLDER_PHOTO}
@@ -217,36 +274,27 @@ export function ProfilePetsAdminPanel({ profilePets, onDeleteProfilePet }: Profi
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <button
-            onClick={() => setPage(Math.max(1, page - 1))}
-            disabled={page === 1}
-            className="flex items-center gap-2 px-4 py-3 text-sm bg-card border border-gray-200 dark:border-gray-700 dark:text-gray-300 rounded-lg hover:bg-accent dark:hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            Назад
-          </button>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-              Страница {page} из {totalPages}
-            </span>
-            <span className="text-xs text-gray-500 dark:text-gray-400">
-              ({filtered.length} всего)
-            </span>
-          </div>
-          <button
-            onClick={() => setPage(Math.min(totalPages, page + 1))}
-            disabled={page >= totalPages}
-            className="flex items-center gap-2 px-4 py-3 text-sm bg-card border border-gray-200 dark:border-gray-700 dark:text-gray-300 rounded-lg hover:bg-accent dark:hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Вперед
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
+        <AdminTablePagination
+          currentPage={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          labels={pg}
+          summary={
+            <>
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                {ap.users.pageOf(page, totalPages)}
+              </span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                {ap.users.totalShort(sorted.length)}
+              </span>
+            </>
+          }
+        />
       )}
 
       {/* Detail Modal */}

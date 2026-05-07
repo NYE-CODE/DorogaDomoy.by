@@ -123,7 +123,7 @@ export default function UserProfilePage() {
       applySeo({
         title: 'Пользователь не найден | DorogaDomoy.by',
         description:
-          'Профиль не существует или недоступен. Поиск пропавших и найденных питомцев на DorogaDomoy.by.',
+          'Профиль не существует или недоступен. DorogaDomoy.by — экосистема помощи животным в Беларуси.',
         canonicalUrl: canonicalUrlFromPath(`/user/${id}`),
         robots: SEO_ROBOTS_PRIVATE,
         keywords: SEO_KEYWORDS,
@@ -135,7 +135,7 @@ export default function UserProfilePage() {
     applySeo({
       title: `${user.name} — ${role} | DorogaDomoy.by`,
       description: truncateMetaDescription(
-        `Профиль ${user.name} (${role}) на DorogaDomoy.by. Объявления о пропавших и найденных питомцах.${geo ? ` ${geo}.` : ''}`,
+        `Профиль ${user.name} (${role}) на DorogaDomoy.by. Экосистема помощи животным: поиск, приюты, поддержка.${geo ? ` ${geo}.` : ''}`,
       ),
       canonicalUrl: canonicalUrlFromPath(`/user/${user.id}`),
       robots: SEO_ROBOTS_PUBLIC,

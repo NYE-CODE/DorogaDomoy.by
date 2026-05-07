@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from telegram_bot import (
     publish_blog_post_to_telegram,
+    send_pending_moderation_alert_sync,
     send_notifications_for_pet,
     send_profile_pet_signal_sync,
     send_sighting_notification_sync,
@@ -15,6 +16,7 @@ from telegram_bot import (
 
 __all__ = [
     "publish_blog_post_to_telegram",
+    "send_pending_moderation_alert_sync",
     "send_notifications_for_pet",
     "send_profile_pet_signal_sync",
     "send_sighting_notification_sync",

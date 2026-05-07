@@ -45,7 +45,9 @@ export default function BlogListPage() {
   const [hasMore, setHasMore] = useState(true);
 
   useEffect(() => {
-    const desc = truncateMetaDescription(`${b.pageSubtitle}. DorogaDomoy.by — поиск пропавших питомцев в Беларуси.`);
+    const desc = truncateMetaDescription(
+      `${b.pageSubtitle}. DorogaDomoy.by — экосистема помощи животным: поиск, приюты и поддержка в Беларуси.`,
+    );
     applySeo({
       title: `${b.pageTitle} — DorogaDomoy.by`,
       description: desc,

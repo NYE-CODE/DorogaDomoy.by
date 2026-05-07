@@ -274,6 +274,66 @@ async def send_notifications_for_pet(pet: Pet, db: Session):
         logger.exception("Failed to save notifications: %s", e)
 
 
+def send_pending_moderation_alert_sync(pet_id: str) -> int:
+    """Отправляет админам с привязанным Telegram уведомление о новом объявлении на модерации."""
+    if not BOT_TOKEN:
+        logger.info("TELEGRAM_BOT_TOKEN not configured, skipping moderation alerts")
+        return 0
+
+    db = SessionLocal()
+    try:
+        pet = db.scalar(select(Pet).where(Pet.id == pet_id))
+        if not pet or pet.moderation_status != "pending":
+            return 0
+
+        admins = db.scalars(
+            select(User).where(
+                User.role == "admin",
+                User.telegram_id.is_not(None),
+                User.is_blocked.is_(False),
+            )
+        ).all()
+        if not admins:
+            return 0
+
+        animal_label = ANIMAL_TYPE_LABELS.get(pet.animal_type, pet.animal_type)
+        status_label = STATUS_LABELS.get(pet.status, pet.status)
+        city = (pet.city or "").strip() or "—"
+        author_name = (pet.author_name or "").strip() or "Пользователь"
+        short_desc = (pet.description or "").strip()
+        if len(short_desc) > 180:
+            short_desc = short_desc[:177] + "..."
+        desc_block = html.escape(short_desc) if short_desc else "Без описания"
+        scope_label = "приют" if (pet.pet_scope or "lost_found") == "shelter_pet" else "потеряшки"
+
+        text = (
+            "🛡 <b>Новое объявление на модерации</b>\n\n"
+            f"ID: <code>{html.escape(pet.id)}</code>\n"
+            f"Раздел: {html.escape(scope_label)}\n"
+            f"Тип: {html.escape(status_label)} / {html.escape(animal_label)}\n"
+            f"Город: {html.escape(city)}\n"
+            f"Автор: {html.escape(author_name)}\n\n"
+            f"{desc_block}"
+        )
+        keyboard = {
+            "inline_keyboard": [[
+                {"text": "Открыть в админке", "url": f"{SITE_URL}/admin"},
+                {"text": "Карточка объявления", "url": f"{SITE_URL}/pet/{pet.id}"},
+            ]]
+        }
+
+        sent_count = 0
+        for admin in admins:
+            if admin.telegram_id and _send_telegram_message_sync(admin.telegram_id, text, reply_markup=keyboard):
+                sent_count += 1
+        return sent_count
+    except Exception as e:
+        logger.exception("send_pending_moderation_alert_sync error for pet %s: %s", pet_id, e)
+        return 0
+    finally:
+        db.close()
+
+
 def send_sighting_notification_sync(sighting_id: str, pet_id: str) -> None:
     """Синхронная отправка уведомления владельцу (для BackgroundTasks, т.к. они выполняются в threadpool)."""
     if not BOT_TOKEN:

@@ -1,0 +1,41 @@
+<svg width="1200" height="900" viewBox="0 0 1200 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="120" y1="90" x2="1080" y2="810" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFF6DB"/>
+      <stop offset="1" stop-color="#F6F8FF"/>
+    </linearGradient>
+    <linearGradient id="card" x1="700" y1="240" x2="1000" y2="640" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFE4A8"/>
+      <stop offset="1" stop-color="#FFD27A"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="0" y="0" width="1200" height="900" rx="40" fill="url(#bg)"/>
+
+  <circle cx="230" cy="210" r="110" fill="#FFD36E" fill-opacity="0.35"/>
+  <circle cx="1020" cy="180" r="130" fill="#BDEACF" fill-opacity="0.35"/>
+  <circle cx="1010" cy="730" r="140" fill="#C9D8FF" fill-opacity="0.3"/>
+
+  <rect x="130" y="180" width="470" height="540" rx="28" fill="white" stroke="#EAEAEA" stroke-width="2"/>
+  <rect x="700" y="250" width="370" height="390" rx="28" fill="url(#card)"/>
+
+  <ellipse cx="365" cy="470" rx="145" ry="165" fill="#F3B67A"/>
+  <circle cx="320" cy="430" r="24" fill="#2E2E2E"/>
+  <circle cx="410" cy="430" r="24" fill="#2E2E2E"/>
+  <circle cx="350" cy="500" r="20" fill="#2E2E2E"/>
+  <path d="M300 555C320 585 410 585 430 555" stroke="#2E2E2E" stroke-width="16" stroke-linecap="round"/>
+  <ellipse cx="260" cy="345" rx="45" ry="70" transform="rotate(-20 260 345)" fill="#F3B67A"/>
+  <ellipse cx="470" cy="345" rx="45" ry="70" transform="rotate(20 470 345)" fill="#F3B67A"/>
+
+  <ellipse cx="870" cy="490" rx="110" ry="130" fill="#FFFFFF"/>
+  <circle cx="830" cy="470" r="16" fill="#2E2E2E"/>
+  <circle cx="910" cy="470" r="16" fill="#2E2E2E"/>
+  <polygon points="870,500 854,530 886,530" fill="#F6A7A7"/>
+  <path d="M830 565C845 585 895 585 910 565" stroke="#2E2E2E" stroke-width="10" stroke-linecap="round"/>
+  <ellipse cx="785" cy="402" rx="34" ry="58" transform="rotate(-18 785 402)" fill="#FFFFFF"/>
+  <ellipse cx="955" cy="402" rx="34" ry="58" transform="rotate(18 955 402)" fill="#FFFFFF"/>
+
+  <rect x="180" y="235" width="180" height="20" rx="10" fill="#FFEAB7"/>
+  <rect x="180" y="270" width="260" height="14" rx="7" fill="#EFEFEF"/>
+  <rect x="180" y="295" width="220" height="14" rx="7" fill="#EFEFEF"/>
+</svg>

@@ -1,5 +1,6 @@
 import { FileText, Map, Heart } from "lucide-react";
 import { useI18n } from "../../../context/I18nContext";
+import type { HomeMode } from "../App";
 import {
   landingBandMuted,
   landingContainerWide,
@@ -11,16 +12,36 @@ import {
 
 const stepIcons = [FileText, Map, Heart] as const;
 
-export function HowItWorks() {
+export function HowItWorks({ mode = "search" }: { mode?: HomeMode }) {
   const { t } = useI18n();
-  const steps = t.landing.howItWorks.steps;
+  const isSheltersMode = mode === "shelters";
+  const steps = isSheltersMode
+    ? [
+        {
+          title: "Выберите питомца",
+          desc: "Откройте карточки приютов и выберите питомца, с которым хотите познакомиться.",
+        },
+        {
+          title: "Свяжитесь с приютом",
+          desc: "Напишите или позвоните в приют, чтобы уточнить детали и договориться о встрече.",
+        },
+        {
+          title: "Подарите дом",
+          desc: "Пройдите знакомство и оформление — и заберите питомца в новую семью.",
+        },
+      ]
+    : t.landing.howItWorks.steps;
+  const title = isSheltersMode ? "Как взять питомца из приюта?" : t.landing.howItWorks.title;
+  const subtitle = isSheltersMode
+    ? "Три простых шага до счастливой встречи с вашим любимцем"
+    : t.landing.howItWorks.subtitle;
 
   return (
     <section id="how-it-works" className={`${landingSectionY} ${landingBandMuted} scroll-mt-24`}>
       <div className={landingContainerWide}>
         <div className={landingSectionHeader}>
-          <h2 className={landingH2}>{t.landing.howItWorks.title}</h2>
-          <p className={landingLeadWideCenter}>{t.landing.howItWorks.subtitle}</p>
+          <h2 className={landingH2}>{title}</h2>
+          <p className={landingLeadWideCenter}>{subtitle}</p>
         </div>
 
         <div className="relative">

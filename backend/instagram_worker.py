@@ -5,6 +5,7 @@ import logging
 import os
 from datetime import timedelta
 
+import httpx
 from sqlalchemy import select
 
 from database import SessionLocal
@@ -12,6 +13,7 @@ from integrations.instagram import (
     InstagramPublishError,
     publish_image,
 )
+from instagram_publications import normalize_region_key, resolve_account_for_region
 from models import InstagramPublication, Pet
 from token_crypto import decrypt_token
 from time_utils import utc_now
@@ -29,6 +31,27 @@ def _build_card_url(pet_id: str, fmt: str) -> str:
     # Instagram publisher now supports story-only output.
     _ = fmt
     return f"{API_PUBLIC_BASE}/pets/{pet_id}/social-card?format=story"
+
+
+def _validate_card_url(image_url: str) -> str | None:
+    """Проверяет, что ссылка карточки публично отдает изображение (200 + image/*)."""
+    try:
+        with httpx.Client(timeout=20, follow_redirects=True) as client:
+            resp = client.get(image_url)
+        content_type = (resp.headers.get("content-type") or "").lower()
+        if resp.status_code != 200:
+            return (
+                f"Social card URL returned HTTP {resp.status_code}. "
+                f"Check API_PUBLIC_BASE/SITE_URL and public access: {image_url}"
+            )
+        if not content_type.startswith("image/"):
+            return (
+                f"Social card URL returned non-image content-type: {content_type or 'unknown'}. "
+                f"URL: {image_url}"
+            )
+        return None
+    except Exception as e:
+        return f"Cannot fetch social card URL: {e}"
 
 
 def _pick_next_publication(db) -> InstagramPublication | None:
@@ -72,6 +95,18 @@ def _process_row(db, row: InstagramPublication) -> bool:
         return True
 
     if not row.account_id or not row.account or not row.account.is_active:
+        # Queue items can be created before routes/accounts are configured.
+        # Re-resolve account on each processing attempt to make retries recoverable.
+        region_key = (row.region_key or "").strip() or normalize_region_key(pet.city)
+        resolved = resolve_account_for_region(db, region_key)
+        if resolved:
+            row.account_id = resolved.id
+            row.region_key = region_key
+            row.updated_at = utc_now()
+            db.commit()
+            db.refresh(row)
+
+    if not row.account_id or not row.account or not row.account.is_active:
         _fail_row(row, "Instagram account is not configured or inactive")
         db.commit()
         return True
@@ -103,6 +138,11 @@ def _process_row(db, row: InstagramPublication) -> bool:
     is_story = True
     image_url = _build_card_url(pet.id, row.format)
     caption = None
+    url_error = _validate_card_url(image_url)
+    if url_error:
+        _fail_row(row, url_error)
+        db.commit()
+        return True
 
     try:
         result = publish_image(

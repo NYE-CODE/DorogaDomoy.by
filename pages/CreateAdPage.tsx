@@ -7,6 +7,7 @@ import { Header } from '../components/layout/Header';
 import { Footer } from '../components/layout/Footer';
 import { PetForm, PetFormData, PetFormStepInfo } from '../components/pet-form';
 import { ChevronLeft } from 'lucide-react';
+import { BackQuickMenu } from '../components/navigation/BackQuickMenu';
 import { ContactRequiredModal } from '../components/contact-required-modal';
 import { petsApi, profilePetsApi } from '../api/client';
 import { toast } from 'sonner';
@@ -45,7 +46,7 @@ export default function CreateAdPage() {
   useEffect(() => {
     if (isAuthenticated && user) {
       const hasContacts = user.contacts?.phone || user.contacts?.telegram || user.contacts?.viber;
-      if (!hasContacts) setShowContactRequired(true);
+      setShowContactRequired(!hasContacts);
     }
   }, [isAuthenticated, user]);
 
@@ -86,6 +87,12 @@ export default function CreateAdPage() {
 
   const handleSubmit = async (formData: PetFormData) => {
     if (!user) return;
+    const hasContacts = user.contacts?.phone || user.contacts?.telegram || user.contacts?.viber;
+    if (!hasContacts) {
+      setShowContactRequired(true);
+      toast.error(t.profile.atLeastOneContact);
+      return;
+    }
     const contacts = formData.useProfileContacts
       ? { ...user.contacts }
       : { phone: formData.contactPhone || '' };
@@ -136,7 +143,7 @@ export default function CreateAdPage() {
   if (profilePetId && profilePrefillLoading) {
     return (
       <div className="landing-theme min-h-screen bg-gray-50 dark:bg-background flex flex-col">
-        <Header />
+        <Header showHomeModeToggle={false} />
         <main className="flex-1 flex flex-col items-center justify-center px-4">
           <div className="w-10 h-10 border-4 border-[#FF9800]/30 border-t-[#FF9800] rounded-full animate-spin mb-4" />
           <p className="text-gray-600 dark:text-muted-foreground text-center">{t.common.loading}</p>
@@ -149,7 +156,7 @@ export default function CreateAdPage() {
   if (!isAuthenticated) {
     return (
       <div className="landing-theme min-h-screen bg-gray-50 dark:bg-background flex flex-col items-center justify-center px-4">
-        <Header />
+        <Header showHomeModeToggle={false} />
         <main className="flex-1 flex flex-col items-center justify-center text-center">
           <p className="text-lg text-gray-600 dark:text-gray-400 mb-6">
             {(t.app as { loginToCreate?: string }).loginToCreate ?? 'Войдите или зарегистрируйтесь, чтобы создать объявление'}
@@ -167,21 +174,25 @@ export default function CreateAdPage() {
 
   return (
     <div className="landing-theme min-h-screen bg-gray-50 dark:bg-background flex flex-col">
-      <Header />
+      <Header showHomeModeToggle={false} />
 
       {/* Секция шага — сразу под хедером, отдельно от формы */}
       {stepInfo && (
         <section className="bg-white dark:bg-card border-b border-gray-200 dark:border-border px-4 sm:px-6 lg:px-8">
           <div className="max-w-[736px] mx-auto py-4">
             <div className="flex items-center gap-4 mb-4">
-              <button
-                type="button"
-                onClick={stepInfo.onBack}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-muted rounded-lg transition-colors"
-                aria-label={t.common.back}
-              >
-                <ChevronLeft className="w-6 h-6 text-gray-600 dark:text-muted-foreground" />
-              </button>
+              {stepInfo.step > 1 ? (
+                <button
+                  type="button"
+                  onClick={stepInfo.onBack}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-muted rounded-lg transition-colors"
+                  aria-label={t.common.back}
+                >
+                  <ChevronLeft className="w-6 h-6 text-gray-600 dark:text-muted-foreground" />
+                </button>
+              ) : (
+                <BackQuickMenu />
+              )}
               <div className="flex-1 min-w-0">
                 <h1 className="text-2xl font-bold text-black dark:text-foreground truncate">{stepInfo.pageTitle}</h1>
                 <p className="text-sm text-gray-600 dark:text-muted-foreground mt-1">
@@ -222,7 +233,6 @@ export default function CreateAdPage() {
 
       <ContactRequiredModal
         open={showContactRequired}
-        onClose={() => setShowContactRequired(false)}
         onGoToProfile={() => {
           setShowContactRequired(false);
           navigate('/profile');
