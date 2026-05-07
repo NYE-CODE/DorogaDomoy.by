@@ -1,13 +1,16 @@
 import { MapPin, Clock } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { Button } from "./ui/button";
-import { petsApi } from "../../../api/client";
+import { petsApi, sheltersApi } from "../../../api/client";
 import { useI18n } from "../../../context/I18nContext";
 import type { Pet } from "../../../types/pet";
 import { formatRelativeTime, petStatusPhotoPillClass } from "../../../utils/pet-helpers";
 import { getRewardBadgeMeta } from "../../../components/reward-badge";
 import { FavoriteHeartButton } from "../../../components/favorite-heart-button";
+import { ShelterPetCard } from "../../../components/shelter-pet-card";
+import type { HomeMode } from "../App";
+import { trackYmGoal } from "../../../utils/ym";
 import {
   landingContainerWide,
   landingH2,
@@ -19,25 +22,62 @@ import {
 
 const DEFAULT_PHOTO = "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&h=400&fit=crop";
 
-export function Announcements() {
+function trackAnnouncementsClick(mode: HomeMode, action: "card_open" | "view_all", targetId?: string) {
+  trackYmGoal("announcements_click", {
+    mode,
+    action,
+    target_id: targetId ?? null,
+  });
+}
+
+export function Announcements({ mode = "search" }: { mode?: HomeMode }) {
   const { t } = useI18n();
+  const navigate = useNavigate();
   const [pets, setPets] = useState<Pet[]>([]);
   const [loading, setLoading] = useState(true);
+  const isSheltersMode = mode === "shelters";
 
   useEffect(() => {
+    setLoading(true);
+    if (isSheltersMode) {
+      sheltersApi
+        .list()
+        .then(async (shelters) => {
+          const chunks = await Promise.all(
+            shelters.map((shelter) =>
+              sheltersApi
+                .listPets(shelter.id, { is_archived: false, limit: 50 })
+                .catch(() => []),
+            ),
+          );
+          const flat = chunks.flat();
+          setPets(flat.slice(0, 8));
+        })
+        .catch(() => setPets([]))
+        .finally(() => setLoading(false));
+      return;
+    }
+
     petsApi
-      .list({ moderation_status: "approved", is_archived: false })
+      .list({ moderation_status: "approved" as const, is_archived: false })
       .then((list) => setPets(list.slice(0, 8)))
       .catch(() => setPets([]))
       .finally(() => setLoading(false));
-  }, []);
+  }, [isSheltersMode]);
 
   const animalTypeLabels = t.pet.animalType as Record<string, string>;
   const colorLabels = t.pet.color as Record<string, string>;
+  const sectionTitle = isSheltersMode ? "Питомцы из приютов" : t.landing.announcements.title;
+  const sectionSubtitle = isSheltersMode
+    ? "Выбирайте тех, кто ищет дом, и связывайтесь с приютом напрямую."
+    : t.landing.announcements.subtitle;
+  const sectionEmpty = isSheltersMode ? "Пока нет опубликованных питомцев приютов." : t.landing.announcements.noAds;
+  const viewAllText = isSheltersMode ? "Смотреть приюты" : t.landing.announcements.viewAll;
+  const viewAllHref = isSheltersMode ? "/shelters?tab=pets" : "/search";
 
   const cards = pets.map((pet) => ({
     id: pet.id,
-    type: pet.status === "searching" ? "lost" : "found",
+    type: isSheltersMode ? "adoption" : pet.status === "searching" ? "lost" : "found",
     petType: animalTypeLabels[pet.animalType] ?? pet.animalType,
     breed: pet.breed || t.landing.announcements.breedDefault,
     color: pet.colors.length ? pet.colors.map((c) => colorLabels[c] ?? c).join(", ") : "—",
@@ -51,15 +91,29 @@ export function Announcements() {
     <section id="announcements" className={`${landingSectionY} bg-background scroll-mt-24`}>
       <div className={landingContainerWide}>
         <div className={landingSectionHeader}>
-          <h2 className={landingH2}>{t.landing.announcements.title}</h2>
-          <p className={landingLeadCenter}>{t.landing.announcements.subtitle}</p>
+          <h2 className={landingH2}>{sectionTitle}</h2>
+          <p className={landingLeadCenter}>{sectionSubtitle}</p>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6 mb-10 md:mb-12">
+        <div className={`mb-10 md:mb-12 ${isSheltersMode ? "" : "grid sm:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6"}`}>
           {loading ? (
             <div className="col-span-full text-center py-12 text-muted-foreground">{t.landing.announcements.loading}</div>
-          ) : cards.length === 0 ? (
-            <div className="col-span-full text-center py-12 text-muted-foreground">{t.landing.announcements.noAds}</div>
+          ) : (isSheltersMode ? pets.length === 0 : cards.length === 0) ? (
+            <div className="col-span-full text-center py-12 text-muted-foreground">{sectionEmpty}</div>
+          ) : isSheltersMode ? (
+            <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-5">
+              {pets.map((pet) => (
+                <li key={pet.id} className="h-full">
+                  <ShelterPetCard
+                    pet={pet}
+                    onClick={() => {
+                      trackAnnouncementsClick(mode, "card_open", pet.id);
+                      navigate(`/shelter-pet/${pet.id}`);
+                    }}
+                  />
+                </li>
+              ))}
+            </ul>
           ) : (
             cards.map((announcement) => (
               <div
@@ -68,6 +122,7 @@ export function Announcements() {
               >
                 <Link
                   to={`/pet/${announcement.id}`}
+                  onClick={() => trackAnnouncementsClick(mode, "card_open", announcement.id)}
                   className="block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 >
                   <div className="relative overflow-hidden">
@@ -80,12 +135,18 @@ export function Announcements() {
                     <div className="absolute left-3 right-3 top-3 flex items-start justify-between gap-2">
                       <span
                         className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold ${
-                          petStatusPhotoPillClass[announcement.type === "lost" ? "searching" : "found"]
+                          announcement.type === "adoption"
+                            ? "bg-emerald-500/90 text-white"
+                            : petStatusPhotoPillClass[announcement.type === "lost" ? "searching" : "found"]
                         }`}
                       >
-                        {announcement.type === "lost" ? t.landing.announcements.lost : t.landing.announcements.found}
+                        {announcement.type === "adoption"
+                          ? "Ищет дом"
+                          : announcement.type === "lost"
+                            ? t.landing.announcements.lost
+                            : t.landing.announcements.found}
                       </span>
-                      {announcement.reward && (
+                      {announcement.reward && !isSheltersMode && (
                         <span
                           title={announcement.reward.tooltip}
                           className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold shadow-sm ${announcement.reward.className.replace(" dark:bg-violet-900/30", " dark:bg-violet-900/85").replace(" dark:bg-amber-900/35", " dark:bg-amber-900/85")}`}
@@ -123,8 +184,12 @@ export function Announcements() {
 
         <div className="text-center">
           <Button asChild>
-            <Link to="/search" className={landingPrimaryCtaClass}>
-              {t.landing.announcements.viewAll}
+            <Link
+              to={viewAllHref}
+              className={landingPrimaryCtaClass}
+              onClick={() => trackAnnouncementsClick(mode, "view_all")}
+            >
+              {viewAllText}
             </Link>
           </Button>
         </div>

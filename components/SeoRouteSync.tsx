@@ -84,12 +84,12 @@ export function SeoRouteSync() {
       return;
     }
 
-    if (pathname === '/blog') {
+    if (pathname === '/blog' || pathname === '/shelters' || pathname.startsWith('/shelters/')) {
       return;
     }
 
     applySeo({
-      title: 'DorogaDomoy.by — Дорога Домой',
+      title: 'DorogaDomoy.by — экосистема помощи животным',
       description: SEO_HOME_DESCRIPTION,
       canonicalUrl: canonical,
       robots,

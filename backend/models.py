@@ -28,6 +28,18 @@ class User(Base):
     points_earned_total = Column(Integer, default=0, nullable=False)
 
     pets = relationship("Pet", back_populates="author", foreign_keys="Pet.author_id")
+    owned_shelters = relationship(
+        "Shelter",
+        back_populates="owner",
+        foreign_keys="Shelter.owner_user_id",
+        cascade="all, delete-orphan",
+    )
+    shelter_memberships = relationship(
+        "ShelterMembership",
+        back_populates="user",
+        foreign_keys="ShelterMembership.user_id",
+        cascade="all, delete-orphan",
+    )
     pet_favorites = relationship("PetFavorite", back_populates="user", cascade="all, delete-orphan")
     reports = relationship("Report", back_populates="reporter", foreign_keys="Report.reporter_id")
     notification_settings = relationship("NotificationSettings", back_populates="user", uselist=False, cascade="all, delete-orphan")
@@ -64,6 +76,12 @@ class Pet(Base):
     reward_points = Column(Integer, default=50, nullable=False)  # platform points for confirmed helper
     reward_recipient_user_id = Column(String, ForeignKey("users.id"), nullable=True)
     reward_points_awarded_at = Column(DateTime, nullable=True)
+    pet_scope = Column(String, default="lost_found", nullable=False)  # lost_found, shelter_pet
+    shelter_id = Column(String, ForeignKey("shelters.id", ondelete="SET NULL"), nullable=True, index=True)
+    adoption_status = Column(String, nullable=True)  # available, reserved, adopted, on_treatment, not_for_adoption
+    is_published = Column(Boolean, default=True, nullable=False)
+    published_by_user_id = Column(String, ForeignKey("users.id"), nullable=True)
+    updated_by_user_id = Column(String, ForeignKey("users.id"), nullable=True)
 
     author = relationship("User", back_populates="pets", foreign_keys=[author_id])
     reports = relationship(
@@ -73,6 +91,53 @@ class Pet(Base):
         cascade="all, delete-orphan",
     )
     sightings = relationship("Sighting", back_populates="pet", foreign_keys="Sighting.pet_id", cascade="all, delete-orphan")
+    shelter_details = relationship(
+        "ShelterPetDetails",
+        back_populates="pet",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+
+
+class ShelterPetDetails(Base):
+    __tablename__ = "shelter_pet_details"
+
+    id = Column(String, primary_key=True, index=True)
+    pet_id = Column(String, ForeignKey("pets.id", ondelete="CASCADE"), nullable=False, unique=True, index=True)
+    nickname = Column(String, nullable=True)
+    health_status = Column(String, nullable=True)  # disabled, treatment, good, excellent
+    coat_type = Column(String, nullable=True)  # smooth, semi, fluffy
+    adoption_status = Column(String, nullable=True)  # available, reserved, adopted, on_treatment, not_for_adoption
+    is_published = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    pet = relationship("Pet", back_populates="shelter_details", foreign_keys=[pet_id])
+
+
+class ShelterCampaign(Base):
+    __tablename__ = "shelter_campaigns"
+
+    id = Column(String, primary_key=True, index=True)
+    pet_id = Column(String, ForeignKey("pets.id", ondelete="CASCADE"), nullable=False, index=True)
+    shelter_id = Column(String, ForeignKey("shelters.id", ondelete="CASCADE"), nullable=False, index=True)
+    title = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    help_details = Column(Text, nullable=True)  # как помочь: реквизиты/инструкция
+    goal_amount = Column(Integer, nullable=False, default=0)
+    collected_amount = Column(Integer, nullable=False, default=0)
+    status = Column(String, nullable=False, default="draft")  # draft, active, completed, cancelled
+    starts_at = Column(DateTime, nullable=True)
+    ends_at = Column(DateTime, nullable=True)
+    closed_at = Column(DateTime, nullable=True)
+    close_reason = Column(Text, nullable=True)
+    created_by_user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    pet = relationship("Pet", foreign_keys=[pet_id])
+    shelter = relationship("Shelter", foreign_keys=[shelter_id])
+    created_by = relationship("User", foreign_keys=[created_by_user_id])
 
 
 class PetFavorite(Base):
@@ -348,6 +413,73 @@ class BlogPost(Base):
     telegram_channel_username = Column(String, nullable=True)
 
     author = relationship("User", foreign_keys=[author_id])
+
+
+class Shelter(Base):
+    """Приют / передержка / точка помощи — владелец: пользователь с ролью shelter (вариант C)."""
+
+    __tablename__ = "shelters"
+
+    id = Column(String, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    kind = Column(String, nullable=False, default="shelter")  # shelter, foster, vet, other
+    animal_focus = Column(String, nullable=False, default="mixed")  # dogs, cats, mixed
+    description = Column(Text, nullable=True)
+    city = Column(String, nullable=False)
+    address = Column(String, nullable=True)
+    location_lat = Column(Float, nullable=False)
+    location_lng = Column(Float, nullable=False)
+    contacts = Column(JSON, default=dict)
+    logo_url = Column(String, nullable=True)
+    cover_url = Column(String, nullable=True)  # широкое изображение-шапка публичной страницы
+    moderation_status = Column(String, nullable=False, default="draft")  # draft, pending, approved, rejected, hidden
+    moderation_reason = Column(String, nullable=True)
+    moderated_at = Column(DateTime, nullable=True)
+    moderated_by = Column(String, nullable=True)
+    owner_user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    owner = relationship("User", back_populates="owned_shelters", foreign_keys=[owner_user_id])
+    memberships = relationship(
+        "ShelterMembership",
+        back_populates="shelter",
+        foreign_keys="ShelterMembership.shelter_id",
+        cascade="all, delete-orphan",
+    )
+
+
+class ShelterMembership(Base):
+    """Членство пользователя в приюте (owner/manager/volunteer)."""
+
+    __tablename__ = "shelter_memberships"
+    __table_args__ = (UniqueConstraint("shelter_id", "user_id", name="uq_shelter_memberships_shelter_user"),)
+
+    id = Column(String, primary_key=True, index=True)
+    shelter_id = Column(String, ForeignKey("shelters.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    role = Column(String, nullable=False, default="volunteer")  # owner, manager, volunteer
+    status = Column(String, nullable=False, default="active")  # invited, active, removed
+    invited_by_user_id = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    joined_at = Column(DateTime, nullable=True)
+    removed_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    shelter = relationship("Shelter", back_populates="memberships", foreign_keys=[shelter_id])
+    user = relationship("User", back_populates="shelter_memberships", foreign_keys=[user_id])
+
+
+class ShelterSubscription(Base):
+    """Подписка пользователя на уведомления о приюте (Telegram — см. отправку в shelter_subscription_notify)."""
+
+    __tablename__ = "shelter_subscriptions"
+    __table_args__ = (UniqueConstraint("user_id", "shelter_id", name="uq_shelter_subscription_user_shelter"),)
+
+    id = Column(String, primary_key=True)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    shelter_id = Column(String, ForeignKey("shelters.id", ondelete="CASCADE"), nullable=False, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
 
 
 class ProfilePetScanSignal(Base):

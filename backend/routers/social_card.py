@@ -5,10 +5,10 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import Response
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from database import get_db
-from models import Pet
+from models import Pet, Shelter
 from rate_limit import limiter
 from social_card import generate_social_card, CardFormat
 
@@ -27,13 +27,30 @@ def get_social_card(
     contacts: int = Query(1, ge=0, le=1),
     db: Session = Depends(get_db),
 ):
-    pet = db.scalar(select(Pet).where(Pet.id == pet_id))
+    pet = db.scalar(
+        select(Pet)
+        .where(Pet.id == pet_id)
+        .options(selectinload(Pet.shelter_details))
+    )
     if not pet:
         raise HTTPException(status_code=404, detail="Pet not found")
     if pet.moderation_status != "approved":
         raise HTTPException(status_code=404, detail="Pet not found")
 
     pet_contacts = (pet.contacts or {}) if contacts else {}
+
+    shelter_name = None
+    shelter_city = None
+    pet_nickname = None
+    if getattr(pet, "pet_scope", None) == "shelter_pet" and getattr(pet, "shelter_id", None):
+        org = db.scalar(select(Shelter).where(Shelter.id == pet.shelter_id))
+        if org:
+            shelter_name = org.name
+            shelter_city = org.city
+    if getattr(pet, "pet_scope", None) == "shelter_pet":
+        det = getattr(pet, "shelter_details", None)
+        if det and (det.nickname or "").strip():
+            pet_nickname = det.nickname.strip()
 
     card_format: CardFormat = "story" if fmt == "story" else "feed"
     card_bytes, media_type = generate_social_card(
@@ -48,7 +65,12 @@ def get_social_card(
         approximate_age=pet.approximate_age,
         contacts=pet_contacts,
         author_name=pet.author_name,
+        pet_scope=getattr(pet, "pet_scope", None),
+        adoption_status=getattr(pet, "adoption_status", None),
         site_url=SITE_URL,
+        shelter_name=shelter_name,
+        shelter_city=shelter_city,
+        pet_nickname=pet_nickname,
         lang=lang,
         card_format=card_format,
     )

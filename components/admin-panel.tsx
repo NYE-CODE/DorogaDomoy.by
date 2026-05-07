@@ -1,16 +1,15 @@
-import { useState, useEffect, useMemo } from 'react';
-import { 
-  LayoutDashboard, 
-  FileText, 
-  Users, 
-  AlertTriangle, 
-  Settings, 
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import {
+  LayoutDashboard,
+  LayoutTemplate,
+  FileText,
+  Users,
+  AlertTriangle,
+  Settings,
   Flag,
   ArrowLeft,
   TrendingUp,
   Calendar,
-  ChevronLeft,
-  ChevronRight,
   CheckCircle2,
   XCircle,
   Trash2,
@@ -25,12 +24,19 @@ import {
   PawPrint,
   BookOpen,
   MessageCircle,
-  FolderOpen,
   Wrench,
   Tags,
   HelpCircle,
   Instagram,
   Coins,
+  Building2,
+  Search,
+  MapPin,
+  Send,
+  EyeOff,
+  ArrowUpDown,
+  ChevronUp,
+  ChevronDown,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Pet } from '../types/pet';
@@ -38,8 +44,19 @@ import { User } from '../context/AuthContext';
 import { Report, AdminStats, type ReportReason } from '../types/admin';
 import { formatDate, statusLabels } from '../utils/pet-helpers';
 import { BELARUS_MOBILE_PHONE_PLACEHOLDER } from '../utils/belarus-phone';
-import { settingsApi, featureFlagsApi, blogApi, rewardsApi, API_BASE } from '../api/client';
-import type { BlogCategory, BlogPostAdmin, FaqItem, MediaArticle, Partner, PointsTransactionItem, ProfilePetResponse } from '../api/client';
+import { settingsApi, featureFlagsApi, blogApi, rewardsApi, sheltersApi, API_BASE } from '../api/client';
+import type {
+  BlogCategory,
+  BlogPostAdmin,
+  FaqItem,
+  MediaArticle,
+  Partner,
+  PointsTransactionItem,
+  ProfilePetResponse,
+  ShelterResponse,
+  ShelterAnimalFocus,
+  ShelterKind,
+} from '../api/client';
 import { ModerationPanel } from './moderation-panel';
 import { PetsAdminPanel } from './pets-admin-panel';
 import { ProfilePetsAdminPanel } from './profile-pets-admin-panel';
@@ -49,6 +66,8 @@ import { BlogMarkdownEditor } from './blog-markdown-editor';
 import { titleToBlogSlug } from '../utils/blog-slug';
 import { useI18n } from '../context/I18nContext';
 import { AdminInstagramPanel } from './admin-instagram-panel';
+import { adm } from './admin-panel-chrome';
+import { AdminTablePagination } from './admin-table-pagination';
 
 type AdminTab =
   | 'dashboard'
@@ -66,27 +85,40 @@ type AdminTab =
   | 'instagram'
   | 'telegramBlog'
   | 'faq'
-  | 'settings';
+  | 'settings'
+  | 'sheltersCatalog'
+  | 'sheltersModeration';
 
-type AdminSection = 'operations' | 'content' | 'blog' | 'admin';
+type AdminPrimarySection = 'dashboard' | 'landing' | 'petSearch' | 'shelter' | 'blog' | 'administration';
 
-const TAB_SECTION: Record<AdminTab, AdminSection> = {
-  dashboard: 'operations',
-  moderation: 'operations',
-  pets: 'operations',
-  profilePets: 'operations',
-  users: 'operations',
-  rewards: 'operations',
-  reports: 'operations',
+const TAB_PRIMARY: Record<AdminTab, AdminPrimarySection> = {
+  dashboard: 'dashboard',
+  media: 'landing',
+  partners: 'landing',
+  faq: 'landing',
+  users: 'petSearch',
+  profilePets: 'petSearch',
+  pets: 'petSearch',
+  moderation: 'petSearch',
+  reports: 'petSearch',
+  rewards: 'petSearch',
+  sheltersCatalog: 'shelter',
+  sheltersModeration: 'shelter',
   blog: 'blog',
   blogCategories: 'blog',
   telegramBlog: 'blog',
-  media: 'content',
-  partners: 'content',
-  faq: 'content',
-  featureFlags: 'admin',
-  instagram: 'admin',
-  settings: 'admin',
+  featureFlags: 'administration',
+  instagram: 'administration',
+  settings: 'administration',
+};
+
+const TABS_BY_PRIMARY: Record<AdminPrimarySection, AdminTab[]> = {
+  dashboard: ['dashboard'],
+  landing: ['media', 'partners', 'faq'],
+  petSearch: ['users', 'profilePets', 'pets', 'moderation', 'reports', 'rewards'],
+  shelter: ['sheltersCatalog', 'sheltersModeration'],
+  blog: ['blog', 'blogCategories', 'telegramBlog'],
+  administration: ['featureFlags', 'instagram', 'settings'],
 };
 
 const ADMIN_PLACEHOLDER_PHOTO =
@@ -213,35 +245,27 @@ export function AdminPanel({
   const sectionMeta = useMemo(
     () =>
       [
-        { id: 'operations' as const, label: ap.sections.operations, shortLabel: ap.sections.operationsShort, icon: ClipboardCheck },
-        { id: 'content' as const, label: ap.sections.content, shortLabel: ap.sections.contentShort, icon: FolderOpen },
+        { id: 'dashboard' as const, label: ap.sections.dashboard, shortLabel: ap.sections.dashboardShort, icon: LayoutDashboard },
+        { id: 'landing' as const, label: ap.sections.landing, shortLabel: ap.sections.landingShort, icon: LayoutTemplate },
+        { id: 'petSearch' as const, label: ap.sections.petSearch, shortLabel: ap.sections.petSearchShort, icon: Search },
+        { id: 'shelter' as const, label: ap.sections.shelter, shortLabel: ap.sections.shelterShort, icon: Building2 },
         { id: 'blog' as const, label: ap.sections.blog, shortLabel: ap.sections.blogShort, icon: BookOpen },
-        { id: 'admin' as const, label: ap.sections.administration, shortLabel: ap.sections.administrationShort, icon: Wrench },
+        { id: 'administration' as const, label: ap.sections.administration, shortLabel: ap.sections.administrationShort, icon: Wrench },
       ] as const,
-    [locale],
+    [ap, locale],
   );
 
   const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
-  const [activeSection, setActiveSection] = useState<AdminSection>('operations');
+  const [activePrimary, setActivePrimary] = useState<AdminPrimarySection>('dashboard');
 
   const selectTab = (tab: AdminTab) => {
     setActiveTab(tab);
-    setActiveSection(TAB_SECTION[tab]);
+    setActivePrimary(TAB_PRIMARY[tab]);
   };
 
-  const selectSection = (section: AdminSection) => {
-    setActiveSection(section);
-    if (TAB_SECTION[activeTab] !== section) {
-      const order: AdminTab[] =
-        section === 'operations'
-          ? ['dashboard', 'moderation', 'pets', 'profilePets', 'users', 'rewards', 'reports']
-          : section === 'content'
-            ? ['media', 'partners', 'faq']
-            : section === 'blog'
-              ? ['blog', 'blogCategories', 'telegramBlog']
-              : ['featureFlags', 'settings'];
-      setActiveTab(order[0]);
-    }
+  const selectPrimary = (section: AdminPrimarySection) => {
+    setActivePrimary(section);
+    setActiveTab(TABS_BY_PRIMARY[section][0]);
   };
 
   // Edit user modal
@@ -258,6 +282,8 @@ export function AdminPanel({
   const [usersStatusFilter, setUsersStatusFilter] = useState<string>('all');
   const [usersPage, setUsersPage] = useState(1);
   const usersPerPage = 15;
+  const [usersSortBy, setUsersSortBy] = useState<'confirmed' | 'points' | null>(null);
+  const [usersSortDir, setUsersSortDir] = useState<'asc' | 'desc'>('desc');
 
   // Reports filters and pagination
   const [reportsStatusFilter, setReportsStatusFilter] = useState<string>('all');
@@ -265,6 +291,12 @@ export function AdminPanel({
   const [reportsPage, setReportsPage] = useState(1);
   const reportsPerPage = 10;
   const [rewardsKindFilter, setRewardsKindFilter] = useState<string>('all');
+
+  const [shelterPendingList, setShelterPendingList] = useState<ShelterResponse[]>([]);
+  const [shelterListLoading, setShelterListLoading] = useState(false);
+  const [shelterReasons, setShelterReasons] = useState<Record<string, string>>({});
+  const [shelterAllList, setShelterAllList] = useState<ShelterResponse[]>([]);
+  const [shelterAllLoading, setShelterAllLoading] = useState(false);
 
   // Media article modal (create/edit)
   const [editingMedia, setEditingMedia] = useState<MediaArticle | 'create' | null>(null);
@@ -330,9 +362,19 @@ export function AdminPanel({
   const [editCatSort, setEditCatSort] = useState(0);
 
   useEffect(() => {
-    if (activeSection !== 'blog') return;
+    if (activePrimary !== 'blog') return;
     blogApi.listCategories().then(setBlogCategories).catch(() => setBlogCategories([]));
-  }, [activeSection, activeTab]);
+  }, [activePrimary, activeTab]);
+
+  useEffect(() => {
+    if (activeTab !== 'sheltersCatalog' && activeTab !== 'dashboard') return;
+    setShelterAllLoading(true);
+    sheltersApi
+      .adminListAll()
+      .then(setShelterAllList)
+      .catch(() => setShelterAllList([]))
+      .finally(() => setShelterAllLoading(false));
+  }, [activeTab]);
 
   useEffect(() => {
     settingsApi.get().then((s) => {
@@ -371,6 +413,19 @@ export function AdminPanel({
       console.warn('[AdminPanel] feature flags load failed', err);
     });
   }, []);
+
+  const fetchShelterPending = useCallback(() => {
+    setShelterListLoading(true);
+    sheltersApi
+      .adminPending()
+      .then(setShelterPendingList)
+      .catch(() => setShelterPendingList([]))
+      .finally(() => setShelterListLoading(false));
+  }, []);
+
+  useEffect(() => {
+    fetchShelterPending();
+  }, [fetchShelterPending]);
 
   const handleSaveSettings = () => {
     settingsApi.update({
@@ -417,55 +472,142 @@ export function AdminPanel({
       });
   };
 
-  // Calculate real stats from data
-  const stats: AdminStats = {
-    totalPets: pets.length,
-    activePets: pets.filter(p => !p.isArchived).length,
-    archivedPets: pets.filter(p => p.isArchived).length,
-    totalUsers: users.length,
-    blockedUsers: users.filter(u => u.isBlocked).length,
-    pendingReports: reports.filter(r => r.status === 'pending').length,
-    resolvedReports: reports.filter(r => r.status === 'resolved').length,
-    petsLast7Days: pets.filter(p => {
-      const daysDiff = Math.floor((Date.now() - new Date(p.publishedAt).getTime()) / (1000 * 60 * 60 * 24));
+  const stats = useMemo((): AdminStats => {
+    const now = Date.now();
+    const dayMs = 1000 * 60 * 60 * 24;
+    const petsLast7Days = pets.filter((p) => {
+      const daysDiff = Math.floor((now - new Date(p.publishedAt).getTime()) / dayMs);
       return daysDiff <= 7;
-    }).length,
-    petsLast30Days: pets.filter(p => {
-      const daysDiff = Math.floor((Date.now() - new Date(p.publishedAt).getTime()) / (1000 * 60 * 60 * 24));
+    }).length;
+    const petsLast30Days = pets.filter((p) => {
+      const daysDiff = Math.floor((now - new Date(p.publishedAt).getTime()) / dayMs);
       return daysDiff <= 30;
-    }).length,
-    successRate: pets.length > 0 
-      ? (pets.filter(p => p.status === 'found').length / pets.length) * 100 
-      : 0
-  };
+    }).length;
+    const profilePetsLast30Days = profilePets.filter((pp) => {
+      const daysDiff = Math.floor((now - new Date(pp.created_at).getTime()) / dayMs);
+      return daysDiff <= 30;
+    }).length;
+    const pointsPositiveSum = pointsTransactions.reduce((s, t) => (t.amount > 0 ? s + t.amount : s), 0);
+    return {
+      totalPets: pets.length,
+      activePets: pets.filter((p) => !p.isArchived).length,
+      archivedPets: pets.filter((p) => p.isArchived).length,
+      totalUsers: users.length,
+      blockedUsers: users.filter((u) => u.isBlocked).length,
+      pendingReports: reports.filter((r) => r.status === 'pending').length,
+      resolvedReports: reports.filter((r) => r.status === 'resolved').length,
+      petsLast7Days,
+      petsLast30Days,
+      successRate:
+        pets.length > 0 ? (pets.filter((p) => p.status === 'found').length / pets.length) * 100 : 0,
+      pendingModerationPets: pets.filter((p) => !p.isArchived && p.moderationStatus === 'pending').length,
+      searchingActivePets: pets.filter((p) => !p.isArchived && p.status === 'searching').length,
+      reportsTotal: reports.length,
+      reportsDismissed: reports.filter((r) => r.status === 'dismissed').length,
+      reportsReviewed: reports.filter((r) => r.status === 'reviewed').length,
+      usersVolunteers: users.filter((u) => u.role === 'volunteer').length,
+      usersShelters: users.filter((u) => u.role === 'shelter').length,
+      usersAdmins: users.filter((u) => u.role === 'admin').length,
+      profilePetsTotal: profilePets.length,
+      profilePetsLast30Days,
+      blogPublished: blogPosts.filter((b) => b.status === 'published').length,
+      blogDrafts: blogPosts.filter((b) => b.status !== 'published').length,
+      blogTotal: blogPosts.length,
+      mediaCount: mediaArticles.length,
+      partnersCount: partners.length,
+      faqCount: faqItems.length,
+      sheltersPendingModeration: shelterPendingList.length,
+      pointsTransactionsCount: pointsTransactions.length,
+      pointsPositiveSum,
+      petsWithRewardGranted: pets.filter((p) => p.rewardPointsAwardedAt).length,
+    };
+  }, [
+    pets,
+    users,
+    reports,
+    profilePets,
+    blogPosts,
+    mediaArticles,
+    partners,
+    faqItems,
+    shelterPendingList,
+    pointsTransactions,
+  ]);
   const recentPets = [...pets]
     .sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime())
     .slice(0, 5);
+
+  const recentProfilePets = useMemo(
+    () =>
+      [...profilePets]
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, 5),
+    [profilePets],
+  );
+
+  const recentShelters = useMemo(
+    () =>
+      [...shelterAllList]
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, 5),
+    [shelterAllList],
+  );
+
+  const shelterCatalogStatusLabel = (st: ShelterResponse['moderation_status']) => {
+    const sc = ap.sheltersCatalog;
+    switch (st) {
+      case 'draft':
+        return sc.statusDraft;
+      case 'pending':
+        return sc.statusPending;
+      case 'approved':
+        return sc.statusApproved;
+      case 'rejected':
+        return sc.statusRejected;
+      case 'hidden':
+      default:
+        return sc.statusHidden;
+    }
+  };
+
+  const shelterLogoPreview = (url?: string | null) => {
+    if (!url) return ADMIN_PLACEHOLDER_PHOTO;
+    if (url.startsWith('http') || url.startsWith('data:')) return url;
+    return `${API_BASE}${url}`;
+  };
 
   const allTabs = useMemo(
     () =>
       [
         { id: 'dashboard' as const, label: ap.tabs.dashboard, icon: LayoutDashboard },
-        { id: 'moderation' as const, label: ap.tabs.moderation, icon: ClipboardCheck },
-        { id: 'pets' as const, label: ap.tabs.ads, icon: FileText },
-        { id: 'profilePets' as const, label: ap.tabs.pets, icon: PawPrint },
-        { id: 'users' as const, label: ap.tabs.users, icon: Users },
-        { id: 'rewards' as const, label: 'Награды', icon: Coins },
-        { id: 'reports' as const, label: ap.tabs.reports, icon: AlertTriangle },
         { id: 'media' as const, label: ap.tabs.media, icon: Newspaper },
         { id: 'partners' as const, label: ap.tabs.partners, icon: Handshake },
         { id: 'faq' as const, label: ap.tabs.faq, icon: HelpCircle },
+        { id: 'users' as const, label: ap.tabs.users, icon: Users },
+        { id: 'profilePets' as const, label: ap.tabs.pets, icon: PawPrint },
+        { id: 'pets' as const, label: ap.tabs.ads, icon: FileText },
+        { id: 'moderation' as const, label: ap.tabs.moderation, icon: ClipboardCheck },
+        { id: 'reports' as const, label: ap.tabs.reports, icon: AlertTriangle },
+        { id: 'rewards' as const, label: ap.tabs.rewards, icon: Coins },
+        { id: 'sheltersCatalog' as const, label: ap.tabs.sheltersCatalog, icon: Building2 },
+        { id: 'sheltersModeration' as const, label: ap.tabs.sheltersModeration, icon: ClipboardCheck },
         { id: 'blog' as const, label: ap.tabs.articles, icon: BookOpen },
         { id: 'blogCategories' as const, label: ap.tabs.categories, icon: Tags },
-        { id: 'telegramBlog' as const, label: ap.tabs.telegram, icon: MessageCircle },
+        { id: 'telegramBlog' as const, label: ap.tabs.blogSettings, icon: MessageCircle },
         { id: 'featureFlags' as const, label: ap.tabs.featureFlags, icon: Flag },
         { id: 'instagram' as const, label: ap.tabs.instagram, icon: Instagram },
         { id: 'settings' as const, label: ap.tabs.settings, icon: Settings },
       ] as const,
-    [locale],
+    [ap, locale],
   );
 
-  const subTabs = allTabs.filter((tab) => TAB_SECTION[tab.id] === activeSection);
+  const subTabs = useMemo(
+    () =>
+      TABS_BY_PRIMARY[activePrimary]
+        .map((tid) => allTabs.find((t) => t.id === tid))
+        .filter((x): x is (typeof allTabs)[number] => !!x),
+    [activePrimary, allTabs],
+  );
 
   const faqRowsSorted = useMemo(
     () =>
@@ -475,113 +617,320 @@ export function AdminPanel({
     [faqItems],
   );
 
-  const renderDashboard = () => (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">{ap.dashboard.title}</h2>
-      
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">{ap.dashboard.statTotalAds}</p>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{stats.totalPets}</p>
+  const renderDashboard = () => {
+    const d = ap.dashboard;
+    const dashSection = 'rounded-lg border border-gray-200 dark:border-gray-700 bg-card shadow-sm p-4';
+    const dashCard =
+      'rounded-lg border border-gray-200 dark:border-gray-700 bg-card shadow-sm p-3 flex flex-col min-h-[100px]';
+    const dashRow =
+      'flex items-center justify-between gap-2 p-2.5 bg-muted/30 dark:bg-muted/15 rounded-lg border border-transparent hover:border-gray-200 dark:hover:border-gray-600 transition-colors';
+    const sectionLabel = 'text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400';
+
+    const statsGrid = (
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+        <div className={dashCard}>
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-xs text-gray-600 dark:text-gray-400 leading-snug">{d.statTotalAds}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-0.5 tabular-nums">{stats.totalPets}</p>
             </div>
-            <div className="p-3 bg-accent dark:bg-accent rounded-lg">
-              <FileText className="w-6 h-6 text-muted-foreground" />
+            <div className="p-2 bg-muted/60 dark:bg-muted/30 rounded-md shrink-0">
+              <FileText className="w-5 h-5 text-muted-foreground" />
             </div>
           </div>
-          <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-            {ap.dashboard.statActive}: {stats.activePets} | {ap.dashboard.statArchived}: {stats.archivedPets}
-          </div>
+          <p className="mt-auto pt-2.5 text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+            {d.statActive}: <span className="font-medium text-gray-800 dark:text-gray-200">{stats.activePets}</span> ·{' '}
+            {d.statArchived}: <span className="font-medium text-gray-800 dark:text-gray-200">{stats.archivedPets}</span>
+            <br />
+            <span className="text-amber-700 dark:text-amber-400">{d.statModerationPending}:</span>{' '}
+            <span className="font-medium text-gray-800 dark:text-gray-200">{stats.pendingModerationPets}</span>
+          </p>
         </div>
 
-        <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">{ap.dashboard.statUsers}</p>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{stats.totalUsers}</p>
+        <div className={dashCard}>
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-xs text-gray-600 dark:text-gray-400 leading-snug">{d.statSearchingActive}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-0.5 tabular-nums">
+                {stats.searchingActivePets}
+              </p>
             </div>
-            <div className="p-3 bg-accent dark:bg-accent rounded-lg">
-              <Users className="w-6 h-6 text-muted-foreground" />
+            <div className="p-2 bg-muted/60 dark:bg-muted/30 rounded-md shrink-0">
+              <Search className="w-5 h-5 text-muted-foreground" />
             </div>
           </div>
-          <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-            {ap.dashboard.statBlocked}: {stats.blockedUsers}
-          </div>
+          <p className="mt-auto pt-2.5 text-[11px] sm:text-xs text-gray-500 dark:text-gray-400">
+            {d.statSuccess}: <span className="font-semibold text-primary">{stats.successRate.toFixed(1)}%</span> —{' '}
+            {d.statSuccessHint}
+          </p>
         </div>
 
-        <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">{ap.dashboard.statReports}</p>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{stats.pendingReports}</p>
+        <div className={dashCard}>
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-xs text-gray-600 dark:text-gray-400 leading-snug">{d.statUsers}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-0.5 tabular-nums">{stats.totalUsers}</p>
             </div>
-            <div className="p-3 bg-accent dark:bg-accent rounded-lg">
-              <AlertTriangle className="w-6 h-6 text-muted-foreground" />
+            <div className="p-2 bg-muted/60 dark:bg-muted/30 rounded-md shrink-0">
+              <Users className="w-5 h-5 text-muted-foreground" />
             </div>
           </div>
-          <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-            {ap.dashboard.statReportsResolved}: {stats.resolvedReports}
-          </div>
+          <p className="mt-auto pt-2.5 text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+            {d.statBlocked}: <span className="font-medium text-gray-800 dark:text-gray-200">{stats.blockedUsers}</span>
+            <br />
+            <span className="text-[10px] sm:text-[11px] text-gray-500 dark:text-gray-500">
+              {d.statUsersRoles(stats.usersVolunteers, stats.usersShelters, stats.usersAdmins)}
+            </span>
+          </p>
         </div>
 
-        <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">{ap.dashboard.statSuccess}</p>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{stats.successRate.toFixed(1)}%</p>
+        <div className={dashCard}>
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-xs text-gray-600 dark:text-gray-400 leading-snug">{d.statReports}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-0.5 tabular-nums">{stats.pendingReports}</p>
             </div>
-            <div className="p-3 bg-accent dark:bg-accent rounded-lg">
-              <TrendingUp className="w-6 h-6 text-muted-foreground" />
+            <div className="p-2 bg-muted/60 dark:bg-muted/30 rounded-md shrink-0">
+              <AlertTriangle className="w-5 h-5 text-muted-foreground" />
             </div>
           </div>
-          <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-            {ap.dashboard.statSuccessHint}
+          <p className="mt-auto pt-2.5 text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+            {d.statReportsTotal}: <span className="font-medium text-gray-800 dark:text-gray-200">{stats.reportsTotal}</span>
+            <br />
+            {d.statReportsMeta(stats.resolvedReports, stats.reportsDismissed, stats.reportsReviewed)}
+          </p>
+        </div>
+
+        <div className={dashCard}>
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-xs text-gray-600 dark:text-gray-400 leading-snug">{d.statProfilePets}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-0.5 tabular-nums">
+                {stats.profilePetsTotal}
+              </p>
+            </div>
+            <div className="p-2 bg-muted/60 dark:bg-muted/30 rounded-md shrink-0">
+              <PawPrint className="w-5 h-5 text-muted-foreground" />
+            </div>
           </div>
+          <p className="mt-auto pt-2.5 text-[11px] sm:text-xs text-gray-500 dark:text-gray-400">
+            {d.statProfilePetsHint(stats.profilePetsLast30Days)}
+          </p>
+        </div>
+
+        <div className={dashCard}>
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-xs text-gray-600 dark:text-gray-400 leading-snug">{d.statBlog}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-0.5 tabular-nums">{stats.blogPublished}</p>
+            </div>
+            <div className="p-2 bg-muted/60 dark:bg-muted/30 rounded-md shrink-0">
+              <BookOpen className="w-5 h-5 text-muted-foreground" />
+            </div>
+          </div>
+          <p className="mt-auto pt-2.5 text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+            {d.statBlogMeta(stats.blogPublished, stats.blogDrafts)}
+            <br />
+            <span className="text-[10px]">{d.statBlogTotalLine(stats.blogTotal)}</span>
+          </p>
+        </div>
+
+        <div className={dashCard}>
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-xs text-gray-600 dark:text-gray-400 leading-snug">{d.statLanding}</p>
+              <p className="text-sm font-semibold text-gray-900 dark:text-white mt-1.5 leading-snug">
+                {d.statLandingMeta(stats.mediaCount, stats.partnersCount, stats.faqCount)}
+              </p>
+            </div>
+            <div className="p-2 bg-muted/60 dark:bg-muted/30 rounded-md shrink-0">
+              <LayoutTemplate className="w-5 h-5 text-muted-foreground" />
+            </div>
+          </div>
+          <p className="mt-auto pt-2.5 text-[11px] sm:text-xs">
+            <span className="text-gray-600 dark:text-gray-400">{d.statSheltersQueue}:</span>{' '}
+            <span
+              className={
+                stats.sheltersPendingModeration > 0
+                  ? 'font-semibold text-amber-700 dark:text-amber-400'
+                  : 'font-medium text-gray-800 dark:text-gray-200'
+              }
+            >
+              {stats.sheltersPendingModeration}
+            </span>
+          </p>
+        </div>
+
+        <div className={dashCard}>
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-xs text-gray-600 dark:text-gray-400 leading-snug">{d.statPointsTitle}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-0.5 tabular-nums">
+                {stats.pointsPositiveSum}
+              </p>
+            </div>
+            <div className="p-2 bg-muted/60 dark:bg-muted/30 rounded-md shrink-0">
+              <Coins className="w-5 h-5 text-muted-foreground" />
+            </div>
+          </div>
+          <p className="mt-auto pt-2.5 text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+            {d.statPointsMeta(stats.pointsTransactionsCount, stats.pointsPositiveSum)}
+          </p>
+        </div>
+
+        <div className={dashCard}>
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-xs text-gray-600 dark:text-gray-400 leading-snug">{d.statRewardsGranted}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-0.5 tabular-nums">
+                {stats.petsWithRewardGranted}
+              </p>
+            </div>
+            <div className="p-2 bg-muted/60 dark:bg-muted/30 rounded-md shrink-0">
+              <TrendingUp className="w-5 h-5 text-muted-foreground" />
+            </div>
+          </div>
+          <p className="mt-auto pt-2.5 text-[11px] sm:text-xs text-gray-500 dark:text-gray-400">
+            {d.statRewardsGrantedHint(stats.petsWithRewardGranted)}
+          </p>
         </div>
       </div>
+    );
 
-      {/* Activity Chart */}
-      <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Calendar className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-          <h3 className="font-semibold text-gray-900 dark:text-white">{ap.dashboard.activity}</h3>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="p-4 bg-accent dark:bg-accent rounded-lg">
-            <p className="text-sm text-gray-600 dark:text-gray-400">{ap.dashboard.last7}</p>
-            <p className="text-2xl font-bold text-foreground mt-1">{stats.petsLast7Days}</p>
-          </div>
-          <div className="p-4 bg-accent dark:bg-accent rounded-lg">
-            <p className="text-sm text-gray-600 dark:text-gray-400">{ap.dashboard.last30}</p>
-            <p className="text-2xl font-bold text-foreground mt-1">{stats.petsLast30Days}</p>
-          </div>
-        </div>
-      </div>
+    return (
+      <div className={adm.page}>
+        <h2 className={adm.title}>{d.title}</h2>
 
-      {/* Recent Activity */}
-      <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-        <h3 className="font-semibold text-gray-900 dark:text-white mb-4">{ap.dashboard.recentAds}</h3>
-        <div className="space-y-3">
-          {recentPets.map(pet => (
-            <div key={pet.id} className="flex items-center justify-between p-3 bg-accent dark:bg-accent rounded-lg">
-              <div className="flex items-center gap-3">
-                <img src={getAdminPetPreviewPhoto(pet)} alt="" className="w-12 h-12 object-cover rounded-lg" />
-                <div>
-                  <p className="font-medium text-gray-900 dark:text-white">{pet.breed || ap.breedUnknown}</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">{pet.city} · {pet.authorName}</p>
+        <div className="space-y-5">
+          <section className="space-y-2">
+            <h3 className={sectionLabel}>{d.sectionMetrics}</h3>
+            {statsGrid}
+          </section>
+
+          <section className={dashSection}>
+            <div className="flex items-center gap-2 mb-3">
+              <Calendar className="w-4 h-4 text-gray-600 dark:text-gray-400 shrink-0" />
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{d.activity}</h3>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="p-3 bg-muted/40 dark:bg-muted/20 rounded-lg border border-gray-200/80 dark:border-gray-700/80">
+                <p className="text-xs text-gray-600 dark:text-gray-400">{d.last7}</p>
+                <p className="text-xl font-bold text-foreground mt-0.5 tabular-nums">{stats.petsLast7Days}</p>
+              </div>
+              <div className="p-3 bg-muted/40 dark:bg-muted/20 rounded-lg border border-gray-200/80 dark:border-gray-700/80">
+                <p className="text-xs text-gray-600 dark:text-gray-400">{d.last30}</p>
+                <p className="text-xl font-bold text-foreground mt-0.5 tabular-nums">{stats.petsLast30Days}</p>
+              </div>
+              <div className="p-3 bg-muted/40 dark:bg-muted/20 rounded-lg border border-gray-200/80 dark:border-gray-700/80">
+                <p className="text-xs text-gray-600 dark:text-gray-400">{d.last30Profiles}</p>
+                <p className="text-xl font-bold text-foreground mt-0.5 tabular-nums">{stats.profilePetsLast30Days}</p>
+              </div>
+            </div>
+          </section>
+
+          <section className={dashSection}>
+            <h3 className={sectionLabel}>{d.sectionLatest}</h3>
+            <div className="mt-3 grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <div className="min-w-0 space-y-2">
+                <h4 className="text-sm font-medium text-gray-900 dark:text-white">{d.recentAds}</h4>
+                <div className="space-y-2">
+                  {recentPets.length === 0 ? (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 py-2">{d.emptyRecentList}</p>
+                  ) : (
+                    recentPets.map((pet) => (
+                      <div key={pet.id} className={dashRow}>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <img
+                            src={getAdminPetPreviewPhoto(pet)}
+                            alt=""
+                            className="w-10 h-10 object-cover rounded-md shrink-0"
+                          />
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                              {pet.breed || ap.breedUnknown}
+                            </p>
+                            <p className="text-[11px] text-gray-600 dark:text-gray-400 truncate">
+                              {pet.city} · {pet.authorName}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-[11px] text-gray-500 dark:text-gray-400 shrink-0 tabular-nums">
+                          {formatDate(pet.publishedAt)}
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
-              <div className="text-sm text-gray-500 dark:text-gray-400">
-                {formatDate(pet.publishedAt)}
+
+              <div className="min-w-0 space-y-2">
+                <h4 className="text-sm font-medium text-gray-900 dark:text-white">{d.recentProfilePets}</h4>
+                <div className="space-y-2">
+                  {recentProfilePets.length === 0 ? (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 py-2">{d.emptyRecentList}</p>
+                  ) : (
+                    recentProfilePets.map((pp) => (
+                      <div key={pp.id} className={dashRow}>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <img
+                            src={pp.photos[0] || ADMIN_PLACEHOLDER_PHOTO}
+                            alt=""
+                            className="w-10 h-10 object-cover rounded-md shrink-0"
+                          />
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{pp.name}</p>
+                            <p className="text-[11px] text-gray-600 dark:text-gray-400 truncate">
+                              {pp.species}
+                              {pp.owner_name ? ` · ${pp.owner_name}` : ''}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-[11px] text-gray-500 dark:text-gray-400 shrink-0 tabular-nums">
+                          {formatDate(new Date(pp.created_at))}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              <div className="min-w-0 space-y-2">
+                <h4 className="text-sm font-medium text-gray-900 dark:text-white">{d.recentShelters}</h4>
+                <div className="space-y-2">
+                  {shelterAllLoading && recentShelters.length === 0 ? (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 py-2">{d.sheltersListLoading}</p>
+                  ) : recentShelters.length === 0 ? (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 py-2">{d.emptyRecentList}</p>
+                  ) : (
+                    recentShelters.map((sh) => (
+                      <div key={sh.id} className={dashRow}>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <img
+                            src={shelterLogoPreview(sh.logo_url)}
+                            alt=""
+                            className="w-10 h-10 object-cover rounded-md shrink-0 bg-muted"
+                          />
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{sh.name}</p>
+                            <p className="text-[11px] text-gray-600 dark:text-gray-400 truncate">
+                              {sh.city} · {shelterCatalogStatusLabel(sh.moderation_status)}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-[11px] text-gray-500 dark:text-gray-400 shrink-0 tabular-nums text-right">
+                          {formatDate(new Date(sh.created_at))}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
-          ))}
+          </section>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const openEditUser = (u: User) => {
     setEditingUser(u);
@@ -624,18 +973,64 @@ export function AdminPanel({
         return true;
       });
 
-    const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
-    const paginatedUsers = filteredUsers.slice((usersPage - 1) * usersPerPage, usersPage * usersPerPage);
+    const sortedUsers = [...filteredUsers];
+    if (usersSortBy === 'confirmed') {
+      sortedUsers.sort((a, b) => {
+        const va = a.helperConfirmedCount ?? 0;
+        const vb = b.helperConfirmedCount ?? 0;
+        return usersSortDir === 'asc' ? va - vb : vb - va;
+      });
+    } else if (usersSortBy === 'points') {
+      sortedUsers.sort((a, b) => {
+        const ba = a.pointsBalance ?? 0;
+        const bb = b.pointsBalance ?? 0;
+        if (ba !== bb) return usersSortDir === 'asc' ? ba - bb : bb - ba;
+        const ea = a.pointsEarnedTotal ?? 0;
+        const eb = b.pointsEarnedTotal ?? 0;
+        return usersSortDir === 'asc' ? ea - eb : eb - ea;
+      });
+    }
+
+    const totalPages = Math.ceil(sortedUsers.length / usersPerPage);
+    const paginatedUsers = sortedUsers.slice((usersPage - 1) * usersPerPage, usersPage * usersPerPage);
+
+    const toggleUserSort = (column: 'confirmed' | 'points') => {
+      setUsersPage(1);
+      if (usersSortBy === column) {
+        setUsersSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+      } else {
+        setUsersSortBy(column);
+        setUsersSortDir('desc');
+      }
+    };
+
+    const userSortThBtn =
+      'w-full px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400 inline-flex items-center gap-1 hover:bg-muted/50 dark:hover:bg-muted/30 transition-colors';
+
+    const userSortIcon = (column: 'confirmed' | 'points') => {
+      if (usersSortBy !== column) {
+        return <ArrowUpDown className="w-3.5 h-3.5 shrink-0 opacity-45" aria-hidden />;
+      }
+      return usersSortDir === 'asc' ? (
+        <ChevronUp className="w-3.5 h-3.5 shrink-0" aria-hidden />
+      ) : (
+        <ChevronDown className="w-3.5 h-3.5 shrink-0" aria-hidden />
+      );
+    };
 
     return (
-      <div className="space-y-6">
-        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">{ap.users.title}</h2>
-        
+      <div className={adm.page}>
+        <div className={adm.headerRow}>
+          <div className={adm.headerText}>
+            <h2 className={adm.title}>{ap.users.title}</h2>
+          </div>
+        </div>
+
         {/* Filters Panel */}
-        <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+        <div className={adm.filtersCard}>
           <div className="flex flex-wrap gap-4 items-end">
             <div className="flex-1 min-w-[250px]">
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{ap.users.search}</label>
+              <label className={adm.labelFilter}>{ap.users.search}</label>
               <input
                 type="text"
                 placeholder={ap.users.searchPlaceholder}
@@ -649,7 +1044,7 @@ export function AdminPanel({
             </div>
 
             <div className="min-w-[180px]">
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{ap.users.role}</label>
+              <label className={adm.labelFilter}>{ap.users.role}</label>
               <Select value={usersRoleFilter} onValueChange={(v) => { setUsersRoleFilter(v); setUsersPage(1); }}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder={ap.users.roleAll} />
@@ -665,7 +1060,7 @@ export function AdminPanel({
             </div>
 
             <div className="min-w-[180px]">
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{ap.users.status}</label>
+              <label className={adm.labelFilter}>{ap.users.status}</label>
               <Select value={usersStatusFilter} onValueChange={(v) => { setUsersStatusFilter(v); setUsersPage(1); }}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder={ap.users.statusAll} />
@@ -679,36 +1074,57 @@ export function AdminPanel({
             </div>
 
             <div className="text-sm text-gray-600 dark:text-gray-400 ml-auto">
-              {ap.users.found}: {filteredUsers.length} {ap.users.usersCount}
+              {ap.users.found}: {sortedUsers.length} {ap.users.usersCount}
             </div>
           </div>
         </div>
 
-        <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg">
-          <table className="w-full table-fixed">
-            <thead className="bg-muted dark:bg-accent border-b border-gray-200 dark:border-gray-600">
+        <div className={adm.tableShell}>
+          <div className={adm.tableWrap}>
+            <table className={`${adm.table} table-fixed`}>
+            <thead className={adm.thead}>
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.users.colUser}</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.users.colEmail}</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.users.colRole}</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">ID помощника</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Подтверждено</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Очки</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.users.colContacts}</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.users.colStatus}</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.users.colActions}</th>
+                <th className={adm.th}>{ap.users.colUser}</th>
+                <th className={adm.th}>{ap.users.colEmail}</th>
+                <th className={adm.th}>{ap.users.colRole}</th>
+                <th className={`${adm.th} p-0`}>{ap.users.colHelperId}</th>
+                <th className={`${adm.th} p-0`}>
+                  <button
+                    type="button"
+                    className={userSortThBtn}
+                    title={ap.users.sortConfirmedTooltip}
+                    onClick={() => toggleUserSort('confirmed')}
+                  >
+                    {ap.users.colConfirmed}
+                    {userSortIcon('confirmed')}
+                  </button>
+                </th>
+                <th className={`${adm.th} p-0`}>
+                  <button
+                    type="button"
+                    className={userSortThBtn}
+                    title={ap.users.sortPointsTooltip}
+                    onClick={() => toggleUserSort('points')}
+                  >
+                    {ap.users.colPoints}
+                    {userSortIcon('points')}
+                  </button>
+                </th>
+                <th className={adm.th}>{ap.users.colContacts}</th>
+                <th className={adm.th}>{ap.users.colStatus}</th>
+                <th className={adm.th}>{ap.users.colActions}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+            <tbody className={adm.tbody}>
               {paginatedUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                  <td colSpan={9} className={adm.tdEmpty}>
                     {ap.users.empty}
                   </td>
                 </tr>
               ) : (
                 paginatedUsers.map(user => (
-                  <tr key={user.id} className="hover:bg-accent dark:hover:bg-accent">
+                  <tr key={user.id} className={adm.tr}>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         {user.avatar && (
@@ -809,6 +1225,7 @@ export function AdminPanel({
               )}
             </tbody>
           </table>
+          </div>
         </div>
 
         {/* Edit User Modal */}
@@ -859,33 +1276,321 @@ export function AdminPanel({
           </div>
         )}
 
-        {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between">
-            <button
-              onClick={() => setUsersPage(Math.max(1, usersPage - 1))}
-              disabled={usersPage === 1}
-              className="flex items-center gap-2 px-4 py-3 text-sm bg-card border border-gray-200 dark:border-gray-700 dark:text-gray-300 rounded-lg hover:bg-accent dark:hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              {t.common.back}
-            </button>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600 dark:text-gray-400">
-                {ap.users.pageOf(usersPage, totalPages)}
-              </span>
-              <span className="text-xs text-gray-500 dark:text-gray-400">
-                {ap.users.totalShort(filteredUsers.length)}
-              </span>
+          <AdminTablePagination
+            currentPage={usersPage}
+            totalPages={totalPages}
+            onPageChange={setUsersPage}
+            labels={ap.pagination}
+            summary={
+              <>
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  {ap.users.pageOf(usersPage, totalPages)}
+                </span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  {ap.users.totalShort(sortedUsers.length)}
+                </span>
+              </>
+            }
+          />
+        )}
+      </div>
+    );
+  };
+
+  const shelterKindLabel = (kind: ShelterKind) => {
+    const s = ap.shelters;
+    switch (kind) {
+      case 'foster':
+        return s.kindFoster;
+      case 'vet':
+        return s.kindVet;
+      case 'other':
+        return s.kindOther;
+      case 'shelter':
+      default:
+        return s.kindShelter;
+    }
+  };
+
+  const shelterAnimalFocusAdminLabel = (focus: ShelterAnimalFocus) => {
+    const s = ap.shelters;
+    switch (focus) {
+      case 'dogs':
+        return s.focusDogs;
+      case 'cats':
+        return s.focusCats;
+      case 'mixed':
+      default:
+        return s.focusMixed;
+    }
+  };
+
+  const handleShelterModerate = (id: string, action: 'approve' | 'reject' | 'hide') => {
+    const reasonRaw = (shelterReasons[id] ?? '').trim();
+    const reason = action === 'approve' ? undefined : reasonRaw || undefined;
+    sheltersApi
+      .moderate(id, { action, reason })
+      .then(() => {
+        if (action === 'approve') toast.success(ap.toasts.shelterApproved);
+        else if (action === 'reject') toast.success(ap.toasts.shelterRejected);
+        else toast.success(ap.toasts.shelterHidden);
+        setShelterReasons((prev) => ({ ...prev, [id]: '' }));
+        fetchShelterPending();
+      })
+      .catch(() => {
+        toast.error(ap.toasts.shelterModerateError);
+      });
+  };
+
+  const renderSheltersModeration = () => {
+    const sp = ap.shelters;
+    return (
+      <div className={adm.page}>
+        <div className={adm.headerRow}>
+          <div className={adm.headerText}>
+            <h2 className={adm.title}>{sp.title}</h2>
+            <p className={adm.subtitle}>{sp.subtitle}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => fetchShelterPending()}
+            disabled={shelterListLoading}
+            className={adm.ghostBtn}
+          >
+            {sp.refresh}
+          </button>
+        </div>
+
+        {shelterListLoading && shelterPendingList.length === 0 ? (
+          <p className={adm.lead}>{sp.loading}</p>
+        ) : shelterPendingList.length === 0 ? (
+          <div className={adm.emptyBox}>
+            <p>{sp.empty}</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {shelterPendingList.map((row) => {
+              const owner = users.find((u) => u.id === row.owner_user_id);
+              const mapHref = `https://www.google.com/maps?q=${row.location_lat},${row.location_lng}`;
+              return (
+                <div key={row.id} className={`${adm.listCard} space-y-4`}>
+                  <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <p className="text-lg font-semibold text-gray-900 dark:text-white">{row.name}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {row.city}
+                        {row.address ? ` · ${row.address}` : ''}
+                      </p>
+                      <div className="flex flex-wrap gap-2 text-xs">
+                        <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                          {shelterKindLabel(row.kind)}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full bg-muted text-foreground font-medium">
+                          {shelterAnimalFocusAdminLabel(row.animal_focus)}
+                        </span>
+                        <span className="text-gray-500 dark:text-gray-400">
+                          {sp.colUpdated}: {formatDate(new Date(row.updated_at))}
+                        </span>
+                      </div>
+                      {row.description ? (
+                        <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap pt-2">{row.description}</p>
+                      ) : null}
+                      <p className="text-sm text-gray-600 dark:text-gray-400 pt-1">
+                        {sp.colOwner}:{' '}
+                        {owner ? (
+                          <a
+                            href={`/user/${owner.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline font-medium"
+                          >
+                            {owner.name}
+                          </a>
+                        ) : (
+                          <span className="font-mono text-xs">{row.owner_user_id}</span>
+                        )}
+                      </p>
+                    </div>
+                    <a
+                      href={mapHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title={sp.openMap}
+                      className="inline-flex items-center justify-center p-2 rounded-lg text-primary hover:bg-primary/10 dark:hover:bg-primary/20 shrink-0"
+                    >
+                      <MapPin className="w-5 h-5" />
+                      <span className="sr-only">{sp.openMap}</span>
+                    </a>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{sp.reasonLabel}</label>
+                    <input
+                      type="text"
+                      value={shelterReasons[row.id] ?? ''}
+                      onChange={(e) => setShelterReasons((prev) => ({ ...prev, [row.id]: e.target.value }))}
+                      placeholder={sp.reasonPlaceholder}
+                      className="w-full max-w-xl px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
+                    />
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleShelterModerate(row.id, 'approve')}
+                      title={sp.approve}
+                      className="inline-flex items-center justify-center p-2.5 rounded-lg bg-green-600 text-white hover:bg-green-700"
+                    >
+                      <CheckCircle2 className="w-5 h-5" />
+                      <span className="sr-only">{sp.approve}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleShelterModerate(row.id, 'reject')}
+                      title={sp.reject}
+                      className="inline-flex items-center justify-center p-2.5 rounded-lg border border-amber-600 text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30"
+                    >
+                      <XCircle className="w-5 h-5" />
+                      <span className="sr-only">{sp.reject}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleShelterModerate(row.id, 'hide')}
+                      title={sp.hide}
+                      className="inline-flex items-center justify-center p-2.5 rounded-lg border border-gray-400 dark:border-gray-500 text-gray-800 dark:text-gray-200 hover:bg-muted"
+                    >
+                      <EyeOff className="w-5 h-5" />
+                      <span className="sr-only">{sp.hide}</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderSheltersCatalog = () => {
+    const sc = ap.sheltersCatalog;
+    const reload = () => {
+      setShelterAllLoading(true);
+      sheltersApi
+        .adminListAll()
+        .then(setShelterAllList)
+        .catch(() => setShelterAllList([]))
+        .finally(() => setShelterAllLoading(false));
+    };
+    return (
+      <div className={adm.page}>
+        <div className={adm.headerRow}>
+          <div className={adm.headerText}>
+            <h2 className={adm.title}>{sc.title}</h2>
+            <p className={adm.subtitle}>{sc.subtitle}</p>
+          </div>
+          <button type="button" onClick={() => reload()} disabled={shelterAllLoading} className={adm.ghostBtn}>
+            {sc.refresh}
+          </button>
+        </div>
+
+        {shelterAllLoading && shelterAllList.length === 0 ? (
+          <p className={adm.lead}>{sc.loading}</p>
+        ) : shelterAllList.length === 0 ? (
+          <div className={adm.emptyBox}>
+            <p>{sc.empty}</p>
+          </div>
+        ) : (
+          <div className={adm.tableShell}>
+            <div className={adm.tableWrap}>
+            <table className={`${adm.table} min-w-[820px]`}>
+              <thead className={adm.thead}>
+                <tr>
+                  <th className={adm.th}>{sc.colName}</th>
+                  <th className={adm.th}>{sc.colCity}</th>
+                  <th className={adm.th}>{sc.colKind}</th>
+                  <th className={adm.th}>{sc.colFocus}</th>
+                  <th className={adm.th}>{sc.colStatus}</th>
+                  <th className={adm.th}>{sc.colOwner}</th>
+                  <th className={adm.th}>{sc.colUpdated}</th>
+                  <th className={`${adm.th} text-right w-28`} title={`${sc.openMap} / ${sc.openPublic}`}>
+                    <span className="sr-only">
+                      {sc.openMap}, {sc.openPublic}
+                    </span>
+                    <span className="inline-flex justify-end gap-1 text-gray-500 dark:text-gray-400">
+                      <MapPin className="w-3.5 h-3.5" aria-hidden />
+                      <ExternalLink className="w-3.5 h-3.5" aria-hidden />
+                    </span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody className={adm.tbody}>
+                {shelterAllList.map((row) => {
+                  const owner = users.find((u) => u.id === row.owner_user_id);
+                  const mapHref = `https://www.google.com/maps?q=${row.location_lat},${row.location_lng}`;
+                  return (
+                    <tr key={row.id} className={adm.tr}>
+                      <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{row.name}</td>
+                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{row.city}</td>
+                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{shelterKindLabel(row.kind)}</td>
+                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                        {shelterAnimalFocusAdminLabel(row.animal_focus)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                          {shelterCatalogStatusLabel(row.moderation_status)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
+                        {owner ? (
+                          <a
+                            href={`/user/${owner.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline"
+                          >
+                            {owner.name}
+                          </a>
+                        ) : (
+                          <span className="font-mono text-xs">{row.owner_user_id}</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                        {formatDate(new Date(row.updated_at))}
+                      </td>
+                      <td className="px-4 py-3 text-right whitespace-nowrap">
+                        <div className="inline-flex items-center justify-end gap-1">
+                          <a
+                            href={mapHref}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title={sc.openMap}
+                            className="inline-flex items-center justify-center p-2 rounded-lg text-primary hover:bg-primary/10 dark:hover:bg-primary/20"
+                          >
+                            <MapPin className="w-4 h-4" />
+                            <span className="sr-only">{sc.openMap}</span>
+                          </a>
+                          {row.moderation_status === 'approved' ? (
+                            <a
+                              href="/shelters"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title={sc.openPublic}
+                              className="inline-flex items-center justify-center p-2 rounded-lg text-primary hover:bg-primary/10 dark:hover:bg-primary/20"
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                              <span className="sr-only">{sc.openPublic}</span>
+                            </a>
+                          ) : null}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
             </div>
-            <button
-              onClick={() => setUsersPage(Math.min(totalPages, usersPage + 1))}
-              disabled={usersPage >= totalPages}
-              className="flex items-center gap-2 px-4 py-3 text-sm bg-card border border-gray-200 dark:border-gray-700 dark:text-gray-300 rounded-lg hover:bg-accent dark:hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {t.common.forward}
-              <ChevronRight className="w-4 h-4" />
-            </button>
           </div>
         )}
       </div>
@@ -908,21 +1613,25 @@ export function AdminPanel({
     const paginatedReports = filteredReports.slice((reportsPage - 1) * reportsPerPage, reportsPage * reportsPerPage);
 
     return (
-      <div className="space-y-6">
-        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">{ap.reports.title}</h2>
-        
+      <div className={adm.page}>
+        <div className={adm.headerRow}>
+          <div className={adm.headerText}>
+            <h2 className={adm.title}>{ap.reports.title}</h2>
+          </div>
+        </div>
+
         {/* Filters Panel */}
-        <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+        <div className={adm.filtersCard}>
           <div className="flex flex-wrap gap-4 items-end">
             <div className="flex-1 min-w-[200px]">
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{ap.reports.statusLabel}</label>
+              <label className={adm.labelFilter}>{ap.reports.statusLabel}</label>
               <select
                 value={reportsStatusFilter}
                 onChange={(e) => {
                   setReportsStatusFilter(e.target.value);
                   setReportsPage(1);
                 }}
-                className="w-full px-3 py-2.5 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                className={adm.selectNative}
               >
                 <option value="all">{ap.reports.statusAll}</option>
                 <option value="pending">{ap.reports.statusNew}</option>
@@ -933,14 +1642,14 @@ export function AdminPanel({
             </div>
 
             <div className="flex-1 min-w-[200px]">
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{ap.reports.reasonLabel}</label>
+              <label className={adm.labelFilter}>{ap.reports.reasonLabel}</label>
               <select
                 value={reportsReasonFilter}
                 onChange={(e) => {
                   setReportsReasonFilter(e.target.value);
                   setReportsPage(1);
                 }}
-                className="w-full px-3 py-2.5 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                className={adm.selectNative}
               >
                 <option value="all">{ap.reports.reasonAll}</option>
                 {(Object.keys(ap.reports.reasons) as ReportReason[]).map((rk) => (
@@ -959,14 +1668,14 @@ export function AdminPanel({
 
       <div className="space-y-4">
         {paginatedReports.length === 0 ? (
-          <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-12 text-center">
-            <p className="text-gray-500 dark:text-gray-400">{ap.reports.empty}</p>
+          <div className={adm.emptyBox}>
+            <p>{ap.reports.empty}</p>
           </div>
         ) : (
           paginatedReports.map(report => {
             const pet = pets.find(p => p.id === report.petId);
             return (
-              <div key={report.id} className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-4 sm:p-6">
+              <div key={report.id} className={adm.listCard}>
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2 mb-2">
@@ -1053,34 +1762,23 @@ export function AdminPanel({
         )}
       </div>
 
-      {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <button
-            onClick={() => setReportsPage(Math.max(1, reportsPage - 1))}
-            disabled={reportsPage === 1}
-            className="flex items-center gap-2 px-4 py-3 text-sm bg-card border border-gray-200 dark:border-gray-700 dark:text-gray-300 rounded-lg hover:bg-accent dark:hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            {t.common.back}
-          </button>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-              {ap.reports.pageOf(reportsPage, totalPages)}
-            </span>
-            <span className="text-xs text-gray-500 dark:text-gray-400">
-              {ap.users.totalShort(filteredReports.length)}
-            </span>
-          </div>
-          <button
-            onClick={() => setReportsPage(Math.min(totalPages, reportsPage + 1))}
-            disabled={reportsPage >= totalPages}
-            className="flex items-center gap-2 px-4 py-3 text-sm bg-card border border-gray-200 dark:border-gray-700 dark:text-gray-300 rounded-lg hover:bg-accent dark:hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {t.common.forward}
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
+        <AdminTablePagination
+          currentPage={reportsPage}
+          totalPages={totalPages}
+          onPageChange={setReportsPage}
+          labels={ap.pagination}
+          summary={
+            <>
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                {ap.reports.pageOf(reportsPage, totalPages)}
+              </span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                {ap.users.totalShort(filteredReports.length)}
+              </span>
+            </>
+          }
+        />
       )}
     </div>
   );
@@ -1253,19 +1951,17 @@ export function AdminPanel({
       : (blogCategories[0]?.slug ?? '');
 
     return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">{ap.tabs.articles}</h2>
-        <button
-          type="button"
-          onClick={openBlogCreate}
-          className="flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 text-sm"
-        >
+    <div className={adm.page}>
+      <div className={adm.headerRow}>
+        <div className={adm.headerText}>
+          <h2 className={adm.title}>{ap.tabs.articles}</h2>
+        </div>
+        <button type="button" onClick={openBlogCreate} className={adm.primaryBtn}>
           <Plus className="w-4 h-4" /> {ap.blog.newArticle}
         </button>
       </div>
 
-      <p className="text-sm text-gray-600 dark:text-gray-400 max-w-3xl">
+      <p className={adm.lead}>
         {ap.blog.hintTelegramPrefix}{' '}
         <button
           type="button"
@@ -1278,7 +1974,7 @@ export function AdminPanel({
       </p>
 
       {blogCategories.length === 0 ? (
-        <p className="text-sm text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-lg px-4 py-3 max-w-3xl">
+        <p className={adm.warnBanner}>
           {ap.blog.hintCategoriesEmptyPrefix}{' '}
           <button type="button" onClick={() => selectTab('blogCategories')} className="font-medium underline">
             {ap.blog.hintCategoriesLink}
@@ -1287,21 +1983,22 @@ export function AdminPanel({
         </p>
       ) : null}
 
-      <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg overflow-x-auto">
-        <table className="w-full min-w-[720px]">
-          <thead className="bg-muted dark:bg-accent border-b border-gray-200 dark:border-gray-600">
+      <div className={adm.tableShell}>
+        <div className={adm.tableWrap}>
+        <table className={`${adm.table} min-w-[720px]`}>
+          <thead className={adm.thead}>
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.blog.colTitle}</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.blog.colSlug}</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.blog.colStatus}</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.blog.colTelegram}</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.blog.colActions}</th>
+              <th className={adm.th}>{ap.blog.colTitle}</th>
+              <th className={adm.th}>{ap.blog.colSlug}</th>
+              <th className={adm.th}>{ap.blog.colStatus}</th>
+              <th className={adm.th}>{ap.blog.colTelegram}</th>
+              <th className={adm.th}>{ap.blog.colActions}</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+          <tbody className={adm.tbody}>
             {blogPosts.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                <td colSpan={5} className={adm.tdEmpty}>
                   {ap.blog.empty}
                 </td>
               </tr>
@@ -1309,7 +2006,7 @@ export function AdminPanel({
               blogPosts.map((p) => {
                 const tg = blogTelegramUrl(p);
                 return (
-                  <tr key={p.id} className="hover:bg-accent dark:hover:bg-accent">
+                  <tr key={p.id} className={adm.tr}>
                     <td className="px-4 py-3 text-sm text-gray-900 dark:text-white font-medium max-w-[200px]">
                       <span className="line-clamp-2">{p.title}</span>
                     </td>
@@ -1327,16 +2024,25 @@ export function AdminPanel({
                     </td>
                     <td className="px-4 py-3 text-sm">
                       {tg ? (
-                        <a href={tg} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-1">
-                          {ap.blog.tgOpen} <ExternalLink className="w-3.5 h-3.5" />
+                        <a
+                          href={tg}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={ap.blog.tgOpen}
+                          className="inline-flex items-center justify-center p-2 rounded-lg text-primary hover:bg-primary/10 dark:hover:bg-primary/20"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                          <span className="sr-only">{ap.blog.tgOpen}</span>
                         </a>
                       ) : p.status === 'published' ? (
                         <button
                           type="button"
                           onClick={() => onBlogSendTelegram(p.id)}
-                          className="text-primary text-sm hover:underline"
+                          title={ap.blog.tgSend}
+                          className="inline-flex items-center justify-center p-2 rounded-lg text-primary hover:bg-primary/10 dark:hover:bg-primary/20"
                         >
-                          {ap.blog.tgSend}
+                          <Send className="w-4 h-4" />
+                          <span className="sr-only">{ap.blog.tgSend}</span>
                         </button>
                       ) : (
                         <span className="text-gray-400">{ap.blog.tgDash}</span>
@@ -1380,6 +2086,7 @@ export function AdminPanel({
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {editingBlog && (
@@ -1545,41 +2252,40 @@ export function AdminPanel({
   };
 
   const renderBlogCategories = () => (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">{ap.categories.title}</h2>
-        <button
-          type="button"
-          onClick={openBlogCategoryCreate}
-          className="flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 text-sm"
-        >
+    <div className={adm.page}>
+      <div className={adm.headerRow}>
+        <div className={adm.headerText}>
+          <h2 className={adm.title}>{ap.categories.title}</h2>
+        </div>
+        <button type="button" onClick={openBlogCategoryCreate} className={adm.primaryBtn}>
           <Plus className="w-4 h-4" /> {ap.categories.new}
         </button>
       </div>
-      <p className="text-sm text-gray-600 dark:text-gray-400 max-w-3xl">
+      <p className={adm.lead}>
         {ap.categories.hint}
       </p>
 
-      <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg overflow-x-auto">
-        <table className="w-full min-w-[560px]">
-          <thead className="bg-muted dark:bg-accent border-b border-gray-200 dark:border-gray-600">
+      <div className={adm.tableShell}>
+        <div className={adm.tableWrap}>
+        <table className={`${adm.table} min-w-[560px]`}>
+          <thead className={adm.thead}>
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+              <th className={adm.th}>
                 {ap.categories.colOrder}
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+              <th className={adm.th}>
                 {ap.categories.colName}
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.categories.colSlug}</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+              <th className={adm.th}>{ap.categories.colSlug}</th>
+              <th className={adm.th}>
                 {ap.categories.colActions}
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+          <tbody className={adm.tbody}>
             {blogCategories.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                <td colSpan={4} className={adm.tdEmpty}>
                   {ap.categories.empty}
                 </td>
               </tr>
@@ -1587,7 +2293,7 @@ export function AdminPanel({
               [...blogCategories]
                 .sort((a, b) => a.sort_order - b.sort_order || a.slug.localeCompare(b.slug))
                 .map((c) => (
-                  <tr key={c.id} className="hover:bg-accent dark:hover:bg-accent">
+                  <tr key={c.id} className={adm.tr}>
                     <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{c.sort_order}</td>
                     <td className="px-4 py-3 text-sm text-gray-900 dark:text-white font-medium">{c.title}</td>
                     <td className="px-4 py-3 text-sm font-mono text-gray-600 dark:text-gray-300">{c.slug}</td>
@@ -1627,6 +2333,7 @@ export function AdminPanel({
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {editingBlogCategory ? (
@@ -1746,38 +2453,38 @@ export function AdminPanel({
   );
 
   const renderMedia = () => (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">{ap.media.title}</h2>
-        <button
-          onClick={openMediaCreate}
-          className="flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 text-sm"
-        >
+    <div className={adm.page}>
+      <div className={adm.headerRow}>
+        <div className={adm.headerText}>
+          <h2 className={adm.title}>{ap.media.title}</h2>
+        </div>
+        <button onClick={openMediaCreate} className={adm.primaryBtn}>
           <Plus className="w-4 h-4" /> {ap.media.add}
         </button>
       </div>
 
-      <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg overflow-x-auto">
-        <table className="w-full min-w-[600px]">
-          <thead className="bg-muted dark:bg-accent border-b border-gray-200 dark:border-gray-600">
+      <div className={adm.tableShell}>
+        <div className={adm.tableWrap}>
+        <table className={`${adm.table} min-w-[600px]`}>
+          <thead className={adm.thead}>
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.media.colLogo}</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.media.colTitle}</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.media.colDate}</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.media.colLink}</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.media.colActions}</th>
+              <th className={adm.th}>{ap.media.colLogo}</th>
+              <th className={adm.th}>{ap.media.colTitle}</th>
+              <th className={adm.th}>{ap.media.colDate}</th>
+              <th className={adm.th}>{ap.media.colLink}</th>
+              <th className={adm.th}>{ap.media.colActions}</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+          <tbody className={adm.tbody}>
             {mediaArticles.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                <td colSpan={5} className={adm.tdEmpty}>
                   {ap.media.empty}
                 </td>
               </tr>
             ) : (
               mediaArticles.map((m) => (
-                <tr key={m.id} className="hover:bg-accent dark:hover:bg-accent">
+                <tr key={m.id} className={adm.tr}>
                   <td className="px-4 py-3">
                     {m.logo_url ? (
                       <img src={m.logo_url.startsWith('http') || m.logo_url.startsWith('data:') ? m.logo_url : `${API_BASE}${m.logo_url}`} alt="" className="h-8 object-contain max-w-[80px]" />
@@ -1821,6 +2528,7 @@ export function AdminPanel({
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* Media Create/Edit Modal */}
@@ -1905,38 +2613,38 @@ export function AdminPanel({
   };
 
   const renderPartners = () => (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">{ap.partners.title}</h2>
-        <button
-          onClick={openPartnerCreate}
-          className="flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 text-sm"
-        >
+    <div className={adm.page}>
+      <div className={adm.headerRow}>
+        <div className={adm.headerText}>
+          <h2 className={adm.title}>{ap.partners.title}</h2>
+        </div>
+        <button onClick={openPartnerCreate} className={adm.primaryBtn}>
           <Plus className="w-4 h-4" /> {ap.partners.add}
         </button>
       </div>
 
-      <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg overflow-x-auto">
-        <table className="w-full min-w-[600px]">
-          <thead className="bg-muted dark:bg-accent border-b border-gray-200 dark:border-gray-600">
+      <div className={adm.tableShell}>
+        <div className={adm.tableWrap}>
+        <table className={`${adm.table} min-w-[600px]`}>
+          <thead className={adm.thead}>
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.partners.colLogo}</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.partners.colName}</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.partners.colLink}</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.partners.colMedallions}</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ap.partners.colActions}</th>
+              <th className={adm.th}>{ap.partners.colLogo}</th>
+              <th className={adm.th}>{ap.partners.colName}</th>
+              <th className={adm.th}>{ap.partners.colLink}</th>
+              <th className={adm.th}>{ap.partners.colMedallions}</th>
+              <th className={adm.th}>{ap.partners.colActions}</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+          <tbody className={adm.tbody}>
             {partners.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                <td colSpan={5} className={adm.tdEmpty}>
                   {ap.partners.empty}
                 </td>
               </tr>
             ) : (
               partners.map((p) => (
-                <tr key={p.id} className="hover:bg-accent dark:hover:bg-accent">
+                <tr key={p.id} className={adm.tr}>
                   <td className="px-4 py-3">
                     {p.logo_url ? (
                       <img src={p.logo_url.startsWith('http') || p.logo_url.startsWith('data:') ? p.logo_url : `${API_BASE}${p.logo_url}`} alt="" className="h-8 object-contain max-w-[80px]" />
@@ -1990,6 +2698,7 @@ export function AdminPanel({
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {editingPartner && (
@@ -2084,46 +2793,43 @@ export function AdminPanel({
   };
 
   const renderFaq = () => (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">{ap.faq.title}</h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 max-w-3xl">{ap.faq.hint}</p>
+    <div className={adm.page}>
+      <div className={adm.headerRow}>
+        <div className={adm.headerText}>
+          <h2 className={adm.title}>{ap.faq.title}</h2>
+          <p className={adm.subtitle}>{ap.faq.hint}</p>
         </div>
-        <button
-          type="button"
-          onClick={openFaqCreate}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 text-sm shrink-0"
-        >
+        <button type="button" onClick={openFaqCreate} className={adm.primaryBtn}>
           <Plus className="w-4 h-4" /> {ap.faq.add}
         </button>
       </div>
 
-      <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg overflow-x-auto">
-        <table className="w-full min-w-[480px]">
-          <thead className="bg-muted dark:bg-accent border-b border-gray-200 dark:border-gray-600">
+      <div className={adm.tableShell}>
+        <div className={adm.tableWrap}>
+        <table className={`${adm.table} min-w-[480px]`}>
+          <thead className={adm.thead}>
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+              <th className={adm.th}>
                 {ap.faq.colOrder}
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+              <th className={adm.th}>
                 {ap.faq.colQuestion}
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+              <th className={adm.th}>
                 {ap.faq.colActions}
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+          <tbody className={adm.tbody}>
             {faqRowsSorted.length === 0 ? (
               <tr>
-                <td colSpan={3} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                <td colSpan={3} className={adm.tdEmpty}>
                   {ap.faq.empty}
                 </td>
               </tr>
             ) : (
               faqRowsSorted.map((row) => (
-                <tr key={row.id} className="hover:bg-accent dark:hover:bg-accent">
+                <tr key={row.id} className={adm.tr}>
                   <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
                     {row.sort_order}
                   </td>
@@ -2157,6 +2863,7 @@ export function AdminPanel({
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {editingFaq && (
@@ -2286,20 +2993,26 @@ export function AdminPanel({
       .filter((tx) => (rewardsKindFilter === 'all' ? true : tx.kind === rewardsKindFilter))
       .slice(0, 300);
 
+    const rl = ap.rewardsLog;
     return (
-      <div className="space-y-6">
-        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Журнал начислений очков</h2>
-        <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-          <div className="flex items-center gap-3">
-            <label className="text-sm text-gray-700 dark:text-gray-300">Тип операции</label>
+      <div className={adm.page}>
+        <div className={adm.headerRow}>
+          <div className={adm.headerText}>
+            <h2 className={adm.title}>{rl.title}</h2>
+            <p className={adm.subtitle}>{rl.subtitle}</p>
+          </div>
+        </div>
+        <div className={adm.filtersCard}>
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 shrink-0">{rl.filterKind}</label>
             <Select value={rewardsKindFilter} onValueChange={setRewardsKindFilter}>
-              <SelectTrigger className="w-[240px]">
+              <SelectTrigger className="w-[min(100%,240px)]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Все</SelectItem>
-                <SelectItem value="helper_reward">Начисление за помощь</SelectItem>
-                <SelectItem value="manual_adjustment">Ручная корректировка</SelectItem>
+                <SelectItem value="all">{rl.filterAll}</SelectItem>
+                <SelectItem value="helper_reward">{rl.filterHelper}</SelectItem>
+                <SelectItem value="manual_adjustment">{rl.filterManual}</SelectItem>
               </SelectContent>
             </Select>
             <button
@@ -2309,30 +3022,31 @@ export function AdminPanel({
                   setPointsTransactions([]);
                 });
               }}
-              className="ml-auto px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+              className={`${adm.primaryBtn} ml-auto`}
             >
-              Обновить
+              {rl.refresh}
             </button>
           </div>
         </div>
 
-        <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg overflow-x-auto">
-          <table className="w-full min-w-[860px]">
-            <thead className="bg-muted dark:bg-accent border-b border-gray-200 dark:border-gray-600">
+        <div className={adm.tableShell}>
+          <div className={adm.tableWrap}>
+          <table className={`${adm.table} min-w-[860px]`}>
+            <thead className={adm.thead}>
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Дата</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Пользователь</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Объявление</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Очки</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Тип</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Комментарий</th>
+                <th className={adm.th}>{rl.colDate}</th>
+                <th className={adm.th}>{rl.colUser}</th>
+                <th className={adm.th}>{rl.colPet}</th>
+                <th className={adm.th}>{rl.colPoints}</th>
+                <th className={adm.th}>{rl.colKind}</th>
+                <th className={adm.th}>{rl.colNote}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+            <tbody className={adm.tbody}>
               {txRows.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
-                    Операции не найдены
+                  <td colSpan={6} className={adm.tdEmpty}>
+                    {rl.empty}
                   </td>
                 </tr>
               ) : (
@@ -2340,7 +3054,7 @@ export function AdminPanel({
                   const rewardUser = users.find((u) => u.id === tx.user_id);
                   const rewardPet = tx.pet_id ? pets.find((p) => p.id === tx.pet_id) : undefined;
                   return (
-                    <tr key={tx.id} className="hover:bg-accent dark:hover:bg-accent">
+                    <tr key={tx.id} className={adm.tr}>
                       <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{formatDate(new Date(tx.created_at))}</td>
                       <td className="px-4 py-3 text-sm">
                         <a href={`/user/${tx.user_id}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
@@ -2365,17 +3079,22 @@ export function AdminPanel({
               )}
             </tbody>
           </table>
+          </div>
         </div>
       </div>
     );
   };
 
   const renderFeatureFlags = () => (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">{ap.featureFlags.title}</h2>
+    <div className={adm.page}>
+      <div className={adm.headerRow}>
+        <div className={adm.headerText}>
+          <h2 className={adm.title}>{ap.featureFlags.title}</h2>
+        </div>
+      </div>
 
-      <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-        <h3 className="font-semibold text-gray-900 dark:text-white mb-4">{ap.featureFlags.landingTitle}</h3>
+      <div className={adm.settingsCard}>
+        <h3 className={adm.settingsCardTitle}>{ap.featureFlags.landingTitle}</h3>
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-4">
             <div>
@@ -2422,8 +3141,8 @@ export function AdminPanel({
         </div>
       </div>
 
-      <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-        <h3 className="font-semibold text-gray-900 dark:text-white mb-4">{ap.featureFlags.siteTitle}</h3>
+      <div className={adm.settingsCard}>
+        <h3 className={adm.settingsCardTitle}>{ap.featureFlags.siteTitle}</h3>
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-4">
             <div>
@@ -2461,11 +3180,8 @@ export function AdminPanel({
         </div>
       </div>
 
-      <div className="flex justify-end">
-        <button
-          onClick={handleSaveFeatureFlags}
-          className="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-        >
+      <div className={adm.footerActions}>
+        <button onClick={handleSaveFeatureFlags} className={adm.saveBtnLg}>
           {t.common.save}
         </button>
       </div>
@@ -2473,15 +3189,17 @@ export function AdminPanel({
   );
 
   const renderTelegramBlogSettings = () => (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">{ap.telegram.title}</h2>
-      <p className="text-sm text-gray-600 dark:text-gray-400 max-w-3xl">
-        {ap.telegram.intro}
-      </p>
+    <div className={adm.page}>
+      <div className={adm.headerRow}>
+        <div className={adm.headerText}>
+          <h2 className={adm.title}>{ap.telegram.title}</h2>
+          <p className={adm.subtitle}>{ap.telegram.intro}</p>
+        </div>
+      </div>
 
-      <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-xl p-6 space-y-4 max-w-3xl">
+      <div className={`${adm.settingsCard} space-y-4 max-w-3xl`}>
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{ap.telegram.publishTargetTitle}</h3>
+          <h3 className={adm.settingsCardTitle}>{ap.telegram.publishTargetTitle}</h3>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
             {ap.telegram.envVarsIntro}{' '}
             <code className="text-xs bg-muted px-1 rounded">TELEGRAM_BLOG_CHAT_ID</code>{' '}
@@ -2517,11 +3235,7 @@ export function AdminPanel({
             {ap.telegram.usernameHint}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={handleSaveBlogTelegramSettings}
-          className="px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 text-sm font-medium"
-        >
+        <button type="button" onClick={handleSaveBlogTelegramSettings} className={adm.primaryBtn}>
           {ap.telegram.save}
         </button>
       </div>
@@ -2529,11 +3243,15 @@ export function AdminPanel({
   );
 
   const renderSettings = () => (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">{ap.settings.title}</h2>
-      
-      <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-        <h3 className="font-semibold text-gray-900 dark:text-white mb-4">{ap.settings.general}</h3>
+    <div className={adm.page}>
+      <div className={adm.headerRow}>
+        <div className={adm.headerText}>
+          <h2 className={adm.title}>{ap.settings.title}</h2>
+        </div>
+      </div>
+
+      <div className={adm.settingsCard}>
+        <h3 className={adm.settingsCardTitle}>{ap.settings.general}</h3>
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -2580,12 +3298,12 @@ export function AdminPanel({
         </div>
       </div>
 
-      <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-        <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Награды и очки</h3>
+      <div className={adm.settingsCard}>
+        <h3 className={adm.settingsCardTitle}>{ap.settings.rewardsSectionTitle}</h3>
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Очки по умолчанию</label>
+              <label className={adm.labelFilter}>{ap.settings.rewardDefaultPointsLabel}</label>
               <input
                 type="number"
                 min={1}
@@ -2599,18 +3317,15 @@ export function AdminPanel({
         </div>
       </div>
 
-      <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-        <h3 className="font-semibold text-gray-900 dark:text-white mb-4">{ap.settings.citiesTitle}</h3>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
+      <div className={adm.settingsCard}>
+        <h3 className={adm.settingsCardTitle}>{ap.settings.citiesTitle}</h3>
+        <p className={adm.lead}>
           {ap.settings.citiesHint}
         </p>
       </div>
 
-      <div className="flex justify-end">
-        <button
-          onClick={handleSaveSettings}
-          className="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-        >
+      <div className={adm.footerActions}>
+        <button onClick={handleSaveSettings} className={adm.saveBtnLg}>
           {ap.settings.save}
         </button>
       </div>
@@ -2645,12 +3360,12 @@ export function AdminPanel({
           <div className="flex gap-2 py-2 overflow-x-auto scrollbar-hide border-b border-gray-200/80 dark:border-gray-600/80">
             {sectionMeta.map((sec) => {
               const SecIcon = sec.icon;
-              const isActive = activeSection === sec.id;
+              const isActive = activePrimary === sec.id;
               return (
                 <button
                   key={sec.id}
                   type="button"
-                  onClick={() => selectSection(sec.id)}
+                  onClick={() => selectPrimary(sec.id)}
                   className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-lg text-sm font-medium shrink-0 transition-colors ${
                     isActive
                       ? 'bg-primary/15 text-primary ring-1 ring-primary/30'
@@ -2664,38 +3379,45 @@ export function AdminPanel({
               );
             })}
           </div>
-          <div className="overflow-x-auto scrollbar-hide">
-            <div className="flex gap-1 min-w-max">
-              {subTabs.map((tab) => {
-                const Icon = tab.icon;
-                return (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => selectTab(tab.id)}
-                    className={`flex items-center gap-2 px-3 sm:px-4 py-3 border-b-2 transition-colors whitespace-nowrap text-sm ${
-                      activeTab === tab.id
-                        ? 'border-primary text-primary'
-                        : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4 shrink-0" />
-                    <span>{tab.label}</span>
-                    {tab.id === 'reports' && stats.pendingReports > 0 && (
-                      <span className="px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded-full text-xs font-medium">
-                        {stats.pendingReports}
-                      </span>
-                    )}
-                    {tab.id === 'moderation' && pets.filter((p) => p.moderationStatus === 'pending').length > 0 && (
-                      <span className="px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-full text-xs font-medium">
-                        {pets.filter((p) => p.moderationStatus === 'pending').length}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
+          {activePrimary !== 'dashboard' ? (
+            <div className="overflow-x-auto scrollbar-hide">
+              <div className="flex gap-1 min-w-max">
+                {subTabs.map((tab) => {
+                  const Icon = tab.icon;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => selectTab(tab.id)}
+                      className={`flex items-center gap-2 px-3 sm:px-4 py-3 border-b-2 transition-colors whitespace-nowrap text-sm ${
+                        activeTab === tab.id
+                          ? 'border-primary text-primary'
+                          : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4 shrink-0" />
+                      <span>{tab.label}</span>
+                      {tab.id === 'reports' && stats.pendingReports > 0 && (
+                        <span className="px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded-full text-xs font-medium">
+                          {stats.pendingReports}
+                        </span>
+                      )}
+                      {tab.id === 'moderation' && pets.filter((p) => p.moderationStatus === 'pending').length > 0 && (
+                        <span className="px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-full text-xs font-medium">
+                          {pets.filter((p) => p.moderationStatus === 'pending').length}
+                        </span>
+                      )}
+                      {tab.id === 'sheltersModeration' && shelterPendingList.length > 0 && (
+                        <span className="px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-full text-xs font-medium">
+                          {shelterPendingList.length}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          ) : null}
         </div>
       </div>
 
@@ -2726,6 +3448,8 @@ export function AdminPanel({
             }}
           />
         )}
+        {activeTab === 'sheltersCatalog' && renderSheltersCatalog()}
+        {activeTab === 'sheltersModeration' && renderSheltersModeration()}
         {activeTab === 'pets' && <PetsAdminPanel pets={pets} users={users} onDeletePet={onDeletePet} onOpenPet={(petId) => window.open(`/pet/${petId}`, '_blank')} />}
         {activeTab === 'profilePets' && <ProfilePetsAdminPanel profilePets={profilePets} onDeleteProfilePet={onDeleteProfilePet} />}
         {activeTab === 'users' && renderUsers()}

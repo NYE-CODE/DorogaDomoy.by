@@ -12,8 +12,16 @@ import { Help } from "./components/help";
 import { Footer } from "./components/footer";
 import { ScrollToTop } from "./components/scroll-to-top";
 import { useFeatureFlags } from "../../context/FeatureFlagsContext";
+import { useEffect, useRef, useState } from "react";
+import { trackYmGoal } from "../../utils/ym";
 
 /** Условные секции должны совпадать с `landing-nav-config.ts` (навигация в футере). */
+export type HomeMode = "search" | "shelters";
+const HOME_MODE_KEY = "dorogadomoy-home-mode";
+
+function trackModeSelected(mode: HomeMode) {
+  trackYmGoal("mode_selected", { mode });
+}
 
 export default function App() {
   const {
@@ -22,14 +30,38 @@ export default function App() {
     ff_landing_show_pets_feature,
     ff_landing_show_faq,
   } = useFeatureFlags();
+  const [homeMode, setHomeMode] = useState<HomeMode>(() => {
+    if (typeof window === "undefined") return "search";
+    const saved = window.localStorage.getItem(HOME_MODE_KEY);
+    return saved === "shelters" ? "shelters" : "search";
+  });
+  const didMountRef = useRef(false);
+
+  useEffect(() => {
+    window.localStorage.setItem(HOME_MODE_KEY, homeMode);
+  }, [homeMode]);
+
+  useEffect(() => {
+    if (!didMountRef.current) {
+      didMountRef.current = true;
+      return;
+    }
+    trackModeSelected(homeMode);
+  }, [homeMode]);
+
   return (
     <div className="min-h-screen overflow-x-clip">
-      <Header showCitySelector={false} />
-      <Hero />
-      {ff_landing_show_stats && <Stats />}
-      <HowItWorks />
-      {ff_landing_show_pets_feature && <PetsFeature />}
-      <Announcements />
+      <Header
+        showCitySelector={false}
+        showHomeModeToggle
+        homeMode={homeMode}
+        onHomeModeChange={setHomeMode}
+      />
+      <Hero mode={homeMode} />
+      {ff_landing_show_stats && <Stats mode={homeMode} />}
+      <HowItWorks mode={homeMode} />
+      {ff_landing_show_pets_feature && homeMode === "search" && <PetsFeature />}
+      <Announcements mode={homeMode} />
       <WhyUs />
       <Media />
       <Partners />

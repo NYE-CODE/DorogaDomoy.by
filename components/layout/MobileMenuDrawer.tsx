@@ -13,6 +13,7 @@ import {
   User,
   BookOpen,
   Heart,
+  Building2,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useI18n } from '../../context/I18nContext';
@@ -123,6 +124,10 @@ export function MobileMenuDrawer({ open, onClose }: MobileMenuDrawerProps) {
             <Heart size={18} className="text-rose-500" />
             <span>{t.header.favorites}</span>
           </button>
+          <button type="button" onClick={() => go('/shelters')} className={linkCls('/shelters')}>
+            <Building2 size={20} />
+            <span>{t.header.shelters}</span>
+          </button>
           <button type="button" onClick={() => go('/blog')} className={linkCls('/blog')}>
             <BookOpen size={20} />
             <span>{t.header.blog}</span>
@@ -131,6 +136,10 @@ export function MobileMenuDrawer({ open, onClose }: MobileMenuDrawerProps) {
           {isAuthenticated && (
             <>
               <div className="my-2 mx-5 border-t border-border" />
+              <button type="button" onClick={() => go('/profile')} className={linkCls('/profile')}>
+                <User size={20} />
+                <span>{t.header.profile}</span>
+              </button>
               <button type="button" onClick={() => go('/my-ads')} className={linkCls('/my-ads')}>
                 <FileText size={20} />
                 <span>{t.header.myAds}</span>
@@ -139,6 +148,12 @@ export function MobileMenuDrawer({ open, onClose }: MobileMenuDrawerProps) {
                 <PawPrint size={20} />
                 <span>{t.header.myPets ?? t.landing?.header?.myPets}</span>
               </button>
+              {user?.role === 'shelter' && (
+                <button type="button" onClick={() => go('/my-shelters')} className={linkCls('/my-shelters')}>
+                  <Building2 size={20} />
+                  <span>{t.header.myShelterOrg ?? t.landing?.header?.myShelterOrg}</span>
+                </button>
+              )}
               <button type="button" onClick={() => go('/settings')} className={linkCls('/settings')}>
                 <Settings size={20} />
                 <span>{t.header.settings}</span>

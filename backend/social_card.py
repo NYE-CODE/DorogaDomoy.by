@@ -36,34 +36,44 @@ CHIP_FG = (55, 65, 81)
 LABELS_RU = {
     "pill_lost": "Пропал питомец",
     "pill_found": "Найден питомец",
+    "pill_adoption": "Ищет дом",
     "breed": "Порода",
     "age": "Возраст",
     "coat": "Окрас",
     "sex": "Пол",
     "place_lost": "Место пропажи",
     "place_found": "Место находки",
+    "place_adoption": "Город",
     "contacts": "Контакты",
     "phone": "Телефон",
     "telegram": "Telegram",
     "viber": "Viber",
     "scan_qr": "Подробнее на сайте",
+    "shelter_org": "Приют",
+    "nickname": "Кличка",
+    "qr_hint_adoption": "Профиль питомца",
     "site": "DorogaDomoy.by",
     "not_specified": "Не указано",
 }
 LABELS_BE = {
     "pill_lost": "Знікла жывёла",
     "pill_found": "Знойдзена жывёла",
+    "pill_adoption": "Шукае дом",
     "breed": "Парода",
     "age": "Узрост",
     "coat": "Колер",
     "sex": "Пол",
     "place_lost": "Месца знікнення",
     "place_found": "Месца знаходжання",
+    "place_adoption": "Горад",
     "contacts": "Кантакты",
     "phone": "Тэлефон",
     "telegram": "Telegram",
     "viber": "Viber",
     "scan_qr": "Падрабязней на сайце",
+    "shelter_org": "Прыют",
+    "nickname": "Мянушка",
+    "qr_hint_adoption": "Профіль жывёлы",
     "site": "DorogaDomoy.by",
     "not_specified": "Не ўказана",
 }
@@ -298,11 +308,17 @@ def generate_social_card(
     approximate_age: str | None,
     contacts: dict,
     author_name: str | None,
+    pet_scope: str | None,
+    adoption_status: str | None,
     site_url: str,
+    shelter_name: str | None = None,
+    shelter_city: str | None = None,
+    pet_nickname: str | None = None,
     lang: str = "ru",
     card_format: CardFormat = "feed",
 ) -> tuple[bytes, CardMediaType]:
     L = LABELS_BE if lang == "be" else LABELS_RU
+    is_adoption = (pet_scope or "").strip().lower() == "shelter_pet"
     is_lost = status == "searching"
 
     # ── Canvas ──
@@ -333,9 +349,14 @@ def generate_social_card(
 
     # Status pill (top-left) — те же вертикальные отступы, что у тегов окраса
     pill_f = _font("semibold", 30)
-    pill_txt = L["pill_lost"] if is_lost else L["pill_found"]
-    pill_bg = PILL_LOST_BG if is_lost else PILL_FOUND_BG
-    pill_fg = PILL_LOST_FG if is_lost else PILL_FOUND_FG
+    if is_adoption:
+        pill_txt = L["pill_adoption"]
+        pill_bg = (219, 234, 254)
+        pill_fg = (29, 78, 216)
+    else:
+        pill_txt = L["pill_lost"] if is_lost else L["pill_found"]
+        pill_bg = PILL_LOST_BG if is_lost else PILL_FOUND_BG
+        pill_fg = PILL_LOST_FG if is_lost else PILL_FOUND_FG
     pill_pad_x = 18
     pill_pad_top = 10
     pill_pad_bottom = 15
@@ -377,6 +398,17 @@ def generate_social_card(
     contact_lbl_f = _font("regular", 26)
     contact_val_f = _font("semibold", 34)
 
+    # ── Nickname (пристройство) ──
+    if is_adoption and (pet_nickname or "").strip():
+        nk = (pet_nickname or "").strip()
+        draw.text((x0, y), L["nickname"], font=lbl_f, fill=GRAY_400)
+        y += _lh(lbl_f) + 11
+        nick_lines = _wrap(nk, val_f, full_w, 2)
+        for ln in nick_lines:
+            draw.text((x0, y), ln, font=val_f, fill=DARK)
+            y += _lh(val_f) + 6
+        y += 18
+
     # ── Two-column row: Sex | Age ──
     col_w = (full_w - 32) // 2
     gender_val = _gender(gender, lang)
@@ -404,7 +436,10 @@ def generate_social_card(
     y += 20
 
     # ── Location ──
-    place_lbl = L["place_lost"] if is_lost else L["place_found"]
+    if is_adoption:
+        place_lbl = L["place_adoption"]
+    else:
+        place_lbl = L["place_lost"] if is_lost else L["place_found"]
     city_txt = city.strip() or L["not_specified"]
     draw.text((x0, y), place_lbl, font=lbl_f, fill=GRAY_400)
     y += _lh(lbl_f) + 11
@@ -420,12 +455,37 @@ def generate_social_card(
         y += _lh(loc_f) + 6
     y += 12
 
+    # ── Shelter (пристройство): отступ и разделитель перед блоком приюта ──
+    if is_adoption and (shelter_name or "").strip():
+        y += 18
+        draw.line([(x0, y), (x1, y)], fill=DIVIDER, width=1)
+        y += 22
+
+    # ── Shelter: название и город ──
+    if is_adoption and (shelter_name or "").strip():
+        sn = (shelter_name or "").strip()
+        draw.text((x0, y), L["shelter_org"], font=lbl_f, fill=GRAY_400)
+        y += _lh(lbl_f) + 11
+        max_nm = 4 if card_format == "story" else 3
+        name_lines = _wrap(sn, loc_f, full_w - 36, max_nm)
+        for ln in name_lines:
+            draw.text((x0, y), ln, font=loc_f, fill=GRAY_600)
+            y += _lh(loc_f) + 6
+        sc = (shelter_city or "").strip()
+        if sc:
+            draw.text((x0, y), sc, font=small_lbl_f, fill=GRAY_400)
+            y += _lh(small_lbl_f) + 10
+        y += 14
+
     # ── Divider ──
     draw.line([(x0, y), (x1, y)], fill=DIVIDER, width=1)
     y += 20
 
     # ── Contacts + QR side by side ──
-    qr_url = f"{site_url.rstrip('/')}/pet/{pet_id}"
+    if is_adoption:
+        qr_url = f"{site_url.rstrip('/')}/shelter-pet/{pet_id}"
+    else:
+        qr_url = f"{site_url.rstrip('/')}/pet/{pet_id}"
     qr_img = _make_qr(qr_url, qr_sz)
     qr_x = x1 - qr_sz
     qr_y = y
@@ -445,7 +505,7 @@ def generate_social_card(
             y += _lh(contact_val_f) + 4
         y += 10
 
-    if not has_any:
+    if not has_any and not is_adoption:
         draw.text((x0, y), L["scan_qr"], font=small_lbl_f, fill=GRAY_400)
 
     # QR code
@@ -458,7 +518,7 @@ def generate_social_card(
     img.paste(qr_img, (qr_x, qr_y))
 
     scan_f = _font("regular", 22)
-    scan_txt = L["scan_qr"]
+    scan_txt = L["qr_hint_adoption"] if is_adoption else L["scan_qr"]
     scan_w = _tw(scan_f, scan_txt)
     draw.text((qr_x + (qr_sz - scan_w) // 2, qr_y + qr_sz + 10),
               scan_txt, font=scan_f, fill=GRAY_400)

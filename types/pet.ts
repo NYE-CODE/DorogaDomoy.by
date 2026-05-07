@@ -7,6 +7,8 @@ export type PetColor = 'black' | 'white' | 'gray' | 'brown' | 'red' | 'mixed' | 
 export type Gender = 'male' | 'female' | 'unknown';
 
 export type ModerationStatus = 'pending' | 'approved' | 'rejected';
+export type PetScope = 'lost_found' | 'shelter_pet';
+export type AdoptionStatus = 'available' | 'reserved' | 'adopted' | 'on_treatment' | 'not_for_adoption';
 
 export interface Statistics {
   searching: number;
@@ -16,6 +18,7 @@ export interface Statistics {
 
 export interface Pet {
   id: string;
+  name?: string;
   photos: string[];
   animalType: AnimalType;
   breed?: string;
@@ -49,4 +52,12 @@ export interface Pet {
   rewardPoints?: number;
   rewardRecipientUserId?: string;
   rewardPointsAwardedAt?: Date;
+  petScope?: PetScope;
+  shelterId?: string;
+  adoptionStatus?: AdoptionStatus;
+  healthStatus?: 'disabled' | 'treatment' | 'good' | 'excellent';
+  coatType?: 'smooth' | 'semi' | 'fluffy';
+  isPublished?: boolean;
+  publishedByUserId?: string;
+  updatedByUserId?: string;
 }

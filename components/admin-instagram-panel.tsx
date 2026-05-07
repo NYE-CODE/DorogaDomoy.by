@@ -10,7 +10,9 @@ import {
 } from '../api/client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Switch } from './ui/switch';
+import { Pencil, Trash2, Send, RotateCw, XCircle, Plus, Save } from 'lucide-react';
 import { useI18n } from '../context/I18nContext';
+import { adm } from './admin-panel-chrome';
 
 type PublicationFilter = 'all' | 'pending' | 'processing' | 'published' | 'failed' | 'cancelled';
 
@@ -269,23 +271,23 @@ export function AdminInstagramPanel() {
 
   if (loading) {
     return (
-      <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+      <div className={`${adm.settingsCard} flex items-center justify-center py-16`}>
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary/30 border-t-primary" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">{ig.title}</h2>
-        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-          {ig.subtitle}
-        </p>
+    <div className={adm.page}>
+      <div className={adm.headerRow}>
+        <div className={adm.headerText}>
+          <h2 className={adm.title}>{ig.title}</h2>
+          <p className={adm.subtitle}>{ig.subtitle}</p>
+        </div>
       </div>
 
-      <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{ig.modeTitle}</h3>
+      <div className={adm.settingsCard}>
+        <h3 className={adm.settingsCardTitle}>{ig.modeTitle}</h3>
         <div className="mt-4 space-y-4">
           <label className="flex items-center justify-between gap-4">
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{ig.modeAutopublish}</span>
@@ -307,7 +309,8 @@ export function AdminInstagramPanel() {
           </label>
         </div>
         <button
-          className="mt-5 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 text-sm font-medium disabled:opacity-60"
+          type="button"
+          className={`${adm.primaryBtn} mt-5 disabled:opacity-60`}
           onClick={() => void saveInstagramSettings()}
           disabled={busy}
         >
@@ -316,7 +319,7 @@ export function AdminInstagramPanel() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+        <div className={adm.settingsCard}>
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{ig.accountsTitle}</h3>
             <button
@@ -362,15 +365,18 @@ export function AdminInstagramPanel() {
               />
             </label>
             <button
-              className="px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 text-sm font-medium disabled:opacity-60"
+              type="button"
+              title={editingAccountId ? ig.accountSaveButton : ig.accountAddButton}
+              className={`${adm.primaryBtn} disabled:opacity-60`}
               onClick={() => void handleAccountSubmit()}
               disabled={busy}
             >
-              {editingAccountId ? ig.accountSaveButton : ig.accountAddButton}
+              {editingAccountId ? <Save className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+              <span className="sr-only">{editingAccountId ? ig.accountSaveButton : ig.accountAddButton}</span>
             </button>
           </div>
 
-          <div className="mt-5 bg-card border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+          <div className={`mt-5 ${adm.tableShell}`}>
             {accounts.length === 0 ? (
               <div className="px-4 py-6 text-sm text-gray-500 dark:text-gray-400">{ig.accountsEmpty}</div>
             ) : (
@@ -388,11 +394,14 @@ export function AdminInstagramPanel() {
                         </div>
                       </div>
                       <button
-                        className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-xs hover:bg-accent dark:hover:bg-accent"
+                        type="button"
+                        title={ig.editButton}
+                        className="inline-flex items-center justify-center p-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-accent dark:hover:bg-accent"
                         onClick={() => beginEditAccount(row)}
                         disabled={busy}
                       >
-                        {ig.editButton}
+                        <Pencil className="w-4 h-4" />
+                        <span className="sr-only">{ig.editButton}</span>
                       </button>
                     </div>
                   </div>
@@ -402,7 +411,7 @@ export function AdminInstagramPanel() {
           </div>
         </div>
 
-        <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+        <div className={adm.settingsCard}>
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{ig.routesTitle}</h3>
           <div className="mt-4 grid gap-3">
             <input
@@ -428,15 +437,18 @@ export function AdminInstagramPanel() {
               <Switch checked={routeFallback} onCheckedChange={setRouteFallback} />
             </label>
             <button
-              className="px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 text-sm font-medium disabled:opacity-60"
+              type="button"
+              title={ig.routeAddButton}
+              className={`${adm.primaryBtn} disabled:opacity-60`}
               onClick={() => void handleCreateRoute()}
               disabled={busy}
             >
-              {ig.routeAddButton}
+              <Plus className="w-4 h-4" />
+              <span className="sr-only">{ig.routeAddButton}</span>
             </button>
           </div>
 
-          <div className="mt-5 bg-card border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+          <div className={`mt-5 ${adm.tableShell}`}>
             {routes.length === 0 ? (
               <div className="px-4 py-6 text-sm text-gray-500 dark:text-gray-400">{ig.routesEmpty}</div>
             ) : (
@@ -459,13 +471,16 @@ export function AdminInstagramPanel() {
                           />
                         </label>
                         <button
-                          className="px-2.5 py-1.5 border border-red-300 dark:border-red-900 rounded-lg text-xs text-red-600 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
+                          type="button"
+                          title={ig.deleteButton}
+                          className="inline-flex items-center justify-center p-2 rounded-lg border border-red-300 dark:border-red-900 text-red-600 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
                           onClick={() => {
                             void handleDeleteRoute(row.id);
                           }}
                           disabled={busy}
                         >
-                          {ig.deleteButton}
+                          <Trash2 className="w-4 h-4" />
+                          <span className="sr-only">{ig.deleteButton}</span>
                         </button>
                       </div>
                     </div>
@@ -477,7 +492,7 @@ export function AdminInstagramPanel() {
         </div>
       </div>
 
-      <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+      <div className={adm.settingsCard}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{ig.queueTitle}</h3>
           <div className="flex items-center gap-2">
@@ -529,33 +544,42 @@ export function AdminInstagramPanel() {
               {row.last_error ? (
                 <div className="mt-1 text-xs text-red-600 dark:text-red-300">{row.last_error}</div>
               ) : null}
-              <div className="mt-2 flex flex-wrap items-center gap-2">
+              <div className="mt-2 flex flex-wrap items-center gap-1">
                 <button
-                  className="px-2.5 py-1 border border-gray-300 dark:border-gray-600 rounded-lg text-xs hover:bg-accent dark:hover:bg-accent"
+                  type="button"
+                  title={ig.publishNowButton}
+                  className="inline-flex items-center justify-center p-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-accent dark:hover:bg-accent disabled:opacity-50"
                   onClick={() => {
                     void handleQueueAction(row.id, 'publishNow');
                   }}
                   disabled={busy || row.status === 'published' || row.status === 'cancelled'}
                 >
-                  {ig.publishNowButton}
+                  <Send className="w-4 h-4" />
+                  <span className="sr-only">{ig.publishNowButton}</span>
                 </button>
                 <button
-                  className="px-2.5 py-1 border border-amber-300 dark:border-amber-900 rounded-lg text-xs text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                  type="button"
+                  title={ig.retryButton}
+                  className="inline-flex items-center justify-center p-2 rounded-lg border border-amber-300 dark:border-amber-900 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20 disabled:opacity-50"
                   onClick={() => {
                     void handleQueueAction(row.id, 'retry');
                   }}
                   disabled={busy || row.status === 'published'}
                 >
-                  {ig.retryButton}
+                  <RotateCw className="w-4 h-4" />
+                  <span className="sr-only">{ig.retryButton}</span>
                 </button>
                 <button
-                  className="px-2.5 py-1 border border-red-300 dark:border-red-900 rounded-lg text-xs text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
+                  type="button"
+                  title={ig.cancelButton}
+                  className="inline-flex items-center justify-center p-2 rounded-lg border border-red-300 dark:border-red-900 text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50"
                   onClick={() => {
                     void handleQueueAction(row.id, 'cancel');
                   }}
                   disabled={busy || row.status === 'published' || row.status === 'cancelled'}
                 >
-                  {ig.cancelButton}
+                  <XCircle className="w-4 h-4" />
+                  <span className="sr-only">{ig.cancelButton}</span>
                 </button>
               </div>
             </div>

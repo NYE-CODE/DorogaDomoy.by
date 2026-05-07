@@ -1,0 +1,3 @@
+# SPA fallback (Netlify и аналоги): несуществующие пути отдают index.html.
+# Реальные файлы из dist (/assets/*, sw.js, …) обслуживаются как обычно.
+/*    /index.html   200

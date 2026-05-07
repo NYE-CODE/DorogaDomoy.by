@@ -19,6 +19,7 @@ const LandingPage = lazy(() => import('./pages/LandingPage.tsx'));
 const SearchPage = lazy(() => import('./pages/SearchPage.tsx'));
 const ProfilePage = lazy(() => import('./pages/ProfilePage.tsx'));
 const PetDetailPage = lazy(() => import('./pages/PetDetailPage.tsx'));
+const ShelterPetDetailPage = lazy(() => import('./pages/ShelterPetDetailPage.tsx'));
 const UserProfilePage = lazy(() => import('./pages/UserProfilePage.tsx'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage.tsx'));
 const AdminPage = lazy(() => import('./pages/AdminPage.tsx'));
@@ -34,6 +35,14 @@ const TermsPage = lazy(() => import('./pages/TermsPage.tsx'));
 const BlogListPage = lazy(() => import('./pages/BlogListPage.tsx'));
 const BlogPostPage = lazy(() => import('./pages/BlogPostPage.tsx'));
 const FavoritesPage = lazy(() => import('./pages/FavoritesPage.tsx'));
+const SheltersPage = lazy(() => import('./pages/SheltersPage.tsx'));
+const ShelterDetailPage = lazy(() => import('./pages/ShelterDetailPage.tsx'));
+const MySheltersPage = lazy(() => import('./pages/MySheltersPage.tsx'));
+const MyShelterFormPage = lazy(() => import('./pages/MyShelterFormPage.tsx'));
+const MyShelterPetsListPage = lazy(() => import('./pages/MyShelterPetsListPage.tsx'));
+const MyShelterPetFormPage = lazy(() => import('./pages/MyShelterPetFormPage.tsx'));
+const MyShelterPetCampaignPage = lazy(() => import('./pages/MyShelterPetCampaignPage.tsx'));
+const MyShelterTeamPage = lazy(() => import('./pages/MyShelterTeamPage.tsx'));
 
 function GlobalToaster() {
   const { theme } = useTheme();
@@ -52,6 +61,8 @@ function GlobalToaster() {
 }
 
 const YM_ID = 107705476;
+const PREV_ROUTE_KEY = 'dd_previous_path';
+const CURRENT_ROUTE_KEY = 'dd_current_path';
 
 function MetrikaTracker() {
   const location = useLocation();
@@ -60,6 +71,22 @@ function MetrikaTracker() {
       (window as any).ym(YM_ID, 'hit', location.pathname + location.search);
     }
   }, [location.pathname, location.search]);
+  return null;
+}
+
+function RouteHistoryTracker() {
+  const location = useLocation();
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const next = `${location.pathname}${location.search}`;
+    const current = window.sessionStorage.getItem(CURRENT_ROUTE_KEY);
+    if (current && current !== next) {
+      window.sessionStorage.setItem(PREV_ROUTE_KEY, current);
+    }
+    window.sessionStorage.setItem(CURRENT_ROUTE_KEY, next);
+  }, [location.pathname, location.search]);
+
   return null;
 }
 
@@ -96,6 +123,14 @@ function RequireAdmin({ children }: { children: React.ReactElement }) {
   return children;
 }
 
+function RequireShelter({ children }: { children: React.ReactElement }) {
+  const { user, isAuthenticated, isLoading } = useAuth();
+  if (isLoading) return <RouteLoader />;
+  if (!isAuthenticated) return <Navigate to="/search" replace />;
+  if (user?.role !== 'shelter') return <Navigate to="/profile" replace />;
+  return children;
+}
+
 function AuthModalGlobal() {
   const navigate = useNavigate();
   const { closeAuthModal } = useAuth();
@@ -118,6 +153,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <SeoRouteSync />
           <ScrollToTopOnRouteChange />
           <MetrikaTracker />
+          <RouteHistoryTracker />
           <GlobalToaster />
           <AuthProvider>
             <FavoritesProvider>
@@ -135,6 +171,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                   <Route path="/my-pets/:id" element={<RequireAuth><MyPetProfilePage /></RequireAuth>} />
                   <Route path="/my-pets" element={<RequireAuth><MyPetsPageRoute /></RequireAuth>} />
                   <Route path="/pet/:id" element={<PetDetailPage />} />
+                  <Route path="/shelter-pet/:id" element={<ShelterPetDetailPage />} />
                   <Route path="/user/:id" element={<UserProfilePage />} />
                   <Route path="/my-ads" element={<RequireAuth><MyAdsPageRoute /></RequireAuth>} />
                   <Route path="/create" element={<RequireAuth><CreateAdPage /></RequireAuth>} />
@@ -144,6 +181,97 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                   <Route path="/terms" element={<TermsPage />} />
                   <Route path="/blog" element={<BlogListPage />} />
                   <Route path="/blog/:slug" element={<BlogPostPage />} />
+                  <Route path="/shelters/:shelterId" element={<ShelterDetailPage />} />
+                  <Route path="/shelters" element={<SheltersPage />} />
+                  <Route path="/shelters/" element={<SheltersPage />} />
+                  <Route
+                    path="/my-shelters/:shelterId/pets"
+                    element={
+                      <RequireAuth>
+                        <RequireShelter>
+                          <MyShelterPetsListPage />
+                        </RequireShelter>
+                      </RequireAuth>
+                    }
+                  />
+                  <Route
+                    path="/my-shelters/:shelterId/pets/new"
+                    element={
+                      <RequireAuth>
+                        <RequireShelter>
+                          <MyShelterPetFormPage />
+                        </RequireShelter>
+                      </RequireAuth>
+                    }
+                  />
+                  <Route
+                    path="/my-shelters/:shelterId/pets/:petId/edit"
+                    element={
+                      <RequireAuth>
+                        <RequireShelter>
+                          <MyShelterPetFormPage />
+                        </RequireShelter>
+                      </RequireAuth>
+                    }
+                  />
+                  <Route
+                    path="/my-shelters/:shelterId/pets/:petId/campaign"
+                    element={
+                      <RequireAuth>
+                        <RequireShelter>
+                          <MyShelterPetCampaignPage />
+                        </RequireShelter>
+                      </RequireAuth>
+                    }
+                  />
+                  <Route
+                    path="/my-shelters/:shelterId/team"
+                    element={
+                      <RequireAuth>
+                        <MyShelterTeamPage />
+                      </RequireAuth>
+                    }
+                  />
+                  <Route
+                    path="/my-shelters/new"
+                    element={
+                      <RequireAuth>
+                        <RequireShelter>
+                          <MyShelterFormPage />
+                        </RequireShelter>
+                      </RequireAuth>
+                    }
+                  />
+                  <Route
+                    path="/my-shelters/edit/:shelterId"
+                    element={
+                      <RequireAuth>
+                        <RequireShelter>
+                          <MyShelterFormPage />
+                        </RequireShelter>
+                      </RequireAuth>
+                    }
+                  />
+                  <Route
+                    path="/my-shelters"
+                    element={
+                      <RequireAuth>
+                        <RequireShelter>
+                          <MySheltersPage />
+                        </RequireShelter>
+                      </RequireAuth>
+                    }
+                  />
+                  <Route
+                    path="/my-shelters/"
+                    element={
+                      <RequireAuth>
+                        <RequireShelter>
+                          <MySheltersPage />
+                        </RequireShelter>
+                      </RequireAuth>
+                    }
+                  />
                   <Route path="*" element={<NotFoundPage />} />
                 </Routes>
               </Suspense>

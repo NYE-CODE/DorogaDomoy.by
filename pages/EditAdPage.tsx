@@ -101,7 +101,7 @@ export default function EditAdPage() {
 
   return (
     <div className="landing-theme min-h-screen bg-gray-50 dark:bg-background flex flex-col">
-      <Header />
+      <Header showHomeModeToggle={false} />
 
       {/* Секция шага — как в CreateAdPage */}
       {stepInfo && (

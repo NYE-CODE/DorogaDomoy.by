@@ -247,6 +247,43 @@ interface PetResponse {
   reward_points?: number;
   reward_recipient_user_id?: string;
   reward_points_awarded_at?: string;
+  pet_scope?: 'lost_found' | 'shelter_pet';
+  shelter_id?: string;
+  adoption_status?: 'available' | 'reserved' | 'adopted' | 'on_treatment' | 'not_for_adoption';
+  is_published?: boolean;
+  published_by_user_id?: string;
+  updated_by_user_id?: string;
+  /** Кличка для питомца приюта (ShelterPetDetails), не дублирует author_name */
+  nickname?: string | null;
+}
+
+interface ShelterPetResponse {
+  id: string;
+  photos: string[];
+  nickname?: string;
+  animal_type: string;
+  breed?: string;
+  colors: string[];
+  gender: string;
+  approximate_age?: string;
+  description: string;
+  city: string;
+  location: { lat: number; lng: number };
+  published_at: string;
+  updated_at: string;
+  author_id: string;
+  author_name: string;
+  contacts: Record<string, string>;
+  health_status?: 'disabled' | 'treatment' | 'good' | 'excellent';
+  coat_type?: 'smooth' | 'semi' | 'fluffy';
+  is_archived: boolean;
+  archive_reason?: string;
+  pet_scope?: 'shelter_pet';
+  shelter_id: string;
+  adoption_status?: 'available' | 'reserved' | 'adopted' | 'on_treatment' | 'not_for_adoption';
+  is_published?: boolean;
+  published_by_user_id?: string;
+  updated_by_user_id?: string;
 }
 
 function resolvePhotoUrl(url: string): string {
@@ -254,9 +291,22 @@ function resolvePhotoUrl(url: string): string {
   return `${API_BASE}${url}`;
 }
 
+/**
+ * FastAPI often returns UTC datetimes without timezone suffix.
+ * For such values we explicitly treat them as UTC to avoid local-time shift.
+ */
+function parseApiDate(value: string): Date {
+  if (/[zZ]|[+\-]\d{2}:\d{2}$/.test(value)) {
+    return new Date(value);
+  }
+  return new Date(`${value}Z`);
+}
+
 function toPet(p: PetResponse): Pet {
+  const nick = p.nickname?.trim();
   return {
     id: p.id,
+    ...(nick ? { name: nick } : {}),
     photos: p.photos.map(resolvePhotoUrl),
     animalType: p.animal_type as Pet['animalType'],
     breed: p.breed,
@@ -267,24 +317,67 @@ function toPet(p: PetResponse): Pet {
     description: p.description,
     city: p.city,
     location: p.location,
-    publishedAt: new Date(p.published_at),
-    updatedAt: new Date(p.updated_at),
+    publishedAt: parseApiDate(p.published_at),
+    updatedAt: parseApiDate(p.updated_at),
     authorId: p.author_id,
     authorName: p.author_name,
     contacts: p.contacts,
+    healthStatus: p.health_status,
+    coatType: p.coat_type,
     isArchived: p.is_archived,
     archiveReason: p.archive_reason,
     moderationStatus: p.moderation_status as Pet['moderationStatus'],
     moderationReason: p.moderation_reason,
-    moderatedAt: p.moderated_at ? new Date(p.moderated_at) : undefined,
+    moderatedAt: p.moderated_at ? parseApiDate(p.moderated_at) : undefined,
     moderatedBy: p.moderated_by,
     rewardMode: (p.reward_mode as Pet['rewardMode']) || 'points',
     rewardAmountByn: p.reward_amount_byn,
     rewardPoints: p.reward_points ?? 50,
     rewardRecipientUserId: p.reward_recipient_user_id,
     rewardPointsAwardedAt: p.reward_points_awarded_at
-      ? new Date(p.reward_points_awarded_at)
+      ? parseApiDate(p.reward_points_awarded_at)
       : undefined,
+    petScope: p.pet_scope,
+    shelterId: p.shelter_id,
+    adoptionStatus: p.adoption_status as Pet['adoptionStatus'],
+    isPublished: p.is_published,
+    publishedByUserId: p.published_by_user_id,
+    updatedByUserId: p.updated_by_user_id,
+  };
+}
+
+function toPetFromShelter(p: ShelterPetResponse): Pet {
+  return {
+    id: p.id,
+    name: p.nickname,
+    photos: p.photos.map(resolvePhotoUrl),
+    animalType: p.animal_type as Pet['animalType'],
+    breed: p.breed,
+    colors: p.colors as Pet['colors'],
+    gender: p.gender as Pet['gender'],
+    approximateAge: p.approximate_age,
+    status: 'searching',
+    description: p.description,
+    city: p.city,
+    location: p.location,
+    publishedAt: parseApiDate(p.published_at),
+    updatedAt: parseApiDate(p.updated_at),
+    authorId: p.author_id,
+    authorName: p.author_name,
+    contacts: p.contacts,
+    healthStatus: p.health_status,
+    coatType: p.coat_type,
+    isArchived: p.is_archived,
+    archiveReason: p.archive_reason,
+    moderationStatus: 'approved',
+    rewardMode: 'points',
+    rewardPoints: 50,
+    petScope: 'shelter_pet',
+    shelterId: p.shelter_id,
+    adoptionStatus: p.adoption_status as Pet['adoptionStatus'],
+    isPublished: p.is_published,
+    publishedByUserId: p.published_by_user_id,
+    updatedByUserId: p.updated_by_user_id,
   };
 }
 
@@ -304,7 +397,37 @@ export interface PetCreateInput {
   rewardAmountByn?: number;
   /** Имя для отображения в объявлении (при «другие контакты») */
   author_name?: string;
+  petScope?: 'lost_found' | 'shelter_pet';
+  shelterId?: string;
+  adoptionStatus?: 'available' | 'reserved' | 'adopted' | 'on_treatment' | 'not_for_adoption';
+  isPublished?: boolean;
 }
+
+export interface ShelterPetInput {
+  photos: string[];
+  nickname?: string;
+  animalType: string;
+  breed?: string;
+  colors: string[];
+  gender: string;
+  approximateAge?: string;
+  description: string;
+  city: string;
+  location: { lat: number; lng: number };
+  contacts: Record<string, string>;
+  healthStatus?: 'disabled' | 'treatment' | 'good' | 'excellent';
+  coatType?: 'smooth' | 'semi' | 'fluffy';
+  /** Статус пристройства питомца в приюте */
+  adoptionStatus?: 'available' | 'reserved' | 'adopted' | 'on_treatment' | 'not_for_adoption';
+  isPublished?: boolean;
+  /** Имя автора/менеджера приюта в карточке */
+  author_name?: string;
+}
+
+export type ShelterPetUpdateInput = Partial<ShelterPetInput> & {
+  isArchived?: boolean;
+  archiveReason?: string;
+};
 
 export interface StatisticsResponse {
   searching: number;
@@ -364,6 +487,10 @@ export const petsApi = {
       contacts: data.contacts,
       reward_mode: data.rewardMode ?? 'points',
       reward_amount_byn: data.rewardAmountByn,
+      pet_scope: data.petScope ?? 'lost_found',
+      shelter_id: data.shelterId,
+      adoption_status: data.adoptionStatus,
+      is_published: data.isPublished ?? true,
     };
     if (data.author_name != null && data.author_name.trim() !== '') {
       body.author_name = data.author_name.trim();
@@ -380,6 +507,10 @@ export const petsApi = {
       moderationReason?: string;
       rewardPoints?: number;
       rewardHelperCode?: string;
+      petScope?: 'lost_found' | 'shelter_pet';
+      shelterId?: string;
+      adoptionStatus?: 'available' | 'reserved' | 'adopted' | 'on_treatment' | 'not_for_adoption';
+      isPublished?: boolean;
     }
   ) => {
     const body: Record<string, unknown> = {};
@@ -403,6 +534,10 @@ export const petsApi = {
     if (data.rewardAmountByn != null) body.reward_amount_byn = data.rewardAmountByn;
     if (data.rewardPoints != null) body.reward_points = data.rewardPoints;
     if (data.rewardHelperCode != null) body.reward_helper_code = data.rewardHelperCode;
+    if (data.petScope != null) body.pet_scope = data.petScope;
+    if (data.shelterId != null) body.shelter_id = data.shelterId;
+    if (data.adoptionStatus != null) body.adoption_status = data.adoptionStatus;
+    if (data.isPublished != null) body.is_published = data.isPublished;
     return api<PetResponse>(`/pets/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(body),
@@ -511,10 +646,10 @@ export const reportsApi = {
         reporterName: r.reporter_name,
         reason: r.reason as ReportReason,
         description: r.description,
-        createdAt: new Date(r.created_at),
+        createdAt: parseApiDate(r.created_at),
         status: r.status as Report['status'],
         reviewedBy: r.reviewed_by,
-        reviewedAt: r.reviewed_at ? new Date(r.reviewed_at) : undefined,
+        reviewedAt: r.reviewed_at ? parseApiDate(r.reviewed_at) : undefined,
         resolution: r.resolution,
       }))
     );
@@ -531,10 +666,10 @@ export const reportsApi = {
       reporterName: r.reporter_name,
       reason: r.reason as ReportReason,
       description: r.description,
-      createdAt: new Date(r.created_at),
+      createdAt: parseApiDate(r.created_at),
       status: r.status as Report['status'],
       reviewedBy: r.reviewed_by,
-      reviewedAt: r.reviewed_at ? new Date(r.reviewed_at) : undefined,
+      reviewedAt: r.reviewed_at ? parseApiDate(r.reviewed_at) : undefined,
       resolution: r.resolution,
     })),
 
@@ -1190,5 +1325,282 @@ export const instagramApi = {
   publishNow: (publicationId: string) =>
     api<InstagramPublicationResponse>(`/instagram/publications/${publicationId}/publish-now`, {
       method: 'POST',
+    }),
+};
+
+/** Приюты / передержки (владелец — пользователь с ролью shelter; модерация админом). */
+export type ShelterKind = 'shelter' | 'foster' | 'vet' | 'other';
+/** Кому оказывается помощь: собаки, кошки или оба вида. */
+export type ShelterAnimalFocus = 'dogs' | 'cats' | 'mixed';
+export type ShelterModerationStatus = 'draft' | 'pending' | 'approved' | 'rejected' | 'hidden';
+
+export interface ShelterContacts {
+  phone?: string;
+  telegram?: string;
+  website?: string;
+  email?: string;
+}
+
+export interface ShelterResponse {
+  id: string;
+  name: string;
+  kind: ShelterKind;
+  animal_focus: ShelterAnimalFocus;
+  description?: string | null;
+  city: string;
+  address?: string | null;
+  location_lat: number;
+  location_lng: number;
+  contacts: ShelterContacts;
+  logo_url?: string | null;
+  /** Широкое изображение-шапка публичной страницы приюта */
+  cover_url?: string | null;
+  moderation_status: ShelterModerationStatus;
+  moderation_reason?: string | null;
+  moderated_at?: string | null;
+  moderated_by?: string | null;
+  owner_user_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type ShelterMemberRole = 'owner' | 'manager' | 'volunteer';
+export type ShelterMemberStatus = 'invited' | 'active' | 'removed';
+
+export interface ShelterMemberResponse {
+  id: string;
+  shelter_id: string;
+  user_id: string;
+  role: ShelterMemberRole;
+  status: ShelterMemberStatus;
+  invited_by_user_id?: string | null;
+  joined_at?: string | null;
+  removed_at?: string | null;
+  created_at: string;
+  updated_at: string;
+  user_name?: string | null;
+  user_email?: string | null;
+  user_avatar?: string | null;
+}
+
+export interface ShelterSubscriptionStatus {
+  subscriber_count: number;
+  subscribed: boolean;
+}
+
+export const sheltersApi = {
+  list: (params?: { city?: string }) => {
+    const q = new URLSearchParams();
+    if (params?.city?.trim()) q.set('city', params.city.trim());
+    const suffix = q.toString() ? `?${q}` : '';
+    return api<ShelterResponse[]>(`/shelters${suffix}`);
+  },
+  get: (id: string) => api<ShelterResponse>(`/shelters/${encodeURIComponent(id)}`),
+  subscriptionStatus: (id: string) =>
+    api<ShelterSubscriptionStatus>(
+      `/shelters/${encodeURIComponent(id)}/subscription-status`,
+    ),
+  subscribe: (id: string) =>
+    api<{ ok: boolean }>(`/shelters/${encodeURIComponent(id)}/subscribe`, { method: 'POST' }),
+  unsubscribe: (id: string) =>
+    api<{ ok: boolean }>(`/shelters/${encodeURIComponent(id)}/subscribe`, { method: 'DELETE' }),
+  mine: () => api<ShelterResponse[]>('/shelters/me'),
+  adminPending: () => api<ShelterResponse[]>('/shelters/admin/pending'),
+  adminListAll: () => api<ShelterResponse[]>('/shelters/admin/all'),
+  create: (data: {
+    name: string;
+    kind?: ShelterKind;
+    animal_focus?: ShelterAnimalFocus;
+    description?: string;
+    city: string;
+    address?: string;
+    location_lat: number;
+    location_lng: number;
+    contacts?: ShelterContacts;
+    logo_url?: string;
+    cover_url?: string;
+    owner_user_id?: string;
+  }) =>
+    api<ShelterResponse>('/shelters', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  update: (id: string, data: Partial<{
+    name: string;
+    kind: ShelterKind;
+    animal_focus: ShelterAnimalFocus;
+    description: string | null;
+    city: string;
+    address: string | null;
+    location_lat: number;
+    location_lng: number;
+    contacts: ShelterContacts;
+    logo_url: string | null;
+    cover_url: string | null;
+  }>) =>
+    api<ShelterResponse>(`/shelters/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+  submit: (id: string) =>
+    api<ShelterResponse>(`/shelters/${encodeURIComponent(id)}/submit`, { method: 'POST' }),
+  moderate: (id: string, body: { action: 'approve' | 'reject' | 'hide'; reason?: string }) =>
+    api<ShelterResponse>(`/shelters/${encodeURIComponent(id)}/moderate`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  members: (id: string) =>
+    api<ShelterMemberResponse[]>(`/shelters/${encodeURIComponent(id)}/members`),
+  inviteMember: (
+    id: string,
+    body: { role: 'manager' | 'volunteer'; user_id?: string; email?: string },
+  ) =>
+    api<ShelterMemberResponse>(`/shelters/${encodeURIComponent(id)}/members/invite`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  acceptMemberInvite: (id: string, membershipId: string) =>
+    api<ShelterMemberResponse>(
+      `/shelters/${encodeURIComponent(id)}/members/${encodeURIComponent(membershipId)}/accept`,
+      { method: 'POST' },
+    ),
+  updateMember: (
+    id: string,
+    membershipId: string,
+    body: { role?: ShelterMemberRole; status?: ShelterMemberStatus },
+  ) =>
+    api<ShelterMemberResponse>(
+      `/shelters/${encodeURIComponent(id)}/members/${encodeURIComponent(membershipId)}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(body),
+      },
+    ),
+  removeMember: (id: string, membershipId: string) =>
+    api<ShelterMemberResponse>(
+      `/shelters/${encodeURIComponent(id)}/members/${encodeURIComponent(membershipId)}`,
+      { method: 'DELETE' },
+    ),
+  listPets: (id: string, params?: { is_archived?: boolean; adoption_status?: string; limit?: number; offset?: number }) => {
+    const q = new URLSearchParams();
+    if (params) Object.entries(params).forEach(([k, v]) => v != null && q.set(k, String(v)));
+    const suffix = q.toString() ? `?${q}` : '';
+    return api<ShelterPetResponse[]>(`/shelters/${encodeURIComponent(id)}/pets${suffix}`).then((arr) => arr.map(toPetFromShelter));
+  },
+  createPet: (id: string, data: ShelterPetInput) => {
+    const body: Record<string, unknown> = {
+      photos: data.photos,
+      nickname: data.nickname,
+      animal_type: data.animalType,
+      breed: data.breed,
+      colors: data.colors,
+      gender: data.gender,
+      approximate_age: data.approximateAge,
+      description: data.description,
+      city: data.city,
+      location: data.location,
+      contacts: data.contacts,
+      health_status: data.healthStatus,
+      coat_type: data.coatType,
+      adoption_status: data.adoptionStatus,
+      is_published: data.isPublished ?? true,
+    };
+    if (data.author_name != null && data.author_name.trim() !== '') body.author_name = data.author_name.trim();
+    return api<ShelterPetResponse>(`/shelters/${encodeURIComponent(id)}/pets`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }).then(toPetFromShelter);
+  },
+};
+
+export const shelterPetsApi = {
+  update: (petId: string, data: ShelterPetUpdateInput) => {
+    const body: Record<string, unknown> = {};
+    if (data.photos != null) body.photos = data.photos;
+    if (data.nickname != null) body.nickname = data.nickname;
+    if (data.animalType != null) body.animal_type = data.animalType;
+    if (data.breed != null) body.breed = data.breed;
+    if (data.colors != null) body.colors = data.colors;
+    if (data.gender != null) body.gender = data.gender;
+    if (data.approximateAge != null) body.approximate_age = data.approximateAge;
+    if (data.description != null) body.description = data.description;
+    if (data.city != null) body.city = data.city;
+    if (data.location != null) body.location = data.location;
+    if (data.contacts != null) body.contacts = data.contacts;
+    if (data.healthStatus != null) body.health_status = data.healthStatus;
+    if (data.coatType != null) body.coat_type = data.coatType;
+    if (data.isArchived != null) body.is_archived = data.isArchived;
+    if (data.archiveReason != null) body.archive_reason = data.archiveReason;
+    if (data.adoptionStatus != null) body.adoption_status = data.adoptionStatus;
+    if (data.isPublished != null) body.is_published = data.isPublished;
+    return api<ShelterPetResponse>(`/shelter-pets/${encodeURIComponent(petId)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    }).then(toPetFromShelter);
+  },
+  archive: (petId: string, reason?: string) =>
+    api<ShelterPetResponse>(`/shelter-pets/${encodeURIComponent(petId)}/archive`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    }).then(toPetFromShelter),
+  publish: (petId: string) =>
+    api<ShelterPetResponse>(`/shelter-pets/${encodeURIComponent(petId)}/publish`, {
+      method: 'POST',
+    }).then(toPetFromShelter),
+};
+
+export type ShelterCampaignStatus = 'draft' | 'active' | 'completed' | 'cancelled';
+
+export interface ShelterCampaignResponse {
+  id: string;
+  pet_id: string;
+  shelter_id: string;
+  title: string;
+  description?: string | null;
+  help_details?: string | null;
+  goal_amount: number;
+  collected_amount: number;
+  status: ShelterCampaignStatus;
+  starts_at?: string | null;
+  ends_at?: string | null;
+  closed_at?: string | null;
+  close_reason?: string | null;
+  created_by_user_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export const campaignsApi = {
+  listByPet: (petId: string) =>
+    api<ShelterCampaignResponse[]>(`/shelter-pets/${encodeURIComponent(petId)}/campaigns`),
+  createForPet: (
+    petId: string,
+    data: { title: string; description?: string; help_details: string; goal_amount: number; ends_at?: string | null },
+  ) =>
+    api<ShelterCampaignResponse>(`/shelter-pets/${encodeURIComponent(petId)}/campaigns`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  update: (
+    campaignId: string,
+    data: Partial<{ title: string; description: string | null; help_details: string; goal_amount: number; ends_at: string | null }>,
+  ) =>
+    api<ShelterCampaignResponse>(`/shelter-campaigns/${encodeURIComponent(campaignId)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+  activate: (campaignId: string) =>
+    api<ShelterCampaignResponse>(`/shelter-campaigns/${encodeURIComponent(campaignId)}/activate`, {
+      method: 'POST',
+    }),
+  close: (campaignId: string, data: { action: 'completed' | 'cancelled'; collected_amount: number; close_reason: string }) =>
+    api<ShelterCampaignResponse>(`/shelter-campaigns/${encodeURIComponent(campaignId)}/close`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updateCollected: (campaignId: string, collectedAmount: number) =>
+    api<ShelterCampaignResponse>(`/shelter-campaigns/${encodeURIComponent(campaignId)}/collected`, {
+      method: 'POST',
+      body: JSON.stringify({ collected_amount: collectedAmount }),
     }),
 };

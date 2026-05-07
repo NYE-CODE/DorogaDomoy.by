@@ -11,7 +11,6 @@ import {
   MessageCircle,
   Mail,
   AlertTriangle,
-  ChevronLeft,
 } from 'lucide-react';
 import { useI18n } from '../context/I18nContext';
 import { profilePetsApi, type ProfilePetResponse } from '../api/client';
@@ -31,6 +30,7 @@ import { Footer } from '../components/layout/Footer';
 import { PageLoader } from '../components/ui/page-loader';
 import { EmptyState } from '../components/ui/empty-state';
 import { Button } from '../components/ui/button';
+import { BackQuickMenu } from '../components/navigation/BackQuickMenu';
 
 export default function PublicPetProfilePage() {
   const { id } = useParams<{ id: string }>();
@@ -171,13 +171,7 @@ export default function PublicPetProfilePage() {
       <div className="flex-1 py-6 sm:py-8">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-6">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-1 text-gray-600 dark:text-gray-400 hover:text-[#FF9800] transition-colors"
-          >
-            <ChevronLeft size={20} />
-            {pp.backHome}
-          </Link>
+          <BackQuickMenu />
         </div>
         <div className="grid lg:grid-cols-3 gap-6 lg:gap-8">
             <div className="lg:col-span-2 space-y-6">

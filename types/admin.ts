@@ -40,4 +40,26 @@ export interface AdminStats {
   petsLast7Days: number;
   petsLast30Days: number;
   successRate: number; // percentage of pets found
+  /** Объявления на модерации (не в архиве) */
+  pendingModerationPets: number;
+  /** Активные объявления в статусе «ищут» */
+  searchingActivePets: number;
+  reportsTotal: number;
+  reportsDismissed: number;
+  reportsReviewed: number;
+  usersVolunteers: number;
+  usersShelters: number;
+  usersAdmins: number;
+  profilePetsTotal: number;
+  profilePetsLast30Days: number;
+  blogPublished: number;
+  blogDrafts: number;
+  blogTotal: number;
+  mediaCount: number;
+  partnersCount: number;
+  faqCount: number;
+  sheltersPendingModeration: number;
+  pointsTransactionsCount: number;
+  pointsPositiveSum: number;
+  petsWithRewardGranted: number;
 }

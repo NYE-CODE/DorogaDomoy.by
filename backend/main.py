@@ -19,7 +19,7 @@ from database import init_db, check_db_writable
 import models  # noqa: F401 — регистрация ORM до init_db()
 from instagram_worker import process_single_publication
 from rate_limit import limiter
-from routers import auth, pets, users, reports, settings, telegram, notifications, sightings, media, partners, feature_flags, profile_pets, blog, faq, social_card, instagram_publish, rewards, favorites
+from routers import auth, pets, users, reports, settings, telegram, notifications, sightings, media, partners, feature_flags, profile_pets, blog, faq, social_card, instagram_publish, rewards, favorites, shelters, shelter_pets, shelter_campaigns, shelter_subscriptions
 from telegram_bot import BOT_TOKEN, process_telegram_update
 
 logging.basicConfig(
@@ -137,7 +137,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="DorogaDomoy.by API",
-    description="API платформы поиска пропавших питомцев",
+    description="API экосистемы помощи животным: поиск, приюты и поддержка",
     version="1.0.0",
     lifespan=lifespan,
 )
@@ -191,6 +191,10 @@ api_v1.include_router(social_card.router)
 api_v1.include_router(instagram_publish.router)
 api_v1.include_router(rewards.router)
 api_v1.include_router(favorites.router)
+api_v1.include_router(shelters.router)
+api_v1.include_router(shelter_pets.router)
+api_v1.include_router(shelter_campaigns.router)
+api_v1.include_router(shelter_subscriptions.router)
 app.include_router(api_v1)
 
 

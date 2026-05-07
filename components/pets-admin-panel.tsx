@@ -1,9 +1,23 @@
 import { useState } from 'react';
-import { ChevronLeft, ChevronRight, Home, Heart, Building2, Archive, ExternalLink, X } from 'lucide-react';
+import {
+  Home,
+  Heart,
+  Building2,
+  Archive,
+  ExternalLink,
+  X,
+  Trash2,
+  ArrowUpDown,
+  ChevronUp,
+  ChevronDown,
+} from 'lucide-react';
 import { Pet } from '../types/pet';
 import { formatDate, petStatusSoftPillClass, statusLabels } from '../utils/pet-helpers';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { User } from '../context/AuthContext';
+import { useI18n } from '../context/I18nContext';
+import { adm } from './admin-panel-chrome';
+import { AdminTablePagination } from './admin-table-pagination';
 
 interface PetsAdminPanelProps {
   pets: Pet[];
@@ -30,7 +44,23 @@ function getRewardLabel(pet: Pet): string {
   return `${pet.rewardPoints ?? 0} очков`;
 }
 
+function comparePetsByReward(a: Pet, b: Pet, dir: 1 | -1): number {
+  const ra = a.status === 'searching' ? 1 : 0;
+  const rb = b.status === 'searching' ? 1 : 0;
+  if (ra !== rb) return dir * (ra - rb);
+  if (ra === 0) return 0;
+  const modeA = a.rewardMode ?? 'points';
+  const modeB = b.rewardMode ?? 'points';
+  if (modeA !== modeB) return dir * modeA.localeCompare(modeB);
+  const va = modeA === 'money' ? (a.rewardAmountByn ?? 0) : (a.rewardPoints ?? 0);
+  const vb = modeB === 'money' ? (b.rewardAmountByn ?? 0) : (b.rewardPoints ?? 0);
+  return dir * (va - vb);
+}
+
 export function PetsAdminPanel({ pets, users = [], onDeletePet, onOpenPet }: PetsAdminPanelProps) {
+  const { t } = useI18n();
+  const ap = t.adminPanel;
+  const pg = ap.pagination;
   type PetsFilterType = 'all' | 'active' | 'archived';
   const [petsFilter, setPetsFilter] = useState<PetsFilterType>('all');
   const [petsAnimalType, setPetsAnimalType] = useState<string>('all');
@@ -39,7 +69,12 @@ export function PetsAdminPanel({ pets, users = [], onDeletePet, onOpenPet }: Pet
   const [petsDateFilter, setPetsDateFilter] = useState<string>('all');
   const [petsPage, setPetsPage] = useState(1);
   const [selectedPet, setSelectedPet] = useState<Pet | null>(null);
+  const [petsSortBy, setPetsSortBy] = useState<'date' | 'reward' | null>(null);
+  const [petsSortDir, setPetsSortDir] = useState<'asc' | 'desc'>('desc');
   const petsPerPage = 15;
+
+  const petsSortThBtn =
+    'w-full px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400 inline-flex items-center gap-1 hover:bg-muted/50 dark:hover:bg-muted/30 transition-colors';
 
   const filteredPets = pets.filter(pet => {
     if (petsFilter === 'active') return !pet.isArchived;
@@ -66,18 +101,55 @@ export function PetsAdminPanel({ pets, users = [], onDeletePet, onOpenPet }: Pet
     return true;
   });
 
-  const totalPages = Math.ceil(filteredPets.length / petsPerPage);
-  const paginatedPets = filteredPets.slice((petsPage - 1) * petsPerPage, petsPage * petsPerPage);
+  const sortedPets = [...filteredPets];
+  if (petsSortBy === 'date') {
+    sortedPets.sort((a, b) => {
+      const ta = a.publishedAt.getTime();
+      const tb = b.publishedAt.getTime();
+      return petsSortDir === 'asc' ? ta - tb : tb - ta;
+    });
+  } else if (petsSortBy === 'reward') {
+    const dir = petsSortDir === 'asc' ? 1 : -1;
+    sortedPets.sort((a, b) => comparePetsByReward(a, b, dir));
+  }
+
+  const totalPages = Math.ceil(sortedPets.length / petsPerPage);
+  const paginatedPets = sortedPets.slice((petsPage - 1) * petsPerPage, petsPage * petsPerPage);
+
+  const togglePetsSort = (column: 'date' | 'reward') => {
+    setPetsPage(1);
+    if (petsSortBy === column) {
+      setPetsSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setPetsSortBy(column);
+      setPetsSortDir('desc');
+    }
+  };
+
+  const petsSortIcon = (column: 'date' | 'reward') => {
+    if (petsSortBy !== column) {
+      return <ArrowUpDown className="w-3.5 h-3.5 shrink-0 opacity-45" aria-hidden />;
+    }
+    return petsSortDir === 'asc' ? (
+      <ChevronUp className="w-3.5 h-3.5 shrink-0" aria-hidden />
+    ) : (
+      <ChevronDown className="w-3.5 h-3.5 shrink-0" aria-hidden />
+    );
+  };
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Управление объявлениями</h2>
-      
+    <div className={adm.page}>
+      <div className={adm.headerRow}>
+        <div className={adm.headerText}>
+          <h2 className={adm.title}>Управление объявлениями</h2>
+        </div>
+      </div>
+
       {/* Filters Panel */}
-      <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+      <div className={adm.filtersCard}>
         <div className="flex flex-wrap gap-4 items-center">
           <div className="w-full sm:w-auto">
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Статус архивации</label>
+            <label className={adm.labelFilter}>Статус архивации</label>
             <div className="flex gap-2 overflow-x-auto scrollbar-hide">
               <button
                 onClick={() => {
@@ -122,7 +194,7 @@ export function PetsAdminPanel({ pets, users = [], onDeletePet, onOpenPet }: Pet
           </div>
 
           <div className="flex-1 min-w-[200px]">
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Тип животного</label>
+            <label className={adm.labelFilter}>Тип животного</label>
             <Select value={petsAnimalType} onValueChange={(v) => { setPetsAnimalType(v); setPetsPage(1); }}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Все животные" />
@@ -137,7 +209,7 @@ export function PetsAdminPanel({ pets, users = [], onDeletePet, onOpenPet }: Pet
           </div>
 
           <div className="flex-1 min-w-[200px]">
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Статус объявления</label>
+            <label className={adm.labelFilter}>Статус объявления</label>
             <Select value={petsStatus} onValueChange={(v) => { setPetsStatus(v); setPetsPage(1); }}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Все статусы" />
@@ -151,7 +223,7 @@ export function PetsAdminPanel({ pets, users = [], onDeletePet, onOpenPet }: Pet
           </div>
 
           <div className="flex-1 min-w-[200px]">
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Модерация</label>
+            <label className={adm.labelFilter}>Модерация</label>
             <Select value={petsModerationFilter} onValueChange={(v) => { setPetsModerationFilter(v); setPetsPage(1); }}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Все" />
@@ -166,7 +238,7 @@ export function PetsAdminPanel({ pets, users = [], onDeletePet, onOpenPet }: Pet
           </div>
 
           <div className="flex-1 min-w-[200px]">
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Дата публикации</label>
+            <label className={adm.labelFilter}>Дата публикации</label>
             <Select value={petsDateFilter} onValueChange={(v) => { setPetsDateFilter(v); setPetsPage(1); }}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Все даты" />
@@ -180,57 +252,78 @@ export function PetsAdminPanel({ pets, users = [], onDeletePet, onOpenPet }: Pet
           </div>
 
           <div className="text-sm text-gray-600 dark:text-gray-400 ml-auto">
-            Найдено: {filteredPets.length} объявлений
+            Найдено: {sortedPets.length} объявлений
           </div>
         </div>
       </div>
 
-      <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg overflow-x-auto">
-        <table className="w-full min-w-[700px]">
-          <thead className="bg-muted dark:bg-accent border-b border-gray-200 dark:border-gray-600">
+      <div className={adm.tableShell}>
+        <div className={adm.tableWrap}>
+        <table className={`${adm.table} min-w-[700px]`}>
+          <thead className={adm.thead}>
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Фото</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Информация</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Автор</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Статус</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Модерация</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Награда</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Очки начислены</th>
+              <th className={adm.th}>Фото</th>
+              <th className={adm.th}>Информация</th>
+              <th className={adm.th}>Автор</th>
+              <th className={adm.th}>Статус</th>
+              <th className={adm.th}>Модерация</th>
+              <th className={`${adm.th} p-0`}>
+                <button
+                  type="button"
+                  className={petsSortThBtn}
+                  title="Сортировать по награде (сначала объявления «ищут дом»; деньги и очки отдельно)"
+                  onClick={() => togglePetsSort('reward')}
+                >
+                  Награда
+                  {petsSortIcon('reward')}
+                </button>
+              </th>
+              <th className={adm.th}>Очки начислены</th>
               {petsFilter === 'archived' && (
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Причина</th>
+                <th className={adm.th}>Причина</th>
               )}
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Дата</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Действия</th>
+              <th className={`${adm.th} p-0`}>
+                <button
+                  type="button"
+                  className={petsSortThBtn}
+                  title="Сортировать по дате публикации"
+                  onClick={() => togglePetsSort('date')}
+                >
+                  Дата
+                  {petsSortIcon('date')}
+                </button>
+              </th>
+              <th className={adm.th}>Действия</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+          <tbody className={adm.tbody}>
             {paginatedPets.length === 0 ? (
               <tr>
-                <td colSpan={petsFilter === 'archived' ? 10 : 9} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                <td colSpan={petsFilter === 'archived' ? 10 : 9} className={adm.tdEmpty}>
                   Объявления не найдены
                 </td>
               </tr>
             ) : (
               paginatedPets.map(pet => (
-                <tr key={pet.id} className="hover:bg-accent dark:hover:bg-accent cursor-pointer" onClick={() => setSelectedPet(pet)}>
-                  <td className="px-6 py-4">
+                <tr key={pet.id} className={`${adm.tr} cursor-pointer`} onClick={() => setSelectedPet(pet)}>
+                  <td className="px-4 py-3">
                     <img src={pet.photos[0]} alt="" className="w-16 h-16 object-cover rounded-lg" />
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 py-3">
                     <p className="font-medium text-gray-900 dark:text-white">{pet.breed || 'Без породы'}</p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">{pet.city}</p>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 py-3">
                     <p className="text-sm text-gray-900 dark:text-white">{pet.authorName}</p>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 py-3">
                     <span
                       className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${petStatusSoftPillClass[pet.status]}`}
                     >
                       {statusLabels[pet.status]}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 py-3">
                     <span className={`inline-flex px-2 py-1 text-xs rounded-full ${
                       pet.moderationStatus === 'approved'
                         ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
@@ -265,7 +358,7 @@ export function PetsAdminPanel({ pets, users = [], onDeletePet, onOpenPet }: Pet
                     const style = getArchiveReasonStyle(pet.archiveReason);
                     const Icon = 'icon' in style ? style.icon : null;
                     return (
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-3">
                         {pet.archiveReason ? (
                           <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full ${style.className}`}>
                             {Icon && <Icon className="w-3 h-3" />}
@@ -277,25 +370,34 @@ export function PetsAdminPanel({ pets, users = [], onDeletePet, onOpenPet }: Pet
                       </td>
                     );
                   })()}
-                  <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
+                  <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                     {formatDate(pet.publishedAt)}
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-1">
                       <button
+                        type="button"
+                        title="Открыть объявление"
                         onClick={(e) => {
                           e.stopPropagation();
                           onOpenPet?.(pet.id);
                         }}
-                        className="text-primary hover:text-primary/80 text-sm inline-flex items-center gap-1"
+                        className="p-2 rounded-lg text-primary hover:bg-primary/10 dark:hover:bg-primary/20"
                       >
-                        Открыть <ExternalLink className="w-3 h-3" />
+                        <ExternalLink className="w-4 h-4" />
+                        <span className="sr-only">Открыть объявление</span>
                       </button>
                       <button
-                        onClick={(e) => { e.stopPropagation(); onDeletePet(pet.id); }}
-                        className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 text-sm"
+                        type="button"
+                        title="Удалить объявление"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDeletePet(pet.id);
+                        }}
+                        className="p-2 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
                       >
-                        Удалить
+                        <Trash2 className="w-4 h-4" />
+                        <span className="sr-only">Удалить объявление</span>
                       </button>
                     </div>
                   </td>
@@ -304,6 +406,7 @@ export function PetsAdminPanel({ pets, users = [], onDeletePet, onOpenPet }: Pet
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {selectedPet && (
@@ -366,10 +469,12 @@ export function PetsAdminPanel({ pets, users = [], onDeletePet, onOpenPet }: Pet
             <div className="flex justify-end gap-3 px-6 py-4 border-t dark:border-gray-700">
               <button
                 type="button"
+                title="Открыть объявление на сайте"
                 onClick={() => onOpenPet?.(selectedPet.id)}
-                className="px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 text-sm inline-flex items-center gap-2"
+                className="p-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center justify-center"
               >
-                Перейти к объявлению <ExternalLink className="w-4 h-4" />
+                <ExternalLink className="w-5 h-5" />
+                <span className="sr-only">Открыть объявление на сайте</span>
               </button>
             </div>
           </div>
@@ -378,32 +483,22 @@ export function PetsAdminPanel({ pets, users = [], onDeletePet, onOpenPet }: Pet
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <button
-            onClick={() => setPetsPage(Math.max(1, petsPage - 1))}
-            disabled={petsPage === 1}
-            className="flex items-center gap-2 px-4 py-3 text-sm bg-card border border-gray-200 dark:border-gray-700 dark:text-gray-300 rounded-lg hover:bg-accent dark:hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            Назад
-          </button>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-              Страница {petsPage} из {totalPages}
-            </span>
-            <span className="text-xs text-gray-500 dark:text-gray-400">
-              ({filteredPets.length} всего)
-            </span>
-          </div>
-          <button
-            onClick={() => setPetsPage(Math.min(totalPages, petsPage + 1))}
-            disabled={petsPage >= totalPages}
-            className="flex items-center gap-2 px-4 py-3 text-sm bg-card border border-gray-200 dark:border-gray-700 dark:text-gray-300 rounded-lg hover:bg-accent dark:hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Вперед
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
+        <AdminTablePagination
+          currentPage={petsPage}
+          totalPages={totalPages}
+          onPageChange={setPetsPage}
+          labels={pg}
+          summary={
+            <>
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                {ap.users.pageOf(petsPage, totalPages)}
+              </span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                {ap.users.totalShort(sortedPets.length)}
+              </span>
+            </>
+          }
+        />
       )}
     </div>
   );

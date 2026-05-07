@@ -131,6 +131,10 @@ class PetBase(BaseModel):
     reward_mode: str = "points"  # points | money
     reward_amount_byn: Optional[int] = Field(None, ge=1, le=1_000_000)
     reward_points: int = Field(50, ge=1)
+    pet_scope: str = "lost_found"  # lost_found | shelter_pet
+    shelter_id: Optional[str] = None
+    adoption_status: Optional[str] = None
+    is_published: bool = True
 
     @field_validator("breed", mode="before")
     @classmethod
@@ -163,10 +167,77 @@ class PetUpdate(BaseModel):
     reward_amount_byn: Optional[int] = Field(None, ge=1, le=1_000_000)
     reward_points: Optional[int] = Field(None, ge=1)
     reward_helper_code: Optional[str] = None
+    pet_scope: Optional[str] = None
+    shelter_id: Optional[str] = None
+    adoption_status: Optional[str] = None
+    is_published: Optional[bool] = None
 
     @field_validator("breed", mode="before")
     @classmethod
     def trim_breed(cls, v):
+        return _trim_optional_str(v)
+
+
+class ShelterPetBase(BaseModel):
+    photos: list[str] = []
+    nickname: Optional[str] = Field(None, max_length=80)
+    animal_type: str  # cat, dog, other
+    breed: Optional[str] = Field(None, max_length=80)
+    colors: list[str] = []
+    gender: str = "unknown"
+    approximate_age: Optional[str] = None
+    description: str
+    city: str
+    location: PetLocation
+    contacts: UserContacts = Field(default_factory=UserContacts)
+    health_status: Optional[str] = None
+    coat_type: Optional[str] = None
+    adoption_status: Optional[str] = None
+    is_published: bool = True
+
+    @field_validator("breed", mode="before")
+    @classmethod
+    def trim_breed(cls, v):
+        return _trim_optional_str(v)
+
+    @field_validator("nickname", mode="before")
+    @classmethod
+    def trim_nickname(cls, v):
+        return _trim_optional_str(v)
+
+
+class ShelterPetCreate(ShelterPetBase):
+    contacts: UserContactsStrict = Field(default_factory=UserContactsStrict)
+    author_name: Optional[str] = None
+
+
+class ShelterPetUpdate(BaseModel):
+    photos: Optional[list[str]] = None
+    nickname: Optional[str] = Field(None, max_length=80)
+    animal_type: Optional[str] = None
+    breed: Optional[str] = Field(None, max_length=80)
+    colors: Optional[list[str]] = None
+    gender: Optional[str] = None
+    approximate_age: Optional[str] = None
+    description: Optional[str] = None
+    city: Optional[str] = None
+    location: Optional[PetLocation] = None
+    contacts: Optional[UserContactsStrict] = None
+    health_status: Optional[str] = None
+    coat_type: Optional[str] = None
+    is_archived: Optional[bool] = None
+    archive_reason: Optional[str] = None
+    adoption_status: Optional[str] = None
+    is_published: Optional[bool] = None
+
+    @field_validator("breed", mode="before")
+    @classmethod
+    def trim_breed(cls, v):
+        return _trim_optional_str(v)
+
+    @field_validator("nickname", mode="before")
+    @classmethod
+    def trim_nickname(cls, v):
         return _trim_optional_str(v)
 
 
@@ -176,6 +247,7 @@ class PetResponse(PetBase):
     updated_at: datetime
     author_id: str
     author_name: str
+    nickname: Optional[str] = None  # кличка для pet_scope=shelter_pet (ShelterPetDetails)
     is_archived: bool = False
     archive_reason: Optional[str] = None
     moderation_status: str = "pending"
@@ -184,6 +256,40 @@ class PetResponse(PetBase):
     moderated_by: Optional[str] = None
     reward_recipient_user_id: Optional[str] = None
     reward_points_awarded_at: Optional[datetime] = None
+    published_by_user_id: Optional[str] = None
+    updated_by_user_id: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class ShelterPetResponse(BaseModel):
+    id: str
+    photos: list[str] = []
+    nickname: Optional[str] = None
+    animal_type: str
+    breed: Optional[str] = None
+    colors: list[str] = []
+    gender: str = "unknown"
+    approximate_age: Optional[str] = None
+    description: str
+    city: str
+    location: PetLocation
+    published_at: datetime
+    updated_at: datetime
+    author_id: str
+    author_name: str
+    contacts: UserContacts = Field(default_factory=UserContacts)
+    health_status: Optional[str] = None
+    coat_type: Optional[str] = None
+    is_archived: bool = False
+    archive_reason: Optional[str] = None
+    pet_scope: str = "shelter_pet"
+    shelter_id: str
+    adoption_status: Optional[str] = None
+    is_published: bool = True
+    published_by_user_id: Optional[str] = None
+    updated_by_user_id: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -726,3 +832,240 @@ class InstagramBoostEligibilityResponse(BaseModel):
     reason: str
     next_available_at: Optional[datetime] = None
     pet_age_days: Optional[int] = None
+
+
+# --- Shelters (приюты / передержки; владелец — пользователь с ролью shelter) ---
+
+
+class ShelterContacts(BaseModel):
+    phone: Optional[str] = None
+    telegram: Optional[str] = None
+    website: Optional[str] = None
+    email: Optional[str] = None
+
+
+class ShelterCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=200)
+    kind: str = Field(default="shelter")
+    animal_focus: str = Field(default="mixed")
+    description: Optional[str] = Field(None, max_length=8000)
+    city: str = Field(..., min_length=1, max_length=120)
+    address: Optional[str] = Field(None, max_length=300)
+    location_lat: float
+    location_lng: float
+    contacts: ShelterContacts = Field(default_factory=ShelterContacts)
+    logo_url: Optional[str] = None
+    cover_url: Optional[str] = None
+    """Только админ: создать карточку от имени другого пользователя с ролью shelter."""
+    owner_user_id: Optional[str] = Field(None, min_length=1, max_length=120)
+
+    @field_validator("kind")
+    @classmethod
+    def kind_ok(cls, v: str) -> str:
+        k = (v or "shelter").strip().lower()
+        if k not in {"shelter", "foster", "vet", "other"}:
+            raise ValueError("kind: shelter, foster, vet или other")
+        return k
+
+    @field_validator("animal_focus")
+    @classmethod
+    def animal_focus_ok(cls, v: str) -> str:
+        a = (v or "mixed").strip().lower()
+        if a not in {"dogs", "cats", "mixed"}:
+            raise ValueError("animal_focus: dogs, cats или mixed")
+        return a
+
+
+class ShelterUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=200)
+    kind: Optional[str] = None
+    animal_focus: Optional[str] = None
+    description: Optional[str] = Field(None, max_length=8000)
+    city: Optional[str] = Field(None, min_length=1, max_length=120)
+    address: Optional[str] = Field(None, max_length=300)
+    location_lat: Optional[float] = None
+    location_lng: Optional[float] = None
+    contacts: Optional[ShelterContacts] = None
+    logo_url: Optional[str] = None
+    cover_url: Optional[str] = None
+
+    @field_validator("kind")
+    @classmethod
+    def kind_ok(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        k = v.strip().lower()
+        if k not in {"shelter", "foster", "vet", "other"}:
+            raise ValueError("kind: shelter, foster, vet или other")
+        return k
+
+    @field_validator("animal_focus")
+    @classmethod
+    def animal_focus_ok(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        a = v.strip().lower()
+        if a not in {"dogs", "cats", "mixed"}:
+            raise ValueError("animal_focus: dogs, cats или mixed")
+        return a
+
+
+class ShelterResponse(BaseModel):
+    id: str
+    name: str
+    kind: str
+    animal_focus: str
+    description: Optional[str] = None
+    city: str
+    address: Optional[str] = None
+    location_lat: float
+    location_lng: float
+    contacts: dict = Field(default_factory=dict)
+    logo_url: Optional[str] = None
+    cover_url: Optional[str] = None
+    moderation_status: str
+    moderation_reason: Optional[str] = None
+    moderated_at: Optional[datetime] = None
+    moderated_by: Optional[str] = None
+    owner_user_id: str
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class ShelterModerateBody(BaseModel):
+    action: str  # approve | reject | hide
+    reason: Optional[str] = Field(None, max_length=2000)
+
+    @field_validator("action")
+    @classmethod
+    def action_ok(cls, v: str) -> str:
+        a = (v or "").strip().lower()
+        if a not in {"approve", "reject", "hide"}:
+            raise ValueError("action: approve, reject или hide")
+        return a
+
+
+class ShelterMemberInviteBody(BaseModel):
+    user_id: Optional[str] = Field(None, min_length=1, max_length=120)
+    email: Optional[str] = Field(None, min_length=3, max_length=320)
+    role: str = Field(default="volunteer")
+
+    @field_validator("role")
+    @classmethod
+    def role_ok(cls, v: str) -> str:
+        r = (v or "").strip().lower()
+        if r not in {"manager", "volunteer"}:
+            raise ValueError("role: manager или volunteer")
+        return r
+
+    @field_validator("email")
+    @classmethod
+    def email_trim(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        s = v.strip().lower()
+        return s or None
+
+
+class ShelterMemberUpdateBody(BaseModel):
+    role: Optional[str] = None
+    status: Optional[str] = None
+
+    @field_validator("role")
+    @classmethod
+    def role_ok(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        r = v.strip().lower()
+        if r not in {"owner", "manager", "volunteer"}:
+            raise ValueError("role: owner, manager или volunteer")
+        return r
+
+    @field_validator("status")
+    @classmethod
+    def status_ok(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        s = v.strip().lower()
+        if s not in {"invited", "active", "removed"}:
+            raise ValueError("status: invited, active или removed")
+        return s
+
+
+class ShelterMemberResponse(BaseModel):
+    id: str
+    shelter_id: str
+    user_id: str
+    role: str
+    status: str
+    invited_by_user_id: Optional[str] = None
+    joined_at: Optional[datetime] = None
+    removed_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
+    user_name: Optional[str] = None
+    user_email: Optional[str] = None
+    user_avatar: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class ShelterCampaignCreate(BaseModel):
+    title: str = Field(..., min_length=3, max_length=120)
+    description: Optional[str] = Field(None, max_length=2000)
+    help_details: str = Field(..., min_length=10, max_length=4000)
+    goal_amount: int = Field(..., ge=1, le=100_000_000)
+    ends_at: Optional[datetime] = None
+
+
+class ShelterCampaignUpdate(BaseModel):
+    title: Optional[str] = Field(None, min_length=3, max_length=120)
+    description: Optional[str] = Field(None, max_length=2000)
+    help_details: Optional[str] = Field(None, min_length=10, max_length=4000)
+    goal_amount: Optional[int] = Field(None, ge=1, le=100_000_000)
+    ends_at: Optional[datetime] = None
+
+
+class ShelterCampaignCloseBody(BaseModel):
+    action: str = Field(..., pattern="^(completed|cancelled)$")
+    collected_amount: int = Field(..., ge=0, le=100_000_000)
+    close_reason: str = Field(..., min_length=3, max_length=2000)
+
+
+class ShelterCampaignCollectedUpdateBody(BaseModel):
+    collected_amount: int = Field(..., ge=0, le=100_000_000)
+
+
+class ShelterCampaignResponse(BaseModel):
+    id: str
+    pet_id: str
+    shelter_id: str
+    title: str
+    description: Optional[str] = None
+    help_details: Optional[str] = None
+    goal_amount: int
+    collected_amount: int
+    status: str
+    starts_at: Optional[datetime] = None
+    ends_at: Optional[datetime] = None
+    closed_at: Optional[datetime] = None
+    close_reason: Optional[str] = None
+    created_by_user_id: str
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class ShelterSubscriptionStatusResponse(BaseModel):
+    subscriber_count: int
+    subscribed: bool
+
+
+class ShelterSubscriptionOkResponse(BaseModel):
+    ok: bool = True

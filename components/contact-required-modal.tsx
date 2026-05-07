@@ -11,15 +11,14 @@ import { Button } from './ui/button';
 
 interface ContactRequiredModalProps {
   open: boolean;
-  onClose: () => void;
   onGoToProfile: () => void;
 }
 
-export function ContactRequiredModal({ open, onClose, onGoToProfile }: ContactRequiredModalProps) {
+export function ContactRequiredModal({ open, onGoToProfile }: ContactRequiredModalProps) {
   const { t } = useI18n();
 
   return (
-    <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
+    <Dialog open={open}>
       <DialogContent className="max-w-md overflow-hidden rounded-2xl p-0" showCloseButton={false}>
         <div className="flex flex-col">
           <div className="flex justify-center bg-primary/10 px-6 py-8">
@@ -38,9 +37,6 @@ export function ContactRequiredModal({ open, onClose, onGoToProfile }: ContactRe
               <Button onClick={onGoToProfile} className="h-11 w-full">
                 <User className="size-4" />
                 {t.contactRequired.goToProfile}
-              </Button>
-              <Button variant="ghost" onClick={onClose} className="h-11 w-full">
-                {t.common.cancel}
               </Button>
             </div>
           </div>
