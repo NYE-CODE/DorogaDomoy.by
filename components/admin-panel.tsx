@@ -297,6 +297,21 @@ export function AdminPanel({
   const [shelterReasons, setShelterReasons] = useState<Record<string, string>>({});
   const [shelterAllList, setShelterAllList] = useState<ShelterResponse[]>([]);
   const [shelterAllLoading, setShelterAllLoading] = useState(false);
+  const [shelterCatalogEdit, setShelterCatalogEdit] = useState<ShelterResponse | null>(null);
+  const [editScName, setEditScName] = useState('');
+  const [editScKind, setEditScKind] = useState<ShelterKind>('shelter');
+  const [editScFocus, setEditScFocus] = useState<ShelterAnimalFocus>('mixed');
+  const [editScDescription, setEditScDescription] = useState('');
+  const [editScCity, setEditScCity] = useState('');
+  const [editScAddress, setEditScAddress] = useState('');
+  const [editScLat, setEditScLat] = useState('');
+  const [editScLng, setEditScLng] = useState('');
+  const [editScLogo, setEditScLogo] = useState('');
+  const [editScCover, setEditScCover] = useState('');
+  const [editScPhone, setEditScPhone] = useState('');
+  const [editScTelegram, setEditScTelegram] = useState('');
+  const [editScWebsite, setEditScWebsite] = useState('');
+  const [editScEmail, setEditScEmail] = useState('');
 
   // Media article modal (create/edit)
   const [editingMedia, setEditingMedia] = useState<MediaArticle | 'create' | null>(null);
@@ -1157,8 +1172,12 @@ export function AdminPanel({
                       {user.helperConfirmedCount ?? 0}
                     </td>
                     <td className="px-4 py-3 text-xs text-gray-700 dark:text-gray-300">
-                      <div>Баланс: {user.pointsBalance ?? 0}</div>
-                      <div className="text-gray-500 dark:text-gray-400">Всего: {user.pointsEarnedTotal ?? 0}</div>
+                      <div>
+                        {ap.users.pointsBalance} {user.pointsBalance ?? 0}
+                      </div>
+                      <div className="text-gray-500 dark:text-gray-400">
+                        {ap.users.pointsEarnedTotal} {user.pointsEarnedTotal ?? 0}
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-xs text-gray-600 dark:text-gray-400">
                       <div
@@ -1169,7 +1188,8 @@ export function AdminPanel({
                             : ap.users.telegramNone
                         }
                       >
-                        TG: {user.telegramUsername
+                        {ap.users.contactLabelTelegram}{' '}
+                        {user.telegramUsername
                           ? `@${String(user.telegramUsername).replace(/^@/, '')}`
                           : ap.users.telegramNone}
                       </div>
@@ -1177,7 +1197,8 @@ export function AdminPanel({
                         className="truncate"
                         title={user.contacts.phone || user.contacts.viber || '—'}
                       >
-                        TEL/VB: {user.contacts.phone || user.contacts.viber || '—'}
+                        {ap.users.contactLabelPhoneViber}{' '}
+                        {user.contacts.phone || user.contacts.viber || '—'}
                       </div>
                     </td>
                     <td className="px-4 py-3">
@@ -1343,6 +1364,62 @@ export function AdminPanel({
       });
   };
 
+  const openShelterCatalogEdit = (row: ShelterResponse) => {
+    setShelterCatalogEdit(row);
+    setEditScName(row.name);
+    setEditScKind((row.kind as ShelterKind) || 'shelter');
+    setEditScFocus((row.animal_focus as ShelterAnimalFocus) || 'mixed');
+    setEditScDescription(row.description ?? '');
+    setEditScCity(row.city);
+    setEditScAddress(row.address ?? '');
+    setEditScLat(String(row.location_lat));
+    setEditScLng(String(row.location_lng));
+    setEditScLogo(row.logo_url ?? '');
+    setEditScCover(row.cover_url ?? '');
+    const c = row.contacts ?? {};
+    setEditScPhone(c.phone ?? '');
+    setEditScTelegram(c.telegram ?? '');
+    setEditScWebsite(c.website ?? '');
+    setEditScEmail(c.email ?? '');
+  };
+
+  const handleSaveShelterCatalogEdit = () => {
+    if (!shelterCatalogEdit) return;
+    const lat = parseFloat(editScLat.replace(',', '.'));
+    const lng = parseFloat(editScLng.replace(',', '.'));
+    if (!editScName.trim() || !editScCity.trim() || Number.isNaN(lat) || Number.isNaN(lng)) {
+      toast.error(ap.sheltersCatalog.validationGeo);
+      return;
+    }
+    sheltersApi
+      .update(shelterCatalogEdit.id, {
+        name: editScName.trim(),
+        kind: editScKind,
+        animal_focus: editScFocus,
+        description: editScDescription.trim() || null,
+        city: editScCity.trim(),
+        address: editScAddress.trim() || null,
+        location_lat: lat,
+        location_lng: lng,
+        contacts: {
+          phone: editScPhone.trim() || undefined,
+          telegram: editScTelegram.trim() || undefined,
+          website: editScWebsite.trim() || undefined,
+          email: editScEmail.trim() || undefined,
+        },
+        logo_url: editScLogo.trim() || null,
+        cover_url: editScCover.trim() || null,
+      })
+      .then((updated) => {
+        toast.success(ap.toasts.shelterSaved);
+        setShelterCatalogEdit(null);
+        setShelterAllList((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
+      })
+      .catch(() => {
+        toast.error(ap.toasts.shelterSaveError);
+      });
+  };
+
   const renderSheltersModeration = () => {
     const sp = ap.shelters;
     return (
@@ -1440,7 +1517,7 @@ export function AdminPanel({
                       type="button"
                       onClick={() => handleShelterModerate(row.id, 'approve')}
                       title={sp.approve}
-                      className="inline-flex items-center justify-center p-2.5 rounded-lg bg-green-600 text-white hover:bg-green-700"
+                      className="inline-flex items-center justify-center p-2.5 rounded-lg bg-green-600 text-white hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600"
                     >
                       <CheckCircle2 className="w-5 h-5" />
                       <span className="sr-only">{sp.approve}</span>
@@ -1504,7 +1581,7 @@ export function AdminPanel({
         ) : (
           <div className={adm.tableShell}>
             <div className={adm.tableWrap}>
-            <table className={`${adm.table} min-w-[820px]`}>
+            <table className={`${adm.table} min-w-[920px]`}>
               <thead className={adm.thead}>
                 <tr>
                   <th className={adm.th}>{sc.colName}</th>
@@ -1523,6 +1600,7 @@ export function AdminPanel({
                       <ExternalLink className="w-3.5 h-3.5" aria-hidden />
                     </span>
                   </th>
+                  <th className={`${adm.th} text-right w-24`}>{sc.colActions}</th>
                 </tr>
               </thead>
               <tbody className={adm.tbody}>
@@ -1553,7 +1631,7 @@ export function AdminPanel({
                             {owner.name}
                           </a>
                         ) : (
-                          <span className="font-mono text-xs">{row.owner_user_id}</span>
+                          <span className="font-mono text-xs text-gray-600 dark:text-gray-400">{row.owner_user_id}</span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-gray-500 dark:text-gray-400 whitespace-nowrap">
@@ -1585,6 +1663,42 @@ export function AdminPanel({
                           ) : null}
                         </div>
                       </td>
+                      <td className="px-4 py-3 text-right whitespace-nowrap">
+                        <div className="inline-flex items-center justify-end gap-1">
+                          <button
+                            type="button"
+                            onClick={() => openShelterCatalogEdit(row)}
+                            title={sc.editTooltip}
+                            className="inline-flex items-center justify-center p-2 rounded-lg text-primary hover:bg-primary/10 dark:hover:bg-primary/20"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                            <span className="sr-only">{sc.editTooltip}</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const msg = sc.deleteConfirm.replace('{name}', row.name);
+                              if (!window.confirm(msg)) return;
+                              sheltersApi
+                                .adminDelete(row.id)
+                                .then(() => {
+                                  toast.success(ap.toasts.shelterDeleted);
+                                  setShelterCatalogEdit((cur) => (cur?.id === row.id ? null : cur));
+                                  reload();
+                                  fetchShelterPending();
+                                })
+                                .catch(() => {
+                                  toast.error(ap.toasts.shelterDeleteError);
+                                });
+                            }}
+                            title={sc.deleteTooltip}
+                            className="inline-flex items-center justify-center p-2 rounded-lg text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            <span className="sr-only">{sc.deleteTooltip}</span>
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   );
                 })}
@@ -1593,6 +1707,196 @@ export function AdminPanel({
             </div>
           </div>
         )}
+
+        {shelterCatalogEdit ? (
+          <div
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4"
+            onClick={() => setShelterCatalogEdit(null)}
+          >
+            <div
+              className="bg-card rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between px-6 py-4 border-b dark:border-gray-700 shrink-0">
+                <h3 className="font-semibold text-gray-900 dark:text-white">{sc.modalEditTitle}</h3>
+                <button
+                  type="button"
+                  onClick={() => setShelterCatalogEdit(null)}
+                  className="p-1 hover:bg-accent dark:hover:bg-accent rounded"
+                >
+                  <X className="w-5 h-5 dark:text-gray-400" />
+                </button>
+              </div>
+              <div className="px-6 py-4 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{sc.fieldName}</label>
+                  <input
+                    type="text"
+                    value={editScName}
+                    onChange={(e) => setEditScName(e.target.value)}
+                    className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{sc.fieldKind}</label>
+                    <Select value={editScKind} onValueChange={(v) => setEditScKind(v as ShelterKind)}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="shelter">{shelterKindLabel('shelter')}</SelectItem>
+                        <SelectItem value="foster">{shelterKindLabel('foster')}</SelectItem>
+                        <SelectItem value="vet">{shelterKindLabel('vet')}</SelectItem>
+                        <SelectItem value="other">{shelterKindLabel('other')}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{sc.fieldFocus}</label>
+                    <Select value={editScFocus} onValueChange={(v) => setEditScFocus(v as ShelterAnimalFocus)}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="mixed">{shelterAnimalFocusAdminLabel('mixed')}</SelectItem>
+                        <SelectItem value="dogs">{shelterAnimalFocusAdminLabel('dogs')}</SelectItem>
+                        <SelectItem value="cats">{shelterAnimalFocusAdminLabel('cats')}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{sc.fieldDescription}</label>
+                  <textarea
+                    value={editScDescription}
+                    onChange={(e) => setEditScDescription(e.target.value)}
+                    rows={4}
+                    className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-y min-h-[96px]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{sc.fieldCity}</label>
+                  <input
+                    type="text"
+                    value={editScCity}
+                    onChange={(e) => setEditScCity(e.target.value)}
+                    className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{sc.fieldAddress}</label>
+                  <input
+                    type="text"
+                    value={editScAddress}
+                    onChange={(e) => setEditScAddress(e.target.value)}
+                    className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{sc.fieldLat}</label>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={editScLat}
+                      onChange={(e) => setEditScLat(e.target.value)}
+                      className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{sc.fieldLng}</label>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={editScLng}
+                      onChange={(e) => setEditScLng(e.target.value)}
+                      className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{sc.fieldLogo}</label>
+                    <input
+                      type="text"
+                      value={editScLogo}
+                      onChange={(e) => setEditScLogo(e.target.value)}
+                      placeholder="https://..."
+                      className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{sc.fieldCover}</label>
+                    <input
+                      type="text"
+                      value={editScCover}
+                      onChange={(e) => setEditScCover(e.target.value)}
+                      placeholder="https://..."
+                      className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    />
+                  </div>
+                </div>
+                <p className="text-xs font-medium text-gray-600 dark:text-gray-400">{sc.contactsSection}</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{sc.contactPhone}</label>
+                    <input
+                      type="text"
+                      value={editScPhone}
+                      onChange={(e) => setEditScPhone(e.target.value)}
+                      className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{sc.contactTelegram}</label>
+                    <input
+                      type="text"
+                      value={editScTelegram}
+                      onChange={(e) => setEditScTelegram(e.target.value)}
+                      className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{sc.contactWebsite}</label>
+                    <input
+                      type="text"
+                      value={editScWebsite}
+                      onChange={(e) => setEditScWebsite(e.target.value)}
+                      className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{sc.contactEmail}</label>
+                    <input
+                      type="email"
+                      value={editScEmail}
+                      onChange={(e) => setEditScEmail(e.target.value)}
+                      className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+                <button
+                  type="button"
+                  onClick={() => setShelterCatalogEdit(null)}
+                  className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-accent dark:hover:bg-accent"
+                >
+                  {t.common.cancel}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveShelterCatalogEdit}
+                  disabled={!editScName.trim() || !editScCity.trim()}
+                  className="flex items-center gap-2 px-4 py-3 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4" /> {t.common.save}
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
     );
   };
@@ -1713,8 +2017,14 @@ export function AdminPanel({
                           <ExternalLink className="w-4 h-4 text-gray-400 dark:text-gray-500 group-hover:text-primary shrink-0" />
                         </a>
                         <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-2 text-xs text-gray-600 dark:text-gray-300">
-                          Награда: {pet.rewardMode === 'money' ? `${pet.rewardAmountByn ?? 0} BYN` : `${pet.rewardPoints ?? 0} очков`} ·
-                          Начислено: {pet.rewardPointsAwardedAt ? formatDate(pet.rewardPointsAwardedAt) : 'нет'}
+                          {ap.reports.petReward}{' '}
+                          {pet.rewardMode === 'money'
+                            ? `${pet.rewardAmountByn ?? 0} BYN`
+                            : ap.reports.rewardPointsUnit(pet.rewardPoints ?? 0)}{' '}
+                          · {ap.reports.petAwarded}{' '}
+                          {pet.rewardPointsAwardedAt
+                            ? formatDate(pet.rewardPointsAwardedAt)
+                            : ap.reports.petAwardedNever}
                         </div>
                       </div>
                     )}
@@ -3156,8 +3466,8 @@ export function AdminPanel({
           </div>
           <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-200 dark:border-gray-600">
             <div>
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Включить систему наград</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Отключение скрывает и блокирует начисления наград.</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{ap.featureFlags.ffRewardEnabled}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{ap.featureFlags.ffRewardEnabledDesc}</p>
             </div>
             <Switch
               checked={featureFlags.ff_reward_enabled}
@@ -3166,8 +3476,8 @@ export function AdminPanel({
           </div>
           <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-200 dark:border-gray-600">
             <div>
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Разрешить денежную награду</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Если выключено, остается только режим очков.</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{ap.featureFlags.ffRewardMoneyEnabled}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{ap.featureFlags.ffRewardMoneyEnabledDesc}</p>
             </div>
             <Switch
               checked={featureFlags.ff_reward_money_enabled}

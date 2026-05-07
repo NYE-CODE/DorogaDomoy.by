@@ -22,6 +22,7 @@ import {
   SEO_KEYWORDS,
   SEO_ROBOTS_PRIVATE,
 } from '../utils/seo';
+import { getHomePath } from '../utils/home-route';
 import { formatRelativeTime, petStatusPhotoPillClass } from '../utils/pet-helpers';
 import { appPrimaryCtaClass } from '../styles/cta-classes';
 
@@ -167,7 +168,7 @@ export default function FavoritesPage() {
               <Button
                 type="button"
                 className={appPrimaryCtaClass}
-                onClick={() => navigate('/search')}
+                onClick={() => navigate(getHomePath())}
               >
                 <Search className="size-5 shrink-0" aria-hidden />
                 {t.favorites.openSearch}

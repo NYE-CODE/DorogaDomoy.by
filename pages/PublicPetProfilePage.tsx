@@ -23,6 +23,7 @@ import {
   SEO_ROBOTS_PUBLIC,
   truncateMetaDescription,
 } from '../utils/seo';
+import { getHomePath } from '../utils/home-route';
 import { formatPetAgeDisplay, genderLabel, temperamentLabel } from '../utils/profile-pet-text';
 import { toast } from 'sonner';
 import { Header } from '../components/layout/Header';
@@ -121,7 +122,7 @@ export default function PublicPetProfilePage() {
               icon={<PawPrint size={28} />}
               action={
                 <Button asChild>
-                  <Link to="/">{pp.backHome}</Link>
+                  <Link to={getHomePath()}>{pp.backHome}</Link>
                 </Button>
               }
             />
@@ -422,7 +423,7 @@ export default function PublicPetProfilePage() {
                 <p className="text-sm md:text-base text-gray-500 dark:text-gray-400 mb-1">{pp.promoService}</p>
                 <p className="font-medium text-black dark:text-white mb-4 text-sm md:text-base">{pp.promoText}</p>
                 <Link
-                  to="/"
+                  to={getHomePath()}
                   className="inline-flex items-center justify-center gap-2 bg-[#FF9800] text-white hover:bg-[#F57C00] rounded-lg px-6 h-12 text-base md:text-lg transition-colors font-medium w-full md:w-auto"
                 >
                   <PawPrint size={18} />

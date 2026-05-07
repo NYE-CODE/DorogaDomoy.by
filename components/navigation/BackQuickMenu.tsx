@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { ArrowLeft, Building2, Home, Search, History } from 'lucide-react';
 import { useI18n } from '../../context/I18nContext';
+import { getHomePath } from '../../utils/home-route';
 
 const PREV_ROUTE_KEY = 'dd_previous_path';
 
@@ -76,7 +77,7 @@ export function BackQuickMenu() {
             type="button"
             onClick={() => {
               setOpen(false);
-              navigate('/');
+              navigate(getHomePath());
             }}
             className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-foreground transition-colors hover:bg-muted"
           >

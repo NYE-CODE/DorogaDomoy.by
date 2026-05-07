@@ -10,6 +10,7 @@ import { ChevronLeft } from 'lucide-react';
 import { petsApi } from '../api/client';
 import { Pet } from '../types/pet';
 import { toast } from 'sonner';
+import { getHomePath } from '../utils/home-route';
 
 export default function EditAdPage() {
   const { id } = useParams<{ id: string }>();
@@ -24,7 +25,7 @@ export default function EditAdPage() {
   useEffect(() => {
     if (isLoading) return;
     if (!isAuthenticated) {
-      navigate('/', { replace: true });
+      navigate(getHomePath(), { replace: true });
       return;
     }
   }, [isLoading, isAuthenticated, navigate]);

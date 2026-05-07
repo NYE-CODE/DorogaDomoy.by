@@ -1407,6 +1407,8 @@ export const sheltersApi = {
   mine: () => api<ShelterResponse[]>('/shelters/me'),
   adminPending: () => api<ShelterResponse[]>('/shelters/admin/pending'),
   adminListAll: () => api<ShelterResponse[]>('/shelters/admin/all'),
+  adminDelete: (id: string) =>
+    api<void>(`/shelters/admin/${encodeURIComponent(id)}`, { method: 'DELETE' }),
   create: (data: {
     name: string;
     kind?: ShelterKind;

@@ -14,6 +14,7 @@ import { SeoRouteSync } from './components/SeoRouteSync'
 import { PageLoader } from './components/ui/page-loader';
 import { ScrollToTopOnRouteChange } from './components/ScrollToTopOnRouteChange';
 import { FavoritesProvider } from './context/FavoritesContext';
+import { getHomePath } from './utils/home-route';
 
 const LandingPage = lazy(() => import('./pages/LandingPage.tsx'));
 const SearchPage = lazy(() => import('./pages/SearchPage.tsx'));
@@ -106,7 +107,7 @@ function RequireAuth({ children }: { children: React.ReactElement }) {
   if (!isAuthenticated) {
     return (
       <Navigate
-        to="/search"
+        to={getHomePath()}
         replace
         state={{ fromProtected: `${location.pathname}${location.search}${location.hash}` }}
       />
@@ -118,15 +119,15 @@ function RequireAuth({ children }: { children: React.ReactElement }) {
 function RequireAdmin({ children }: { children: React.ReactElement }) {
   const { user, isAuthenticated, isLoading } = useAuth();
   if (isLoading) return <RouteLoader />;
-  if (!isAuthenticated) return <Navigate to="/search" replace />;
-  if (user?.role !== 'admin') return <Navigate to="/search" replace />;
+  if (!isAuthenticated) return <Navigate to={getHomePath()} replace />;
+  if (user?.role !== 'admin') return <Navigate to={getHomePath()} replace />;
   return children;
 }
 
 function RequireShelter({ children }: { children: React.ReactElement }) {
   const { user, isAuthenticated, isLoading } = useAuth();
   if (isLoading) return <RouteLoader />;
-  if (!isAuthenticated) return <Navigate to="/search" replace />;
+  if (!isAuthenticated) return <Navigate to={getHomePath()} replace />;
   if (user?.role !== 'shelter') return <Navigate to="/profile" replace />;
   return children;
 }
@@ -136,7 +137,7 @@ function AuthModalGlobal() {
   const { closeAuthModal } = useAuth();
   const handleNavigateToTerms = () => {
     closeAuthModal();
-    navigate('/search');
+    navigate(getHomePath());
   };
   return <AuthModal onNavigateToTerms={handleNavigateToTerms} />;
 }

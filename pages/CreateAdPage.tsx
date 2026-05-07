@@ -12,6 +12,7 @@ import { ContactRequiredModal } from '../components/contact-required-modal';
 import { petsApi, profilePetsApi } from '../api/client';
 import { toast } from 'sonner';
 import { buildPrefillFromProfilePet } from '../utils/profile-pet-prefill';
+import { getHomePath } from '../utils/home-route';
 
 export default function CreateAdPage() {
   const { user, isAuthenticated, isLoading, openAuthModal } = useAuth();
@@ -83,7 +84,7 @@ export default function CreateAdPage() {
     };
   }, [profilePetId, user?.id, prefillLabels]);
 
-  const handleCloseForm = () => navigate('/');
+  const handleCloseForm = () => navigate(getHomePath());
 
   const handleSubmit = async (formData: PetFormData) => {
     if (!user) return;

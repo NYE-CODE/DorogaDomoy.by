@@ -1,16 +1,17 @@
 """Приюты и точки помощи: владелец — пользователь с ролью shelter; модерация админом."""
 from __future__ import annotations
 
+import logging
 import uuid
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from auth import get_current_user, get_current_user_required, require_admin, require_shelter_or_admin
 from database import get_db
-from models import Shelter, ShelterMembership, User
+from models import Pet, Report, Shelter, ShelterMembership, User
 from schemas import (
     ShelterCreate,
     ShelterMemberInviteBody,
@@ -184,6 +185,37 @@ def admin_list_all_shelters(
     """Все карточки организаций (любой статус модерации) — для админ-вкладки «Приюты»."""
     stmt = select(Shelter).order_by(Shelter.updated_at.desc())
     return [_to_response(s) for s in db.scalars(stmt).all()]
+
+
+@router.delete("/admin/{shelter_id}", status_code=status.HTTP_204_NO_CONTENT)
+def admin_delete_shelter(
+    shelter_id: str,
+    _: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Удаление карточки организации: сначала питомцы приюта (как при удалении объявления), затем приют.
+
+    Иначе при ``ON DELETE SET NULL`` у ``pets.shelter_id`` остаются «приютские» объявления без приюта.
+    Подписки, членство и сборы по приюту удаляются каскадом при удалении строки ``shelters``.
+    """
+    s = db.scalar(select(Shelter).where(Shelter.id == shelter_id))
+    if not s:
+        raise HTTPException(status_code=404, detail="Не найдено")
+    try:
+        pets = db.scalars(select(Pet).where(Pet.shelter_id == shelter_id)).all()
+        for pet in pets:
+            db.execute(delete(Report).where(Report.pet_id == pet.id))
+            db.delete(pet)
+        db.delete(s)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        logging.exception("Ошибка при удалении приюта %s: %s", shelter_id, e)
+        raise HTTPException(
+            status_code=500,
+            detail="Не удалось удалить организацию. Попробуйте позже.",
+        ) from e
+    return None
 
 
 @router.get("/{shelter_id}", response_model=ShelterResponse)

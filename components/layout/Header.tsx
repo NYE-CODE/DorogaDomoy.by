@@ -5,8 +5,7 @@
 import { useEffect, useState } from 'react';
 import { Header as LandingHeader } from '../../landing/app/components/header';
 import type { HomeMode } from '../../landing/app/App';
-
-const HOME_MODE_KEY = 'dorogadomoy-home-mode';
+import { HOME_MODE_STORAGE_KEY } from '../../utils/home-route';
 
 export interface HeaderProps {
   /** Выбранный город (из localStorage) — когда передан, хедер показывает его вместо «Вся Беларусь» */
@@ -22,12 +21,12 @@ export interface HeaderProps {
 export function Header(props?: HeaderProps) {
   const [homeMode, setHomeMode] = useState<HomeMode>(() => {
     if (typeof window === 'undefined') return 'search';
-    const saved = window.localStorage.getItem(HOME_MODE_KEY);
+    const saved = window.localStorage.getItem(HOME_MODE_STORAGE_KEY);
     return saved === 'shelters' ? 'shelters' : 'search';
   });
 
   useEffect(() => {
-    window.localStorage.setItem(HOME_MODE_KEY, homeMode);
+    window.localStorage.setItem(HOME_MODE_STORAGE_KEY, homeMode);
   }, [homeMode]);
 
   return (

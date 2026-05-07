@@ -9,6 +9,7 @@ import { User } from '../context/AuthContext';
 import { Report } from '../types/admin';
 import { toast } from 'sonner';
 import { useI18n } from '../context/I18nContext';
+import { getHomePath } from '../utils/home-route';
 
 export default function AdminPage() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -31,7 +32,7 @@ export default function AdminPage() {
   useEffect(() => {
     if (isLoading) return;
     if (!isAdmin) {
-      navigate('/', { replace: true });
+      navigate(getHomePath(), { replace: true });
       return;
     }
 
@@ -332,7 +333,7 @@ export default function AdminPage() {
         mediaArticles={mediaArticles}
         partners={partners}
         profilePets={profilePets}
-        onBack={() => navigate('/search')}
+        onBack={() => navigate(getHomePath())}
         onUpdatePet={handleUpdatePet}
         onDeletePet={handleDeletePet}
         onUpdateUser={handleUpdateUser}

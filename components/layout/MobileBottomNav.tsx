@@ -5,9 +5,9 @@ import { useAuth } from '../../context/AuthContext';
 import { useI18n } from '../../context/I18nContext';
 import { useIsMobile } from '../ui/use-mobile';
 import type { HomeMode } from '../../landing/app/App';
+import { HOME_MODE_STORAGE_KEY } from '../../utils/home-route';
 
 const HIDDEN_PREFIXES = ['/create', '/edit/', '/admin', '/terms', '/my-pets/add'];
-const HOME_MODE_KEY = 'dorogadomoy-home-mode';
 
 function shouldHide(pathname: string): boolean {
   if (HIDDEN_PREFIXES.some((p) => pathname.startsWith(p))) return true;
@@ -25,7 +25,7 @@ export function MobileBottomNav() {
   const modeMenuRef = useRef<HTMLDivElement>(null);
   const [homeMode, setHomeMode] = useState<HomeMode>(() => {
     if (typeof window === 'undefined') return 'search';
-    const saved = window.localStorage.getItem(HOME_MODE_KEY);
+    const saved = window.localStorage.getItem(HOME_MODE_STORAGE_KEY);
     return saved === 'shelters' ? 'shelters' : 'search';
   });
 
@@ -36,7 +36,7 @@ export function MobileBottomNav() {
 
   useEffect(() => {
     const syncMode = () => {
-      const saved = window.localStorage.getItem(HOME_MODE_KEY);
+      const saved = window.localStorage.getItem(HOME_MODE_STORAGE_KEY);
       setHomeMode(saved === 'shelters' ? 'shelters' : 'search');
     };
     syncMode();
@@ -81,7 +81,7 @@ export function MobileBottomNav() {
     navigate('/my-shelters');
   };
   const setModeAndNavigate = (mode: HomeMode) => {
-    window.localStorage.setItem(HOME_MODE_KEY, mode);
+    window.localStorage.setItem(HOME_MODE_STORAGE_KEY, mode);
     setHomeMode(mode);
     setModeMenuOpen(false);
     navigate(mode === 'shelters' ? '/shelters' : '/search');

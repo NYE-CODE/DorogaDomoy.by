@@ -18,6 +18,7 @@ import { API_BASE, usersApi, petsApi, profilePetsApi } from '../api/client';
 import { useI18n } from '../context/I18nContext';
 import { RewardBadge } from '../components/reward-badge';
 import { toast } from 'sonner';
+import { getHomePath } from '../utils/home-route';
 import { Header } from '../components/layout/Header';
 import { Footer } from '../components/layout/Footer';
 import { profilePetToListCard, type ProfilePetListCard } from '../utils/profile-pet-display';
@@ -226,7 +227,7 @@ export default function UserProfilePage() {
               К сожалению, профиль пользователя не существует.
             </p>
             <Link
-              to="/"
+              to={getHomePath()}
               className="inline-flex items-center justify-center h-12 px-6 bg-[#FF9800] text-white rounded-lg hover:bg-[#F57C00] transition-colors font-medium text-lg"
             >
               {(t.userProfile as { toMain?: string }).toMain ?? 'На главную'}
@@ -526,7 +527,7 @@ export default function UserProfilePage() {
           {/* Back Button */}
           <div className="mt-6 text-center">
             <Link
-              to="/"
+              to={getHomePath()}
               className="inline-flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors font-medium"
             >
               {t.userProfile.backHome}

@@ -46,6 +46,10 @@ const emptyForm = (): ProfilePetFormData => ({
 const MAX_PHOTOS = 5;
 const MAX_PROFILE_UPLOAD_BYTES = 750 * 1024;
 
+/** Пост с советами по фото для профиля питомца (шаг «Фотографии»). */
+const PROFILE_PET_PHOTO_GUIDE_INSTAGRAM_URL =
+  "https://www.instagram.com/p/DXpRblXiJwT/?img_index=1";
+
 function buildCompressedPhotoName(file: File): string {
   const baseName = file.name.replace(/\.[^.]+$/, "") || "photo";
   return `${baseName}.jpg`;
@@ -383,7 +387,23 @@ export function AddEditPetContent() {
 
       <div className="max-w-3xl mx-auto px-4 py-8">
         <div className="bg-white dark:bg-card rounded-2xl shadow-sm border border-gray-200 dark:border-border p-8">
-          <p className="text-gray-600 dark:text-muted-foreground mb-6">{currentMeta.subtitle}</p>
+          <div className="mb-6 space-y-2">
+            <p className="text-gray-600 dark:text-muted-foreground">{currentMeta.subtitle}</p>
+            {currentStep === 2 ? (
+              <p className="text-sm text-gray-600 dark:text-muted-foreground">
+                {f.step2InstagramGuidePrefix}
+                <a
+                  href={PROFILE_PET_PHOTO_GUIDE_INSTAGRAM_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-[#FF9800] hover:text-[#F57C00] hover:underline dark:text-[#FFB74D] dark:hover:text-[#FFCC80]"
+                >
+                  {f.step2InstagramGuideLink}
+                </a>
+                {f.step2InstagramGuideSuffix}
+              </p>
+            ) : null}
+          </div>
 
           <input
             ref={fileInputRef}

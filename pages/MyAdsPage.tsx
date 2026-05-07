@@ -9,6 +9,7 @@ import { AuthModal } from '../components/auth/AuthModal';
 import { featureFlagsApi, instagramApi, petsApi } from '../api/client';
 import { Pet } from '../types/pet';
 import { toast } from 'sonner';
+import { getHomePath } from '../utils/home-route';
 
 export default function MyAdsPageRoute() {
   const { user, isAuthenticated, openAuthModal, closeAuthModal, isLoading } = useAuth();
@@ -51,7 +52,7 @@ export default function MyAdsPageRoute() {
       return;
     }
     if (!isAuthenticated) {
-      navigate('/', { replace: true });
+      navigate(getHomePath(), { replace: true });
       return;
     }
 
@@ -157,7 +158,7 @@ export default function MyAdsPageRoute() {
     <>
       <MyAdsList
         pets={pets}
-        onBack={() => navigate('/search')}
+        onBack={() => navigate(getHomePath())}
         onCreateClick={handleCreateClick}
         onEditPet={(pet) => navigate(`/edit/${pet.id}`)}
         onDeletePet={setDeletingPet}
