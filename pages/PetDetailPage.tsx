@@ -36,6 +36,7 @@ import {
   appOutlineCtaClass,
   appPrimaryCtaClass,
 } from '../styles/cta-classes';
+import { getHomePath } from '../utils/home-route';
 
 const PRINT_PLACEHOLDER_IMAGE =
   'data:image/svg+xml;utf8,' +
@@ -366,7 +367,7 @@ export default function PetDetailPage() {
           description={t.petDetail.notFoundDesc}
           action={
             <Button className={appPrimaryCtaClass} asChild>
-              <Link to="/">{t.petDetail.toMain}</Link>
+              <Link to={getHomePath()}>{t.petDetail.toMain}</Link>
             </Button>
           }
           className="mx-auto max-w-lg border-dashed"
@@ -905,7 +906,7 @@ export default function PetDetailPage() {
         {/* Breadcrumb */}
         <div className="mb-6">
           <Link
-            to="/"
+            to={getHomePath()}
             className="inline-flex items-center gap-1 text-muted-foreground transition-colors hover:text-primary"
           >
             <ChevronLeft size={20} aria-hidden />

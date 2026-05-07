@@ -14,10 +14,10 @@ import { ScrollToTop } from "./components/scroll-to-top";
 import { useFeatureFlags } from "../../context/FeatureFlagsContext";
 import { useEffect, useRef, useState } from "react";
 import { trackYmGoal } from "../../utils/ym";
+import { HOME_MODE_STORAGE_KEY } from "../../utils/home-route";
 
 /** Условные секции должны совпадать с `landing-nav-config.ts` (навигация в футере). */
 export type HomeMode = "search" | "shelters";
-const HOME_MODE_KEY = "dorogadomoy-home-mode";
 
 function trackModeSelected(mode: HomeMode) {
   trackYmGoal("mode_selected", { mode });
@@ -32,13 +32,13 @@ export default function App() {
   } = useFeatureFlags();
   const [homeMode, setHomeMode] = useState<HomeMode>(() => {
     if (typeof window === "undefined") return "search";
-    const saved = window.localStorage.getItem(HOME_MODE_KEY);
+    const saved = window.localStorage.getItem(HOME_MODE_STORAGE_KEY);
     return saved === "shelters" ? "shelters" : "search";
   });
   const didMountRef = useRef(false);
 
   useEffect(() => {
-    window.localStorage.setItem(HOME_MODE_KEY, homeMode);
+    window.localStorage.setItem(HOME_MODE_STORAGE_KEY, homeMode);
   }, [homeMode]);
 
   useEffect(() => {
