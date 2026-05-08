@@ -2,7 +2,7 @@
 import re
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from belarus_phone import format_belarus_phone_storage
 
@@ -48,6 +48,15 @@ class UserCreate(BaseModel):
     name: str
     password: str
     contacts: UserContactsStrict = UserContactsStrict()
+    role: str = "user"
+
+    @field_validator("role")
+    @classmethod
+    def signup_role_ok(cls, v: str) -> str:
+        r = (v or "user").strip().lower()
+        if r not in ("user", "volunteer"):
+            raise ValueError("role: user или volunteer")
+        return r
 
 
 class UserLogin(BaseModel):
@@ -68,6 +77,7 @@ class UserResponse(UserBase):
     telegram_id: Optional[int] = None
     telegram_username: Optional[str] = None
     telegram_linked_at: Optional[datetime] = None
+    registered_as_volunteer: bool = False
 
     class Config:
         from_attributes = True
@@ -80,6 +90,16 @@ class UserUpdate(BaseModel):
     role: Optional[str] = None
     is_blocked: Optional[bool] = None
     blocked_reason: Optional[str] = None
+
+    @field_validator("role")
+    @classmethod
+    def admin_role_ok(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        r = str(v).strip().lower()
+        if r not in ("user", "volunteer", "admin"):
+            raise ValueError("role: user, volunteer или admin")
+        return r
 
 
 class HelperLookupResponse(BaseModel):
@@ -367,6 +387,80 @@ class NotificationSettingsUpdate(BaseModel):
     notification_radius_km: Optional[float] = Field(None, ge=1.0, le=10.0)
 
 
+# --- Platform settings (админ PATCH /settings) ---
+class PlatformSettingsUpdate(BaseModel):
+    """Частичное обновление; значения из админки часто приходят строками — приводим к типам."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    require_moderation: Optional[bool] = None
+    auto_archive_days: Optional[int] = Field(None, ge=1, le=3650)
+    max_photos: Optional[int] = Field(None, ge=1, le=50)
+    reward_default_points: Optional[int] = Field(None, ge=0, le=1_000_000)
+    telegram_blog_chat_id: Optional[str] = Field(None, max_length=64)
+    telegram_blog_public_username: Optional[str] = Field(None, max_length=64)
+    instagram_autopublish_enabled: Optional[bool] = None
+    instagram_story_enabled: Optional[bool] = None
+    instagram_manual_when_auto_off: Optional[bool] = None
+
+    @field_validator(
+        "require_moderation",
+        "instagram_autopublish_enabled",
+        "instagram_story_enabled",
+        "instagram_manual_when_auto_off",
+        mode="before",
+    )
+    @classmethod
+    def coerce_optional_bool(cls, v):
+        if v is None:
+            return None
+        if isinstance(v, bool):
+            return v
+        if isinstance(v, str):
+            s = v.strip().lower()
+            if s in ("true", "1", "yes", "on"):
+                return True
+            if s in ("false", "0", "no", "off", ""):
+                return False
+        raise ValueError("Ожидается логическое значение")
+
+    @field_validator("auto_archive_days", "max_photos", "reward_default_points", mode="before")
+    @classmethod
+    def coerce_optional_int(cls, v):
+        if v is None:
+            return None
+        if isinstance(v, bool):
+            raise ValueError("Недопустимый тип")
+        if isinstance(v, int):
+            return v
+        if isinstance(v, str):
+            t = v.strip()
+            if not t:
+                return None
+            return int(t)
+        raise ValueError("Ожидается целое число")
+
+    @field_validator("telegram_blog_chat_id", mode="before")
+    @classmethod
+    def sanitize_telegram_chat_id(cls, v):
+        if v is None:
+            return None
+        s = str(v).strip()
+        if "\n" in s or "\r" in s:
+            raise ValueError("Недопустимые символы")
+        return s
+
+    @field_validator("telegram_blog_public_username", mode="before")
+    @classmethod
+    def sanitize_telegram_public_username(cls, v):
+        if v is None:
+            return None
+        s = str(v).strip().lstrip("@")
+        if "\n" in s or "\r" in s:
+            raise ValueError("Недопустимые символы")
+        return s
+
+
 # --- Notifications ---
 class NotificationResponse(BaseModel):
     id: str
@@ -379,6 +473,12 @@ class NotificationResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class NotificationPatch(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    is_read: Optional[bool] = None
 
 
 # --- Statistics ---
@@ -407,6 +507,16 @@ class StatisticsResponse(BaseModel):
 # --- Sightings ---
 class SightingCreate(BaseModel):
     pet_id: str
+    location_lat: float
+    location_lng: float
+    seen_at: datetime
+    comment: Optional[str] = Field(None, max_length=500)
+    contact: Optional[str] = Field(None, max_length=100)
+
+
+class SightingCreateNested(BaseModel):
+    """Тело POST /pets/{pet_id}/sightings — pet_id в пути, не в JSON."""
+
     location_lat: float
     location_lng: float
     seen_at: datetime
@@ -823,6 +933,13 @@ class InstagramPublicationResponse(BaseModel):
         from_attributes = True
 
 
+class InstagramPublicationListResponse(BaseModel):
+    items: list[InstagramPublicationResponse]
+    total: int
+    limit: int
+    offset: int
+
+
 class InstagramBoostCreate(BaseModel):
     pet_id: str = Field(..., min_length=1, max_length=120)
 
@@ -856,15 +973,15 @@ class ShelterCreate(BaseModel):
     contacts: ShelterContacts = Field(default_factory=ShelterContacts)
     logo_url: Optional[str] = None
     cover_url: Optional[str] = None
-    """Только админ: создать карточку от имени другого пользователя с ролью shelter."""
+    """Только админ: создать карточку от имени другого пользователя с ролью volunteer."""
     owner_user_id: Optional[str] = Field(None, min_length=1, max_length=120)
 
     @field_validator("kind")
     @classmethod
     def kind_ok(cls, v: str) -> str:
         k = (v or "shelter").strip().lower()
-        if k not in {"shelter", "foster", "vet", "other"}:
-            raise ValueError("kind: shelter, foster, vet или other")
+        if k not in {"shelter", "foster", "other"}:
+            raise ValueError("kind: shelter, foster или other")
         return k
 
     @field_validator("animal_focus")
@@ -895,8 +1012,8 @@ class ShelterUpdate(BaseModel):
         if v is None:
             return None
         k = v.strip().lower()
-        if k not in {"shelter", "foster", "vet", "other"}:
-            raise ValueError("kind: shelter, foster, vet или other")
+        if k not in {"shelter", "foster", "other"}:
+            raise ValueError("kind: shelter, foster или other")
         return k
 
     @field_validator("animal_focus")
@@ -957,8 +1074,8 @@ class ShelterMemberInviteBody(BaseModel):
     @classmethod
     def role_ok(cls, v: str) -> str:
         r = (v or "").strip().lower()
-        if r not in {"manager", "volunteer"}:
-            raise ValueError("role: manager или volunteer")
+        if r != "volunteer":
+            raise ValueError("В команду можно добавить только как волонтёра (role: volunteer)")
         return r
 
     @field_validator("email")

@@ -109,7 +109,7 @@ export default function MyShelterFormPage() {
       .then((list) => {
         if (cancelled) return;
         const row = list.find((x) => x.id === shelterId);
-        if (!row) {
+        if (!row || row.owner_user_id !== user?.id) {
           toast.error(ms.loadError);
           navigate('/my-shelters', { replace: true });
           return;
@@ -130,7 +130,7 @@ export default function MyShelterFormPage() {
     return () => {
       cancelled = true;
     };
-  }, [isCreate, shelterId, defaults, user?.contacts, ms.loadError, navigate]);
+  }, [isCreate, shelterId, defaults, user?.contacts, user?.id, ms.loadError, navigate]);
 
   const approvedLocked = editingStatus === 'approved';
 
@@ -410,7 +410,6 @@ export default function MyShelterFormPage() {
                       <SelectContent>
                         <SelectItem value="shelter">{ms.kindShelter}</SelectItem>
                         <SelectItem value="foster">{ms.kindFoster}</SelectItem>
-                        <SelectItem value="vet">{ms.kindVet}</SelectItem>
                         <SelectItem value="other">{ms.kindOther}</SelectItem>
                       </SelectContent>
                     </Select>

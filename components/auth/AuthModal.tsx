@@ -19,6 +19,7 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [signupRole, setSignupRole] = useState<'user' | 'volunteer'>('user');
   const [isLoading, setIsLoading] = useState(false);
 
   if (!isAuthModalOpen) return null;
@@ -49,7 +50,7 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
         await login(email, password);
         toast.success(t.auth.welcomeBack);
       } else {
-        await register(email, name, password, {});
+        await register(email, name, password, {}, signupRole);
         toast.success(t.auth.registerSuccess);
       }
     } catch (err) {
@@ -133,6 +134,36 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
                 />
               </div>
             </div>
+
+            {mode === 'register' && (
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-foreground">
+                  {(t.auth as { registerRoleLabel?: string }).registerRoleLabel ?? 'Роль'}
+                </label>
+                <div className="flex flex-col gap-2 sm:flex-row sm:gap-4">
+                  <label className="flex cursor-pointer items-center gap-2 text-sm text-foreground">
+                    <input
+                      type="radio"
+                      name="signup-role"
+                      checked={signupRole === 'user'}
+                      onChange={() => setSignupRole('user')}
+                      className="size-4 accent-primary"
+                    />
+                    {(t.auth as { registerAsUser?: string }).registerAsUser ?? 'Пользователь'}
+                  </label>
+                  <label className="flex cursor-pointer items-center gap-2 text-sm text-foreground">
+                    <input
+                      type="radio"
+                      name="signup-role"
+                      checked={signupRole === 'volunteer'}
+                      onChange={() => setSignupRole('volunteer')}
+                      className="size-4 accent-primary"
+                    />
+                    {(t.auth as { registerAsVolunteer?: string }).registerAsVolunteer ?? 'Волонтёр'}
+                  </label>
+                </div>
+              </div>
+            )}
 
             {mode === 'register' && (
               <div className="flex items-center">

@@ -15,6 +15,7 @@ from models import Pet, Sighting, User
 from schemas import SightingCreate, SightingResponse
 from auth import get_current_user
 from integrations.telegram import send_sighting_notification_sync
+from rate_limit import limiter
 from time_utils import utc_now
 
 logger = logging.getLogger(__name__)
@@ -47,14 +48,14 @@ def sighting_to_response(s: Sighting) -> SightingResponse:
     )
 
 
-@router.post("", response_model=SightingResponse)
-def create_sighting(
-    data: SightingCreate,
+def run_create_sighting(
     request: Request,
+    data: SightingCreate,
     background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db),
-    user: Optional[User] = Depends(get_current_user),
-):
+    db: Session,
+    user: Optional[User],
+) -> SightingResponse:
+    """Общая логика создания видения (legacy POST /sightings и POST /pets/{id}/sightings)."""
     pet_id = data.pet_id
     pet = db.scalar(select(Pet).where(Pet.id == pet_id))
     if not pet:
@@ -75,10 +76,10 @@ def create_sighting(
             detail="Автор объявления не может добавлять видения — только другие люди",
         )
 
-    # Rate limit: 1 per IP/user per day per pet
     now = utc_now()
     day_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
+    anon_ip_hash: Optional[str] = None
     if user:
         recent = db.scalar(
             select(Sighting).where(
@@ -93,20 +94,27 @@ def create_sighting(
                 detail="Вы уже добавляли видение сегодня. Повторите завтра.",
             )
     else:
-        ip_hash = _get_ip_hash(request)
-        if ip_hash:
-            recent = db.scalar(
-                select(Sighting).where(
-                    Sighting.pet_id == pet_id,
-                    Sighting.ip_hash == ip_hash,
-                    Sighting.created_at >= day_start,
-                )
+        anon_ip_hash = _get_ip_hash(request)
+        if not anon_ip_hash:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Не удалось определить соединение для анонимного видения. "
+                    "Войдите в аккаунт или попробуйте позже."
+                ),
             )
-            if recent:
-                raise HTTPException(
-                    status_code=429,
-                    detail="Вы уже добавляли видение сегодня. Повторите завтра.",
-                )
+        recent = db.scalar(
+            select(Sighting).where(
+                Sighting.pet_id == pet_id,
+                Sighting.ip_hash == anon_ip_hash,
+                Sighting.created_at >= day_start,
+            )
+        )
+        if recent:
+            raise HTTPException(
+                status_code=429,
+                detail="Вы уже добавляли видение сегодня. Повторите завтра.",
+            )
 
     sighting = Sighting(
         id=f"sight-{uuid.uuid4().hex[:12]}",
@@ -117,24 +125,22 @@ def create_sighting(
         comment=data.comment if data.comment and data.comment.strip() else None,
         contact=data.contact if data.contact and data.contact.strip() else None,
         reporter_id=user.id if user else None,
-        ip_hash=_get_ip_hash(request) if not user else None,
+        ip_hash=anon_ip_hash,
     )
     db.add(sighting)
     db.commit()
     db.refresh(sighting)
 
-    # Send Telegram notification to pet owner (sync — BackgroundTasks run in threadpool)
     background_tasks.add_task(send_sighting_notification_sync, sighting.id, pet.id)
 
     return sighting_to_response(sighting)
 
 
-@router.get("/pet/{pet_id}", response_model=list[SightingResponse])
-def list_sightings(
+def run_list_sightings_for_pet(
     pet_id: str,
-    days: Optional[int] = Query(7, ge=1, le=90),
-    db: Session = Depends(get_db),
-):
+    days: Optional[int],
+    db: Session,
+) -> list[SightingResponse]:
     pet = db.scalar(select(Pet).where(Pet.id == pet_id))
     if not pet:
         raise HTTPException(status_code=404, detail="Объявление не найдено")
@@ -148,12 +154,7 @@ def list_sightings(
     return [sighting_to_response(s) for s in sightings]
 
 
-@router.get("/counts")
-def get_sighting_counts(
-    pet_ids: str = Query(..., description="Comma-separated pet IDs"),
-    db: Session = Depends(get_db),
-):
-    """Returns { pet_id: count } for each pet. Used for 'My ads' indicators."""
+def run_get_sighting_counts(pet_ids: str, db: Session) -> dict[str, int]:
     ids = [x.strip() for x in pet_ids.split(",") if x.strip()]
     if not ids:
         return {}
@@ -165,3 +166,32 @@ def get_sighting_counts(
         .group_by(Sighting.pet_id)
     ).all()
     return {str(r.pet_id): r.cnt for r in rows}
+
+
+@router.post("", response_model=SightingResponse, status_code=201)
+@limiter.limit("30/minute")
+def create_sighting(
+    request: Request,
+    data: SightingCreate,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    user: Optional[User] = Depends(get_current_user),
+):
+    return run_create_sighting(request, data, background_tasks, db, user)
+
+
+@router.get("/pet/{pet_id}", response_model=list[SightingResponse])
+def list_sightings(
+    pet_id: str,
+    days: Optional[int] = Query(7, ge=1, le=90),
+    db: Session = Depends(get_db),
+):
+    return run_list_sightings_for_pet(pet_id, days, db)
+
+
+@router.get("/counts")
+def get_sighting_counts(
+    pet_ids: str = Query(..., description="Comma-separated pet IDs"),
+    db: Session = Depends(get_db),
+):
+    return run_get_sighting_counts(pet_ids, db)

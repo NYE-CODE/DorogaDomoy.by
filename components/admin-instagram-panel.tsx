@@ -13,6 +13,7 @@ import { Switch } from './ui/switch';
 import { Pencil, Trash2, Send, RotateCw, XCircle, Plus, Save } from 'lucide-react';
 import { useI18n } from '../context/I18nContext';
 import { adm } from './admin-panel-chrome';
+import { AdminTablePagination } from './admin-table-pagination';
 
 type PublicationFilter = 'all' | 'pending' | 'processing' | 'published' | 'failed' | 'cancelled';
 
@@ -42,13 +43,18 @@ export function AdminInstagramPanel() {
   const ig = t.adminPanel.instagram;
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [queueLoading, setQueueLoading] = useState(false);
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
 
   const [accounts, setAccounts] = useState<InstagramAccountResponse[]>([]);
   const [routes, setRoutes] = useState<InstagramRegionRouteResponse[]>([]);
   const [publications, setPublications] = useState<InstagramPublicationResponse[]>([]);
+  const [publicationsTotal, setPublicationsTotal] = useState(0);
 
   const [publicationFilter, setPublicationFilter] = useState<PublicationFilter>('all');
+  const [publicationPetFilter, setPublicationPetFilter] = useState('');
+  const [queuePage, setQueuePage] = useState(1);
+  const queuePageSize = 30;
   const [manualPetId, setManualPetId] = useState('');
 
   const [editingAccountId, setEditingAccountId] = useState<string | null>(null);
@@ -67,19 +73,39 @@ export function AdminInstagramPanel() {
     [],
   );
 
+  const fetchQueue = async (
+    status: PublicationFilter = publicationFilter,
+    page: number = queuePage,
+    petId: string = publicationPetFilter,
+  ) => {
+    setQueueLoading(true);
+    try {
+      const normalizedPetId = petId.trim();
+      const nextPublications = await instagramApi.listPublications({
+        status: status === 'all' ? undefined : status,
+        pet_id: normalizedPetId || undefined,
+        limit: queuePageSize,
+        offset: (page - 1) * queuePageSize,
+      });
+      setPublications(nextPublications.items);
+      setPublicationsTotal(nextPublications.total);
+    } finally {
+      setQueueLoading(false);
+    }
+  };
+
   const refreshAll = async () => {
-    const [nextAccounts, nextRoutes, nextPublications, settings] = await Promise.all([
+    const [nextAccounts, nextRoutes, settings] = await Promise.all([
       instagramApi.listAccounts(),
       instagramApi.listRoutes(),
-      instagramApi.listPublications({ limit: 200 }),
       settingsApi.get(),
     ]);
     setAccounts(nextAccounts);
     setRoutes(nextRoutes);
-    setPublications(nextPublications);
     setInstagramAutopublishEnabled(asBool(settings.instagram_autopublish_enabled, false));
     setInstagramStoryEnabled(asBool(settings.instagram_story_enabled, true));
     setInstagramManualWhenAutoOff(asBool(settings.instagram_manual_when_auto_off, true));
+    await fetchQueue();
   };
 
   useEffect(() => {
@@ -257,9 +283,7 @@ export function AdminInstagramPanel() {
   };
 
   const visiblePublications =
-    publicationFilter === 'all'
-      ? publications
-      : publications.filter((x) => x.status === publicationFilter);
+    publicationFilter === 'all' ? publications : publications.filter((x) => x.status === publicationFilter);
   const statusLabels: Record<PublicationFilter, string> = {
     all: ig.statusAll,
     pending: ig.statusPending,
@@ -267,6 +291,31 @@ export function AdminInstagramPanel() {
     published: ig.statusPublished,
     failed: ig.statusFailed,
     cancelled: ig.statusCancelled,
+  };
+  const queueStatusLabel = (status: string) => {
+    const key = status as PublicationFilter;
+    return statusLabels[key] ?? status;
+  };
+  const queueTotalPages = Math.max(1, Math.ceil(publicationsTotal / queuePageSize));
+  const queueStatusBadgeClass = (status: string) => {
+    switch (status) {
+      case 'published':
+        return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300';
+      case 'failed':
+        return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300';
+      case 'processing':
+        return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300';
+      case 'cancelled':
+        return 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300';
+      case 'pending':
+      default:
+        return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300';
+    }
+  };
+  const formatQueueDate = (value?: string | null) => {
+    if (!value) return '—';
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString();
   };
 
   if (loading) {
@@ -496,7 +545,15 @@ export function AdminInstagramPanel() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{ig.queueTitle}</h3>
           <div className="flex items-center gap-2">
-            <Select value={publicationFilter} onValueChange={(value) => setPublicationFilter(value as PublicationFilter)}>
+            <Select
+              value={publicationFilter}
+              onValueChange={(value) => {
+                const next = value as PublicationFilter;
+                setPublicationFilter(next);
+                setQueuePage(1);
+                void fetchQueue(next, 1, publicationPetFilter);
+              }}
+            >
               <SelectTrigger className="w-[180px]">
                 <SelectValue />
               </SelectTrigger>
@@ -508,10 +565,26 @@ export function AdminInstagramPanel() {
                 ))}
               </SelectContent>
             </Select>
+            <input
+              className="w-[180px] px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm"
+              placeholder={ig.queuePetFilterPlaceholder}
+              value={publicationPetFilter}
+              onChange={(e) => {
+                setPublicationPetFilter(e.target.value);
+              }}
+              onKeyDown={(e) => {
+                if (e.key !== 'Enter') return;
+                const nextPage = 1;
+                setQueuePage(nextPage);
+                void fetchQueue(publicationFilter, nextPage, publicationPetFilter);
+              }}
+            />
             <button
               className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:bg-accent dark:hover:bg-accent"
               onClick={() => {
-                void refreshAll();
+                const nextPage = 1;
+                setQueuePage(nextPage);
+                void fetchQueue(publicationFilter, nextPage, publicationPetFilter);
               }}
               disabled={busy}
             >
@@ -527,20 +600,41 @@ export function AdminInstagramPanel() {
           </div>
         </div>
         <div className="mt-4 space-y-2">
+          {queueLoading ? (
+            <div className="rounded-xl border border-dashed border-gray-300 p-4 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
+              {ig.loadingQueue}
+            </div>
+          ) : null}
           {visiblePublications.map((row) => (
             <div
               key={row.id}
               className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 text-sm"
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="font-medium text-gray-900 dark:text-white">
-                  {row.pet_id} • {row.format} • {row.status}
+                <div className="font-medium text-gray-900 dark:text-white flex items-center flex-wrap gap-2">
+                  <span>{row.pet_id}</span>
+                  <span className="text-gray-500 dark:text-gray-400">• {row.format}</span>
+                  <span
+                    className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${queueStatusBadgeClass(row.status)}`}
+                  >
+                    {queueStatusLabel(row.status)}
+                  </span>
                 </div>
                 <div className="text-xs text-gray-500 dark:text-gray-400">{ig.attemptsLabel}: {row.attempts}</div>
               </div>
               <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 {ig.accountLabel}: {row.account_name || ig.notAssigned} • {ig.regionLabel}: {row.region_key || '—'}
               </div>
+              <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                {ig.createdAtLabel}: {formatQueueDate(row.created_at)} • {ig.updatedAtLabel}: {formatQueueDate(row.updated_at)}
+                {' • '}
+                {ig.publishedAtLabel}: {formatQueueDate(row.published_at)}
+              </div>
+              {row.external_media_id ? (
+                <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  {ig.externalMediaIdLabel}: <span className="font-mono">{row.external_media_id}</span>
+                </div>
+              ) : null}
               {row.last_error ? (
                 <div className="mt-1 text-xs text-red-600 dark:text-red-300">{row.last_error}</div>
               ) : null}
@@ -590,6 +684,21 @@ export function AdminInstagramPanel() {
             </div>
           ) : null}
         </div>
+        <AdminTablePagination
+          currentPage={queuePage}
+          totalPages={queueTotalPages}
+          onPageChange={(page) => {
+            setQueuePage(page);
+            void fetchQueue(publicationFilter, page, publicationPetFilter);
+          }}
+          labels={t.adminPanel.pagination}
+          summary={
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              {ig.queuePageSummary(queuePage, queuePageSize, publications.length, publicationsTotal)}
+            </span>
+          }
+          className="mt-4"
+        />
       </div>
 
       {isManualModalOpen ? (

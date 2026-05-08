@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Optional
 from fastapi import APIRouter, Depends, File, HTTPException, Body, Response, UploadFile, Request
 from PIL import Image
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -20,6 +20,7 @@ from auth import (
     create_access_token,
     get_current_user_required,
     set_auth_cookie,
+    reject_cross_site_browser_request,
 )
 from mappers.user import user_to_response
 from rate_limit import limiter
@@ -68,13 +69,16 @@ def register(
     if existing:
         raise HTTPException(status_code=400, detail="Email уже зарегистрирован")
     user_id = "user-" + str(int(__import__("time").time() * 1000))
+    signup_role = getattr(data, "role", None) or "user"
+    reg_vol = signup_role == "volunteer"
     user = User(
         id=user_id,
         email=data.email,
         name=data.name,
         password_hash=get_password_hash(data.password),
         avatar=f"https://api.dicebear.com/7.x/avataaars/svg?seed={data.name}",
-        role="user",
+        role=signup_role,
+        registered_as_volunteer=reg_vol,
         contacts=data.contacts.model_dump() if hasattr(data, 'contacts') and data.contacts else {},
         helper_code=_make_helper_code(db),
     )
@@ -113,7 +117,9 @@ def login(
 
 
 @router.post("/logout", status_code=204)
-def logout():
+@limiter.limit("60/minute")
+def logout(request: Request):
+    reject_cross_site_browser_request(request)
     response = Response(status_code=204)
     clear_auth_cookie(response)
     return response
@@ -129,6 +135,17 @@ class UpdateProfileBody(BaseModel):
     email: Optional[str] = None
     contacts: Optional[UserContactsStrict] = None
     avatar: Optional[str] = None
+    role: Optional[str] = None
+
+    @field_validator("role")
+    @classmethod
+    def profile_role_optional(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        r = str(v).strip().lower()
+        if r not in ("user", "volunteer"):
+            raise ValueError("role: user или volunteer")
+        return r
 
 
 class ChangePasswordBody(BaseModel):
@@ -137,7 +154,9 @@ class ChangePasswordBody(BaseModel):
 
 
 @router.post("/change-password")
+@limiter.limit("12/minute")
 def change_password(
+    request: Request,
     body: ChangePasswordBody,
     user: User = Depends(get_current_user_required),
     db: Session = Depends(get_db),
@@ -159,7 +178,9 @@ def change_password(
 
 
 @router.post("/avatar-upload", response_model=dict)
+@limiter.limit("30/minute")
 def upload_avatar(
+    request: Request,
     file: UploadFile = File(...),
     user: User = Depends(get_current_user_required),
     db: Session = Depends(get_db),
@@ -207,7 +228,9 @@ def upload_avatar(
 
 
 @router.patch("/me", response_model=UserResponse)
+@limiter.limit("60/minute")
 def update_me(
+    request: Request,
     body: UpdateProfileBody = Body(default=UpdateProfileBody()),
     user: User = Depends(get_current_user_required),
     db: Session = Depends(get_db),
@@ -228,6 +251,22 @@ def update_me(
         user.email = body.email
     if body.contacts is not None:
         user.contacts = {**(user.contacts or {}), **body.contacts.model_dump(exclude_unset=True)}
+    if body.role is not None:
+        if user.role == "admin":
+            raise HTTPException(status_code=400, detail="Роль администратора меняется только через админ-панель")
+        if bool(getattr(user, "registered_as_volunteer", False)):
+            raise HTTPException(status_code=400, detail="Роль выбрана при регистрации и не может быть изменена")
+        new_role = body.role
+        if user.role == "volunteer" and new_role == "user":
+            raise HTTPException(status_code=400, detail="Нельзя перейти с роли волонтёра на пользователя")
+        if user.role == "user" and new_role == "volunteer":
+            user.role = "volunteer"
+        elif user.role == "volunteer" and new_role == "volunteer":
+            pass
+        elif user.role == "user" and new_role == "user":
+            pass
+        else:
+            raise HTTPException(status_code=400, detail="Недопустимое изменение роли")
     try:
         db.commit()
         db.refresh(user)

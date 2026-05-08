@@ -51,7 +51,6 @@ export default function MyShelterTeamPage() {
 
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteUserId, setInviteUserId] = useState('');
-  const [inviteRole, setInviteRole] = useState<'manager' | 'volunteer'>('volunteer');
   const [inviting, setInviting] = useState(false);
 
   const reload = useCallback(async () => {
@@ -96,18 +95,11 @@ export default function MyShelterTeamPage() {
     });
   }, [tm.title, tm.subtitle, shelterId]);
 
-  const myMembership = useMemo(
-    () => (user ? members.find((m) => m.user_id === user.id) : undefined),
-    [members, user],
-  );
-
   const canManage = useMemo(() => {
     if (!user || !shelter) return false;
     if (user.role === 'admin') return true;
-    if (shelter.owner_user_id === user.id) return true;
-    if (!myMembership || myMembership.status !== 'active') return false;
-    return myMembership.role === 'owner' || myMembership.role === 'manager';
-  }, [myMembership, shelter, user]);
+    return shelter.owner_user_id === user.id;
+  }, [shelter, user]);
 
   const visibleMembers = useMemo(
     () => sortMembers(members.filter((m) => m.status !== 'removed')),
@@ -153,7 +145,7 @@ export default function MyShelterTeamPage() {
     setInviting(true);
     try {
       await sheltersApi.inviteMember(shelterId, {
-        role: inviteRole,
+        role: 'volunteer',
         ...(uid ? { user_id: uid } : { email }),
       });
       toast.success(tm.inviteSuccess);
@@ -188,17 +180,6 @@ export default function MyShelterTeamPage() {
       await reload();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : tm.removeError);
-    }
-  };
-
-  const onRoleChange = async (m: ShelterMemberResponse, next: ShelterMemberRole) => {
-    if (!shelterId || m.role === 'owner' || next === m.role) return;
-    try {
-      await sheltersApi.updateMember(shelterId, m.id, { role: next });
-      toast.success(tm.roleUpdated);
-      await reload();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : tm.roleUpdateError);
     }
   };
 
@@ -271,7 +252,8 @@ export default function MyShelterTeamPage() {
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-lg font-semibold">{tm.inviteTitle}</h2>
               </div>
-              <div className="grid gap-3 lg:grid-cols-[minmax(180px,1fr)_minmax(180px,1fr)_minmax(160px,auto)_auto]">
+              <p className="mb-3 text-sm text-muted-foreground">{tm.inviteVolunteersOnlyHint}</p>
+              <div className="grid gap-3 lg:grid-cols-[minmax(180px,1fr)_minmax(180px,1fr)_auto]">
                 <label className="flex flex-col gap-1 text-sm">
                   <span className="text-muted-foreground">{tm.inviteEmail}</span>
                   <input
@@ -291,17 +273,6 @@ export default function MyShelterTeamPage() {
                     placeholder="uuid…"
                     autoComplete="off"
                   />
-                </label>
-                <label className="flex flex-col gap-1 text-sm">
-                  <span className="text-muted-foreground">{tm.inviteRole}</span>
-                  <select
-                    value={inviteRole}
-                    onChange={(e) => setInviteRole(e.target.value as 'manager' | 'volunteer')}
-                    className="rounded-lg border border-border bg-background px-3 py-2"
-                  >
-                    <option value="manager">{tm.roleManager}</option>
-                    <option value="volunteer">{tm.roleVolunteer}</option>
-                  </select>
                 </label>
                 <div className="flex items-end">
                   <Button
@@ -356,26 +327,9 @@ export default function MyShelterTeamPage() {
                       </div>
 
                       <div className="flex flex-wrap items-center gap-2 sm:justify-center">
-                        {m.role === 'owner' ? (
-                          <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium">
-                            {roleLabel(m.role)}
-                          </span>
-                        ) : showManage ? (
-                          <select
-                            value={m.role}
-                            onChange={(e) =>
-                              onRoleChange(m, e.target.value as ShelterMemberRole)
-                            }
-                            className="rounded-lg border border-border bg-background px-2 py-1 text-sm"
-                          >
-                            <option value="manager">{tm.roleManager}</option>
-                            <option value="volunteer">{tm.roleVolunteer}</option>
-                          </select>
-                        ) : (
-                          <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium">
-                            {roleLabel(m.role)}
-                          </span>
-                        )}
+                        <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium">
+                          {roleLabel(m.role)}
+                        </span>
                       </div>
 
                       <div className="sm:text-center">

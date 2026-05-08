@@ -2,19 +2,37 @@
 import logging
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from database import get_db
 from models import User, NotificationSettings, Notification
-from schemas import NotificationSettingsResponse, NotificationSettingsUpdate, NotificationResponse
+from schemas import (
+    NotificationPatch,
+    NotificationSettingsResponse,
+    NotificationSettingsUpdate,
+    NotificationResponse,
+)
 from auth import get_current_user_required
+from rate_limit import limiter
 from time_utils import utc_now
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
+
+
+def _notification_row_to_response(n: Notification) -> NotificationResponse:
+    return NotificationResponse(
+        id=n.id,
+        pet_id=n.pet_id,
+        type=n.type,
+        message=n.message,
+        is_read=n.is_read,
+        sent_via=n.sent_via,
+        sent_at=n.sent_at,
+    )
 
 
 def _get_or_create_settings(user: User, db: Session) -> NotificationSettings:
@@ -45,7 +63,9 @@ def get_notification_settings(
 
 
 @router.patch("/settings", response_model=NotificationSettingsResponse)
+@limiter.limit("30/minute")
 def update_notification_settings(
+    request: Request,
     data: NotificationSettingsUpdate,
     user: User = Depends(get_current_user_required),
     db: Session = Depends(get_db),
@@ -93,32 +113,35 @@ def list_notifications(
         .offset(offset)
         .limit(limit)
     ).all()
-    return [
-        NotificationResponse(
-            id=n.id,
-            pet_id=n.pet_id,
-            type=n.type,
-            message=n.message,
-            is_read=n.is_read,
-            sent_via=n.sent_via,
-            sent_at=n.sent_at,
-        )
-        for n in notifications
-    ]
+    return [_notification_row_to_response(n) for n in notifications]
 
 
-@router.patch("/{notification_id}/read")
-def mark_notification_read(
+@router.patch("/{notification_id}", response_model=NotificationResponse)
+def patch_notification(
     notification_id: str,
+    body: NotificationPatch,
     user: User = Depends(get_current_user_required),
     db: Session = Depends(get_db),
 ):
+    patch = body.model_dump(exclude_unset=True)
+    if not patch:
+        raise HTTPException(status_code=400, detail="Нет полей для обновления")
+
     notification = db.scalar(
         select(Notification).where(Notification.id == notification_id, Notification.user_id == user.id)
     )
     if not notification:
         raise HTTPException(status_code=404, detail="Уведомление не найдено")
 
-    notification.is_read = True
-    db.commit()
-    return {"detail": "ok"}
+    if "is_read" in patch:
+        notification.is_read = bool(patch["is_read"])
+
+    try:
+        db.commit()
+        db.refresh(notification)
+    except Exception as e:
+        db.rollback()
+        logger.exception("Failed to patch notification %s: %s", notification_id, e)
+        raise HTTPException(status_code=500, detail="Ошибка при обновлении уведомления") from e
+
+    return _notification_row_to_response(notification)

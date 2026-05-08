@@ -109,7 +109,7 @@ export function MobileBottomNav() {
               <Building2 size={22} />
               <span className="text-[11px] font-medium leading-tight">Приюты</span>
             </button>
-            {user?.role === 'shelter' ? (
+            {user?.role === 'volunteer' || user?.role === 'admin' ? (
               <button
                 type="button"
                 onClick={handleMyShelters}

@@ -8,7 +8,9 @@ from pathlib import Path
 from dotenv import load_dotenv
 load_dotenv(Path(__file__).resolve().parent / ".env")
 
-from fastapi import APIRouter, FastAPI
+from fastapi import APIRouter, FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from slowapi import _rate_limit_exceeded_handler
@@ -146,6 +148,15 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(SlowAPIMiddleware)
 
 
+@app.exception_handler(RequestValidationError)
+async def request_validation_exception_handler(request: Request, exc: RequestValidationError):
+    """В production по умолчанию не отдаём полную структуру ошибок Pydantic (разведка API)."""
+    if os.getenv("API_EXPOSE_VALIDATION_DETAILS", "false").lower() in {"1", "true", "yes"}:
+        return JSONResponse(status_code=422, content={"detail": exc.errors()})
+    logger.warning("422 validation: path=%s errors=%s", request.url.path, exc.errors())
+    return JSONResponse(status_code=422, content={"detail": "Неверные входные данные"})
+
+
 @app.middleware("http")
 async def x_robots_tag_middleware(request, call_next):
     """Не индексировать служебные ответы API (Swagger, схема, корень JSON)."""
@@ -206,7 +217,9 @@ def root():
 @app.get("/health")
 @limiter.exempt
 def health():
-    """Diagnostic endpoint: checks database read/write access."""
-    info = check_db_writable()
-    status_ok = info.get("writable", False)
-    return {"status": "ok" if status_ok else "error"}
+    """Живость сервиса. Детали по БД — только при PUBLIC_HEALTH_INCLUDE_DB=true (для балансировщиков)."""
+    payload: dict = {"status": "ok"}
+    if os.getenv("PUBLIC_HEALTH_INCLUDE_DB", "").lower() in {"1", "true", "yes"}:
+        info = check_db_writable()
+        payload["database"] = "ok" if info.get("writable") else "error"
+    return payload

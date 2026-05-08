@@ -10,6 +10,7 @@ import { cn } from '../components/ui/utils';
 import { Button } from '../components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../components/ui/dropdown-menu';
 import { useI18n } from '../context/I18nContext';
+import { useAuth } from '../context/AuthContext';
 import {
   sheltersApi,
   type ShelterAnimalFocus,
@@ -29,6 +30,7 @@ export default function MySheltersPage() {
   const { t } = useI18n();
   const ms = t.myShelters;
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [list, setList] = useState<ShelterResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,15 +69,15 @@ export default function MySheltersPage() {
       switch (k) {
         case 'foster':
           return ms.kindFoster;
-        case 'vet':
-          return ms.kindVet;
         case 'other':
+          return ms.kindOther;
+        case 'vet':
           return ms.kindOther;
         default:
           return ms.kindShelter;
       }
     },
-    [ms.kindFoster, ms.kindOther, ms.kindShelter, ms.kindVet],
+    [ms.kindFoster, ms.kindOther, ms.kindShelter],
   );
 
   const focusLabel = useCallback(
@@ -129,39 +131,46 @@ export default function MySheltersPage() {
     }
   };
 
-  const renderActionsMenu = (row: ShelterResponse) => (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          className="inline-flex size-8 items-center justify-center rounded-md border border-border bg-background text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          aria-label={ms.colActions}
-        >
-          <MoreHorizontal className="size-4" />
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-52">
-        <DropdownMenuItem onClick={() => navigate(`/my-shelters/${row.id}/pets`)}>
-          <PawPrint className="mr-2 size-4" />
-          {ms.petsButton}
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => navigate(`/my-shelters/${row.id}/team`)}>
-          <Users className="mr-2 size-4" />
-          {ms.teamButton}
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => openEdit(row)}>
-          <Pencil className="mr-2 size-4" />
-          {ms.editCard}
-        </DropdownMenuItem>
-        {(row.moderation_status === 'draft' || row.moderation_status === 'rejected') && (
-          <DropdownMenuItem onClick={() => void handleSubmitModeration(row.id)}>
-            <Send className="mr-2 size-4" />
-            {ms.submitModeration}
+  const renderActionsMenu = (row: ShelterResponse) => {
+    const isOwner = user?.id === row.owner_user_id;
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            className="inline-flex size-8 items-center justify-center rounded-md border border-border bg-background text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            aria-label={ms.colActions}
+          >
+            <MoreHorizontal className="size-4" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-52">
+          <DropdownMenuItem onClick={() => navigate(`/my-shelters/${row.id}/pets`)}>
+            <PawPrint className="mr-2 size-4" />
+            {ms.petsButton}
           </DropdownMenuItem>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
+          {isOwner && (
+            <DropdownMenuItem onClick={() => navigate(`/my-shelters/${row.id}/team`)}>
+              <Users className="mr-2 size-4" />
+              {ms.teamButton}
+            </DropdownMenuItem>
+          )}
+          {isOwner && (
+            <DropdownMenuItem onClick={() => openEdit(row)}>
+              <Pencil className="mr-2 size-4" />
+              {ms.editCard}
+            </DropdownMenuItem>
+          )}
+          {isOwner && (row.moderation_status === 'draft' || row.moderation_status === 'rejected') && (
+            <DropdownMenuItem onClick={() => void handleSubmitModeration(row.id)}>
+              <Send className="mr-2 size-4" />
+              {ms.submitModeration}
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  };
 
   return (
     <div className="flex min-h-screen flex-col bg-background pb-24 md:pb-8 dark:bg-gray-950">

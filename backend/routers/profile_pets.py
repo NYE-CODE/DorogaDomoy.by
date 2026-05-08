@@ -121,7 +121,9 @@ def _to_response(p: ProfilePet, *, include_owner_contacts: bool = True) -> Profi
 
 
 @router.get("", response_model=list[ProfilePetResponse])
+@limiter.limit("120/minute")
 def list_profile_pets(
+    request: Request,
     owner_id: Optional[str] = Query(None),
     db: Session = Depends(get_db),
     current_user: Optional[User] = Depends(get_current_user),

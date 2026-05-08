@@ -16,6 +16,7 @@ def user_to_response(
         name=user.name,
         avatar=user.avatar,
         role=user.role,
+        registered_as_volunteer=bool(getattr(user, "registered_as_volunteer", False)),
         helper_code=user.helper_code,
         helper_confirmed_count=user.helper_confirmed_count or 0,
         points_balance=(user.points_balance or 0) if include_points_balance else 0,

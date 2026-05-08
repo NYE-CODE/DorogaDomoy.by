@@ -125,9 +125,12 @@ export function emptyForm(
 
 export function formFromShelter(s: ShelterResponse) {
   const c = s.contacts || {};
+  const rawKind = s.kind as string;
+  const kind: ShelterKind =
+    rawKind === 'vet' ? 'other' : ((rawKind as ShelterKind) || 'shelter');
   return {
     name: s.name,
-    kind: s.kind,
+    kind,
     animalFocus: s.animal_focus ?? 'mixed',
     description: s.description || '',
     city: s.city,

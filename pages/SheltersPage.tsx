@@ -248,7 +248,6 @@ export default function SheltersPage() {
                 <SelectItem value={ALL_KINDS_VALUE}>{t.common.all}</SelectItem>
                 <SelectItem value="shelter">{s.kindShelter}</SelectItem>
                 <SelectItem value="foster">{s.kindFoster}</SelectItem>
-                <SelectItem value="vet">{s.kindVet}</SelectItem>
                 <SelectItem value="other">{s.kindOther}</SelectItem>
               </SelectContent>
             </Select>

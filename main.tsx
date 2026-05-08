@@ -125,11 +125,11 @@ function RequireAdmin({ children }: { children: React.ReactElement }) {
   return children;
 }
 
-function RequireShelter({ children }: { children: React.ReactElement }) {
+function RequireVolunteer({ children }: { children: React.ReactElement }) {
   const { user, isAuthenticated, isLoading } = useAuth();
   if (isLoading) return <RouteLoader />;
   if (!isAuthenticated) return <Navigate to={getHomePath()} replace />;
-  if (user?.role !== 'shelter') return <Navigate to="/profile" replace />;
+  if (user?.role !== 'volunteer' && user?.role !== 'admin') return <Navigate to="/profile" replace />;
   return children;
 }
 
@@ -190,9 +190,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                     path="/my-shelters/:shelterId/pets"
                     element={
                       <RequireAuth>
-                        <RequireShelter>
+                        <RequireVolunteer>
                           <MyShelterPetsListPage />
-                        </RequireShelter>
+                        </RequireVolunteer>
                       </RequireAuth>
                     }
                   />
@@ -200,9 +200,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                     path="/my-shelters/:shelterId/pets/new"
                     element={
                       <RequireAuth>
-                        <RequireShelter>
+                        <RequireVolunteer>
                           <MyShelterPetFormPage />
-                        </RequireShelter>
+                        </RequireVolunteer>
                       </RequireAuth>
                     }
                   />
@@ -210,9 +210,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                     path="/my-shelters/:shelterId/pets/:petId/edit"
                     element={
                       <RequireAuth>
-                        <RequireShelter>
+                        <RequireVolunteer>
                           <MyShelterPetFormPage />
-                        </RequireShelter>
+                        </RequireVolunteer>
                       </RequireAuth>
                     }
                   />
@@ -220,9 +220,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                     path="/my-shelters/:shelterId/pets/:petId/campaign"
                     element={
                       <RequireAuth>
-                        <RequireShelter>
+                        <RequireVolunteer>
                           <MyShelterPetCampaignPage />
-                        </RequireShelter>
+                        </RequireVolunteer>
                       </RequireAuth>
                     }
                   />
@@ -238,9 +238,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                     path="/my-shelters/new"
                     element={
                       <RequireAuth>
-                        <RequireShelter>
+                        <RequireVolunteer>
                           <MyShelterFormPage />
-                        </RequireShelter>
+                        </RequireVolunteer>
                       </RequireAuth>
                     }
                   />
@@ -248,9 +248,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                     path="/my-shelters/edit/:shelterId"
                     element={
                       <RequireAuth>
-                        <RequireShelter>
+                        <RequireVolunteer>
                           <MyShelterFormPage />
-                        </RequireShelter>
+                        </RequireVolunteer>
                       </RequireAuth>
                     }
                   />
@@ -258,9 +258,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                     path="/my-shelters"
                     element={
                       <RequireAuth>
-                        <RequireShelter>
+                        <RequireVolunteer>
                           <MySheltersPage />
-                        </RequireShelter>
+                        </RequireVolunteer>
                       </RequireAuth>
                     }
                   />
@@ -268,9 +268,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                     path="/my-shelters/"
                     element={
                       <RequireAuth>
-                        <RequireShelter>
+                        <RequireVolunteer>
                           <MySheltersPage />
-                        </RequireShelter>
+                        </RequireVolunteer>
                       </RequireAuth>
                     }
                   />

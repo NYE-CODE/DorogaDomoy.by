@@ -13,7 +13,8 @@ class User(Base):
     name = Column(String, nullable=False)
     password_hash = Column(String, nullable=False)
     avatar = Column(String, nullable=True)
-    role = Column(String, default="user")  # user, volunteer, shelter, admin
+    role = Column(String, default="user")  # user, volunteer, admin
+    registered_as_volunteer = Column(Boolean, default=False, nullable=False)
     contacts = Column(JSON, default=dict)  # {phone?, telegram?, viber?}
     is_blocked = Column(Boolean, default=False)
     blocked_reason = Column(String, nullable=True)
@@ -416,7 +417,7 @@ class BlogPost(Base):
 
 
 class Shelter(Base):
-    """Приют / передержка / точка помощи — владелец: пользователь с ролью shelter (вариант C)."""
+    """Карточка организации в каталоге — владелец: пользователь-волонтёр."""
 
     __tablename__ = "shelters"
 

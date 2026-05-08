@@ -5,8 +5,10 @@ from datetime import datetime, timedelta, timezone
 import uuid
 from typing import Optional
 
+from collections.abc import Collection
+
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from auth import get_current_user_required, require_admin
@@ -28,6 +30,7 @@ from schemas import (
     InstagramBoostCreate,
     InstagramBoostEligibilityResponse,
     InstagramPublicationCreateManual,
+    InstagramPublicationListResponse,
     InstagramPublicationResponse,
     InstagramRegionRouteCreate,
     InstagramRegionRouteResponse,
@@ -62,16 +65,13 @@ def _validate_access_token_shape(token: Optional[str]) -> None:
     if len(token) < 60:
         raise HTTPException(
             status_code=400,
-            detail="Invalid Instagram access token format: token is too short",
+            detail="Токен слишком короткий. Нужен долгоживущий токен Facebook Graph API для Instagram.",
         )
     # Instagram Basic/other token types are not accepted by Graph /{ig-user-id}/media publish flow.
     if token.startswith("IGAA"):
         raise HTTPException(
             status_code=400,
-            detail=(
-                "Unsupported token type (IGAA). "
-                "Use a Facebook Graph access token for Instagram Graph API publishing."
-            ),
+            detail="Этот тип токена не подходит для публикации. Используйте токен Facebook Graph API.",
         )
 
 
@@ -96,24 +96,45 @@ def _account_to_response(row: InstagramAccount) -> InstagramAccountResponse:
     )
 
 
-def _route_to_response(db: Session, row: InstagramRegionRoute) -> InstagramRegionRouteResponse:
-    account = db.scalar(select(InstagramAccount).where(InstagramAccount.id == row.account_id))
+def _account_names_by_ids(db: Session, account_ids: Collection[str]) -> dict[str, str]:
+    """Один запрос вместо N обращений к instagram_accounts в списках."""
+    ids = {x for x in account_ids if x}
+    if not ids:
+        return {}
+    rows = db.execute(
+        select(InstagramAccount.id, InstagramAccount.name).where(InstagramAccount.id.in_(ids))
+    ).all()
+    return {str(rid): name for rid, name in rows}
+
+
+def _route_to_response_with_names(
+    row: InstagramRegionRoute,
+    names: dict[str, str],
+) -> InstagramRegionRouteResponse:
+    account_name = names.get(row.account_id, row.account_id) if row.account_id else ""
     return InstagramRegionRouteResponse(
         id=row.id,
         region_key=row.region_key,
         account_id=row.account_id,
-        account_name=account.name if account else row.account_id,
+        account_name=account_name,
         is_fallback=bool(row.is_fallback),
         created_at=row.created_at or utc_now(),
         updated_at=row.updated_at or utc_now(),
     )
 
 
-def _publication_to_response(db: Session, row: InstagramPublication) -> InstagramPublicationResponse:
+def _route_to_response(db: Session, row: InstagramRegionRoute) -> InstagramRegionRouteResponse:
+    names = _account_names_by_ids(db, [row.account_id] if row.account_id else [])
+    return _route_to_response_with_names(row, names)
+
+
+def _publication_to_response_with_names(
+    row: InstagramPublication,
+    names: dict[str, str],
+) -> InstagramPublicationResponse:
     account_name: Optional[str] = None
     if row.account_id:
-        account = db.scalar(select(InstagramAccount).where(InstagramAccount.id == row.account_id))
-        account_name = account.name if account else None
+        account_name = names.get(row.account_id)
     return InstagramPublicationResponse(
         id=row.id,
         pet_id=row.pet_id,
@@ -136,6 +157,17 @@ def _publication_to_response(db: Session, row: InstagramPublication) -> Instagra
         updated_at=row.updated_at or utc_now(),
         published_at=row.published_at,
     )
+
+
+def _publication_to_response(db: Session, row: InstagramPublication) -> InstagramPublicationResponse:
+    names = _account_names_by_ids(db, [row.account_id] if row.account_id else [])
+    return _publication_to_response_with_names(row, names)
+
+
+def _publications_to_responses(db: Session, rows: list[InstagramPublication]) -> list[InstagramPublicationResponse]:
+    ids = {r.account_id for r in rows if r.account_id}
+    names = _account_names_by_ids(db, ids)
+    return [_publication_to_response_with_names(r, names) for r in rows]
 
 
 def _boost_last_item(db: Session, user_id: str) -> InstagramPublication | None:
@@ -260,7 +292,8 @@ def list_routes(
     _: User = Depends(require_admin),
 ):
     rows = db.scalars(select(InstagramRegionRoute).order_by(InstagramRegionRoute.region_key.asc())).all()
-    return [_route_to_response(db, r) for r in rows]
+    names = _account_names_by_ids(db, {r.account_id for r in rows if r.account_id})
+    return [_route_to_response_with_names(r, names) for r in rows]
 
 
 @router.post("/routes", response_model=InstagramRegionRouteResponse, status_code=201)
@@ -347,7 +380,7 @@ def delete_route(
     return None
 
 
-@router.get("/publications", response_model=list[InstagramPublicationResponse])
+@router.get("/publications", response_model=InstagramPublicationListResponse)
 def list_publications(
     status: Optional[str] = Query(None),
     pet_id: Optional[str] = Query(None),
@@ -356,14 +389,21 @@ def list_publications(
     db: Session = Depends(get_db),
     _: User = Depends(require_admin),
 ):
-    stmt = select(InstagramPublication).order_by(InstagramPublication.created_at.desc())
+    base_stmt = select(InstagramPublication)
     if status:
-        stmt = stmt.where(InstagramPublication.status == status)
+        base_stmt = base_stmt.where(InstagramPublication.status == status)
     if pet_id:
-        stmt = stmt.where(InstagramPublication.pet_id == pet_id)
-    stmt = stmt.offset(offset).limit(limit)
+        base_stmt = base_stmt.where(InstagramPublication.pet_id == pet_id)
+    total_stmt = select(func.count()).select_from(base_stmt.subquery())
+    total = db.scalar(total_stmt) or 0
+    stmt = base_stmt.order_by(InstagramPublication.created_at.desc()).offset(offset).limit(limit)
     rows = db.scalars(stmt).all()
-    return [_publication_to_response(db, r) for r in rows]
+    return InstagramPublicationListResponse(
+        items=_publications_to_responses(db, rows),
+        total=total,
+        limit=limit,
+        offset=offset,
+    )
 
 
 @router.post("/publications/manual", response_model=list[InstagramPublicationResponse], status_code=201)
@@ -389,7 +429,7 @@ def create_manual_publication(
         formats=[data.format],
         initiated_by=admin.id,
     )
-    return [_publication_to_response(db, r) for r in items]
+    return _publications_to_responses(db, items)
 
 
 @router.post("/publications/{publication_id}/retry", response_model=InstagramPublicationResponse)

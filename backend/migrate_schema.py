@@ -446,6 +446,7 @@ PERFORMANCE_INDEXES = [
         "CREATE INDEX IF NOT EXISTS ix_sightings_pet_ip_created "
         "ON sightings (pet_id, ip_hash, created_at)"
     ),
+    "CREATE INDEX IF NOT EXISTS ix_sightings_pet_seen_at ON sightings (pet_id, seen_at DESC)",
     "CREATE UNIQUE INDEX IF NOT EXISTS ix_users_helper_code ON users (helper_code)",
     "CREATE INDEX IF NOT EXISTS ix_points_transactions_user_id ON points_transactions (user_id)",
     "CREATE INDEX IF NOT EXISTS ix_instagram_accounts_business_id ON instagram_accounts (instagram_business_id)",
