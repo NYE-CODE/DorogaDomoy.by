@@ -3,7 +3,7 @@ import { Mail, Lock, User, ArrowRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useI18n } from '../../context/I18nContext';
 import { toast } from 'sonner';
-import { Dialog, DialogContent } from '../ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 
@@ -70,16 +70,14 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
           showCloseButton={false}
         >
         {/* Header */}
-        <div className="relative h-32 bg-gradient-to-r from-primary to-primary/80 flex items-center justify-center">
+        <div className="relative flex h-32 items-center justify-center bg-gradient-to-r from-primary to-primary/80">
           <div className="text-center text-white">
-            <h2 className="text-2xl font-bold mb-1">
+            <DialogTitle className="mb-1 text-2xl font-bold text-white">
               {mode === 'login' ? t.auth.loginTitle : t.auth.registerTitle}
-            </h2>
-            <p className="text-primary-foreground/90 text-sm">
-              {mode === 'login' 
-                ? t.auth.loginSubtitle 
-                : t.auth.registerSubtitle}
-            </p>
+            </DialogTitle>
+            <DialogDescription className="text-sm text-primary-foreground/90">
+              {mode === 'login' ? t.auth.loginSubtitle : t.auth.registerSubtitle}
+            </DialogDescription>
           </div>
         </div>
 

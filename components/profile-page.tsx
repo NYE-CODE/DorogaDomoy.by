@@ -42,6 +42,7 @@ export default function ProfilePage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user, updateContacts, updateProfile, changePassword, uploadAvatar, refreshUser } = useAuth();
+  const { t } = useI18n();
   const pr = t.profile as typeof t.profile & {
     roleFieldLabel?: string;
     roleHintRegVolunteer?: string;
@@ -52,7 +53,6 @@ export default function ProfilePage() {
     volunteerUpgradeCancel?: string;
     roles?: { user: string; volunteer: string; admin: string };
   };
-  const { t } = useI18n();
   
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
