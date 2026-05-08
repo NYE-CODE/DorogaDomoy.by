@@ -39,7 +39,7 @@ def list_articles(
     return [_to_response(m) for m in items]
 
 
-@router.post("", response_model=MediaArticleResponse)
+@router.post("", response_model=MediaArticleResponse, status_code=201)
 def create_article(
     data: MediaArticleCreate,
     db: Session = Depends(get_db),

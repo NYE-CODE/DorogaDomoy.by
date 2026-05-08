@@ -84,8 +84,8 @@ export const adminPanelLocales = {
         `${ops} операций · +${sumPositive} баллов начислено`,
       statRewardsGranted: 'Награда начислена',
       statRewardsGrantedHint: (n: number) => `по ${n} объявлениям`,
-      statUsersRoles: (volunteers: number, shelters: number, admins: number) =>
-        `Волонтёры: ${volunteers} · Приюты: ${shelters} · Админы: ${admins}`,
+      statUsersRoles: (regular: number, volunteers: number, admins: number) =>
+        `Пользователи: ${regular} · Волонтёры: ${volunteers} · Админы: ${admins}`,
     },
     toasts: {
       settingsSaved: 'Настройки сохранены',
@@ -551,6 +551,14 @@ export const adminPanelLocales = {
       attemptsLabel: 'попытки',
       accountLabel: 'аккаунт',
       regionLabel: 'регион',
+      createdAtLabel: 'создано',
+      updatedAtLabel: 'обновлено',
+      publishedAtLabel: 'опубликовано',
+      externalMediaIdLabel: 'media id',
+      queuePetFilterPlaceholder: 'Фильтр по pet_id',
+      loadingQueue: 'Загрузка очереди…',
+      queuePageSummary: (page: number, pageSize: number, rows: number, total: number) =>
+        `Страница ${page} · показано: ${rows}/${pageSize} · всего: ${total}`,
       notAssigned: 'не назначен',
       publishNowButton: 'Опубликовать сейчас',
       retryButton: 'Повторить',
@@ -669,8 +677,8 @@ export const adminPanelLocales = {
         `${ops} аперацый · +${sumPositive} балаў налічана`,
       statRewardsGranted: 'Узнагарода налічана',
       statRewardsGrantedHint: (n: number) => `па ${n} аб\'явам`,
-      statUsersRoles: (volunteers: number, shelters: number, admins: number) =>
-        `Валанцёры: ${volunteers} · Прыюты: ${shelters} · Адміны: ${admins}`,
+      statUsersRoles: (regular: number, volunteers: number, admins: number) =>
+        `Карыстальнікі: ${regular} · Валанцёры: ${volunteers} · Адміны: ${admins}`,
     },
     toasts: {
       settingsSaved: 'Налады захаваны',
@@ -1138,6 +1146,14 @@ export const adminPanelLocales = {
       attemptsLabel: 'спробы',
       accountLabel: 'акаўнт',
       regionLabel: 'рэгіён',
+      createdAtLabel: 'створана',
+      updatedAtLabel: 'абноўлена',
+      publishedAtLabel: 'апублікавана',
+      externalMediaIdLabel: 'media id',
+      queuePetFilterPlaceholder: 'Фільтр па pet_id',
+      loadingQueue: 'Загрузка чаргі…',
+      queuePageSummary: (page: number, pageSize: number, rows: number, total: number) =>
+        `Старонка ${page} · паказана: ${rows}/${pageSize} · усяго: ${total}`,
       notAssigned: 'не прызначаны',
       publishNowButton: 'Апублікаваць зараз',
       retryButton: 'Паўтарыць',
@@ -1256,8 +1272,8 @@ export const adminPanelLocales = {
         `${ops} tx · +${sumPositive} pts granted`,
       statRewardsGranted: 'Reward paid out',
       statRewardsGrantedHint: (n: number) => `on ${n} ads`,
-      statUsersRoles: (volunteers: number, shelters: number, admins: number) =>
-        `Volunteers: ${volunteers} · Shelters: ${shelters} · Admins: ${admins}`,
+      statUsersRoles: (regular: number, volunteers: number, admins: number) =>
+        `Users: ${regular} · Volunteers: ${volunteers} · Admins: ${admins}`,
     },
     toasts: {
       settingsSaved: 'Settings saved',
@@ -1725,6 +1741,14 @@ export const adminPanelLocales = {
       attemptsLabel: 'attempts',
       accountLabel: 'account',
       regionLabel: 'region',
+      createdAtLabel: 'created',
+      updatedAtLabel: 'updated',
+      publishedAtLabel: 'published',
+      externalMediaIdLabel: 'media id',
+      queuePetFilterPlaceholder: 'Filter by pet_id',
+      loadingQueue: 'Loading queue…',
+      queuePageSummary: (page: number, pageSize: number, rows: number, total: number) =>
+        `Page ${page} · shown: ${rows}/${pageSize} · total: ${total}`,
       notAssigned: 'not assigned',
       publishNowButton: 'Publish now',
       retryButton: 'Retry',

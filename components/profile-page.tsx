@@ -5,6 +5,15 @@ import { useAuth } from '../context/AuthContext';
 import { useI18n } from '../context/I18nContext';
 import { API_BASE, telegramApi, notificationsApi, type NotificationSettingsData } from '../api/client';
 import { toast } from 'sonner';
+import { Button } from './ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from './ui/dialog';
 import { Header } from './layout/Header';
 import { CitySelectModal } from './city-select-modal';
 import { useCity } from '../context/CityContext';
@@ -29,24 +38,20 @@ function sanitizeTelegramBotUrl(raw: string): string | null {
   }
 }
 
-const roleLabels: Record<string, string> = {
-  user: 'Пользователь',
-  volunteer: 'Волонтёр',
-  shelter: 'Приют',
-  admin: 'Администратор'
-};
-
-const roleColors: Record<string, string> = {
-  user: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
-  volunteer: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
-  shelter: 'bg-purple-100 text-purple-700',
-  admin: 'bg-primary/10 dark:bg-primary/20 text-primary'
-};
-
 export default function ProfilePage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user, updateContacts, updateProfile, changePassword, uploadAvatar, refreshUser } = useAuth();
+  const pr = t.profile as typeof t.profile & {
+    roleFieldLabel?: string;
+    roleHintRegVolunteer?: string;
+    roleUpgradeHint?: string;
+    volunteerUpgradeTitle?: string;
+    volunteerUpgradeBody?: string;
+    volunteerUpgradeConfirm?: string;
+    volunteerUpgradeCancel?: string;
+    roles?: { user: string; volunteer: string; admin: string };
+  };
   const { t } = useI18n();
   
   const [name, setName] = useState('');
@@ -91,6 +96,9 @@ export default function ProfilePage() {
 
   type ProfileTab = 'personal' | 'security' | 'notifications';
   const [activeTab, setActiveTab] = useState<ProfileTab>('personal');
+
+  const [roleDraft, setRoleDraft] = useState<'user' | 'volunteer'>('user');
+  const [volunteerConfirmOpen, setVolunteerConfirmOpen] = useState(false);
 
   useEffect(() => {
     const tab = searchParams.get('tab');
@@ -139,6 +147,7 @@ export default function ProfilePage() {
       setPhone(user.contacts?.phone || '');
       setTelegram(user.contacts?.telegram || '');
       setViber(user.contacts?.viber || '');
+      setRoleDraft(user.role === 'volunteer' ? 'volunteer' : 'user');
     }
   }, [user]);
 
@@ -235,6 +244,21 @@ export default function ProfilePage() {
     finally { setIsSavingContacts(false); }
   };
 
+  const performPersonalSave = async (opts?: { roleVolunteer?: boolean }) => {
+    const tgContact = resolveTelegramContactForSave();
+    await updateProfile(
+      name,
+      email,
+      opts?.roleVolunteer ? { role: 'volunteer' } : undefined,
+    );
+    await updateContacts({
+      phone: phone.trim() ? (formatBelarusPhoneStorage(phone) ?? undefined) : undefined,
+      telegram: tgContact,
+      viber: viber.trim() ? (formatBelarusPhoneStorage(viber) ?? undefined) : undefined,
+    });
+    toast.success(t.profile.profileUpdated);
+  };
+
   /** Сохранить профиль + контакты одной кнопкой (таб «Личные данные») */
   const handleSavePersonal = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -249,17 +273,33 @@ export default function ProfilePage() {
     }
     if (!isValidBelarusMobilePhoneOptional(phone)) { toast.error(t.profile.belarusPhoneInvalid); return; }
     if (!isValidBelarusMobilePhoneOptional(viber)) { toast.error(t.profile.belarusPhoneInvalid); return; }
+
+    const upgradingVolunteer =
+      user?.role === 'user' && roleDraft === 'volunteer';
+
+    if (upgradingVolunteer) {
+      setVolunteerConfirmOpen(true);
+      return;
+    }
+
     setIsSavingProfile(true);
     try {
-      await updateProfile(name, email);
-      await updateContacts({
-        phone: phone.trim() ? (formatBelarusPhoneStorage(phone) ?? undefined) : undefined,
-        telegram: tgContact,
-        viber: viber.trim() ? (formatBelarusPhoneStorage(viber) ?? undefined) : undefined,
-      });
-      toast.success(t.profile.profileUpdated);
+      await performPersonalSave();
     } catch (err: unknown) {
       console.warn('[ProfilePage] handleSavePersonal failed', err);
+      toast.error(t.profile.profileUpdateError);
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
+
+  const handleConfirmVolunteerUpgrade = async () => {
+    setVolunteerConfirmOpen(false);
+    setIsSavingProfile(true);
+    try {
+      await performPersonalSave({ roleVolunteer: true });
+    } catch (err: unknown) {
+      console.warn('[ProfilePage] volunteer upgrade save failed', err);
       toast.error(t.profile.profileUpdateError);
     } finally {
       setIsSavingProfile(false);
@@ -543,6 +583,53 @@ export default function ProfilePage() {
                           <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="your@email.com" className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF9800] focus:border-[#FF9800] bg-white dark:bg-gray-800 text-gray-900 dark:text-white" />
                         </div>
                       </div>
+
+                      {user?.role === 'admin' && (
+                        <div className="md:col-span-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-800/40 p-4">
+                          <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            {pr.roleFieldLabel ?? 'Роль'}
+                          </div>
+                          <div className="text-gray-900 dark:text-white font-medium">{pr.roles?.admin ?? 'Администратор'}</div>
+                        </div>
+                      )}
+
+                      {user?.role === 'user' && (
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            {pr.roleFieldLabel ?? 'Роль'}
+                          </label>
+                          <select
+                            value={roleDraft}
+                            onChange={(e) => setRoleDraft(e.target.value as 'user' | 'volunteer')}
+                            className="w-full max-w-md rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-3 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#FF9800]"
+                          >
+                            <option value="user">{pr.roles?.user ?? 'Пользователь'}</option>
+                            <option value="volunteer">{pr.roles?.volunteer ?? 'Волонтёр'}</option>
+                          </select>
+                          <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{pr.roleUpgradeHint}</p>
+                        </div>
+                      )}
+
+                      {user?.role === 'volunteer' && (
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            {pr.roleFieldLabel ?? 'Роль'}
+                          </label>
+                          <select
+                            disabled
+                            value="volunteer"
+                            className="w-full max-w-md rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-900 px-3 py-3 text-gray-700 dark:text-gray-300 cursor-not-allowed opacity-90"
+                          >
+                            <option value="volunteer">{pr.roles?.volunteer ?? 'Волонтёр'}</option>
+                          </select>
+                          <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                            {user.registeredAsVolunteer
+                              ? (pr.roleHintRegVolunteer ?? '')
+                              : (pr.roleUpgradeHint ?? '')}
+                          </p>
+                        </div>
+                      )}
+
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           {t.profile.phone} <span className="text-red-500">*</span>
@@ -728,6 +815,26 @@ export default function ProfilePage() {
           </div>
         </div>
       </main>
+
+      <Dialog open={volunteerConfirmOpen} onOpenChange={setVolunteerConfirmOpen}>
+        <DialogContent showCloseButton className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{pr.volunteerUpgradeTitle ?? 'Подтверждение'}</DialogTitle>
+            <DialogDescription className="text-left">
+              {pr.volunteerUpgradeBody ??
+                'Вы переходите на роль волонтёра. Откатить это действие будет нельзя. Продолжить?'}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button type="button" variant="outline" onClick={() => setVolunteerConfirmOpen(false)}>
+              {pr.volunteerUpgradeCancel ?? 'Отмена'}
+            </Button>
+            <Button type="button" className="bg-[#FF9800] hover:bg-[#F57C00]" onClick={() => void handleConfirmVolunteerUpgrade()}>
+              {pr.volunteerUpgradeConfirm ?? 'Да, сохранить'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <CitySelectModal
         open={showCityModal}

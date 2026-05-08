@@ -6,7 +6,8 @@ export interface User {
   email: string;
   name: string;
   avatar?: string;
-  role: 'user' | 'volunteer' | 'shelter' | 'admin';
+  role: 'user' | 'volunteer' | 'admin';
+  registeredAsVolunteer?: boolean;
   helperCode?: string | null;
   helperConfirmedCount?: number;
   pointsBalance?: number;
@@ -28,10 +29,16 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, name: string, password: string, contacts: User['contacts']) => Promise<void>;
+  register: (
+    email: string,
+    name: string,
+    password: string,
+    contacts: User['contacts'],
+    signupRole?: 'user' | 'volunteer',
+  ) => Promise<void>;
   logout: () => Promise<void>;
   updateContacts: (contacts: User['contacts']) => Promise<void>;
-  updateProfile: (name: string, email: string) => Promise<void>;
+  updateProfile: (name: string, email: string, opts?: { role?: 'volunteer' }) => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   uploadAvatar: (file: File) => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -60,8 +67,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsAuthModalOpen(false);
   };
 
-  const register = async (email: string, name: string, password: string, contacts: User['contacts']) => {
-    const u = await authApi.register(email, name, password, contacts);
+  const register = async (
+    email: string,
+    name: string,
+    password: string,
+    contacts: User['contacts'],
+    signupRole: 'user' | 'volunteer' = 'user',
+  ) => {
+    const u = await authApi.register(email, name, password, contacts, signupRole);
     setUser(u);
     setIsAuthModalOpen(false);
   };
@@ -77,9 +90,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(u);
   };
 
-  const updateProfile = async (name: string, email: string) => {
+  const updateProfile = async (name: string, email: string, opts?: { role?: 'volunteer' }) => {
     if (!user) return;
-    const u = await authApi.updateProfile({ name, email });
+    const u = await authApi.updateProfile({
+      name,
+      email,
+      ...(opts?.role ? { role: opts.role } : {}),
+    });
     setUser(u);
   };
 

@@ -113,6 +113,7 @@ def _ensure_bounty_and_helper_columns() -> None:
         "helper_confirmed_count": "INTEGER DEFAULT 0",
         "points_balance": "INTEGER DEFAULT 0",
         "points_earned_total": "INTEGER DEFAULT 0",
+        "registered_as_volunteer": "INTEGER DEFAULT 0",
     }
     pet_columns = {
         "reward_mode": "VARCHAR DEFAULT 'points'",
@@ -144,6 +145,10 @@ def _ensure_bounty_and_helper_columns() -> None:
                     continue
                 conn.execute(text(f"ALTER TABLE users ADD COLUMN {col_name} {col_type}"))
                 logger.warning("Auto-migrated column users.%s", col_name)
+
+            conn.execute(
+                text("UPDATE users SET role = 'volunteer' WHERE role = 'shelter'")
+            )
 
             # helper_code index + backfill
             conn.execute(

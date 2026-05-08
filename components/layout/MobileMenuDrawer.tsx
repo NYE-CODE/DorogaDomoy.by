@@ -148,7 +148,7 @@ export function MobileMenuDrawer({ open, onClose }: MobileMenuDrawerProps) {
                 <PawPrint size={20} />
                 <span>{t.header.myPets ?? t.landing?.header?.myPets}</span>
               </button>
-              {user?.role === 'shelter' && (
+              {(user?.role === 'volunteer' || user?.role === 'admin') && (
                 <button type="button" onClick={() => go('/my-shelters')} className={linkCls('/my-shelters')}>
                   <Building2 size={20} />
                   <span>{t.header.myShelterOrg ?? t.landing?.header?.myShelterOrg}</span>

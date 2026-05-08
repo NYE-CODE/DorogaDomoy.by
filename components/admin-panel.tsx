@@ -520,8 +520,8 @@ export function AdminPanel({
       reportsTotal: reports.length,
       reportsDismissed: reports.filter((r) => r.status === 'dismissed').length,
       reportsReviewed: reports.filter((r) => r.status === 'reviewed').length,
+      usersRegular: users.filter((u) => u.role === 'user').length,
       usersVolunteers: users.filter((u) => u.role === 'volunteer').length,
-      usersShelters: users.filter((u) => u.role === 'shelter').length,
       usersAdmins: users.filter((u) => u.role === 'admin').length,
       profilePetsTotal: profilePets.length,
       profilePetsLast30Days,
@@ -694,7 +694,7 @@ export function AdminPanel({
             {d.statBlocked}: <span className="font-medium text-gray-800 dark:text-gray-200">{stats.blockedUsers}</span>
             <br />
             <span className="text-[10px] sm:text-[11px] text-gray-500 dark:text-gray-500">
-              {d.statUsersRoles(stats.usersVolunteers, stats.usersShelters, stats.usersAdmins)}
+              {d.statUsersRoles(stats.usersRegular, stats.usersVolunteers, stats.usersAdmins)}
             </span>
           </p>
         </div>
@@ -951,7 +951,7 @@ export function AdminPanel({
     setEditingUser(u);
     setEditName(u.name);
     setEditEmail(u.email);
-    setEditRole(u.role);
+    setEditRole((u.role === 'shelter' ? 'volunteer' : u.role) as User['role']);
     setEditPhone(u.contacts?.phone ?? '');
     setEditViber(u.contacts?.viber ?? '');
   };
@@ -1068,7 +1068,6 @@ export function AdminPanel({
                   <SelectItem value="all">{ap.users.roleAll}</SelectItem>
                   <SelectItem value="user">{ap.users.roleUsers}</SelectItem>
                   <SelectItem value="volunteer">{ap.users.roleVolunteers}</SelectItem>
-                  <SelectItem value="shelter">{ap.users.roleShelters}</SelectItem>
                   <SelectItem value="admin">{ap.users.roleAdmins}</SelectItem>
                 </SelectContent>
               </Select>
@@ -1162,7 +1161,11 @@ export function AdminPanel({
                         user.role === 'admin' ? 'bg-primary/10 dark:bg-primary/20 text-primary' :
                         'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
                       }`}>
-                        {{ user: ap.users.roleUser, volunteer: ap.users.roleVolunteer, shelter: ap.users.roleShelter, admin: ap.users.roleAdmin }[user.role]}
+                        {user.role === 'admin'
+                          ? ap.users.roleAdmin
+                          : user.role === 'user'
+                            ? ap.users.roleUser
+                            : ap.users.roleVolunteer}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-xs text-gray-700 dark:text-gray-300 font-mono truncate" title={user.helperCode || '—'}>
@@ -1275,7 +1278,6 @@ export function AdminPanel({
                     <SelectContent>
                       <SelectItem value="user">{ap.users.roleUser}</SelectItem>
                       <SelectItem value="volunteer">{ap.users.roleVolunteer}</SelectItem>
-                      <SelectItem value="shelter">{ap.users.roleShelter}</SelectItem>
                       <SelectItem value="admin">{ap.users.roleAdmin}</SelectItem>
                     </SelectContent>
                   </Select>
@@ -1324,9 +1326,8 @@ export function AdminPanel({
     switch (kind) {
       case 'foster':
         return s.kindFoster;
-      case 'vet':
-        return s.kindVet;
       case 'other':
+      case 'vet':
         return s.kindOther;
       case 'shelter':
       default:
@@ -1747,7 +1748,6 @@ export function AdminPanel({
                       <SelectContent>
                         <SelectItem value="shelter">{shelterKindLabel('shelter')}</SelectItem>
                         <SelectItem value="foster">{shelterKindLabel('foster')}</SelectItem>
-                        <SelectItem value="vet">{shelterKindLabel('vet')}</SelectItem>
                         <SelectItem value="other">{shelterKindLabel('other')}</SelectItem>
                       </SelectContent>
                     </Select>

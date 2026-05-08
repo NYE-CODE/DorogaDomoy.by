@@ -99,8 +99,7 @@ export function SightingForm({ pet, onClose, onSuccess }: SightingFormProps) {
     if (!location) return;
     setSubmitting(true);
     try {
-      await sightingsApi.create({
-        pet_id: pet.id,
+      await sightingsApi.create(pet.id, {
         location_lat: location.lat,
         location_lng: location.lng,
         seen_at: new Date(seenAt).toISOString(),

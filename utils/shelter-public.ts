@@ -17,13 +17,12 @@ export function shelterLogoSrc(url?: string | null): string | undefined {
   return `${API_BASE}${url.startsWith('/') ? url : `/${url}`}`;
 }
 
-export function shelterKindLabel(kind: ShelterKind, s: SheltersLandingCopy): string {
+export function shelterKindLabel(kind: ShelterKind | string, s: SheltersLandingCopy): string {
   switch (kind) {
     case 'foster':
       return s.kindFoster;
-    case 'vet':
-      return s.kindVet;
     case 'other':
+    case 'vet':
       return s.kindOther;
     case 'shelter':
     default:

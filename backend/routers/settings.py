@@ -9,6 +9,7 @@ from database import get_db
 from models import PlatformSettings, User
 from auth import require_admin, get_current_user
 from platform_settings import PLATFORM_SETTINGS_DEFAULTS, get_settings_with_defaults
+from schemas import PlatformSettingsUpdate
 from ttl_cache import invalidate_settings_cache
 
 router = APIRouter(prefix="/settings", tags=["settings"])
@@ -36,19 +37,26 @@ def get_settings(
 
 @router.patch("")
 def update_settings(
-    data: dict,
+    data: PlatformSettingsUpdate,
     db: Session = Depends(get_db),
     _: User = Depends(require_admin),
 ):
+    patch = data.model_dump(exclude_unset=True, exclude_none=True)
     allowed = set(DEFAULTS.keys())
-    for k, v in data.items():
+    for k, v in patch.items():
         if k not in allowed:
             continue
+        if isinstance(v, bool):
+            str_val = "true" if v else "false"
+        elif isinstance(v, int):
+            str_val = str(v)
+        else:
+            str_val = str(v) if v is not None else ""
         row = db.scalar(select(PlatformSettings).where(PlatformSettings.key == k))
         if row:
-            row.value = str(v)
+            row.value = str_val
         else:
-            db.add(PlatformSettings(key=k, value=str(v)))
+            db.add(PlatformSettings(key=k, value=str_val))
     db.commit()
     invalidate_settings_cache()
     return _get_all(db)

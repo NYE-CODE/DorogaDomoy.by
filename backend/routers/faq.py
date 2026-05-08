@@ -34,7 +34,7 @@ def list_faq(db: Session = Depends(get_db)):
     return [_to_response(r) for r in rows]
 
 
-@router.post("", response_model=FaqItemResponse)
+@router.post("", response_model=FaqItemResponse, status_code=201)
 def create_faq_item(
     data: FaqItemCreate,
     db: Session = Depends(get_db),

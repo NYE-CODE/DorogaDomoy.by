@@ -7,6 +7,7 @@ from datetime import timedelta
 
 import httpx
 from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 
 from database import SessionLocal
 from integrations.instagram import (
@@ -71,6 +72,7 @@ def _pick_next_publication(db) -> InstagramPublication | None:
 
     return db.scalar(
         select(InstagramPublication)
+        .options(joinedload(InstagramPublication.account))
         .where(InstagramPublication.status == "pending")
         .order_by(InstagramPublication.created_at.asc())
         .limit(1)
@@ -84,6 +86,35 @@ def _fail_row(row: InstagramPublication, msg: str) -> None:
         row.status = "failed"
     else:
         row.status = "pending"
+
+
+def _finalize_failure(publication_id: str, msg: str) -> None:
+    """Обновление статуса в новой короткой сессии после сетевых ошибок."""
+    db = SessionLocal()
+    try:
+        row = db.get(InstagramPublication, publication_id)
+        if not row:
+            return
+        _fail_row(row, msg)
+        db.commit()
+    finally:
+        db.close()
+
+
+def _finalize_success(publication_id: str, media_id: str) -> None:
+    db = SessionLocal()
+    try:
+        row = db.get(InstagramPublication, publication_id)
+        if not row:
+            return
+        row.status = "published"
+        row.external_media_id = media_id
+        row.last_error = None
+        row.published_at = utc_now()
+        row.updated_at = utc_now()
+        db.commit()
+    finally:
+        db.close()
 
 
 def _process_row(db, row: InstagramPublication) -> bool:
@@ -138,10 +169,15 @@ def _process_row(db, row: InstagramPublication) -> bool:
     is_story = True
     image_url = _build_card_url(pet.id, row.format)
     caption = None
+    publication_id = row.id
+
+    # Долгие HTTP (карточка + Graph API) без удержания SQLite-сессии и блокировок записи.
+    db.commit()
+    db.close()
+
     url_error = _validate_card_url(image_url)
     if url_error:
-        _fail_row(row, url_error)
-        db.commit()
+        _finalize_failure(publication_id, url_error)
         return True
 
     try:
@@ -153,30 +189,27 @@ def _process_row(db, row: InstagramPublication) -> bool:
             is_story=is_story,
         )
     except InstagramPublishError as e:
-        _fail_row(row, str(e))
-        db.commit()
-        logger.warning("Instagram publish failed for %s: %s", row.id, e)
+        _finalize_failure(publication_id, str(e))
+        logger.warning("Instagram publish failed for %s: %s", publication_id, e)
         return True
     except Exception as e:
-        _fail_row(row, f"Unexpected error: {e}")
-        db.commit()
-        logger.exception("Unexpected Instagram publish error for %s", row.id)
+        _finalize_failure(publication_id, f"Unexpected error: {e}")
+        logger.exception("Unexpected Instagram publish error for %s", publication_id)
         return True
 
-    row.status = "published"
-    row.external_media_id = result.media_id
-    row.last_error = None
-    row.published_at = utc_now()
-    row.updated_at = utc_now()
-    db.commit()
-    logger.info("Instagram publication %s published as %s", row.id, result.media_id)
+    _finalize_success(publication_id, result.media_id)
+    logger.info("Instagram publication %s published as %s", publication_id, result.media_id)
     return True
 
 
 def process_publication_by_id(publication_id: str) -> bool:
     db = SessionLocal()
     try:
-        row = db.scalar(select(InstagramPublication).where(InstagramPublication.id == publication_id))
+        row = db.scalar(
+            select(InstagramPublication)
+            .options(joinedload(InstagramPublication.account))
+            .where(InstagramPublication.id == publication_id)
+        )
         if not row:
             return False
         if row.status == "published":

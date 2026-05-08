@@ -12,7 +12,21 @@ from sqlalchemy.orm import Session, selectinload
 
 from database import get_db
 from models import Pet, PointsTransaction, Report, ShelterMembership, User
-from schemas import PetCreate, PetUpdate, PetResponse, StatisticsResponse, _is_happy_archive
+from schemas import (
+    PetCreate,
+    PetUpdate,
+    PetResponse,
+    StatisticsResponse,
+    SightingCreate,
+    SightingCreateNested,
+    SightingResponse,
+    _is_happy_archive,
+)
+from routers.sightings import (
+    run_create_sighting,
+    run_get_sighting_counts,
+    run_list_sightings_for_pet,
+)
 from auth import get_current_user, get_current_user_required, require_admin
 from platform_settings import DEFAULT_MAX_PHOTOS, get_bool_setting, get_int_setting
 from integrations.telegram import send_notifications_for_pet, send_pending_moderation_alert_sync
@@ -315,6 +329,37 @@ def get_statistics(db: Session = Depends(get_db)):
         success_rate=success_rate,
         users_count=users_count,
     )
+
+
+@router.get("/sightings/counts")
+def pet_sightings_counts(
+    pet_ids: str = Query(..., description="Comma-separated pet IDs"),
+    db: Session = Depends(get_db),
+):
+    return run_get_sighting_counts(pet_ids, db)
+
+
+@router.get("/{pet_id}/sightings", response_model=list[SightingResponse])
+def get_pet_sightings(
+    pet_id: str,
+    days: Optional[int] = Query(7, ge=1, le=90),
+    db: Session = Depends(get_db),
+):
+    return run_list_sightings_for_pet(pet_id, days, db)
+
+
+@router.post("/{pet_id}/sightings", response_model=SightingResponse, status_code=201)
+@limiter.limit("30/minute")
+def create_pet_sighting(
+    request: Request,
+    pet_id: str,
+    data: SightingCreateNested,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    user: Optional[User] = Depends(get_current_user),
+):
+    full = SightingCreate(pet_id=pet_id, **data.model_dump())
+    return run_create_sighting(request, full, background_tasks, db, user)
 
 
 @router.get("/{pet_id}", response_model=PetResponse)

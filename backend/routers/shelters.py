@@ -1,4 +1,4 @@
-"""Приюты и точки помощи: владелец — пользователь с ролью shelter; модерация админом."""
+"""Карточки организаций: владелец — волонтёр; модерация админом."""
 from __future__ import annotations
 
 import logging
@@ -6,10 +6,10 @@ import uuid
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import delete, select
+from sqlalchemy import delete, or_, select
 from sqlalchemy.orm import Session
 
-from auth import get_current_user, get_current_user_required, require_admin, require_shelter_or_admin
+from auth import get_current_user, get_current_user_required, require_admin, require_volunteer_or_admin
 from database import get_db
 from models import Pet, Report, Shelter, ShelterMembership, User
 from schemas import (
@@ -125,20 +125,17 @@ def _invited_or_active_membership(
 
 
 def _assert_member_manage_access(db: Session, user: User, s: Shelter) -> None:
+    """Командой управляет только владелец карточки или админ."""
     if user.role == "admin" or s.owner_user_id == user.id:
         return
-    m = _active_membership(db, s.id, user.id)
-    if m and m.role in {"owner", "manager"}:
-        return
-    raise HTTPException(status_code=403, detail="Нет прав на управление командой приюта")
+    raise HTTPException(status_code=403, detail="Нет прав на управление командой организации")
 
 
-def _assert_member_view_access(db: Session, user: User, s: Shelter) -> None:
+def _assert_team_owner_or_admin(db: Session, user: User, s: Shelter) -> None:
+    """Список участников команды — только владелец или админ (не участники-волонтёры)."""
     if user.role == "admin" or s.owner_user_id == user.id:
         return
-    if _invited_or_active_membership(db, s.id, user.id):
-        return
-    raise HTTPException(status_code=403, detail="Нет доступа к команде приюта")
+    raise HTTPException(status_code=403, detail="Нет доступа к команде организации")
 
 
 @router.get("", response_model=list[ShelterResponse])
@@ -157,10 +154,18 @@ def list_public_shelters(
 
 @router.get("/me", response_model=list[ShelterResponse])
 def list_my_shelters(
-    user: User = Depends(require_shelter_or_admin),
+    user: User = Depends(require_volunteer_or_admin),
     db: Session = Depends(get_db),
 ):
-    stmt = select(Shelter).where(Shelter.owner_user_id == user.id).order_by(Shelter.updated_at.desc())
+    member_shelter_ids = select(ShelterMembership.shelter_id).where(
+        ShelterMembership.user_id == user.id,
+        ShelterMembership.status == "active",
+    )
+    stmt = (
+        select(Shelter)
+        .where(or_(Shelter.owner_user_id == user.id, Shelter.id.in_(member_shelter_ids)))
+        .order_by(Shelter.updated_at.desc())
+    )
     return [_to_response(s) for s in db.scalars(stmt).all()]
 
 
@@ -237,7 +242,7 @@ def get_shelter(
 @router.post("", response_model=ShelterResponse, status_code=status.HTTP_201_CREATED)
 def create_shelter(
     data: ShelterCreate,
-    user: User = Depends(require_shelter_or_admin),
+    user: User = Depends(require_volunteer_or_admin),
     db: Session = Depends(get_db),
 ):
     owner_id = user.id
@@ -247,8 +252,8 @@ def create_shelter(
         target = db.scalar(select(User).where(User.id == data.owner_user_id))
         if not target:
             raise HTTPException(status_code=400, detail="Пользователь не найден")
-        if target.role != "shelter":
-            raise HTTPException(status_code=400, detail="Владелец карточки должен иметь роль shelter")
+        if target.role != "volunteer":
+            raise HTTPException(status_code=400, detail="Владелец карточки должен быть волонтёром")
         owner_id = target.id
 
     sid = str(uuid.uuid4())
@@ -294,7 +299,7 @@ def create_shelter(
 def update_shelter(
     shelter_id: str,
     data: ShelterUpdate,
-    user: User = Depends(require_shelter_or_admin),
+    user: User = Depends(require_volunteer_or_admin),
     db: Session = Depends(get_db),
 ):
     s = db.scalar(select(Shelter).where(Shelter.id == shelter_id))
@@ -352,7 +357,7 @@ def update_shelter(
 @router.post("/{shelter_id}/submit", response_model=ShelterResponse)
 def submit_shelter(
     shelter_id: str,
-    user: User = Depends(require_shelter_or_admin),
+    user: User = Depends(require_volunteer_or_admin),
     db: Session = Depends(get_db),
 ):
     s = db.scalar(select(Shelter).where(Shelter.id == shelter_id))
@@ -417,7 +422,7 @@ def list_shelter_members(
     s = db.scalar(select(Shelter).where(Shelter.id == shelter_id))
     if not s:
         raise HTTPException(status_code=404, detail="Не найдено")
-    _assert_member_view_access(db, user, s)
+    _assert_team_owner_or_admin(db, user, s)
 
     members = db.scalars(
         select(ShelterMembership)
@@ -450,6 +455,11 @@ def invite_shelter_member(
         raise HTTPException(status_code=400, detail="Нужно указать user_id или email")
     if not target:
         raise HTTPException(status_code=404, detail="Пользователь не найден")
+    if target.role != "volunteer":
+        raise HTTPException(
+            status_code=400,
+            detail="В команду можно приглашать только пользователей с ролью «волонтёр»",
+        )
     if target.id == s.owner_user_id:
         raise HTTPException(status_code=400, detail="Владелец уже состоит в команде")
 

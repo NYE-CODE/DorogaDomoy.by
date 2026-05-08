@@ -1,6 +1,6 @@
 """Избранные объявления пользователя."""
 import uuid
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import delete, or_, select
 from sqlalchemy.orm import Session
 
@@ -28,6 +28,8 @@ def list_favorite_ids(
 
 @router.get("", response_model=list[PetResponse])
 def list_favorites(
+    limit: int = Query(200, ge=1, le=500),
+    offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user_required),
 ):
@@ -36,7 +38,6 @@ def list_favorites(
         select(Pet)
         .join(PetFavorite, PetFavorite.pet_id == Pet.id)
         .where(PetFavorite.user_id == user.id)
-        .order_by(PetFavorite.created_at.desc())
     )
     if not is_admin:
         stmt = stmt.where(
@@ -45,6 +46,7 @@ def list_favorites(
                 Pet.author_id == user.id,
             )
         )
+    stmt = stmt.order_by(PetFavorite.created_at.desc()).offset(offset).limit(limit)
     pets = db.scalars(stmt).all()
     return [pet_to_response(p) for p in pets]
 
@@ -66,17 +68,36 @@ def import_favorites(
         if len(ordered) >= 150:
             break
 
-    for pet_id in ordered:
-        pet = db.scalar(select(Pet).where(Pet.id == pet_id))
-        if not pet:
-            continue
-        exists = db.scalar(
-            select(PetFavorite).where(
+    if not ordered:
+        rows = db.scalars(
+            select(PetFavorite.pet_id)
+            .where(PetFavorite.user_id == user.id)
+            .order_by(PetFavorite.created_at.desc())
+        ).all()
+        return FavoriteIdsResponse(ids=list(rows))
+
+    existing_pet_ids = set(
+        db.scalars(select(Pet.id).where(Pet.id.in_(ordered))).all()
+    )
+    candidate_ids = [pid for pid in ordered if pid in existing_pet_ids]
+    if not candidate_ids:
+        rows = db.scalars(
+            select(PetFavorite.pet_id)
+            .where(PetFavorite.user_id == user.id)
+            .order_by(PetFavorite.created_at.desc())
+        ).all()
+        return FavoriteIdsResponse(ids=list(rows))
+
+    already_fav = set(
+        db.scalars(
+            select(PetFavorite.pet_id).where(
                 PetFavorite.user_id == user.id,
-                PetFavorite.pet_id == pet_id,
+                PetFavorite.pet_id.in_(candidate_ids),
             )
-        )
-        if exists:
+        ).all()
+    )
+    for pet_id in candidate_ids:
+        if pet_id in already_fav:
             continue
         db.add(
             PetFavorite(

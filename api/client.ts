@@ -126,6 +126,7 @@ export interface UserResponse {
   telegram_id?: number | null;
   telegram_username?: string | null;
   telegram_linked_at?: string | null;
+  registered_as_volunteer?: boolean;
 }
 
 export interface TokenResponse {
@@ -141,6 +142,7 @@ function toUser(u: UserResponse): User {
     name: u.name,
     avatar: u.avatar,
     role: u.role as User['role'],
+    registeredAsVolunteer: u.registered_as_volunteer ?? false,
     helperCode: u.helper_code,
     helperConfirmedCount: u.helper_confirmed_count ?? 0,
     pointsBalance: u.points_balance ?? 0,
@@ -164,10 +166,16 @@ export const authApi = {
       return toUser(r.user);
     }),
 
-  register: (email: string, name: string, password: string, contacts: User['contacts']) =>
+  register: (
+    email: string,
+    name: string,
+    password: string,
+    contacts: User['contacts'],
+    signupRole: 'user' | 'volunteer' = 'user',
+  ) =>
     api<TokenResponse>('/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ email, name, password, contacts }),
+      body: JSON.stringify({ email, name, password, contacts, role: signupRole }),
     }).then((r) => {
       clearLegacyToken();
       return toUser(r.user);
@@ -175,7 +183,13 @@ export const authApi = {
 
   me: () => api<UserResponse>('/auth/me').then(toUser),
 
-  updateProfile: (data: { name?: string; email?: string; contacts?: User['contacts']; avatar?: string }) =>
+  updateProfile: (data: {
+    name?: string;
+    email?: string;
+    contacts?: User['contacts'];
+    avatar?: string;
+    role?: 'user' | 'volunteer';
+  }) =>
     api<UserResponse>('/auth/me', {
       method: 'PATCH',
       body: JSON.stringify(data),
@@ -555,7 +569,8 @@ export interface FavoriteIdsResponse {
 
 export const favoritesApi = {
   ids: () => api<FavoriteIdsResponse>('/favorites/ids'),
-  list: () => api<PetResponse[]>('/favorites').then((arr) => arr.map(toPet)),
+  list: (limit = 200, offset = 0) =>
+    api<PetResponse[]>(`/favorites?limit=${limit}&offset=${offset}`).then((arr) => arr.map(toPet)),
   add: (petId: string) =>
     api<{ ok: boolean; already?: boolean }>(`/favorites/${encodeURIComponent(petId)}`, {
       method: 'POST',
@@ -795,7 +810,10 @@ export const notificationsApi = {
     api<NotificationItem[]>(`/notifications?limit=${limit}&offset=${offset}`),
 
   markRead: (id: string) =>
-    api<{ detail: string }>(`/notifications/${id}/read`, { method: 'PATCH' }),
+    api<NotificationItem>(`/notifications/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ is_read: true }),
+    }),
 };
 
 // --- Media Articles (СМИ о нас) ---
@@ -1181,17 +1199,20 @@ export interface SightingItem {
 }
 
 export const sightingsApi = {
-  create: (data: { pet_id: string; location_lat: number; location_lng: number; seen_at: string; comment?: string; contact?: string }) =>
-    api<SightingItem>('/sightings', {
+  create: (
+    petId: string,
+    data: { location_lat: number; location_lng: number; seen_at: string; comment?: string; contact?: string },
+  ) =>
+    api<SightingItem>(`/pets/${encodeURIComponent(petId)}/sightings`, {
       method: 'POST',
       body: JSON.stringify(data),
     }),
 
   listByPet: (petId: string, days = 7, init?: RequestInit) =>
-    api<SightingItem[]>(`/sightings/pet/${petId}?days=${days}`, init),
+    api<SightingItem[]>(`/pets/${encodeURIComponent(petId)}/sightings?days=${days}`, init),
 
   getCounts: (petIds: string[]) =>
-    api<Record<string, number>>(`/sightings/counts?pet_ids=${petIds.join(',')}`),
+    api<Record<string, number>>(`/pets/sightings/counts?pet_ids=${petIds.join(',')}`),
 };
 
 // --- Instagram publishing admin ---
@@ -1237,6 +1258,13 @@ export interface InstagramPublicationResponse {
   created_at: string;
   updated_at: string;
   published_at?: string | null;
+}
+
+export interface InstagramPublicationListResponse {
+  items: InstagramPublicationResponse[];
+  total: number;
+  limit: number;
+  offset: number;
 }
 
 export interface InstagramBoostEligibilityResponse {
@@ -1300,7 +1328,7 @@ export const instagramApi = {
     if (params?.limit != null) q.set('limit', String(params.limit));
     if (params?.offset != null) q.set('offset', String(params.offset));
     const suffix = q.toString() ? `?${q}` : '';
-    return api<InstagramPublicationResponse[]>(`/instagram/publications${suffix}`);
+    return api<InstagramPublicationListResponse>(`/instagram/publications${suffix}`);
   },
   createManualPublication: (data: { pet_id: string; format: 'story' }) =>
     api<InstagramPublicationResponse[]>('/instagram/publications/manual', {
@@ -1329,7 +1357,7 @@ export const instagramApi = {
 };
 
 /** Приюты / передержки (владелец — пользователь с ролью shelter; модерация админом). */
-export type ShelterKind = 'shelter' | 'foster' | 'vet' | 'other';
+export type ShelterKind = 'shelter' | 'foster' | 'other';
 /** Кому оказывается помощь: собаки, кошки или оба вида. */
 export type ShelterAnimalFocus = 'dogs' | 'cats' | 'mixed';
 export type ShelterModerationStatus = 'draft' | 'pending' | 'approved' | 'rejected' | 'hidden';

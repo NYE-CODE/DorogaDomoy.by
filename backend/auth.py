@@ -90,6 +90,13 @@ def clear_auth_cookie(response: Response) -> None:
     )
 
 
+def reject_cross_site_browser_request(request: Request) -> None:
+    """Снижает риск logout/info-leak CSRF: браузеры шлют Sec-Fetch-Site=cross-site для чужого сайта."""
+    sfs = request.headers.get("Sec-Fetch-Site") or request.headers.get("sec-fetch-site")
+    if sfs and sfs.strip().lower() == "cross-site":
+        raise HTTPException(status_code=403, detail="Запрос отклонён")
+
+
 async def get_current_user(
     request: Request,
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
@@ -131,11 +138,20 @@ def require_admin(user: User = Depends(get_current_user_required)) -> User:
     return user
 
 
-def require_shelter_or_admin(user: User = Depends(get_current_user_required)) -> User:
-    """Создание и редактирование карточек приюта — только роль shelter или admin."""
-    if user.role not in ("shelter", "admin"):
+def _require_volunteer_or_admin_user(user: User) -> User:
+    """Карточки организаций создают волонтёры (или админ)."""
+    if user.role not in ("volunteer", "admin"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Нужна роль «приют» (shelter) или администратора",
+            detail="Нужна роль волонтёра или администратора",
         )
     return user
+
+
+def require_volunteer_or_admin(user: User = Depends(get_current_user_required)) -> User:
+    return _require_volunteer_or_admin_user(user)
+
+
+def require_shelter_or_admin(user: User = Depends(get_current_user_required)) -> User:
+    """Устаревшее имя dependency — то же, что require_volunteer_or_admin."""
+    return _require_volunteer_or_admin_user(user)
