@@ -15,6 +15,7 @@ import { SeoRouteSync } from './components/SeoRouteSync'
 import { PageLoader } from './components/ui/page-loader';
 import { ScrollToTopOnRouteChange } from './components/ScrollToTopOnRouteChange';
 import { FavoritesProvider } from './context/FavoritesContext';
+import { ShelterPetBrowseProvider } from './context/ShelterPetBrowseContext';
 import { getHomePath } from './utils/home-route';
 
 const LandingPage = lazy(() => import('./pages/LandingPage.tsx'));
@@ -45,6 +46,9 @@ const MyShelterPetsListPage = lazy(() => import('./pages/MyShelterPetsListPage.t
 const MyShelterPetFormPage = lazy(() => import('./pages/MyShelterPetFormPage.tsx'));
 const MyShelterPetCampaignPage = lazy(() => import('./pages/MyShelterPetCampaignPage.tsx'));
 const MyShelterTeamPage = lazy(() => import('./pages/MyShelterTeamPage.tsx'));
+const CompleteProfilePage = lazy(() => import('./pages/CompleteProfilePage.tsx'));
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage.tsx'));
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage.tsx'));
 
 function GlobalToaster() {
   const { theme } = useTheme();
@@ -92,9 +96,15 @@ function RouteHistoryTracker() {
   return null;
 }
 
-function RequireAuth({ children }: { children: React.ReactElement }) {
+function RequireAuth({
+  children,
+  allowIncompleteProfile = false,
+}: {
+  children: React.ReactElement;
+  allowIncompleteProfile?: boolean;
+}) {
   const location = useLocation();
-  const { isAuthenticated, isLoading, openAuthModal } = useAuth();
+  const { user, isAuthenticated, isLoading, openAuthModal } = useAuth();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -113,6 +123,9 @@ function RequireAuth({ children }: { children: React.ReactElement }) {
         state={{ fromProtected: `${location.pathname}${location.search}${location.hash}` }}
       />
     );
+  }
+  if (!allowIncompleteProfile && user && user.profileCompleted === false) {
+    return <Navigate to="/complete-profile" replace />;
   }
   return children;
 }
@@ -160,6 +173,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <AuthProvider>
             <FavoritesProvider>
             <CityProvider>
+              <ShelterPetBrowseProvider>
               <AuthModalGlobal />
               <Suspense fallback={<RouteLoader />}>
                 <Routes>
@@ -181,6 +195,16 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                   <Route path="/settings" element={<RequireAuth><SettingsPageRoute /></RequireAuth>} />
                   <Route path="/admin" element={<RequireAdmin><AdminPage /></RequireAdmin>} />
                   <Route path="/terms" element={<TermsPage />} />
+                  <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                  <Route path="/reset-password" element={<ResetPasswordPage />} />
+                  <Route
+                    path="/complete-profile"
+                    element={
+                      <RequireAuth allowIncompleteProfile>
+                        <CompleteProfilePage />
+                      </RequireAuth>
+                    }
+                  />
                   <Route path="/blog" element={<BlogListPage />} />
                   <Route path="/blog/:slug" element={<BlogPostPage />} />
                   <Route path="/shelters/:shelterId" element={<ShelterDetailPage />} />
@@ -278,6 +302,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                 </Routes>
               </Suspense>
               <MobileBottomNav />
+              </ShelterPetBrowseProvider>
             </CityProvider>
             </FavoritesProvider>
           </AuthProvider>

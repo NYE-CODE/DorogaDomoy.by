@@ -339,6 +339,28 @@ export default function PublicPetProfilePage() {
                     </div>
                   </div>
                 )}
+
+                {(pet.registration_authority?.trim() || pet.registration_token_number?.trim()) && (
+                  <div className="px-5 md:px-6 lg:px-8 pb-5 md:pb-6 lg:pb-8">
+                    <div className="bg-gray-50 dark:bg-muted/50 rounded-xl px-4 py-3 md:px-5 md:py-4 border border-gray-100 dark:border-border">
+                      <p className="text-xs md:text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
+                        {pp.registrationTitle}
+                      </p>
+                      {pet.registration_authority?.trim() ? (
+                        <p className="text-sm md:text-base text-gray-700 dark:text-gray-300">
+                          <span className="text-gray-500 dark:text-gray-400">{pp.registrationAuthority}: </span>
+                          {pet.registration_authority.trim()}
+                        </p>
+                      ) : null}
+                      {pet.registration_token_number?.trim() ? (
+                        <p className="mt-2 text-sm md:text-base text-gray-700 dark:text-gray-300">
+                          <span className="text-gray-500 dark:text-gray-400">{pp.registrationToken}: </span>
+                          <span className="font-mono">{pet.registration_token_number.trim()}</span>
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

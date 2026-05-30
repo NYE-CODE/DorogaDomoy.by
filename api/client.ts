@@ -127,6 +127,8 @@ export interface UserResponse {
   telegram_username?: string | null;
   telegram_linked_at?: string | null;
   registered_as_volunteer?: boolean;
+  profile_completed?: boolean;
+  password_set?: boolean;
 }
 
 export interface TokenResponse {
@@ -153,10 +155,62 @@ function toUser(u: UserResponse): User {
     telegramId: u.telegram_id,
     telegramUsername: u.telegram_username,
     telegramLinkedAt: u.telegram_linked_at,
+    profileCompleted: u.profile_completed ?? true,
+    passwordSet: u.password_set ?? true,
   };
 }
 
+export interface AuthPublicConfig {
+  telegram_bot_username?: string | null;
+  telegram_login_enabled: boolean;
+}
+
+export interface TelegramAuthPayload {
+  id: number;
+  first_name?: string;
+  last_name?: string;
+  username?: string;
+  photo_url?: string;
+  auth_date: number;
+  hash: string;
+}
+
 export const authApi = {
+  getConfig: () => api<AuthPublicConfig>('/auth/config'),
+
+  loginWithTelegram: (payload: TelegramAuthPayload) =>
+    api<TokenResponse>('/auth/telegram/login', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }).then((r) => {
+      clearLegacyToken();
+      return toUser(r.user);
+    }),
+
+  completeProfile: (data: { email: string; role: 'user' | 'volunteer'; password?: string }) =>
+    api<UserResponse>('/auth/complete-profile', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }).then(toUser),
+
+  forgotPassword: (email: string) =>
+    api<{ detail: string }>('/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    }),
+
+  resetPassword: (token: string, newPassword: string) =>
+    api<{ detail: string }>('/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ token, new_password: newPassword }),
+    }),
+
+  setPassword: (newPassword: string) =>
+    api<{ detail: string }>('/auth/set-password', {
+      method: 'POST',
+      body: JSON.stringify({ new_password: newPassword }),
+    }),
+
   login: (email: string, password: string) =>
     api<TokenResponse>('/auth/login', {
       method: 'POST',
@@ -269,6 +323,8 @@ interface PetResponse {
   updated_by_user_id?: string;
   /** Кличка для питомца приюта (ShelterPetDetails), не дублирует author_name */
   nickname?: string | null;
+  registration_authority?: string | null;
+  registration_token_number?: string | null;
 }
 
 interface ShelterPetResponse {
@@ -298,6 +354,8 @@ interface ShelterPetResponse {
   is_published?: boolean;
   published_by_user_id?: string;
   updated_by_user_id?: string;
+  registration_authority?: string | null;
+  registration_token_number?: string | null;
 }
 
 function resolvePhotoUrl(url: string): string {
@@ -357,6 +415,8 @@ function toPet(p: PetResponse): Pet {
     isPublished: p.is_published,
     publishedByUserId: p.published_by_user_id,
     updatedByUserId: p.updated_by_user_id,
+    registrationAuthority: p.registration_authority ?? undefined,
+    registrationTokenNumber: p.registration_token_number ?? undefined,
   };
 }
 
@@ -392,6 +452,8 @@ function toPetFromShelter(p: ShelterPetResponse): Pet {
     isPublished: p.is_published,
     publishedByUserId: p.published_by_user_id,
     updatedByUserId: p.updated_by_user_id,
+    registrationAuthority: p.registration_authority ?? undefined,
+    registrationTokenNumber: p.registration_token_number ?? undefined,
   };
 }
 
@@ -415,6 +477,8 @@ export interface PetCreateInput {
   shelterId?: string;
   adoptionStatus?: 'available' | 'reserved' | 'adopted' | 'on_treatment' | 'not_for_adoption';
   isPublished?: boolean;
+  registrationAuthority?: string;
+  registrationTokenNumber?: string;
 }
 
 export interface ShelterPetInput {
@@ -436,6 +500,8 @@ export interface ShelterPetInput {
   isPublished?: boolean;
   /** Имя автора/менеджера приюта в карточке */
   author_name?: string;
+  registrationAuthority?: string;
+  registrationTokenNumber?: string;
 }
 
 export type ShelterPetUpdateInput = Partial<ShelterPetInput> & {
@@ -506,6 +572,10 @@ export const petsApi = {
       adoption_status: data.adoptionStatus,
       is_published: data.isPublished ?? true,
     };
+    const ra = data.registrationAuthority?.trim();
+    const rt = data.registrationTokenNumber?.trim();
+    if (ra) body.registration_authority = ra;
+    if (rt) body.registration_token_number = rt;
     if (data.author_name != null && data.author_name.trim() !== '') {
       body.author_name = data.author_name.trim();
     }
@@ -552,6 +622,12 @@ export const petsApi = {
     if (data.shelterId != null) body.shelter_id = data.shelterId;
     if (data.adoptionStatus != null) body.adoption_status = data.adoptionStatus;
     if (data.isPublished != null) body.is_published = data.isPublished;
+    if (data.registrationAuthority !== undefined) {
+      body.registration_authority = data.registrationAuthority?.trim() || null;
+    }
+    if (data.registrationTokenNumber !== undefined) {
+      body.registration_token_number = data.registrationTokenNumber?.trim() || null;
+    }
     return api<PetResponse>(`/pets/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(body),
@@ -1081,6 +1157,8 @@ export interface ProfilePetResponse {
   special_marks?: string | null;
   is_chipped: boolean;
   chip_number?: string | null;
+  registration_authority?: string | null;
+  registration_token_number?: string | null;
   medical_info?: string | null;
   temperament?: string | null;
   responds_to_name: boolean;
@@ -1108,6 +1186,8 @@ export interface ProfilePetInput {
   special_marks?: string;
   is_chipped: boolean;
   chip_number?: string;
+  registration_authority?: string;
+  registration_token_number?: string;
   medical_info?: string;
   temperament?: string;
   responds_to_name: boolean;
@@ -1535,6 +1615,10 @@ export const sheltersApi = {
       adoption_status: data.adoptionStatus,
       is_published: data.isPublished ?? true,
     };
+    const cra = data.registrationAuthority?.trim();
+    const crt = data.registrationTokenNumber?.trim();
+    if (cra) body.registration_authority = cra;
+    if (crt) body.registration_token_number = crt;
     if (data.author_name != null && data.author_name.trim() !== '') body.author_name = data.author_name.trim();
     return api<ShelterPetResponse>(`/shelters/${encodeURIComponent(id)}/pets`, {
       method: 'POST',
@@ -1563,6 +1647,12 @@ export const shelterPetsApi = {
     if (data.archiveReason != null) body.archive_reason = data.archiveReason;
     if (data.adoptionStatus != null) body.adoption_status = data.adoptionStatus;
     if (data.isPublished != null) body.is_published = data.isPublished;
+    if (data.registrationAuthority !== undefined) {
+      body.registration_authority = data.registrationAuthority?.trim() || null;
+    }
+    if (data.registrationTokenNumber !== undefined) {
+      body.registration_token_number = data.registrationTokenNumber?.trim() || null;
+    }
     return api<ShelterPetResponse>(`/shelter-pets/${encodeURIComponent(petId)}`, {
       method: 'PATCH',
       body: JSON.stringify(body),

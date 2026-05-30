@@ -432,6 +432,32 @@ export default function MyPetProfilePage() {
                 </Card>
               )}
 
+              {(pet.registration_authority?.trim() || pet.registration_token_number?.trim()) && (
+                <Card className="border-border/80 shadow-sm">
+                  <CardHeader className="pb-2">
+                    <CardTitle className={sectionTitleClass}>{op.registrationTitle}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3 text-sm">
+                    {pet.registration_authority?.trim() ? (
+                      <div>
+                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                          {op.registrationAuthority}
+                        </p>
+                        <p className="mt-1 leading-relaxed text-foreground/90">{pet.registration_authority.trim()}</p>
+                      </div>
+                    ) : null}
+                    {pet.registration_token_number?.trim() ? (
+                      <div>
+                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                          {op.registrationToken}
+                        </p>
+                        <p className="mt-1 font-mono text-foreground/90">{pet.registration_token_number.trim()}</p>
+                      </div>
+                    ) : null}
+                  </CardContent>
+                </Card>
+              )}
+
               <Card className="border-border/80 shadow-sm">
                 <CardHeader className="pb-2">
                   <CardTitle className={sectionTitleClass}>{op.extraInfoTitle}</CardTitle>

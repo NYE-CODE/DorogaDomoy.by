@@ -6,6 +6,7 @@ import { useI18n } from '../context/I18nContext';
 import { sheltersApi, type ShelterResponse } from '../api/client';
 import type { Pet } from '../types/pet';
 import { MapPin, Building2, ChevronRight, Search } from 'lucide-react';
+import { buildShelterPetUrl } from '../utils/shelter-pet-browse';
 import {
   shelterAnimalFocusLabel,
   shelterKindLabel,
@@ -46,8 +47,11 @@ export default function SheltersPage() {
   const [petsLoading, setPetsLoading] = useState(false);
   const [error, setError] = useState(false);
   const [petsError, setPetsError] = useState(false);
-  const [petCityFilter, setPetCityFilter] = useState('');
-  const [petAnimalFilter, setPetAnimalFilter] = useState<'all' | 'cat' | 'dog' | 'other'>('all');
+  const [petCityFilter, setPetCityFilter] = useState(() => searchParams.get('petCity') ?? '');
+  const [petAnimalFilter, setPetAnimalFilter] = useState<'all' | 'cat' | 'dog' | 'other'>(() => {
+    const animal = searchParams.get('petAnimal');
+    return animal === 'cat' || animal === 'dog' || animal === 'other' ? animal : 'all';
+  });
 
   useEffect(() => {
     const desc = truncateMetaDescription(`${s.pageSubtitle} DorogaDomoy.by.`);
@@ -124,6 +128,20 @@ export default function SheltersPage() {
     else next.set('tab', 'pets');
     setSearchParams(next, { replace: true });
   };
+
+  useEffect(() => {
+    if (activeTab !== 'pets') return;
+    const next = new URLSearchParams(searchParams);
+    next.set('tab', 'pets');
+    if (petCityFilter.trim()) next.set('petCity', petCityFilter.trim());
+    else next.delete('petCity');
+    if (petAnimalFilter !== 'all') next.set('petAnimal', petAnimalFilter);
+    else next.delete('petAnimal');
+    const nextStr = next.toString();
+    const curStr = searchParams.toString();
+    if (nextStr !== curStr) setSearchParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- синхронизируем URL только при смене фильтров
+  }, [activeTab, petCityFilter, petAnimalFilter]);
 
   useEffect(() => {
     if (activeTab !== 'pets' || shelterPets.length > 0 || petsLoading) return;
@@ -424,7 +442,18 @@ export default function SheltersPage() {
           <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {filteredPets.map((pet) => (
               <li key={pet.id} className="h-full">
-                <ShelterPetCard pet={pet} onClick={() => navigate(`/shelter-pet/${pet.id}`)} />
+                <ShelterPetCard
+                  pet={pet}
+                  onClick={() =>
+                    navigate(
+                      buildShelterPetUrl(pet.id, {
+                        source: 'catalog',
+                        catalogCity: petCityFilter,
+                        catalogAnimal: petAnimalFilter,
+                      }),
+                    )
+                  }
+                />
               </li>
             ))}
           </ul>

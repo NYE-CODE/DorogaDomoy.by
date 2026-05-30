@@ -114,6 +114,8 @@ def _ensure_bounty_and_helper_columns() -> None:
         "points_balance": "INTEGER DEFAULT 0",
         "points_earned_total": "INTEGER DEFAULT 0",
         "registered_as_volunteer": "INTEGER DEFAULT 0",
+        "password_set": "INTEGER DEFAULT 1",
+        "profile_completed": "INTEGER DEFAULT 1",
     }
     pet_columns = {
         "reward_mode": "VARCHAR DEFAULT 'points'",
@@ -127,6 +129,8 @@ def _ensure_bounty_and_helper_columns() -> None:
         "is_published": "INTEGER DEFAULT 1",
         "published_by_user_id": "VARCHAR",
         "updated_by_user_id": "VARCHAR",
+        "registration_authority": "VARCHAR",
+        "registration_token_number": "VARCHAR",
     }
     partner_columns = {
         "is_medallion_partner": "INTEGER DEFAULT 0",

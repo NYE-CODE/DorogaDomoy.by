@@ -426,6 +426,8 @@ export default function SearchPage() {
         city: formData.city,
         location: formData.location,
         contacts: formData.contacts,
+        registrationAuthority: formData.registrationAuthority,
+        registrationTokenNumber: formData.registrationTokenNumber,
       });
       setAllPets((prev) => prev.map((p) => (p.id === editingPet.id ? updatedPet : p)));
       setEditingPet(null);

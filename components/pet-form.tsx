@@ -78,6 +78,10 @@ export interface PetFormData {
   /** Награда за помощь */
   rewardMode?: 'points' | 'money';
   rewardAmountByn?: number;
+  /** Госучёт РБ (жетон): орган ведения учёта */
+  registrationAuthority?: string;
+  /** Номер жетона */
+  registrationTokenNumber?: string;
 }
 
 /** Город и точка на карте по выбранному в фильтре городу (иначе Минск). */
@@ -120,6 +124,8 @@ const defaultFormData: PetFormData = {
   agreeToPrivacy: false,
   rewardMode: 'points',
   rewardAmountByn: undefined,
+  registrationAuthority: '',
+  registrationTokenNumber: '',
 };
 
 function formDataFromPet(pet: Pet): PetFormData {
@@ -144,6 +150,8 @@ function formDataFromPet(pet: Pet): PetFormData {
     agreeToPrivacy: true,
     rewardMode: pet.rewardMode ?? 'points',
     rewardAmountByn: pet.rewardAmountByn,
+    registrationAuthority: pet.registrationAuthority ?? '',
+    registrationTokenNumber: pet.registrationTokenNumber ?? '',
   };
 }
 
@@ -338,6 +346,10 @@ export function PetForm({
         errs.rewardAmountByn = 'Укажите сумму в BYN';
       }
     }
+    const raLen = (formData.registrationAuthority ?? '').trim().length;
+    const rtLen = (formData.registrationTokenNumber ?? '').trim().length;
+    if (raLen > 300) errs.registrationAuthority = 'Макс. 300 символов';
+    if (rtLen > 80) errs.registrationTokenNumber = 'Макс. 80 символов';
     return errs;
   };
 
@@ -827,6 +839,55 @@ export function PetForm({
                 required
               />
               {errors.description && <p className="text-xs text-red-500 mt-1">{errors.description}</p>}
+
+              <div className="mt-8 border-t border-gray-200 dark:border-gray-700 pt-6">
+                <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">
+                  {t.petForm.registrationSectionTitle}
+                </p>
+                <p className="text-xs text-muted-foreground mb-4">{t.petForm.registrationHint}</p>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      {t.petForm.registrationAuthorityLabel}
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.registrationAuthority ?? ''}
+                      onChange={(e) =>
+                        setFormData({ ...formData, registrationAuthority: e.target.value })
+                      }
+                      placeholder={t.petForm.registrationAuthorityPlaceholder}
+                      maxLength={300}
+                      className={variant === 'page'
+                        ? `w-full px-4 py-3 border rounded-lg bg-[#f3f3f5] dark:bg-input-background text-foreground focus:outline-none focus:ring-2 focus:ring-[#FF9800] focus:border-transparent ${errors.registrationAuthority ? 'border-red-300' : 'border-gray-300 dark:border-gray-600'}`
+                        : `w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${errors.registrationAuthority ? 'border-red-300' : 'border-gray-200 dark:border-gray-600'}`}
+                    />
+                    {errors.registrationAuthority && (
+                      <p className="text-xs text-red-500 mt-1">{errors.registrationAuthority}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      {t.petForm.registrationTokenLabel}
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.registrationTokenNumber ?? ''}
+                      onChange={(e) =>
+                        setFormData({ ...formData, registrationTokenNumber: e.target.value })
+                      }
+                      placeholder={t.petForm.registrationTokenPlaceholder}
+                      maxLength={80}
+                      className={variant === 'page'
+                        ? `w-full px-4 py-3 border rounded-lg bg-[#f3f3f5] dark:bg-input-background text-foreground focus:outline-none focus:ring-2 focus:ring-[#FF9800] focus:border-transparent ${errors.registrationTokenNumber ? 'border-red-300' : 'border-gray-300 dark:border-gray-600'}`
+                        : `w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${errors.registrationTokenNumber ? 'border-red-300' : 'border-gray-200 dark:border-gray-600'}`}
+                    />
+                    {errors.registrationTokenNumber && (
+                      <p className="text-xs text-red-500 mt-1">{errors.registrationTokenNumber}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
 
               {formData.status === 'searching' && (
               <div className="mt-8 border-t border-gray-200 dark:border-gray-700 pt-6">

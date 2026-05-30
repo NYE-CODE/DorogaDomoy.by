@@ -18,6 +18,7 @@ import {
   type ShelterPetHealth,
   type ShelterPetSponsor,
 } from '../utils/shelter-pet-filters';
+import { buildShelterPetUrl } from '../utils/shelter-pet-browse';
 import { cn } from './ui/utils';
 
 export const SHELTER_PETS_ANCHOR = 'shelter-pets';
@@ -343,7 +344,18 @@ export function ShelterPetsSection({ shelterId, initialPets }: { shelterId: stri
                   <ul ref={listRef} className="grid list-none grid-cols-1 gap-4 p-0 sm:grid-cols-2 lg:grid-cols-3">
                     {displayed.map((pet) => (
                       <li key={pet.id} className="min-w-0">
-                        <ShelterPetCard pet={pet} onClick={() => navigate(`/shelter-pet/${pet.id}`)} />
+                        <ShelterPetCard
+                          pet={pet}
+                          onClick={() =>
+                            navigate(
+                              buildShelterPetUrl(pet.id, {
+                                source: 'shelter',
+                                shelterId,
+                                shelterFilters: applied,
+                              }),
+                            )
+                          }
+                        />
                       </li>
                     ))}
                   </ul>

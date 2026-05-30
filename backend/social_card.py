@@ -486,10 +486,41 @@ def generate_social_card(
         qr_url = f"{site_url.rstrip('/')}/shelter-pet/{pet_id}"
     else:
         qr_url = f"{site_url.rstrip('/')}/pet/{pet_id}"
+
+    scan_f = _font("regular", 22)
+    scan_h = _lh(scan_f)
+    qr_border = 8
+    footer_gap = 12
+    min_qr = 176 if card_format == "feed" else 208
+    qr_right_pad = PAD + qr_border + 6
+    min_contact_w = 200
+
+    def _fit_qr_size() -> tuple[int, int, int]:
+        """Подбирает размер QR и X так, чтобы рамка и код не обрезались краем холста и футером."""
+        sz = qr_sz
+        vc = footer_y - y - 10 - scan_h - footer_gap
+        if vc >= min_qr:
+            sz = min(sz, vc)
+        else:
+            sz = min(sz, max(80, vc))
+        qx = W - qr_right_pad - sz
+        cw = qx - x0 - 28
+        if cw < min_contact_w and sz > 80:
+            need = min_contact_w - cw
+            sz = max(80, sz - need)
+            qx = W - qr_right_pad - sz
+        vc2 = footer_y - y - 10 - scan_h - footer_gap
+        if sz > vc2:
+            if vc2 >= min_qr:
+                sz = min(sz, vc2)
+            else:
+                sz = min(sz, max(80, vc2))
+            qx = W - qr_right_pad - sz
+        return sz, qx, max(100, qx - x0 - 28)
+
+    qr_sz, qr_x, contact_w = _fit_qr_size()
     qr_img = _make_qr(qr_url, qr_sz)
-    qr_x = x1 - qr_sz
     qr_y = y
-    contact_w = qr_x - x0 - 28
 
     has_any = False
     for key, lbl_key in [("phone", "phone"), ("telegram", "telegram"), ("viber", "viber")]:
@@ -509,7 +540,6 @@ def generate_social_card(
         draw.text((x0, y), L["scan_qr"], font=small_lbl_f, fill=GRAY_400)
 
     # QR code
-    qr_border = 8
     draw.rounded_rectangle(
         (qr_x - qr_border, qr_y - qr_border,
          qr_x + qr_sz + qr_border, qr_y + qr_sz + qr_border),
@@ -517,7 +547,6 @@ def generate_social_card(
     )
     img.paste(qr_img, (qr_x, qr_y))
 
-    scan_f = _font("regular", 22)
     scan_txt = L["qr_hint_adoption"] if is_adoption else L["scan_qr"]
     scan_w = _tw(scan_f, scan_txt)
     draw.text((qr_x + (qr_sz - scan_w) // 2, qr_y + qr_sz + 10),

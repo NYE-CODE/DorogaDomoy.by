@@ -1,0 +1,137 @@
+import { sheltersApi } from '../api/client';
+import type { Pet } from '../types/pet';
+import {
+  defaultShelterPetFilters,
+  petMatchesShelterFilters,
+  type ShelterPetFilterState,
+} from './shelter-pet-filters';
+
+export type ShelterPetBrowseSource = 'catalog' | 'shelter';
+
+export type ShelterPetBrowseContext = {
+  source: ShelterPetBrowseSource;
+  shelterId?: string;
+  catalogCity?: string;
+  catalogAnimal?: 'all' | 'cat' | 'dog' | 'other';
+  shelterFilters?: ShelterPetFilterState;
+};
+
+const FILTER_PARAM = 'sf';
+
+function isShelterPetRow(p: Pet): boolean {
+  return (p.petScope ?? 'lost_found') === 'shelter_pet' && p.moderationStatus === 'approved';
+}
+
+export function encodeShelterFilters(filters: ShelterPetFilterState): string {
+  try {
+    const json = JSON.stringify(filters);
+    return btoa(unescape(encodeURIComponent(json)));
+  } catch {
+    return '';
+  }
+}
+
+export function decodeShelterFilters(raw: string | null): ShelterPetFilterState {
+  if (!raw?.trim()) return defaultShelterPetFilters();
+  try {
+    const json = decodeURIComponent(escape(atob(raw)));
+    const parsed = JSON.parse(json) as Partial<ShelterPetFilterState>;
+    return { ...defaultShelterPetFilters(), ...parsed };
+  } catch {
+    return defaultShelterPetFilters();
+  }
+}
+
+export function parseBrowseContext(searchParams: URLSearchParams): ShelterPetBrowseContext | null {
+  const from = searchParams.get('from');
+  if (from === 'catalog') {
+    const animal = searchParams.get('petAnimal');
+    const catalogAnimal =
+      animal === 'cat' || animal === 'dog' || animal === 'other' ? animal : 'all';
+    return {
+      source: 'catalog',
+      catalogCity: searchParams.get('petCity')?.trim() || '',
+      catalogAnimal,
+    };
+  }
+  if (from === 'shelter') {
+    const shelterId = searchParams.get('shelterId')?.trim();
+    if (!shelterId) return null;
+    return {
+      source: 'shelter',
+      shelterId,
+      shelterFilters: decodeShelterFilters(searchParams.get(FILTER_PARAM)),
+    };
+  }
+  return null;
+}
+
+export function browseContextToSearchParams(ctx: ShelterPetBrowseContext): URLSearchParams {
+  const params = new URLSearchParams();
+  if (ctx.source === 'catalog') {
+    params.set('from', 'catalog');
+    if (ctx.catalogCity?.trim()) params.set('petCity', ctx.catalogCity.trim());
+    if (ctx.catalogAnimal && ctx.catalogAnimal !== 'all') params.set('petAnimal', ctx.catalogAnimal);
+    return params;
+  }
+  params.set('from', 'shelter');
+  if (ctx.shelterId) params.set('shelterId', ctx.shelterId);
+  const encoded = encodeShelterFilters(ctx.shelterFilters ?? defaultShelterPetFilters());
+  if (encoded) params.set(FILTER_PARAM, encoded);
+  return params;
+}
+
+export function buildShelterPetBrowseQuery(ctx: ShelterPetBrowseContext): string {
+  const qs = browseContextToSearchParams(ctx).toString();
+  return qs ? `?${qs}` : '';
+}
+
+export function buildShelterPetUrl(petId: string, ctx: ShelterPetBrowseContext): string {
+  return `/shelter-pet/${petId}${buildShelterPetBrowseQuery(ctx)}`;
+}
+
+export async function loadCatalogShelterPets(): Promise<Pet[]> {
+  const shelters = await sheltersApi.list();
+  const buckets = await Promise.all(
+    shelters.map(async (shelter) => {
+      try {
+        return await sheltersApi.listPets(shelter.id, { is_archived: false, limit: 200 });
+      } catch {
+        return [];
+      }
+    }),
+  );
+  return buckets.flat().filter(isShelterPetRow);
+}
+
+function filterCatalogPets(pets: Pet[], ctx: ShelterPetBrowseContext): Pet[] {
+  const city = ctx.catalogCity?.trim() ?? '';
+  const animal = ctx.catalogAnimal ?? 'all';
+  return pets.filter((p) => {
+    if (city && p.city?.trim() !== city) return false;
+    if (animal !== 'all' && p.animalType !== animal) return false;
+    return true;
+  });
+}
+
+export async function resolveShelterPetBrowseIds(
+  ctx: ShelterPetBrowseContext | null,
+  fallbackShelterId?: string | null,
+): Promise<string[]> {
+  if (ctx?.source === 'catalog') {
+    const pets = await loadCatalogShelterPets();
+    return filterCatalogPets(pets, ctx).map((p) => p.id);
+  }
+
+  const shelterId = ctx?.source === 'shelter' ? ctx.shelterId : fallbackShelterId;
+  if (!shelterId?.trim()) return [];
+
+  const rows = await sheltersApi.listPets(shelterId.trim(), { is_archived: false, limit: 300 });
+  const filters = ctx?.source === 'shelter' ? ctx.shelterFilters ?? defaultShelterPetFilters() : defaultShelterPetFilters();
+  return rows.filter((p) => petMatchesShelterFilters(p, filters)).map((p) => p.id);
+}
+
+export function browseSearchFromParams(searchParams: URLSearchParams): string {
+  const qs = searchParams.toString();
+  return qs ? `?${qs}` : '';
+}

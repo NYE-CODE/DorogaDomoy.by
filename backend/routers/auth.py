@@ -1,18 +1,34 @@
-"""Auth routes: login, register, me, change-password, avatar."""
+"""Auth routes: login, register, me, change-password, avatar, telegram login, password reset."""
+import hashlib
 import io
 import logging
+import os
+import secrets
 import uuid
+from datetime import timedelta
 from pathlib import Path
 from typing import Optional
 from fastapi import APIRouter, Depends, File, HTTPException, Body, Response, UploadFile, Request
 from PIL import Image
 from pydantic import BaseModel, field_validator
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from database import get_db
-from models import User
-from schemas import UserCreate, UserLogin, UserResponse, Token, UserContactsStrict
+from models import User, PasswordResetToken
+from schemas import (
+    UserCreate,
+    UserLogin,
+    UserResponse,
+    Token,
+    UserContactsStrict,
+    AuthPublicConfigResponse,
+    TelegramLoginBody,
+    CompleteProfileBody,
+    ForgotPasswordBody,
+    ResetPasswordBody,
+    SetPasswordBody,
+)
 from auth import (
     clear_auth_cookie,
     get_password_hash,
@@ -24,6 +40,14 @@ from auth import (
 )
 from mappers.user import user_to_response
 from rate_limit import limiter
+from telegram_bot import BOT_TOKEN, BOT_USERNAME, send_password_reset_sync
+from telegram_login import (
+    verify_telegram_login_payload,
+    telegram_display_name,
+    internal_telegram_email,
+    is_internal_email,
+)
+from time_utils import utc_now
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -32,6 +56,11 @@ UPLOADS_DIR.mkdir(exist_ok=True)
 MIME_TO_EXT = {"image/jpeg": ".jpg", "image/png": ".png", "image/gif": ".gif", "image/webp": ".webp"}
 MAX_AVATAR_BYTES = 5 * 1024 * 1024  # 5 MB
 AVATAR_SIZE = 256
+SITE_URL = os.getenv("SITE_URL", "https://dorogadomoy.by").rstrip("/")
+PASSWORD_RESET_TTL_MINUTES = 30
+FORGOT_PASSWORD_GENERIC_MSG = (
+    "Если аккаунт найден и Telegram привязан, мы отправили ссылку для сброса пароля в бот."
+)
 
 
 def _make_helper_code(db: Session) -> str:
@@ -43,8 +72,13 @@ def _make_helper_code(db: Session) -> str:
     return f"DD-{uuid.uuid4().hex[:12].upper()}"
 
 
+def _is_telegram_photo_url(url: str) -> bool:
+    u = (url or "").strip()
+    return u.startswith("https://t.me/") or u.startswith("https://telegram.org/")
+
+
 def _is_allowed_avatar_url(url: str) -> bool:
-    """Только загруженный файл на сайте или дефолтный Dicebear."""
+    """Только загруженный файл на сайте, дефолтный Dicebear или фото из Telegram."""
     u = (url or "").strip()
     if not u or len(u) > 512:
         return False
@@ -54,7 +88,19 @@ def _is_allowed_avatar_url(url: str) -> bool:
         return True
     if u.startswith("https://api.dicebear.com/"):
         return True
+    if _is_telegram_photo_url(u):
+        return True
     return False
+
+
+def _hash_reset_token(raw: str) -> str:
+    return hashlib.sha256(raw.encode()).hexdigest()
+
+
+def _issue_session(response: Response, user: User) -> Token:
+    token = create_access_token(data={"sub": user.id})
+    set_auth_cookie(response, token)
+    return Token(access_token=token, user=user_to_response(user))
 
 
 @router.post("/register", response_model=Token)
@@ -81,6 +127,8 @@ def register(
         registered_as_volunteer=reg_vol,
         contacts=data.contacts.model_dump() if hasattr(data, 'contacts') and data.contacts else {},
         helper_code=_make_helper_code(db),
+        password_set=True,
+        profile_completed=True,
     )
     try:
         db.add(user)
@@ -98,6 +146,231 @@ def register(
     return Token(access_token=token, user=user_to_response(user))
 
 
+@router.get("/config", response_model=AuthPublicConfigResponse)
+def auth_public_config():
+    username = (BOT_USERNAME or "").strip().lstrip("@")
+    enabled = bool(BOT_TOKEN and username)
+    return AuthPublicConfigResponse(
+        telegram_bot_username=username or None,
+        telegram_login_enabled=enabled,
+    )
+
+
+@router.post("/telegram/login", response_model=Token)
+@limiter.limit("30/minute")
+def telegram_login(
+    request: Request,
+    body: TelegramLoginBody,
+    response: Response,
+    db: Session = Depends(get_db),
+):
+    payload = body.model_dump()
+    ok, err = verify_telegram_login_payload(payload)
+    if not ok:
+        raise HTTPException(status_code=400, detail=err)
+
+    telegram_id = int(body.id)
+    username = (body.username or "").strip() or None
+    display_name = telegram_display_name(payload)
+
+    user = db.scalar(select(User).where(User.telegram_id == telegram_id))
+    if user:
+        if user.is_blocked:
+            raise HTTPException(status_code=403, detail="Аккаунт заблокирован")
+        if username and user.telegram_username != username:
+            user.telegram_username = username
+            contacts = dict(user.contacts or {})
+            contacts["telegram"] = f"@{username}"
+            user.contacts = contacts
+            db.commit()
+            db.refresh(user)
+        return _issue_session(response, user)
+
+    email = internal_telegram_email(telegram_id)
+    if db.scalar(select(User).where(User.email == email)):
+        raise HTTPException(status_code=400, detail="Не удалось создать аккаунт. Обратитесь в поддержку.")
+
+    photo = (body.photo_url or "").strip()
+    avatar = photo if _is_telegram_photo_url(photo) else f"https://api.dicebear.com/7.x/avataaars/svg?seed={display_name}"
+
+    user_id = "user-" + str(int(__import__("time").time() * 1000))
+    user = User(
+        id=user_id,
+        email=email,
+        name=display_name,
+        password_hash=get_password_hash(secrets.token_urlsafe(32)),
+        password_set=False,
+        profile_completed=False,
+        avatar=avatar,
+        role="user",
+        registered_as_volunteer=False,
+        contacts={"telegram": f"@{username}"} if username else {},
+        helper_code=_make_helper_code(db),
+        telegram_id=telegram_id,
+        telegram_username=username,
+        telegram_linked_at=utc_now(),
+    )
+    try:
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    except Exception as e:
+        db.rollback()
+        logging.exception("Telegram login register error: %s", e)
+        raise HTTPException(status_code=500, detail="Не удалось войти через Telegram") from e
+
+    return _issue_session(response, user)
+
+
+@router.post("/complete-profile", response_model=UserResponse)
+@limiter.limit("20/minute")
+def complete_profile(
+    request: Request,
+    body: CompleteProfileBody,
+    user: User = Depends(get_current_user_required),
+    db: Session = Depends(get_db),
+):
+    if user.profile_completed and not is_internal_email(user.email):
+        raise HTTPException(status_code=400, detail="Профиль уже заполнен")
+
+    email = body.email.strip().lower()
+    if not email or "@" not in email:
+        raise HTTPException(status_code=400, detail="Укажите корректный email")
+    if is_internal_email(email):
+        raise HTTPException(status_code=400, detail="Укажите реальный email")
+
+    existing = db.scalar(select(User).where(User.email == email, User.id != user.id))
+    if existing:
+        raise HTTPException(status_code=400, detail="Этот email уже используется")
+
+    signup_role = body.role
+    user.email = email
+    user.role = signup_role
+    user.registered_as_volunteer = signup_role == "volunteer"
+    user.profile_completed = True
+
+    if body.password and body.password.strip():
+        pwd = body.password.strip()
+        if len(pwd) < 6:
+            raise HTTPException(status_code=400, detail="Пароль должен быть не менее 6 символов")
+        user.password_hash = get_password_hash(pwd)
+        user.password_set = True
+
+    try:
+        db.commit()
+        db.refresh(user)
+    except Exception as e:
+        db.rollback()
+        logging.exception("complete_profile error %s: %s", user.id, e)
+        raise HTTPException(status_code=500, detail="Не удалось сохранить профиль") from e
+
+    return user_to_response(user)
+
+
+@router.post("/forgot-password")
+@limiter.limit("10/minute")
+def forgot_password(
+    request: Request,
+    body: ForgotPasswordBody,
+    db: Session = Depends(get_db),
+):
+    email = body.email.strip().lower()
+    user = db.scalar(select(User).where(User.email == email)) if email else None
+
+    if user and user.telegram_id and bool(getattr(user, "password_set", True)):
+        db.execute(
+            update(PasswordResetToken)
+            .where(PasswordResetToken.user_id == user.id, PasswordResetToken.used.is_(False))
+            .values(used=True)
+        )
+        raw_token = secrets.token_urlsafe(32)
+        row = PasswordResetToken(
+            id=f"prt-{uuid.uuid4().hex[:12]}",
+            user_id=user.id,
+            token_hash=_hash_reset_token(raw_token),
+            created_at=utc_now(),
+            expires_at=utc_now() + timedelta(minutes=PASSWORD_RESET_TTL_MINUTES),
+        )
+        db.add(row)
+        try:
+            db.commit()
+        except Exception as e:
+            db.rollback()
+            logging.exception("forgot_password token error: %s", e)
+        else:
+            reset_url = f"{SITE_URL}/reset-password?token={raw_token}"
+            send_password_reset_sync(user.telegram_id, reset_url)
+
+    return {"detail": FORGOT_PASSWORD_GENERIC_MSG}
+
+
+@router.post("/reset-password")
+@limiter.limit("15/minute")
+def reset_password(
+    request: Request,
+    body: ResetPasswordBody,
+    db: Session = Depends(get_db),
+):
+    if len(body.new_password) < 6:
+        raise HTTPException(status_code=400, detail="Пароль должен быть не менее 6 символов")
+
+    token_hash = _hash_reset_token(body.token.strip())
+    row = db.scalar(
+        select(PasswordResetToken).where(
+            PasswordResetToken.token_hash == token_hash,
+            PasswordResetToken.used.is_(False),
+        )
+    )
+    if not row or row.expires_at < utc_now():
+        raise HTTPException(status_code=400, detail="Ссылка недействительна или истекла")
+
+    user = db.scalar(select(User).where(User.id == row.user_id))
+    if not user:
+        raise HTTPException(status_code=400, detail="Ссылка недействительна или истекла")
+
+    user.password_hash = get_password_hash(body.new_password)
+    user.password_set = True
+    row.used = True
+
+    try:
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        logging.exception("reset_password error: %s", e)
+        raise HTTPException(status_code=500, detail="Не удалось сменить пароль") from e
+
+    return {"detail": "Пароль успешно изменён. Теперь можно войти с новым паролем."}
+
+
+@router.post("/set-password")
+@limiter.limit("12/minute")
+def set_password(
+    request: Request,
+    body: SetPasswordBody,
+    user: User = Depends(get_current_user_required),
+    db: Session = Depends(get_db),
+):
+    """Задать пароль аккаунту без пароля (после входа через Telegram)."""
+    if bool(getattr(user, "password_set", True)):
+        raise HTTPException(
+            status_code=400,
+            detail="Пароль уже задан. Используйте смену пароля в профиле.",
+        )
+    if len(body.new_password) < 6:
+        raise HTTPException(status_code=400, detail="Пароль должен быть не менее 6 символов")
+
+    user.password_hash = get_password_hash(body.new_password)
+    user.password_set = True
+    try:
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        logging.exception("set_password error %s: %s", user.id, e)
+        raise HTTPException(status_code=500, detail="Не удалось задать пароль") from e
+
+    return {"detail": "Пароль задан. Теперь можно входить по email."}
+
+
 @router.post("/login", response_model=Token)
 @limiter.limit("30/minute")
 def login(
@@ -106,14 +379,20 @@ def login(
     response: Response,
     db: Session = Depends(get_db),
 ):
-    user = db.scalar(select(User).where(User.email == data.email))
-    if not user or not verify_password(data.password, user.password_hash):
+    email = data.email.strip().lower()
+    user = db.scalar(select(User).where(User.email == email))
+    if not user:
+        raise HTTPException(status_code=401, detail="Неверный email или пароль")
+    if is_internal_email(user.email) or not bool(getattr(user, "password_set", True)):
+        raise HTTPException(
+            status_code=401,
+            detail="Для этого аккаунта вход только через Telegram. Задайте пароль в профиле после входа.",
+        )
+    if not user.password_hash or not verify_password(data.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Неверный email или пароль")
     if user.is_blocked:
         raise HTTPException(status_code=403, detail="Аккаунт заблокирован")
-    token = create_access_token(data={"sub": user.id})
-    set_auth_cookie(response, token)
-    return Token(access_token=token, user=user_to_response(user))
+    return _issue_session(response, user)
 
 
 @router.post("/logout", status_code=204)
@@ -162,11 +441,17 @@ def change_password(
     db: Session = Depends(get_db),
 ):
     """Смена пароля. Требует текущий пароль."""
+    if not bool(getattr(user, "password_set", True)) or not user.password_hash:
+        raise HTTPException(
+            status_code=400,
+            detail="Пароль ещё не задан. Используйте «Задать пароль» в профиле.",
+        )
     if not verify_password(body.current_password, user.password_hash):
         raise HTTPException(status_code=400, detail="Неверный текущий пароль")
     if len(body.new_password) < 6:
         raise HTTPException(status_code=400, detail="Новый пароль должен быть не менее 6 символов")
     user.password_hash = get_password_hash(body.new_password)
+    user.password_set = True
     try:
         db.commit()
         db.refresh(user)
@@ -245,10 +530,15 @@ def update_me(
             raise HTTPException(status_code=400, detail="Недопустимый URL аватара")
         user.avatar = body.avatar.strip()
     if body.email is not None and body.email != user.email:
-        existing = db.scalar(select(User).where(User.email == body.email, User.id != user.id))
+        new_email = body.email.strip().lower()
+        if is_internal_email(new_email):
+            raise HTTPException(status_code=400, detail="Укажите реальный email")
+        existing = db.scalar(select(User).where(User.email == new_email, User.id != user.id))
         if existing:
             raise HTTPException(status_code=400, detail="Этот email уже используется")
-        user.email = body.email
+        user.email = new_email
+        if not user.profile_completed:
+            user.profile_completed = True
     if body.contacts is not None:
         user.contacts = {**(user.contacts or {}), **body.contacts.model_dump(exclude_unset=True)}
     if body.role is not None:

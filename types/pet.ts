@@ -60,4 +60,8 @@ export interface Pet {
   isPublished?: boolean;
   publishedByUserId?: string;
   updatedByUserId?: string;
+  /** Госучёт РБ: орган, ведущий учёт (как на жетоне) */
+  registrationAuthority?: string | null;
+  /** Номер жетона учёта */
+  registrationTokenNumber?: string | null;
 }

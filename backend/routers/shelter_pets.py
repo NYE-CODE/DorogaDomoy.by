@@ -57,6 +57,8 @@ def shelter_pet_to_response(p: Pet) -> ShelterPetResponse:
         is_published=bool(is_published),
         published_by_user_id=p.published_by_user_id,
         updated_by_user_id=p.updated_by_user_id,
+        registration_authority=getattr(p, "registration_authority", None),
+        registration_token_number=getattr(p, "registration_token_number", None),
     )
 
 
@@ -215,6 +217,8 @@ def create_shelter_pet(
         published_by_user_id=user.id,
         updated_by_user_id=user.id,
         updated_at=now,
+        registration_authority=data.registration_authority,
+        registration_token_number=data.registration_token_number,
     )
     db.add(pet)
     _upsert_shelter_details(
