@@ -21,7 +21,7 @@ from models import (
     ProfilePet,
     ProfilePetScanSignal,
 )
-from time_utils import utc_now
+from time_utils import is_past, utc_now
 
 logger = logging.getLogger(__name__)
 
@@ -103,7 +103,7 @@ def handle_link_command(telegram_id: int, telegram_username: Optional[str], code
         if not link_code:
             return "Неверный код. Убедитесь, что скопировали его правильно, и попробуйте снова."
 
-        if link_code.expires_at < utc_now():
+        if is_past(link_code.expires_at):
             return "Код истёк. Запросите новый на сайте в настройках профиля."
 
         existing = db.scalar(select(User).where(User.telegram_id == telegram_id))
