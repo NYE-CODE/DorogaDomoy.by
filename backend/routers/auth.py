@@ -48,7 +48,7 @@ from telegram_login import (
     is_internal_email,
     resolve_telegram_bot_username,
 )
-from time_utils import utc_now
+from time_utils import is_past, utc_now
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -322,7 +322,7 @@ def reset_password(
             PasswordResetToken.used.is_(False),
         )
     )
-    if not row or row.expires_at < utc_now():
+    if not row or is_past(row.expires_at):
         raise HTTPException(status_code=400, detail="Ссылка недействительна или истекла")
 
     user = db.scalar(select(User).where(User.id == row.user_id))
