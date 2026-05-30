@@ -24,6 +24,8 @@ type FormState = {
   description: string;
   adoptionStatus: 'available' | 'reserved' | 'adopted' | 'on_treatment' | 'not_for_adoption';
   isPublished: boolean;
+  registrationAuthority: string;
+  registrationTokenNumber: string;
 };
 
 const emptyForm = (): FormState => ({
@@ -39,6 +41,8 @@ const emptyForm = (): FormState => ({
   description: '',
   adoptionStatus: 'available',
   isPublished: true,
+  registrationAuthority: '',
+  registrationTokenNumber: '',
 });
 
 function compressImage(file: File, maxDim = 1200, quality = 0.8): Promise<string> {
@@ -115,6 +119,8 @@ export default function MyShelterPetFormPage() {
             description: pet.description,
             adoptionStatus: pet.adoptionStatus ?? 'available',
             isPublished: pet.isPublished ?? true,
+            registrationAuthority: pet.registrationAuthority ?? '',
+            registrationTokenNumber: pet.registrationTokenNumber ?? '',
           });
         }
       })
@@ -189,6 +195,8 @@ export default function MyShelterPetFormPage() {
           isPublished: form.isPublished,
           city: shelter.city,
           location: { lat: shelter.location_lat, lng: shelter.location_lng },
+          registrationAuthority: form.registrationAuthority,
+          registrationTokenNumber: form.registrationTokenNumber,
         });
       } else {
         const payload: ShelterPetInput = {
@@ -207,6 +215,8 @@ export default function MyShelterPetFormPage() {
           city: shelter.city,
           location: { lat: shelter.location_lat, lng: shelter.location_lng },
           contacts: {},
+          registrationAuthority: form.registrationAuthority,
+          registrationTokenNumber: form.registrationTokenNumber,
         };
         await sheltersApi.createPet(shelterId, payload);
       }
@@ -271,6 +281,7 @@ export default function MyShelterPetFormPage() {
               {step === 1 ? (
                 <div>
                   <div className="mb-2 text-sm text-muted-foreground">{form.photos.length} {pf.of} {maxPhotos}</div>
+                  <p className="mb-3 text-xs text-muted-foreground">{pf.photoFileSizeHint}</p>
                   <div className="grid grid-cols-3 gap-3">
                     {form.photos.map((photo, idx) => (
                       <div key={idx} className="group relative aspect-square overflow-hidden rounded-lg">
@@ -318,6 +329,8 @@ export default function MyShelterPetFormPage() {
                     <option value="fluffy">Пушистая</option>
                   </select>
                   <textarea value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} className="min-h-24 rounded-lg border border-border bg-background px-3 py-2 text-sm sm:col-span-2" placeholder="Описание питомца" />
+                  <input value={form.registrationAuthority} onChange={(e) => setForm((p) => ({ ...p, registrationAuthority: e.target.value }))} className="rounded-lg border border-border bg-background px-3 py-2 text-sm sm:col-span-2" placeholder={t.petForm.registrationAuthorityPlaceholder} maxLength={300} />
+                  <input value={form.registrationTokenNumber} onChange={(e) => setForm((p) => ({ ...p, registrationTokenNumber: e.target.value }))} className="rounded-lg border border-border bg-background px-3 py-2 text-sm sm:col-span-2" placeholder={t.petForm.registrationTokenPlaceholder} maxLength={80} />
                 </div>
               ) : null}
 

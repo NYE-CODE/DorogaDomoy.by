@@ -33,6 +33,8 @@ export default function CreateAdPage() {
       labelChipped: t.myPets.form.labelChipped,
       medicalTitle: t.myPets.ownerProfile.medicalTitle,
       yes: t.myPets.form.yes,
+      labelRegistrationAuthority: t.myPets.form.labelRegistrationAuthority,
+      labelRegistrationToken: t.myPets.form.labelRegistrationToken,
     }),
     [t],
   );
@@ -118,6 +120,8 @@ export default function CreateAdPage() {
             }
           : {}),
         ...(authorName && { author_name: authorName }),
+        registrationAuthority: formData.registrationAuthority,
+        registrationTokenNumber: formData.registrationTokenNumber,
       });
       if (newPet.moderationStatus === 'approved') {
         toast.success(t.app.adPublished);

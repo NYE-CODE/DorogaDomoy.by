@@ -162,6 +162,8 @@ def pet_to_response(p: Pet) -> PetResponse:
         published_by_user_id=getattr(p, "published_by_user_id", None),
         updated_by_user_id=getattr(p, "updated_by_user_id", None),
         nickname=_shelter_pet_nickname(p),
+        registration_authority=getattr(p, "registration_authority", None),
+        registration_token_number=getattr(p, "registration_token_number", None),
     )
 
 
@@ -453,6 +455,8 @@ async def create_pet(
         is_published=bool(data.is_published),
         published_by_user_id=user.id,
         updated_by_user_id=user.id,
+        registration_authority=data.registration_authority,
+        registration_token_number=data.registration_token_number,
     )
     try:
         db.add(pet)
@@ -524,6 +528,7 @@ async def update_pet(
         "location", "contacts", "is_archived", "archive_reason",
         "reward_mode", "reward_amount_byn", "reward_points", "reward_helper_code",
         "pet_scope", "shelter_id", "adoption_status", "is_published",
+        "registration_authority", "registration_token_number",
     }
     ADMIN_ONLY_FIELDS = {"moderation_status", "moderation_reason"}
     d = data.model_dump(exclude_unset=True)

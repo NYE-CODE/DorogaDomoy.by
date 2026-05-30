@@ -34,6 +34,8 @@ USER_COLUMNS_TO_ADD = [
     ("helper_confirmed_count", "INTEGER DEFAULT 0"),
     ("points_balance", "INTEGER DEFAULT 0"),
     ("points_earned_total", "INTEGER DEFAULT 0"),
+    ("password_set", "INTEGER DEFAULT 1"),
+    ("profile_completed", "INTEGER DEFAULT 1"),
 ]
 
 PET_BOUNTY_COLUMNS_TO_ADD = [
@@ -53,6 +55,11 @@ PET_SHELTER_COLUMNS_TO_ADD = [
     ("updated_by_user_id", "VARCHAR"),
 ]
 
+PET_REGISTRATION_COLUMNS_TO_ADD = [
+    ("registration_authority", "VARCHAR"),
+    ("registration_token_number", "VARCHAR"),
+]
+
 SHELTER_PET_DETAILS_COLUMNS_TO_ADD = [
     ("nickname", "VARCHAR"),
     ("health_status", "VARCHAR"),
@@ -67,6 +74,8 @@ PROFILE_PET_COLUMNS_TO_ADD = [
     ("special_marks", "TEXT"),
     ("is_chipped", "INTEGER DEFAULT 0"),
     ("chip_number", "VARCHAR"),
+    ("registration_authority", "VARCHAR"),
+    ("registration_token_number", "VARCHAR"),
     ("medical_info", "TEXT"),
     ("temperament", "VARCHAR"),
     ("responds_to_name", "INTEGER DEFAULT 1"),
@@ -93,6 +102,16 @@ NEW_TABLES = {
             id VARCHAR PRIMARY KEY,
             code VARCHAR UNIQUE NOT NULL,
             user_id VARCHAR NOT NULL REFERENCES users(id),
+            created_at DATETIME,
+            expires_at DATETIME NOT NULL,
+            used INTEGER DEFAULT 0
+        )
+    """,
+    "password_reset_tokens": """
+        CREATE TABLE password_reset_tokens (
+            id VARCHAR PRIMARY KEY,
+            user_id VARCHAR NOT NULL REFERENCES users(id),
+            token_hash VARCHAR UNIQUE NOT NULL,
             created_at DATETIME,
             expires_at DATETIME NOT NULL,
             used INTEGER DEFAULT 0
@@ -342,7 +361,13 @@ def resolve_sqlite_db_path() -> Path:
 def migrate(conn):
     changes = []
     for table, col_defs in [
-        ("pets", PET_COLUMNS_TO_ADD + PET_BOUNTY_COLUMNS_TO_ADD + PET_SHELTER_COLUMNS_TO_ADD),
+        (
+            "pets",
+            PET_COLUMNS_TO_ADD
+            + PET_BOUNTY_COLUMNS_TO_ADD
+            + PET_SHELTER_COLUMNS_TO_ADD
+            + PET_REGISTRATION_COLUMNS_TO_ADD,
+        ),
         ("users", USER_COLUMNS_TO_ADD),
         ("profile_pets", PROFILE_PET_COLUMNS_TO_ADD),
         ("instagram_publications", INSTAGRAM_PUBLICATION_COLUMNS_TO_ADD),

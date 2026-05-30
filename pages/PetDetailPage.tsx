@@ -1034,6 +1034,30 @@ export default function PetDetailPage() {
               <p className="whitespace-pre-line leading-relaxed text-muted-foreground">{pet.description}</p>
             </div>
 
+            {(pet.registrationAuthority?.trim() || pet.registrationTokenNumber?.trim()) && (
+              <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+                <h2 className="mb-4 text-2xl font-bold text-foreground">{t.petDetail.registrationTitle}</h2>
+                <dl className="space-y-3 text-muted-foreground">
+                  {pet.registrationAuthority?.trim() ? (
+                    <div>
+                      <dt className="text-xs font-semibold uppercase tracking-wide text-foreground/70">
+                        {t.petDetail.registrationAuthority}
+                      </dt>
+                      <dd className="mt-1 whitespace-pre-line leading-relaxed">{pet.registrationAuthority.trim()}</dd>
+                    </div>
+                  ) : null}
+                  {pet.registrationTokenNumber?.trim() ? (
+                    <div>
+                      <dt className="text-xs font-semibold uppercase tracking-wide text-foreground/70">
+                        {t.petDetail.registrationToken}
+                      </dt>
+                      <dd className="mt-1 font-mono text-sm">{pet.registrationTokenNumber.trim()}</dd>
+                    </div>
+                  ) : null}
+                </dl>
+              </div>
+            )}
+
             {!isShelterPet && (
               <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
                 <div className="border-b border-border p-6">

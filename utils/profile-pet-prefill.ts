@@ -55,6 +55,8 @@ export type ProfilePetPrefillLabels = {
   labelChipped: string;
   medicalTitle: string;
   yes: string;
+  labelRegistrationAuthority: string;
+  labelRegistrationToken: string;
 };
 
 function normalizeApproximateAge(age: string | null | undefined): PetFormData["approximateAge"] {
@@ -93,6 +95,12 @@ export function buildPrefillFromProfilePet(
   if (p.medical_info?.trim()) {
     lines.push(`${L.medicalTitle}: ${p.medical_info.trim()}`);
   }
+  if (p.registration_authority?.trim()) {
+    lines.push(`${L.labelRegistrationAuthority}: ${p.registration_authority.trim()}`);
+  }
+  if (p.registration_token_number?.trim()) {
+    lines.push(`${L.labelRegistrationToken}: ${p.registration_token_number.trim()}`);
+  }
   const description = lines.join('\n\n').slice(0, 500);
 
   return {
@@ -104,5 +112,7 @@ export function buildPrefillFromProfilePet(
     approximateAge: normalizeApproximateAge(p.age),
     description,
     useProfileContacts: true,
+    registrationAuthority: p.registration_authority?.trim() ?? '',
+    registrationTokenNumber: p.registration_token_number?.trim() ?? '',
   };
 }

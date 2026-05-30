@@ -148,6 +148,18 @@ def handle_link_command(telegram_id: int, telegram_username: Optional[str], code
         db.close()
 
 
+def send_password_reset_sync(telegram_id: int, reset_url: str) -> bool:
+    """Отправляет ссылку сброса пароля в Telegram."""
+    text = (
+        "🔐 <b>Сброс пароля</b> на DorogaDomoy.by\n\n"
+        "Если вы запрашивали сброс — перейдите по ссылке (действует 30 минут):\n"
+        f"{reset_url}\n\n"
+        "Если это не вы — просто проигнорируйте сообщение."
+    )
+    keyboard = {"inline_keyboard": [[{"text": "Задать новый пароль", "url": reset_url}]]}
+    return _send_telegram_message_sync(telegram_id, text, reply_markup=keyboard)
+
+
 def handle_start_command() -> str:
     return (
         "Привет! Я бот платформы ДорогаДомой.by 🐾\n\n"

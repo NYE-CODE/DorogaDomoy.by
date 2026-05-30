@@ -41,7 +41,7 @@ function sanitizeTelegramBotUrl(raw: string): string | null {
 export default function ProfilePage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user, updateContacts, updateProfile, changePassword, uploadAvatar, refreshUser } = useAuth();
+  const { user, updateContacts, updateProfile, changePassword, setPassword, uploadAvatar, refreshUser } = useAuth();
   const { t } = useI18n();
   const pr = t.profile as typeof t.profile & {
     roleFieldLabel?: string;
@@ -205,7 +205,8 @@ export default function ProfilePage() {
 
   const handleSavePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentPassword.trim()) {
+    const hasPassword = user?.passwordSet !== false;
+    if (hasPassword && !currentPassword.trim()) {
       toast.error((t.profile as { wrongPassword?: string }).wrongPassword ?? 'Введите текущий пароль');
       return;
     }
@@ -213,7 +214,11 @@ export default function ProfilePage() {
     if (newPassword.length < 6) { toast.error(t.auth.passwordMinLength); return; }
     setIsSavingPassword(true);
     try {
-      await changePassword(currentPassword, newPassword);
+      if (hasPassword) {
+        await changePassword(currentPassword, newPassword);
+      } else {
+        await setPassword(newPassword);
+      }
       setCurrentPassword(''); setNewPassword(''); setConfirmPassword('');
       toast.success(t.profile.passwordChanged);
     } catch (err) {
@@ -660,11 +665,20 @@ export default function ProfilePage() {
               {activeTab === 'security' && (
                 <div className="space-y-6">
                   <div className="bg-orange-50 dark:bg-orange-950/20 border border-[#FF9800] rounded-lg p-4 mb-6">
-                    <h3 className="font-bold text-black dark:text-white mb-2">{t.profile.changePassword}</h3>
-                    <p className="text-sm text-gray-700 dark:text-gray-300">{(t.profile as { passwordHint?: string }).passwordHint ?? 'Пароль должен содержать минимум 8 символов, включая буквы и цифры'}</p>
+                    <h3 className="font-bold text-black dark:text-white mb-2">
+                      {user?.passwordSet === false
+                        ? ((t.profile as { setPasswordTitle?: string }).setPasswordTitle ?? 'Задать пароль')
+                        : t.profile.changePassword}
+                    </h3>
+                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                      {user?.passwordSet === false
+                        ? ((t.profile as { setPasswordHint?: string }).setPasswordHint ?? 'Вы вошли через Telegram. Задайте пароль, чтобы входить также по email.')
+                        : ((t.profile as { passwordHint?: string }).passwordHint ?? 'Пароль должен содержать минимум 8 символов, включая буквы и цифры')}
+                    </p>
                   </div>
                   <form onSubmit={handleSavePassword} className="space-y-4">
                     <input type="hidden" autoComplete="username" value={user?.email || ''} readOnly />
+                    {user?.passwordSet !== false && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t.profile.currentPassword?.replace(/\s*\*\s*$/, '').trim() || 'Текущий пароль'} <span className="text-red-500">*</span></label>
                       <div className="relative">
@@ -673,6 +687,7 @@ export default function ProfilePage() {
                         <button type="button" onClick={() => setShowCurrentPw(!showCurrentPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" tabIndex={-1}>{showCurrentPw ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}</button>
                       </div>
                     </div>
+                    )}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t.profile.newPassword?.replace(/\s*\*\s*$/, '').trim() || 'Новый пароль'} <span className="text-red-500">*</span></label>
                       <div className="relative">
@@ -690,8 +705,8 @@ export default function ProfilePage() {
                       </div>
                     </div>
                     <div className="flex justify-end pt-4">
-                      <button type="submit" disabled={isSavingPassword || !currentPassword || !newPassword || !confirmPassword} className="flex items-center justify-center gap-2 h-12 px-8 bg-[#FF9800] text-white rounded-lg hover:bg-[#F57C00] transition-colors font-medium text-lg disabled:opacity-50 disabled:cursor-not-allowed">
-                        {isSavingPassword ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <><Lock className="w-5 h-5" /> {t.profile.changePassword}</>}
+                      <button type="submit" disabled={isSavingPassword || !newPassword || !confirmPassword || (user?.passwordSet !== false && !currentPassword)} className="flex items-center justify-center gap-2 h-12 px-8 bg-[#FF9800] text-white rounded-lg hover:bg-[#F57C00] transition-colors font-medium text-lg disabled:opacity-50 disabled:cursor-not-allowed">
+                        {isSavingPassword ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <><Lock className="w-5 h-5" /> {user?.passwordSet === false ? ((t.profile as { setPasswordTitle?: string }).setPasswordTitle ?? 'Задать пароль') : t.profile.changePassword}</>}
                       </button>
                     </div>
                   </form>

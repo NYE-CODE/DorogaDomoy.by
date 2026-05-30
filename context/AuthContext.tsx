@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { authApi } from '../api/client';
+import { authApi, type TelegramAuthPayload } from '../api/client';
 
 export interface User {
   id: string;
@@ -22,6 +22,8 @@ export interface User {
   telegramId?: number | null;
   telegramUsername?: string | null;
   telegramLinkedAt?: string | null;
+  profileCompleted?: boolean;
+  passwordSet?: boolean;
 }
 
 interface AuthContextType {
@@ -29,6 +31,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginWithTelegram: (payload: TelegramAuthPayload) => Promise<User>;
   register: (
     email: string,
     name: string,
@@ -36,10 +39,16 @@ interface AuthContextType {
     contacts: User['contacts'],
     signupRole?: 'user' | 'volunteer',
   ) => Promise<void>;
+  completeProfile: (data: {
+    email: string;
+    role: 'user' | 'volunteer';
+    password?: string;
+  }) => Promise<void>;
   logout: () => Promise<void>;
   updateContacts: (contacts: User['contacts']) => Promise<void>;
   updateProfile: (name: string, email: string, opts?: { role?: 'volunteer' }) => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+  setPassword: (newPassword: string) => Promise<void>;
   uploadAvatar: (file: File) => Promise<void>;
   refreshUser: () => Promise<void>;
   openAuthModal: () => void;
@@ -67,6 +76,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsAuthModalOpen(false);
   };
 
+  const loginWithTelegram = async (payload: TelegramAuthPayload) => {
+    const u = await authApi.loginWithTelegram(payload);
+    setUser(u);
+    setIsAuthModalOpen(false);
+    return u;
+  };
+
   const register = async (
     email: string,
     name: string,
@@ -77,6 +93,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const u = await authApi.register(email, name, password, contacts, signupRole);
     setUser(u);
     setIsAuthModalOpen(false);
+  };
+
+  const completeProfile = async (data: {
+    email: string;
+    role: 'user' | 'volunteer';
+    password?: string;
+  }) => {
+    const u = await authApi.completeProfile(data);
+    setUser(u);
   };
 
   const logout = async () => {
@@ -102,6 +127,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const changePassword = async (currentPassword: string, newPassword: string) => {
     await authApi.changePassword(currentPassword, newPassword);
+    const u = await authApi.me();
+    setUser(u);
+  };
+
+  const setPassword = async (newPassword: string) => {
+    await authApi.setPassword(newPassword);
+    const u = await authApi.me();
+    setUser(u);
   };
 
   const uploadAvatar = async (file: File) => {
@@ -130,11 +163,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isAuthenticated: !!user,
         isLoading,
         login,
+        loginWithTelegram,
         register,
+        completeProfile,
         logout,
         updateContacts,
         updateProfile,
         changePassword,
+        setPassword,
         uploadAvatar,
         refreshUser,
         openAuthModal,

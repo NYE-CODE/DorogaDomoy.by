@@ -75,6 +75,8 @@ export default function EditAdPage() {
             }
           : {}),
         ...(authorName && { author_name: authorName }),
+        registrationAuthority: formData.registrationAuthority,
+        registrationTokenNumber: formData.registrationTokenNumber,
       });
       if (updatedPet.moderationStatus === 'pending') {
         toast.success('Объявление обновлено и отправлено на модерацию');

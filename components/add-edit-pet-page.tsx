@@ -17,6 +17,8 @@ interface ProfilePetFormData {
   specialMarks: string;
   isChipped: string;
   chipNumber: string;
+  registrationAuthority: string;
+  registrationTokenNumber: string;
   medicalInfo: string;
   temperament: string;
   respondsToName: string;
@@ -35,6 +37,8 @@ const emptyForm = (): ProfilePetFormData => ({
   specialMarks: "",
   isChipped: "no",
   chipNumber: "",
+  registrationAuthority: "",
+  registrationTokenNumber: "",
   medicalInfo: "",
   temperament: "friendly",
   respondsToName: "yes",
@@ -82,6 +86,8 @@ function profilePetToForm(p: ProfilePetResponse): ProfilePetFormData {
     specialMarks: p.special_marks ?? "",
     isChipped: p.is_chipped ? "yes" : "no",
     chipNumber: p.chip_number ?? "",
+    registrationAuthority: p.registration_authority ?? "",
+    registrationTokenNumber: p.registration_token_number ?? "",
     medicalInfo: p.medical_info ?? "",
     temperament: p.temperament ?? "friendly",
     respondsToName: p.responds_to_name ? "yes" : "no",
@@ -268,6 +274,8 @@ export function AddEditPetContent() {
       special_marks: formData.specialMarks || undefined,
       is_chipped: formData.isChipped === "yes",
       chip_number: formData.isChipped === "yes" ? formData.chipNumber || undefined : undefined,
+      registration_authority: formData.registrationAuthority?.trim() || undefined,
+      registration_token_number: formData.registrationTokenNumber?.trim() || undefined,
       medical_info: formData.medicalInfo || undefined,
       temperament: formData.temperament || undefined,
       responds_to_name: formData.respondsToName === "yes",
@@ -706,6 +714,43 @@ export function AddEditPetContent() {
                     />
                   </div>
                 )}
+              </div>
+
+              <div className="border-t border-gray-200 dark:border-border pt-6 space-y-4">
+                <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase">
+                  {f.registrationSectionTitle}
+                </p>
+                <p className="text-xs text-muted-foreground">{f.registrationHint}</p>
+                <div>
+                  <label htmlFor="registrationAuthority" className="block text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-3">
+                    {f.labelRegistrationAuthority}
+                  </label>
+                  <input
+                    type="text"
+                    id="registrationAuthority"
+                    name="registrationAuthority"
+                    value={formData.registrationAuthority}
+                    onChange={handleInputChange}
+                    maxLength={300}
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-input-background text-foreground focus:ring-2 focus:ring-[#FF9800] focus:border-transparent"
+                    placeholder={f.placeholderRegistrationAuthority}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="registrationTokenNumber" className="block text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-3">
+                    {f.labelRegistrationToken}
+                  </label>
+                  <input
+                    type="text"
+                    id="registrationTokenNumber"
+                    name="registrationTokenNumber"
+                    value={formData.registrationTokenNumber}
+                    onChange={handleInputChange}
+                    maxLength={80}
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-input-background text-foreground focus:ring-2 focus:ring-[#FF9800] focus:border-transparent"
+                    placeholder={f.placeholderRegistrationToken}
+                  />
+                </div>
               </div>
 
               <div>

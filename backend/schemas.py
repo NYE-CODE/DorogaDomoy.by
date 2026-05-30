@@ -78,6 +78,8 @@ class UserResponse(UserBase):
     telegram_username: Optional[str] = None
     telegram_linked_at: Optional[datetime] = None
     registered_as_volunteer: bool = False
+    profile_completed: bool = True
+    password_set: bool = True
 
     class Config:
         from_attributes = True
@@ -155,10 +157,17 @@ class PetBase(BaseModel):
     shelter_id: Optional[str] = None
     adoption_status: Optional[str] = None
     is_published: bool = True
+    registration_authority: Optional[str] = Field(None, max_length=300)
+    registration_token_number: Optional[str] = Field(None, max_length=80)
 
     @field_validator("breed", mode="before")
     @classmethod
     def trim_breed(cls, v):
+        return _trim_optional_str(v)
+
+    @field_validator("registration_authority", "registration_token_number", mode="before")
+    @classmethod
+    def trim_registration_fields(cls, v):
         return _trim_optional_str(v)
 
 
@@ -191,10 +200,17 @@ class PetUpdate(BaseModel):
     shelter_id: Optional[str] = None
     adoption_status: Optional[str] = None
     is_published: Optional[bool] = None
+    registration_authority: Optional[str] = Field(None, max_length=300)
+    registration_token_number: Optional[str] = Field(None, max_length=80)
 
     @field_validator("breed", mode="before")
     @classmethod
     def trim_breed(cls, v):
+        return _trim_optional_str(v)
+
+    @field_validator("registration_authority", "registration_token_number", mode="before")
+    @classmethod
+    def trim_registration_update(cls, v):
         return _trim_optional_str(v)
 
 
@@ -214,6 +230,8 @@ class ShelterPetBase(BaseModel):
     coat_type: Optional[str] = None
     adoption_status: Optional[str] = None
     is_published: bool = True
+    registration_authority: Optional[str] = Field(None, max_length=300)
+    registration_token_number: Optional[str] = Field(None, max_length=80)
 
     @field_validator("breed", mode="before")
     @classmethod
@@ -223,6 +241,11 @@ class ShelterPetBase(BaseModel):
     @field_validator("nickname", mode="before")
     @classmethod
     def trim_nickname(cls, v):
+        return _trim_optional_str(v)
+
+    @field_validator("registration_authority", "registration_token_number", mode="before")
+    @classmethod
+    def trim_shelter_registration(cls, v):
         return _trim_optional_str(v)
 
 
@@ -249,6 +272,8 @@ class ShelterPetUpdate(BaseModel):
     archive_reason: Optional[str] = None
     adoption_status: Optional[str] = None
     is_published: Optional[bool] = None
+    registration_authority: Optional[str] = Field(None, max_length=300)
+    registration_token_number: Optional[str] = Field(None, max_length=80)
 
     @field_validator("breed", mode="before")
     @classmethod
@@ -258,6 +283,11 @@ class ShelterPetUpdate(BaseModel):
     @field_validator("nickname", mode="before")
     @classmethod
     def trim_nickname(cls, v):
+        return _trim_optional_str(v)
+
+    @field_validator("registration_authority", "registration_token_number", mode="before")
+    @classmethod
+    def trim_shelter_registration_update(cls, v):
         return _trim_optional_str(v)
 
 
@@ -310,6 +340,8 @@ class ShelterPetResponse(BaseModel):
     is_published: bool = True
     published_by_user_id: Optional[str] = None
     updated_by_user_id: Optional[str] = None
+    registration_authority: Optional[str] = None
+    registration_token_number: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -359,6 +391,48 @@ class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: UserResponse
+
+
+class AuthPublicConfigResponse(BaseModel):
+    telegram_bot_username: Optional[str] = None
+    telegram_login_enabled: bool = False
+
+
+class TelegramLoginBody(BaseModel):
+    id: int
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    username: Optional[str] = None
+    photo_url: Optional[str] = None
+    auth_date: int
+    hash: str
+
+
+class CompleteProfileBody(BaseModel):
+    email: str
+    role: str = "user"
+    password: Optional[str] = None
+
+    @field_validator("role")
+    @classmethod
+    def complete_profile_role_ok(cls, v: str) -> str:
+        r = (v or "user").strip().lower()
+        if r not in ("user", "volunteer"):
+            raise ValueError("role: user или volunteer")
+        return r
+
+
+class ForgotPasswordBody(BaseModel):
+    email: str
+
+
+class ResetPasswordBody(BaseModel):
+    token: str
+    new_password: str
+
+
+class SetPasswordBody(BaseModel):
+    new_password: str
 
 
 # --- Telegram Link ---
@@ -637,6 +711,8 @@ class ProfilePetCreate(BaseModel):
     special_marks: Optional[str] = None
     is_chipped: bool = False
     chip_number: Optional[str] = Field(None, max_length=40)
+    registration_authority: Optional[str] = Field(None, max_length=300)
+    registration_token_number: Optional[str] = Field(None, max_length=80)
     medical_info: Optional[str] = None
     temperament: Optional[str] = Field(None, max_length=40)
     responds_to_name: bool = True
@@ -647,6 +723,11 @@ class ProfilePetCreate(BaseModel):
     @field_validator("breed", mode="before")
     @classmethod
     def trim_breed(cls, v):
+        return _trim_optional_str(v)
+
+    @field_validator("registration_authority", "registration_token_number", mode="before")
+    @classmethod
+    def trim_profile_registration_create(cls, v):
         return _trim_optional_str(v)
 
 
@@ -660,6 +741,8 @@ class ProfilePetUpdate(BaseModel):
     special_marks: Optional[str] = None
     is_chipped: Optional[bool] = None
     chip_number: Optional[str] = Field(None, max_length=40)
+    registration_authority: Optional[str] = Field(None, max_length=300)
+    registration_token_number: Optional[str] = Field(None, max_length=80)
     medical_info: Optional[str] = None
     temperament: Optional[str] = Field(None, max_length=40)
     responds_to_name: Optional[bool] = None
@@ -670,6 +753,11 @@ class ProfilePetUpdate(BaseModel):
     @field_validator("breed", mode="before")
     @classmethod
     def trim_breed(cls, v):
+        return _trim_optional_str(v)
+
+    @field_validator("registration_authority", "registration_token_number", mode="before")
+    @classmethod
+    def trim_profile_registration_update(cls, v):
         return _trim_optional_str(v)
 
 
@@ -685,6 +773,8 @@ class ProfilePetResponse(BaseModel):
     special_marks: Optional[str] = None
     is_chipped: bool = False
     chip_number: Optional[str] = None
+    registration_authority: Optional[str] = None
+    registration_token_number: Optional[str] = None
     medical_info: Optional[str] = None
     temperament: Optional[str] = None
     responds_to_name: bool = True

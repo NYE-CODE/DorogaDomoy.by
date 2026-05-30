@@ -1,6 +1,7 @@
 """Маппинг User ORM → API-схемы (роутеры не тянут логику через utils)."""
 from models import User
 from schemas import UserResponse
+from telegram_login import is_internal_email
 
 
 def user_to_response(
@@ -12,7 +13,7 @@ def user_to_response(
 ) -> UserResponse:
     return UserResponse(
         id=user.id,
-        email=user.email,
+        email="" if is_internal_email(user.email) else user.email,
         name=user.name,
         avatar=user.avatar,
         role=user.role,
@@ -27,4 +28,6 @@ def user_to_response(
         telegram_id=user.telegram_id if include_telegram else None,
         telegram_username=user.telegram_username if include_telegram else None,
         telegram_linked_at=user.telegram_linked_at if include_telegram else None,
+        profile_completed=bool(getattr(user, "profile_completed", True)),
+        password_set=bool(getattr(user, "password_set", True)),
     )

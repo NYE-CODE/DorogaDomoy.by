@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react';
-import { Link, Navigate, useParams } from 'react-router';
+import { Link, Navigate, useParams, useSearchParams } from 'react-router';
 import {
   Building2,
   Calendar,
@@ -47,6 +47,12 @@ import { compressImageBlobForShare, tryShareImageFile } from '../utils/web-share
 import { copyText as copyToClipboard } from '../utils/copy-text';
 import { buildShelterPetShareBundle } from '../utils/shelter-pet-share';
 import { shelterLogoSrc } from '../utils/shelter-public';
+import { useShelterPetBrowse } from '../context/ShelterPetBrowseContext';
+import {
+  browseSearchFromParams,
+  parseBrowseContext,
+  resolveShelterPetBrowseIds,
+} from '../utils/shelter-pet-browse';
 
 const healthLabel: Record<string, string> = {
   disabled: 'Инвалидность',
@@ -116,6 +122,9 @@ function ShelterPetHealthGlyph({
 
 export default function ShelterPetDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
+  const browseQueryKey = searchParams.toString();
+  const { setBrowseNav, canPrev, canNext, goPrev, goNext, nav: browseNav } = useShelterPetBrowse();
   const { t, locale } = useI18n();
   const treatmentClipId = useId();
   const [loading, setLoading] = useState(true);
@@ -162,6 +171,48 @@ export default function ShelterPetDetailPage() {
       if (u) URL.revokeObjectURL(u);
     };
   }, []);
+
+  useEffect(() => {
+    if (!id) return;
+
+    const ctx = parseBrowseContext(searchParams);
+    const needsPetForFallback = !ctx;
+    if (needsPetForFallback && (!pet || pet.id !== id)) return;
+
+    const browseQuery = browseSearchFromParams(searchParams);
+    setBrowseNav({ petIds: [], currentId: id, browseQuery, loading: true });
+
+    let cancelled = false;
+    const shelterFallback = ctx?.source === 'shelter' ? ctx.shelterId : pet?.shelterId;
+
+    void resolveShelterPetBrowseIds(ctx, shelterFallback)
+      .then((petIds) => {
+        if (cancelled) return;
+        let ids = petIds.length > 0 ? petIds : [id];
+        if (!ids.includes(id)) ids = [id, ...ids];
+        setBrowseNav({ petIds: ids, currentId: id, browseQuery, loading: false });
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setBrowseNav({ petIds: [id], currentId: id, browseQuery, loading: false });
+      });
+
+    return () => {
+      cancelled = true;
+      setBrowseNav(null);
+    };
+  }, [id, pet, browseQueryKey, searchParams, setBrowseNav]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement | null)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      if (e.key === 'ArrowLeft') goPrev();
+      if (e.key === 'ArrowRight') goNext();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [goPrev, goNext]);
 
   useEffect(() => {
     if (!id) return;
@@ -560,6 +611,28 @@ export default function ShelterPetDetailPage() {
 
   return (
     <>
+    {browseNav && browseNav.petIds.length > 1 ? (
+      <>
+        <button
+          type="button"
+          onClick={goPrev}
+          disabled={!canPrev}
+          className="fixed left-2 top-[42%] z-30 hidden size-10 -translate-y-1/2 items-center justify-center rounded-full border border-border/70 bg-background/85 text-muted-foreground shadow-sm backdrop-blur-sm transition hover:border-border hover:bg-muted/80 hover:text-foreground disabled:pointer-events-none disabled:opacity-25 lg:inline-flex"
+          aria-label="Предыдущий питомец"
+        >
+          <ChevronLeft className="size-5" />
+        </button>
+        <button
+          type="button"
+          onClick={goNext}
+          disabled={!canNext}
+          className="fixed right-2 top-[42%] z-30 hidden size-10 -translate-y-1/2 items-center justify-center rounded-full border border-border/70 bg-background/85 text-muted-foreground shadow-sm backdrop-blur-sm transition hover:border-border hover:bg-muted/80 hover:text-foreground disabled:pointer-events-none disabled:opacity-25 lg:inline-flex"
+          aria-label="Следующий питомец"
+        >
+          <ChevronRight className="size-5" />
+        </button>
+      </>
+    ) : null}
     <div className="flex min-h-screen flex-col bg-background">
       <Header showCitySelector={false} />
       <main className="flex-1 py-6 sm:py-10">
@@ -714,6 +787,23 @@ export default function ShelterPetDetailPage() {
                   </div>
 
                   <p className="pt-1 whitespace-pre-line leading-relaxed text-muted-foreground">{pet.description || 'Описание пока не добавлено.'}</p>
+                  {(pet.registrationAuthority?.trim() || pet.registrationTokenNumber?.trim()) && (
+                    <div className="mt-3 rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm">
+                      <p className="font-semibold text-foreground">{t.petDetail.registrationTitle}</p>
+                      {pet.registrationAuthority?.trim() ? (
+                        <p className="mt-1 text-muted-foreground">
+                          <span className="text-foreground/80">{t.petDetail.registrationAuthority}: </span>
+                          {pet.registrationAuthority.trim()}
+                        </p>
+                      ) : null}
+                      {pet.registrationTokenNumber?.trim() ? (
+                        <p className="mt-1 text-muted-foreground">
+                          <span className="text-foreground/80">{t.petDetail.registrationToken}: </span>
+                          <span className="font-mono">{pet.registrationTokenNumber.trim()}</span>
+                        </p>
+                      ) : null}
+                    </div>
+                  )}
                   <p><span className="text-muted-foreground">{t.pet.breedLabel}: </span>{pet.breed?.trim() || '—'}</p>
                   <p><span className="text-muted-foreground">{t.pet.colorLabel}: </span>{colors}</p>
                   <p><span className="text-muted-foreground">{t.pet.ageLabel}: </span>{pet.approximateAge?.trim() || '—'}</p>

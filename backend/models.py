@@ -11,7 +11,11 @@ class User(Base):
     id = Column(String, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
     name = Column(String, nullable=False)
-    password_hash = Column(String, nullable=False)
+    password_hash = Column(String, nullable=True)
+    # False — вход только через Telegram, пока пользователь не задаст пароль
+    password_set = Column(Boolean, default=True, nullable=False)
+    # False — нужен шаг «завершить профиль» (email, роль) после первого входа через TG
+    profile_completed = Column(Boolean, default=True, nullable=False)
     avatar = Column(String, nullable=True)
     role = Column(String, default="user")  # user, volunteer, admin
     registered_as_volunteer = Column(Boolean, default=False, nullable=False)
@@ -83,6 +87,9 @@ class Pet(Base):
     is_published = Column(Boolean, default=True, nullable=False)
     published_by_user_id = Column(String, ForeignKey("users.id"), nullable=True)
     updated_by_user_id = Column(String, ForeignKey("users.id"), nullable=True)
+    # Учёт в РБ: орган (как на жетоне) и номер жетона — необязательно
+    registration_authority = Column(String, nullable=True)
+    registration_token_number = Column(String, nullable=True)
 
     author = relationship("User", back_populates="pets", foreign_keys=[author_id])
     reports = relationship(
@@ -180,6 +187,19 @@ class Report(Base):
 
     pet = relationship("Pet", back_populates="reports", foreign_keys=[pet_id])
     reporter = relationship("User", back_populates="reports", foreign_keys=[reporter_id])
+
+
+class PasswordResetToken(Base):
+    __tablename__ = "password_reset_tokens"
+
+    id = Column(String, primary_key=True, index=True)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    token_hash = Column(String, unique=True, index=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    expires_at = Column(DateTime, nullable=False)
+    used = Column(Boolean, default=False)
+
+    user = relationship("User")
 
 
 class TelegramLinkCode(Base):
@@ -310,6 +330,8 @@ class ProfilePet(Base):
     special_marks = Column(Text, nullable=True)
     is_chipped = Column(Boolean, default=False)
     chip_number = Column(String, nullable=True)
+    registration_authority = Column(String, nullable=True)
+    registration_token_number = Column(String, nullable=True)
     medical_info = Column(Text, nullable=True)
     temperament = Column(String, nullable=True)
     responds_to_name = Column(Boolean, default=True)
