@@ -3,12 +3,54 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import logging
 import os
 from typing import Any
 
+import httpx
+
+logger = logging.getLogger(__name__)
+
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
+_resolved_bot_username: str | None = None
 # Максимальный возраст auth_date (секунды)
 MAX_AUTH_AGE_SECONDS = 86400
+
+
+def resolve_telegram_bot_username() -> str | None:
+    """
+    Username бота для Login Widget — берём из getMe по токену,
+    чтобы не ловить «Bot domain invalid» из‑за неверного TELEGRAM_BOT_USERNAME в .env.
+    """
+    global _resolved_bot_username
+    if _resolved_bot_username:
+        return _resolved_bot_username
+
+    env_username = (os.getenv("TELEGRAM_BOT_USERNAME") or "").strip().lstrip("@")
+    if not BOT_TOKEN:
+        return env_username or None
+
+    try:
+        with httpx.Client(timeout=8.0) as client:
+            resp = client.get(f"https://api.telegram.org/bot{BOT_TOKEN}/getMe")
+        data = resp.json()
+        if resp.status_code == 200 and data.get("ok") and data.get("result", {}).get("username"):
+            api_username = str(data["result"]["username"]).strip().lstrip("@")
+            if env_username and env_username.lower() != api_username.lower():
+                logger.warning(
+                    "TELEGRAM_BOT_USERNAME=%s не совпадает с getMe=%s — для Login Widget используем getMe",
+                    env_username,
+                    api_username,
+                )
+            _resolved_bot_username = api_username
+            return api_username
+    except Exception as e:
+        logger.warning("Не удалось получить username бота через getMe: %s", e)
+
+    if env_username:
+        _resolved_bot_username = env_username
+        return env_username
+    return None
 
 
 def verify_telegram_login_payload(data: dict[str, Any]) -> tuple[bool, str]:

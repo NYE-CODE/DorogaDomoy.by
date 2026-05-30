@@ -46,6 +46,7 @@ from telegram_login import (
     telegram_display_name,
     internal_telegram_email,
     is_internal_email,
+    resolve_telegram_bot_username,
 )
 from time_utils import utc_now
 
@@ -148,7 +149,7 @@ def register(
 
 @router.get("/config", response_model=AuthPublicConfigResponse)
 def auth_public_config():
-    username = (BOT_USERNAME or "").strip().lstrip("@")
+    username = resolve_telegram_bot_username()
     enabled = bool(BOT_TOKEN and username)
     return AuthPublicConfigResponse(
         telegram_bot_username=username or None,
