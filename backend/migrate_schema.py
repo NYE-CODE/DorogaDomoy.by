@@ -64,6 +64,13 @@ SHELTER_PET_DETAILS_COLUMNS_TO_ADD = [
     ("nickname", "VARCHAR"),
     ("health_status", "VARCHAR"),
     ("coat_type", "VARCHAR"),
+    ("energy_level", "INTEGER"),
+    ("friendliness_level", "INTEGER"),
+    ("training_level", "INTEGER"),
+    ("independence_level", "INTEGER"),
+    ("good_with_kids", "VARCHAR"),
+    ("good_with_dogs", "VARCHAR"),
+    ("good_with_cats", "VARCHAR"),
 ]
 
 PROFILE_PET_COLUMNS_TO_ADD = [
@@ -184,6 +191,14 @@ NEW_TABLES = {
             answer_ru TEXT NOT NULL DEFAULT '',
             answer_be TEXT NOT NULL DEFAULT '',
             answer_en TEXT NOT NULL DEFAULT '',
+            sort_order INTEGER NOT NULL DEFAULT 0
+        )
+    """,
+    "help_donation_tiers": """
+        CREATE TABLE help_donation_tiers (
+            id VARCHAR PRIMARY KEY,
+            label VARCHAR NOT NULL,
+            payment_url VARCHAR NOT NULL,
             sort_order INTEGER NOT NULL DEFAULT 0
         )
     """,
@@ -330,6 +345,13 @@ NEW_TABLES = {
             coat_type VARCHAR,
             adoption_status VARCHAR,
             is_published INTEGER NOT NULL DEFAULT 1,
+            energy_level INTEGER,
+            friendliness_level INTEGER,
+            training_level INTEGER,
+            independence_level INTEGER,
+            good_with_kids VARCHAR,
+            good_with_dogs VARCHAR,
+            good_with_cats VARCHAR,
             created_at DATETIME,
             updated_at DATETIME
         )
@@ -484,6 +506,15 @@ PERFORMANCE_INDEXES = [
     "CREATE UNIQUE INDEX IF NOT EXISTS ix_instagram_publications_idempotency_key ON instagram_publications (idempotency_key)",
     "CREATE INDEX IF NOT EXISTS ix_pets_shelter_id ON pets (shelter_id)",
     "CREATE INDEX IF NOT EXISTS ix_pets_pet_scope ON pets (pet_scope)",
+    (
+        "CREATE INDEX IF NOT EXISTS ix_pets_shelter_catalog "
+        "ON pets (pet_scope, moderation_status, is_archived, published_at DESC)"
+    ),
+    (
+        "CREATE INDEX IF NOT EXISTS ix_pets_shelter_list "
+        "ON pets (shelter_id, pet_scope, moderation_status, is_archived, published_at DESC)"
+    ),
+    "CREATE INDEX IF NOT EXISTS ix_pet_favorites_user_created ON pet_favorites (user_id, created_at DESC)",
     "CREATE UNIQUE INDEX IF NOT EXISTS uq_shelter_memberships_shelter_user ON shelter_memberships (shelter_id, user_id)",
     "CREATE INDEX IF NOT EXISTS ix_shelter_memberships_shelter_id ON shelter_memberships (shelter_id)",
     "CREATE INDEX IF NOT EXISTS ix_shelter_memberships_user_id ON shelter_memberships (user_id)",

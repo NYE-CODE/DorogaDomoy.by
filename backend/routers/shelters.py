@@ -5,8 +5,8 @@ import logging
 import uuid
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import delete, or_, select
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from sqlalchemy import delete, func, or_, select
 from sqlalchemy.orm import Session
 
 from auth import get_current_user, get_current_user_required, require_admin, require_volunteer_or_admin
@@ -18,10 +18,12 @@ from schemas import (
     ShelterMemberResponse,
     ShelterMemberUpdateBody,
     ShelterModerateBody,
+    PaginatedShelterListResponse,
     ShelterResponse,
     ShelterUpdate,
 )
 from time_utils import utc_now
+from rate_limit import limiter
 
 
 router = APIRouter(prefix="/shelters", tags=["shelters"])
@@ -138,18 +140,25 @@ def _assert_team_owner_or_admin(db: Session, user: User, s: Shelter) -> None:
     raise HTTPException(status_code=403, detail="Нет доступа к команде организации")
 
 
-@router.get("", response_model=list[ShelterResponse])
+@router.get("", response_model=PaginatedShelterListResponse)
 def list_public_shelters(
     city: Optional[str] = Query(None, description="Фильтр по городу (подстрока, без учёта регистра)"),
+    limit: int = Query(200, ge=1, le=500),
+    offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
 ):
-    stmt = select(Shelter).where(Shelter.moderation_status == "approved")
+    base = select(Shelter).where(Shelter.moderation_status == "approved")
     if city and city.strip():
         key = f"%{city.strip()}%"
-        stmt = stmt.where(Shelter.city.ilike(key))
-    stmt = stmt.order_by(Shelter.name.asc())
-    rows = db.scalars(stmt).all()
-    return [_to_response(s) for s in rows]
+        base = base.where(Shelter.city.ilike(key))
+    total = db.scalar(select(func.count()).select_from(base.subquery())) or 0
+    rows = db.scalars(base.order_by(Shelter.name.asc()).offset(offset).limit(limit)).all()
+    return PaginatedShelterListResponse(
+        items=[_to_response(s) for s in rows],
+        total=total,
+        limit=limit,
+        offset=offset,
+    )
 
 
 @router.get("/me", response_model=list[ShelterResponse])
@@ -208,8 +217,10 @@ def admin_delete_shelter(
         raise HTTPException(status_code=404, detail="Не найдено")
     try:
         pets = db.scalars(select(Pet).where(Pet.shelter_id == shelter_id)).all()
+        pet_ids = [p.id for p in pets]
+        if pet_ids:
+            db.execute(delete(Report).where(Report.pet_id.in_(pet_ids)))
         for pet in pets:
-            db.execute(delete(Report).where(Report.pet_id == pet.id))
             db.delete(pet)
         db.delete(s)
         db.commit()
@@ -240,7 +251,9 @@ def get_shelter(
 
 
 @router.post("", response_model=ShelterResponse, status_code=status.HTTP_201_CREATED)
+@limiter.limit("20/minute")
 def create_shelter(
+    request: Request,
     data: ShelterCreate,
     user: User = Depends(require_volunteer_or_admin),
     db: Session = Depends(get_db),
@@ -296,7 +309,9 @@ def create_shelter(
 
 
 @router.patch("/{shelter_id}", response_model=ShelterResponse)
+@limiter.limit("30/minute")
 def update_shelter(
+    request: Request,
     shelter_id: str,
     data: ShelterUpdate,
     user: User = Depends(require_volunteer_or_admin),
@@ -308,6 +323,26 @@ def update_shelter(
     _assert_owner_or_admin(user, s)
 
     d = data.model_dump(exclude_unset=True)
+    sent = set(d.keys())
+
+    # Опубликованную карточку владелец может править только в разрешённых полях — проверяем до применения.
+    if s.moderation_status == "approved" and user.role != "admin":
+        allowed = {
+            "description",
+            "address",
+            "contacts",
+            "logo_url",
+            "cover_url",
+            "location_lat",
+            "location_lng",
+            "animal_focus",
+        }
+        if sent - allowed:
+            raise HTTPException(
+                status_code=400,
+                detail="В опубликованной карточке можно менять только описание, адрес, контакты, логотип, шапку страницы, координаты и «для кого помощь»",
+            )
+
     if "contacts" in d and d["contacts"] is not None:
         s.contacts = _contacts_dict(d.pop("contacts"))
 
@@ -325,25 +360,6 @@ def update_shelter(
     if "address" in d:
         s.address = str(d["address"]).strip() if d["address"] else None
 
-    # После правок владельца вне approved — остаёмся в draft/rejected; в approved мелкие правки без сброса
-    if s.moderation_status == "approved" and user.role != "admin":
-        allowed = {
-            "description",
-            "address",
-            "contacts",
-            "logo_url",
-            "cover_url",
-            "location_lat",
-            "location_lng",
-            "animal_focus",
-        }
-        sent = set(data.model_dump(exclude_unset=True).keys())
-        if sent - allowed:
-            raise HTTPException(
-                status_code=400,
-                detail="В опубликованной карточке можно менять только описание, адрес, контакты, логотип, шапку страницы, координаты и «для кого помощь»",
-            )
-
     if s.moderation_status in ("draft", "rejected") and user.role != "admin":
         # любое редактирование черновика владельцем — остаётся draft/rejected до submit
         pass
@@ -355,7 +371,9 @@ def update_shelter(
 
 
 @router.post("/{shelter_id}/submit", response_model=ShelterResponse)
+@limiter.limit("15/minute")
 def submit_shelter(
+    request: Request,
     shelter_id: str,
     user: User = Depends(require_volunteer_or_admin),
     db: Session = Depends(get_db),

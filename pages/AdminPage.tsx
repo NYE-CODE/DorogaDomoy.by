@@ -36,26 +36,38 @@ export default function AdminPage() {
       return;
     }
 
-    setDataLoading(true);
-    Promise.all([
-      petsApi.list().catch(() => [] as Pet[]),
-      usersApi.list().catch(() => [] as User[]),
-      reportsApi.list().catch(() => [] as Report[]),
-      mediaApi.list().catch(() => [] as MediaArticle[]),
-      partnersApi.list().catch(() => [] as Partner[]),
-      profilePetsApi.list().catch(() => [] as ProfilePetResponse[]),
-      blogApi.adminList().catch(() => [] as BlogPostAdmin[]),
-      faqApi.list().catch(() => [] as FaqItem[]),
-    ]).then(([p, u, r, m, partnersList, pp, blogs, faqList]) => {
-      setPets(p);
-      setUsers(u);
-      setReports(r);
-      setMediaArticles(m);
-      setPartners(partnersList);
-      setProfilePets(pp);
-      setBlogPosts(blogs);
-      setFaqItems(faqList);
-    }).finally(() => setDataLoading(false));
+    let cancelled = false;
+
+    (async () => {
+      setDataLoading(true);
+      try {
+        const [p, u, r, m, partnersList, pp, blogs, faqList] = await Promise.all([
+          petsApi.list({ limit: 500 }).catch(() => [] as Pet[]),
+          usersApi.list().catch(() => [] as User[]),
+          reportsApi.list().catch(() => [] as Report[]),
+          mediaApi.list().catch(() => [] as MediaArticle[]),
+          partnersApi.list().catch(() => [] as Partner[]),
+          profilePetsApi.list().catch(() => [] as ProfilePetResponse[]),
+          blogApi.adminList().catch(() => [] as BlogPostAdmin[]),
+          faqApi.list().catch(() => [] as FaqItem[]),
+        ]);
+        if (cancelled) return;
+        setPets(p);
+        setUsers(u);
+        setReports(r);
+        setMediaArticles(m);
+        setPartners(partnersList);
+        setProfilePets(pp);
+        setBlogPosts(blogs);
+        setFaqItems(faqList);
+      } finally {
+        if (!cancelled) setDataLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [isLoading, isAdmin, navigate]);
 
   if (isLoading || dataLoading) {

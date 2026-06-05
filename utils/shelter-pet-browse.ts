@@ -1,12 +1,14 @@
-import { sheltersApi } from '../api/client';
+import { sheltersApi, shelterPetsApi } from '../api/client';
 import type { Pet } from '../types/pet';
+import { readAdopterProfile, readMatchLikedPetIdsOrdered } from './adopter-profile-storage';
 import {
   defaultShelterPetFilters,
   petMatchesShelterFilters,
+  sanitizeShelterPetFilters,
   type ShelterPetFilterState,
 } from './shelter-pet-filters';
 
-export type ShelterPetBrowseSource = 'catalog' | 'shelter';
+export type ShelterPetBrowseSource = 'catalog' | 'shelter' | 'match';
 
 export type ShelterPetBrowseContext = {
   source: ShelterPetBrowseSource;
@@ -17,10 +19,6 @@ export type ShelterPetBrowseContext = {
 };
 
 const FILTER_PARAM = 'sf';
-
-function isShelterPetRow(p: Pet): boolean {
-  return (p.petScope ?? 'lost_found') === 'shelter_pet' && p.moderationStatus === 'approved';
-}
 
 export function encodeShelterFilters(filters: ShelterPetFilterState): string {
   try {
@@ -36,7 +34,7 @@ export function decodeShelterFilters(raw: string | null): ShelterPetFilterState 
   try {
     const json = decodeURIComponent(escape(atob(raw)));
     const parsed = JSON.parse(json) as Partial<ShelterPetFilterState>;
-    return { ...defaultShelterPetFilters(), ...parsed };
+    return sanitizeShelterPetFilters(parsed);
   } catch {
     return defaultShelterPetFilters();
   }
@@ -63,6 +61,9 @@ export function parseBrowseContext(searchParams: URLSearchParams): ShelterPetBro
       shelterFilters: decodeShelterFilters(searchParams.get(FILTER_PARAM)),
     };
   }
+  if (from === 'match') {
+    return { source: 'match' };
+  }
   return null;
 }
 
@@ -72,6 +73,10 @@ export function browseContextToSearchParams(ctx: ShelterPetBrowseContext): URLSe
     params.set('from', 'catalog');
     if (ctx.catalogCity?.trim()) params.set('petCity', ctx.catalogCity.trim());
     if (ctx.catalogAnimal && ctx.catalogAnimal !== 'all') params.set('petAnimal', ctx.catalogAnimal);
+    return params;
+  }
+  if (ctx.source === 'match') {
+    params.set('from', 'match');
     return params;
   }
   params.set('from', 'shelter');
@@ -90,18 +95,20 @@ export function buildShelterPetUrl(petId: string, ctx: ShelterPetBrowseContext):
   return `/shelter-pet/${petId}${buildShelterPetBrowseQuery(ctx)}`;
 }
 
-export async function loadCatalogShelterPets(): Promise<Pet[]> {
-  const shelters = await sheltersApi.list();
-  const buckets = await Promise.all(
-    shelters.map(async (shelter) => {
-      try {
-        return await sheltersApi.listPets(shelter.id, { is_archived: false, limit: 200 });
-      } catch {
-        return [];
-      }
-    }),
-  );
-  return buckets.flat().filter(isShelterPetRow);
+let catalogPetsPromise: Promise<Pet[]> | null = null;
+
+/** Публичный каталог питомцев приютов — один HTTP-запрос, с dedupe параллельных вызовов. */
+export function loadCatalogShelterPets(options?: { force?: boolean }): Promise<Pet[]> {
+  if (options?.force) catalogPetsPromise = null;
+  if (!catalogPetsPromise) {
+    catalogPetsPromise = shelterPetsApi
+      .catalog({ limit: 500 })
+      .catch((err) => {
+        catalogPetsPromise = null;
+        throw err;
+      });
+  }
+  return catalogPetsPromise;
 }
 
 function filterCatalogPets(pets: Pet[], ctx: ShelterPetBrowseContext): Pet[] {
@@ -118,6 +125,12 @@ export async function resolveShelterPetBrowseIds(
   ctx: ShelterPetBrowseContext | null,
   fallbackShelterId?: string | null,
 ): Promise<string[]> {
+  if (ctx?.source === 'match') {
+    const profile = readAdopterProfile();
+    if (!profile) return [];
+    return readMatchLikedPetIdsOrdered(profile.completedAt);
+  }
+
   if (ctx?.source === 'catalog') {
     const pets = await loadCatalogShelterPets();
     return filterCatalogPets(pets, ctx).map((p) => p.id);

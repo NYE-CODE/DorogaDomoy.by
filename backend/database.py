@@ -380,6 +380,18 @@ def _ensure_shelter_pet_details_table() -> None:
         if "coat_type" not in existing_cols:
             conn.execute(text("ALTER TABLE shelter_pet_details ADD COLUMN coat_type VARCHAR"))
             logger.warning("Auto-migrated column shelter_pet_details.coat_type")
+        for col, col_type in (
+            ("energy_level", "INTEGER"),
+            ("friendliness_level", "INTEGER"),
+            ("training_level", "INTEGER"),
+            ("independence_level", "INTEGER"),
+            ("good_with_kids", "VARCHAR"),
+            ("good_with_dogs", "VARCHAR"),
+            ("good_with_cats", "VARCHAR"),
+        ):
+            if col not in existing_cols:
+                conn.execute(text(f"ALTER TABLE shelter_pet_details ADD COLUMN {col} {col_type}"))
+                logger.warning("Auto-migrated column shelter_pet_details.%s", col)
         conn.execute(
             text(
                 """

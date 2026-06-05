@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { Building2, MoreHorizontal, PawPrint, Pencil, Send, Users } from 'lucide-react';
 import { toast } from 'sonner';
+import { toastApiError } from '../utils/app-toast';
 import { Header } from '../components/layout/Header';
 import { Footer } from '../components/layout/Footer';
 import { EmptyState } from '../components/ui/empty-state';
@@ -123,11 +124,27 @@ export default function MySheltersPage() {
 
   const handleSubmitModeration = async (id: string) => {
     try {
+      const row = await sheltersApi.get(id);
+      if (row.owner_user_id !== user?.id) {
+        toast.error(ms.submitError);
+        reload();
+        return;
+      }
+      if (row.moderation_status !== 'draft' && row.moderation_status !== 'rejected') {
+        toast.error(
+          row.moderation_status === 'approved'
+            ? ms.submitAlreadyPublished
+            : ms.submitAlreadyPending,
+        );
+        reload();
+        return;
+      }
       await sheltersApi.submit(id);
       toast.success(ms.submitSuccess);
       reload();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : ms.submitError);
+      toastApiError(err, ms.submitError);
+      reload();
     }
   };
 

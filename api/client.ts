@@ -63,17 +63,14 @@ function formatApiErrorBody(errBody: unknown, fallback: string): string {
   const detail = (errBody as Record<string, unknown>).detail;
   if (typeof detail === 'string') return detail;
   if (Array.isArray(detail)) {
-    const parts: string[] = [];
-    for (const item of detail) {
-      if (typeof item === 'string') {
-        parts.push(item);
-        continue;
-      }
+    const parts = detail.flatMap((item) => {
+      if (typeof item === 'string') return [item];
       if (item && typeof item === 'object' && 'msg' in item) {
         const m = (item as { msg?: unknown }).msg;
-        if (typeof m === 'string') parts.push(m);
+        return typeof m === 'string' ? [m] : [];
       }
-    }
+      return [];
+    });
     if (parts.length > 0) return parts.join(' · ');
   }
   return fallback;
@@ -356,6 +353,13 @@ interface ShelterPetResponse {
   updated_by_user_id?: string;
   registration_authority?: string | null;
   registration_token_number?: string | null;
+  energy_level?: number | null;
+  friendliness_level?: number | null;
+  training_level?: number | null;
+  independence_level?: number | null;
+  good_with_kids?: 'yes' | 'no' | 'unknown' | null;
+  good_with_dogs?: 'yes' | 'no' | 'unknown' | null;
+  good_with_cats?: 'yes' | 'no' | 'unknown' | null;
 }
 
 function resolvePhotoUrl(url: string): string {
@@ -379,10 +383,10 @@ function toPet(p: PetResponse): Pet {
   return {
     id: p.id,
     ...(nick ? { name: nick } : {}),
-    photos: p.photos.map(resolvePhotoUrl),
+    photos: (p.photos ?? []).map(resolvePhotoUrl),
     animalType: p.animal_type as Pet['animalType'],
     breed: p.breed,
-    colors: p.colors as Pet['colors'],
+    colors: (p.colors ?? []) as Pet['colors'],
     gender: p.gender as Pet['gender'],
     approximateAge: p.approximate_age,
     status: p.status as Pet['status'],
@@ -424,10 +428,10 @@ function toPetFromShelter(p: ShelterPetResponse): Pet {
   return {
     id: p.id,
     name: p.nickname,
-    photos: p.photos.map(resolvePhotoUrl),
+    photos: (p.photos ?? []).map(resolvePhotoUrl),
     animalType: p.animal_type as Pet['animalType'],
     breed: p.breed,
-    colors: p.colors as Pet['colors'],
+    colors: (p.colors ?? []) as Pet['colors'],
     gender: p.gender as Pet['gender'],
     approximateAge: p.approximate_age,
     status: 'searching',
@@ -454,6 +458,13 @@ function toPetFromShelter(p: ShelterPetResponse): Pet {
     updatedByUserId: p.updated_by_user_id,
     registrationAuthority: p.registration_authority ?? undefined,
     registrationTokenNumber: p.registration_token_number ?? undefined,
+    energyLevel: (p.energy_level ?? undefined) as Pet['energyLevel'],
+    friendlinessLevel: (p.friendliness_level ?? undefined) as Pet['friendlinessLevel'],
+    trainingLevel: (p.training_level ?? undefined) as Pet['trainingLevel'],
+    independenceLevel: (p.independence_level ?? undefined) as Pet['independenceLevel'],
+    goodWithKids: (p.good_with_kids ?? undefined) as Pet['goodWithKids'],
+    goodWithDogs: (p.good_with_dogs ?? undefined) as Pet['goodWithDogs'],
+    goodWithCats: (p.good_with_cats ?? undefined) as Pet['goodWithCats'],
   };
 }
 
@@ -502,6 +513,13 @@ export interface ShelterPetInput {
   author_name?: string;
   registrationAuthority?: string;
   registrationTokenNumber?: string;
+  energyLevel?: number;
+  friendlinessLevel?: number;
+  trainingLevel?: number;
+  independenceLevel?: number;
+  goodWithKids?: 'yes' | 'no' | 'unknown';
+  goodWithDogs?: 'yes' | 'no' | 'unknown';
+  goodWithCats?: 'yes' | 'no' | 'unknown';
 }
 
 export type ShelterPetUpdateInput = Partial<ShelterPetInput> & {
@@ -521,6 +539,13 @@ export interface StatisticsResponse {
   success_rate?: number | null;
   /** Зарегистрированные пользователи */
   users_count?: number;
+}
+
+export interface PaginatedList<T> {
+  items: T[];
+  total: number;
+  limit: number;
+  offset: number;
 }
 
 export const petsApi = {
@@ -546,7 +571,7 @@ export const petsApi = {
   }, options: RequestInit = {}) => {
     const q = new URLSearchParams();
     if (params) Object.entries(params).forEach(([k, v]) => v != null && q.set(k, String(v)));
-    return api<PetResponse[]>(`/pets?${q}`, options).then((arr) => arr.map(toPet));
+    return api<PaginatedList<PetResponse>>(`/pets?${q}`, options).then((page) => page.items.map(toPet));
   },
 
   get: (id: string, init?: RequestInit) =>
@@ -646,10 +671,12 @@ export interface FavoriteIdsResponse {
 export const favoritesApi = {
   ids: () => api<FavoriteIdsResponse>('/favorites/ids'),
   list: (limit = 200, offset = 0) =>
-    api<PetResponse[]>(`/favorites?limit=${limit}&offset=${offset}`).then((arr) => arr.map(toPet)),
+    api<PaginatedList<PetResponse>>(`/favorites?limit=${limit}&offset=${offset}`).then((page) =>
+      page.items.map(toPet),
+    ),
   add: (petId: string) =>
     api<{ ok: boolean; already?: boolean }>(`/favorites/${encodeURIComponent(petId)}`, {
-      method: 'POST',
+      method: 'PUT',
     }),
   remove: (petId: string) =>
     api<void>(`/favorites/${encodeURIComponent(petId)}`, { method: 'DELETE' }),
@@ -821,6 +848,7 @@ export interface PlatformSettings {
   instagram_autopublish_enabled?: string;
   instagram_story_enabled?: string;
   instagram_manual_when_auto_off?: string;
+  help_volunteer_url?: string;
 }
 
 export const settingsApi = {
@@ -1142,6 +1170,51 @@ export const faqApi = {
     }),
 
   delete: (id: string) => api<void>(`/faq/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+};
+
+// --- Help section (лендинг «Как нам помочь») ---
+export interface HelpDonationTier {
+  id: string;
+  label: string;
+  payment_url: string;
+  sort_order: number;
+}
+
+export interface HelpLandingConfig {
+  volunteer_url: string;
+  donation_tiers: HelpDonationTier[];
+}
+
+export const helpApi = {
+  get: () => api<HelpLandingConfig>('/help'),
+
+  updateVolunteerUrl: (volunteer_url: string) =>
+    api<{ volunteer_url: string }>('/help/volunteer-url', {
+      method: 'PATCH',
+      body: JSON.stringify({ volunteer_url }),
+    }),
+
+  createDonationTier: (data: { label: string; payment_url: string; sort_order?: number }) =>
+    api<HelpDonationTier>('/help/donation-tiers', {
+      method: 'POST',
+      body: JSON.stringify({
+        label: data.label,
+        payment_url: data.payment_url,
+        sort_order: data.sort_order ?? 0,
+      }),
+    }),
+
+  updateDonationTier: (
+    id: string,
+    data: Partial<{ label: string; payment_url: string; sort_order: number }>,
+  ) =>
+    api<HelpDonationTier>(`/help/donation-tiers/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+
+  deleteDonationTier: (id: string) =>
+    api<void>(`/help/donation-tiers/${encodeURIComponent(id)}`, { method: 'DELETE' }),
 };
 
 // --- Profile Pets (адресник / QR) ---
@@ -1497,11 +1570,13 @@ export interface ShelterSubscriptionStatus {
 }
 
 export const sheltersApi = {
-  list: (params?: { city?: string }) => {
+  list: (params?: { city?: string; limit?: number; offset?: number }) => {
     const q = new URLSearchParams();
     if (params?.city?.trim()) q.set('city', params.city.trim());
+    if (params?.limit != null) q.set('limit', String(params.limit));
+    if (params?.offset != null) q.set('offset', String(params.offset));
     const suffix = q.toString() ? `?${q}` : '';
-    return api<ShelterResponse[]>(`/shelters${suffix}`);
+    return api<PaginatedList<ShelterResponse>>(`/shelters${suffix}`).then((page) => page.items);
   },
   get: (id: string) => api<ShelterResponse>(`/shelters/${encodeURIComponent(id)}`),
   subscriptionStatus: (id: string) =>
@@ -1511,7 +1586,7 @@ export const sheltersApi = {
   subscribe: (id: string) =>
     api<{ ok: boolean }>(`/shelters/${encodeURIComponent(id)}/subscribe`, { method: 'POST' }),
   unsubscribe: (id: string) =>
-    api<{ ok: boolean }>(`/shelters/${encodeURIComponent(id)}/subscribe`, { method: 'DELETE' }),
+    api<void>(`/shelters/${encodeURIComponent(id)}/subscribe`, { method: 'DELETE' }),
   mine: () => api<ShelterResponse[]>('/shelters/me'),
   adminPending: () => api<ShelterResponse[]>('/shelters/admin/pending'),
   adminListAll: () => api<ShelterResponse[]>('/shelters/admin/all'),
@@ -1614,6 +1689,13 @@ export const sheltersApi = {
       coat_type: data.coatType,
       adoption_status: data.adoptionStatus,
       is_published: data.isPublished ?? true,
+      energy_level: data.energyLevel,
+      friendliness_level: data.friendlinessLevel,
+      training_level: data.trainingLevel,
+      independence_level: data.independenceLevel,
+      good_with_kids: data.goodWithKids,
+      good_with_dogs: data.goodWithDogs,
+      good_with_cats: data.goodWithCats,
     };
     const cra = data.registrationAuthority?.trim();
     const crt = data.registrationTokenNumber?.trim();
@@ -1628,6 +1710,20 @@ export const sheltersApi = {
 };
 
 export const shelterPetsApi = {
+  catalog: (params?: {
+    adoption_status?: string;
+    limit?: number;
+    offset?: number;
+  }) => {
+    const q = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([k, v]) => v != null && q.set(k, String(v)));
+    }
+    const suffix = q.toString() ? `?${q}` : '';
+    return api<ShelterPetResponse[]>(`/shelter-pets/catalog${suffix}`).then((arr) =>
+      arr.map(toPetFromShelter),
+    );
+  },
   update: (petId: string, data: ShelterPetUpdateInput) => {
     const body: Record<string, unknown> = {};
     if (data.photos != null) body.photos = data.photos;
@@ -1643,6 +1739,13 @@ export const shelterPetsApi = {
     if (data.contacts != null) body.contacts = data.contacts;
     if (data.healthStatus != null) body.health_status = data.healthStatus;
     if (data.coatType != null) body.coat_type = data.coatType;
+    if (data.energyLevel != null) body.energy_level = data.energyLevel;
+    if (data.friendlinessLevel != null) body.friendliness_level = data.friendlinessLevel;
+    if (data.trainingLevel != null) body.training_level = data.trainingLevel;
+    if (data.independenceLevel != null) body.independence_level = data.independenceLevel;
+    if (data.goodWithKids != null) body.good_with_kids = data.goodWithKids;
+    if (data.goodWithDogs != null) body.good_with_dogs = data.goodWithDogs;
+    if (data.goodWithCats != null) body.good_with_cats = data.goodWithCats;
     if (data.isArchived != null) body.is_archived = data.isArchived;
     if (data.archiveReason != null) body.archive_reason = data.archiveReason;
     if (data.adoptionStatus != null) body.adoption_status = data.adoptionStatus;

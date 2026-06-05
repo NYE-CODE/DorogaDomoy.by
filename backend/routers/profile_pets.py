@@ -66,7 +66,9 @@ def _save_base64(data_url: str) -> str:
 
 
 @router.post("/upload-photo", response_model=dict)
+@limiter.limit("20/minute")
 def upload_profile_pet_photo(
+    request: Request,
     file: UploadFile = File(...),
     user: User = Depends(get_current_user_required),
 ):

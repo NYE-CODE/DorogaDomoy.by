@@ -1,4 +1,5 @@
 import type { AnimalType, Gender, Pet, PetColor, PetStatus } from '../types/pet';
+import type { AdopterAgePref } from '../types/adopter-profile';
 
 /** Состояние фильтров приюта (черновик / применённые). */
 export type ShelterPetAgeBand =
@@ -38,6 +39,53 @@ export const defaultShelterPetFilters = (): ShelterPetFilterState => ({
   sponsor: 'all',
   urgentOnly: false,
 });
+
+const ANIMAL_FILTER = new Set<AnimalType | 'all'>(['all', 'cat', 'dog', 'other']);
+const STATUS_FILTER = new Set<PetStatus | 'all'>(['all', 'searching', 'found']);
+const GENDER_FILTER = new Set<ShelterPetFilterState['gender']>(['all', 'male', 'female']);
+const AGE_BAND_FILTER = new Set<ShelterPetAgeBand>([
+  'all',
+  'under5mo',
+  'm6to12',
+  'y1to5',
+  'y6to10',
+  'y10plus',
+]);
+const HEALTH_FILTER = new Set<ShelterPetHealth>(['all', 'disabled', 'treatment', 'good', 'excellent']);
+const COAT_FILTER = new Set<ShelterPetCoat>(['all', 'smooth', 'semi', 'fluffy']);
+const SPONSOR_FILTER = new Set<ShelterPetSponsor>(['all', 'available', 'taken']);
+const COLOR_FILTER = new Set<ShelterPetFilterState['color']>([
+  'all',
+  'black',
+  'white',
+  'gray',
+  'brown',
+  'red',
+  'mixed',
+  'spotted',
+  'striped',
+]);
+
+function pickFilterEnum<T extends string>(value: unknown, allowed: ReadonlySet<T>, fallback: T): T {
+  return typeof value === 'string' && allowed.has(value as T) ? (value as T) : fallback;
+}
+
+/** Нормализация фильтров из URL — неизвестные enum-значения сбрасываются к дефолту. */
+export function sanitizeShelterPetFilters(raw: Partial<ShelterPetFilterState>): ShelterPetFilterState {
+  const defaults = defaultShelterPetFilters();
+  return {
+    animalType: pickFilterEnum(raw.animalType, ANIMAL_FILTER, defaults.animalType),
+    status: pickFilterEnum(raw.status, STATUS_FILTER, defaults.status),
+    search: typeof raw.search === 'string' ? raw.search : defaults.search,
+    gender: pickFilterEnum(raw.gender, GENDER_FILTER, defaults.gender),
+    ageBand: pickFilterEnum(raw.ageBand, AGE_BAND_FILTER, defaults.ageBand),
+    health: pickFilterEnum(raw.health, HEALTH_FILTER, defaults.health),
+    color: pickFilterEnum(raw.color, COLOR_FILTER, defaults.color),
+    coat: pickFilterEnum(raw.coat, COAT_FILTER, defaults.coat),
+    sponsor: pickFilterEnum(raw.sponsor, SPONSOR_FILTER, defaults.sponsor),
+    urgentOnly: raw.urgentOnly === true,
+  };
+}
 
 function norm(s: string): string {
   return s.toLowerCase().replace(/ё/g, 'е');
@@ -149,11 +197,52 @@ export function petMatchesShelterFilters(p: Pet, f: ShelterPetFilterState): bool
   if (!matchesSponsor(blob, f.sponsor)) return false;
   if (!matchesUrgent(blob, f.urgentOnly)) return false;
 
-  const q = f.search.trim().toLowerCase();
+  const q = String(f.search ?? '').trim().toLowerCase();
   if (q) {
     if (!blob.includes(q)) return false;
   }
 
+  return true;
+}
+
+/** Возрастное предпочтение из анкеты подбора. */
+export function matchesAdopterAgePref(p: Pet, pref: AdopterAgePref): boolean {
+  if (pref === 'any') return true;
+  const blob = petSearchBlob(p);
+  if (!hasAnyAgeSignal(p, blob)) return true;
+
+  const presetYoung = p.approximateAge?.trim() === 'менее 2 года';
+  const presetOld = p.approximateAge?.trim() === 'более 2 года';
+  const isYoung =
+    presetYoung ||
+    matchesAgeBand(p, 'under5mo') ||
+    matchesAgeBand(p, 'm6to12');
+  const isSenior = presetOld || matchesAgeBand(p, 'y10plus');
+  const isAdult =
+    !isYoung &&
+    !isSenior &&
+    (matchesAgeBand(p, 'y1to5') || matchesAgeBand(p, 'y6to10'));
+
+  switch (pref) {
+    case 'young':
+      return isYoung;
+    case 'adult':
+      return isAdult || (!isYoung && !isSenior);
+    case 'senior':
+      return isSenior;
+    default:
+      return true;
+  }
+}
+
+export function petMatchesAdopterHealth(
+  p: Pet,
+  opts: { acceptsTreatment: boolean; acceptsDisability: boolean },
+): boolean {
+  const status = p.healthStatus;
+  if (!status) return true;
+  if (status === 'treatment' && !opts.acceptsTreatment) return false;
+  if (status === 'disabled' && !opts.acceptsDisability) return false;
   return true;
 }
 

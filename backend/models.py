@@ -117,6 +117,15 @@ class ShelterPetDetails(Base):
     coat_type = Column(String, nullable=True)  # smooth, semi, fluffy
     adoption_status = Column(String, nullable=True)  # available, reserved, adopted, on_treatment, not_for_adoption
     is_published = Column(Boolean, default=True, nullable=False)
+    # Черты характера для подбора (шкалы 1-5, nullable = «не указано»)
+    energy_level = Column(Integer, nullable=True)  # активность: 1 диван — 5 марафонец
+    friendliness_level = Column(Integer, nullable=True)  # контактность/доверие к людям
+    training_level = Column(Integer, nullable=True)  # воспитанность (лоток/команды/поводок)
+    independence_level = Column(Integer, nullable=True)  # переносит одиночество
+    # Совместимость: yes / no / unknown
+    good_with_kids = Column(String, nullable=True)
+    good_with_dogs = Column(String, nullable=True)
+    good_with_cats = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -298,6 +307,17 @@ class Partner(Base):
     name = Column(String, nullable=False)  # название компании
     link = Column(String, nullable=True)  # ссылка на сайт партнёра
     is_medallion_partner = Column(Boolean, default=False, nullable=False)
+
+
+class HelpDonationTier(Base):
+    """Варианты суммы поддержки проекта для секции «Как нам помочь» на лендинге."""
+
+    __tablename__ = "help_donation_tiers"
+
+    id = Column(String, primary_key=True, index=True)
+    label = Column(String, nullable=False)
+    payment_url = Column(String, nullable=False)
+    sort_order = Column(Integer, default=0, nullable=False)
 
 
 class FaqItem(Base):

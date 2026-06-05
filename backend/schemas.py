@@ -138,6 +138,21 @@ def _trim_optional_str(v):
     return s if s else None
 
 
+_COMPATIBILITY_VALUES = {"yes", "no", "unknown"}
+
+
+def _validate_compatibility(v):
+    """Совместимость с детьми/животными: yes / no / unknown (или None)."""
+    if v is None:
+        return None
+    s = str(v).strip().lower()
+    if not s:
+        return None
+    if s not in _COMPATIBILITY_VALUES:
+        raise ValueError("Допустимо: yes, no, unknown")
+    return s
+
+
 class PetBase(BaseModel):
     photos: list[str] = []
     animal_type: str  # cat, dog, other
@@ -232,6 +247,13 @@ class ShelterPetBase(BaseModel):
     is_published: bool = True
     registration_authority: Optional[str] = Field(None, max_length=300)
     registration_token_number: Optional[str] = Field(None, max_length=80)
+    energy_level: Optional[int] = Field(None, ge=1, le=5)
+    friendliness_level: Optional[int] = Field(None, ge=1, le=5)
+    training_level: Optional[int] = Field(None, ge=1, le=5)
+    independence_level: Optional[int] = Field(None, ge=1, le=5)
+    good_with_kids: Optional[str] = None
+    good_with_dogs: Optional[str] = None
+    good_with_cats: Optional[str] = None
 
     @field_validator("breed", mode="before")
     @classmethod
@@ -247,6 +269,11 @@ class ShelterPetBase(BaseModel):
     @classmethod
     def trim_shelter_registration(cls, v):
         return _trim_optional_str(v)
+
+    @field_validator("good_with_kids", "good_with_dogs", "good_with_cats", mode="before")
+    @classmethod
+    def validate_compatibility(cls, v):
+        return _validate_compatibility(v)
 
 
 class ShelterPetCreate(ShelterPetBase):
@@ -274,6 +301,13 @@ class ShelterPetUpdate(BaseModel):
     is_published: Optional[bool] = None
     registration_authority: Optional[str] = Field(None, max_length=300)
     registration_token_number: Optional[str] = Field(None, max_length=80)
+    energy_level: Optional[int] = Field(None, ge=1, le=5)
+    friendliness_level: Optional[int] = Field(None, ge=1, le=5)
+    training_level: Optional[int] = Field(None, ge=1, le=5)
+    independence_level: Optional[int] = Field(None, ge=1, le=5)
+    good_with_kids: Optional[str] = None
+    good_with_dogs: Optional[str] = None
+    good_with_cats: Optional[str] = None
 
     @field_validator("breed", mode="before")
     @classmethod
@@ -289,6 +323,11 @@ class ShelterPetUpdate(BaseModel):
     @classmethod
     def trim_shelter_registration_update(cls, v):
         return _trim_optional_str(v)
+
+    @field_validator("good_with_kids", "good_with_dogs", "good_with_cats", mode="before")
+    @classmethod
+    def validate_compatibility_update(cls, v):
+        return _validate_compatibility(v)
 
 
 class PetResponse(PetBase):
@@ -311,6 +350,13 @@ class PetResponse(PetBase):
 
     class Config:
         from_attributes = True
+
+
+class PaginatedPetListResponse(BaseModel):
+    items: list[PetResponse]
+    total: int
+    limit: int
+    offset: int
 
 
 class ShelterPetResponse(BaseModel):
@@ -342,6 +388,13 @@ class ShelterPetResponse(BaseModel):
     updated_by_user_id: Optional[str] = None
     registration_authority: Optional[str] = None
     registration_token_number: Optional[str] = None
+    energy_level: Optional[int] = None
+    friendliness_level: Optional[int] = None
+    training_level: Optional[int] = None
+    independence_level: Optional[int] = None
+    good_with_kids: Optional[str] = None
+    good_with_dogs: Optional[str] = None
+    good_with_cats: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -476,6 +529,16 @@ class PlatformSettingsUpdate(BaseModel):
     instagram_autopublish_enabled: Optional[bool] = None
     instagram_story_enabled: Optional[bool] = None
     instagram_manual_when_auto_off: Optional[bool] = None
+    help_volunteer_url: Optional[str] = Field(None, max_length=2000)
+
+    @field_validator("help_volunteer_url", mode="before")
+    @classmethod
+    def sanitize_help_volunteer_url(cls, v):
+        if v is None:
+            return None
+        from url_safety import validate_external_url
+
+        return validate_external_url(str(v), allow_empty=True)
 
     @field_validator(
         "require_moderation",
@@ -698,6 +761,60 @@ class FaqItemResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+def _validate_http_url(v: str, *, allow_empty: bool = False) -> str:
+    from url_safety import validate_external_url
+
+    return validate_external_url(str(v or ""), allow_empty=allow_empty)
+
+
+class HelpDonationTierCreate(BaseModel):
+    label: str = Field(..., min_length=1, max_length=80)
+    payment_url: str = Field(..., min_length=8, max_length=2000)
+    sort_order: int = Field(0, ge=0, le=10000)
+
+    @field_validator("payment_url", mode="before")
+    @classmethod
+    def payment_url_http(cls, v):
+        return _validate_http_url(str(v or ""))
+
+
+class HelpDonationTierUpdate(BaseModel):
+    label: Optional[str] = Field(None, min_length=1, max_length=80)
+    payment_url: Optional[str] = Field(None, min_length=8, max_length=2000)
+    sort_order: Optional[int] = Field(None, ge=0, le=10000)
+
+    @field_validator("payment_url", mode="before")
+    @classmethod
+    def payment_url_http(cls, v):
+        if v is None:
+            return None
+        return _validate_http_url(str(v))
+
+
+class HelpDonationTierResponse(BaseModel):
+    id: str
+    label: str
+    payment_url: str
+    sort_order: int
+
+    class Config:
+        from_attributes = True
+
+
+class HelpLandingResponse(BaseModel):
+    volunteer_url: str
+    donation_tiers: list[HelpDonationTierResponse]
+
+
+class HelpVolunteerUrlUpdate(BaseModel):
+    volunteer_url: str = Field("", max_length=2000)
+
+    @field_validator("volunteer_url", mode="before")
+    @classmethod
+    def volunteer_url_http(cls, v):
+        return _validate_http_url(str(v or ""), allow_empty=True)
 
 
 # --- Profile Pets (адресник / QR) ---
@@ -1140,6 +1257,13 @@ class ShelterResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class PaginatedShelterListResponse(BaseModel):
+    items: list[ShelterResponse]
+    total: int
+    limit: int
+    offset: int
 
 
 class ShelterModerateBody(BaseModel):

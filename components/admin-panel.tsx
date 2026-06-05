@@ -21,6 +21,7 @@ import {
   Newspaper,
   Plus,
   Handshake,
+  Heart,
   PawPrint,
   BookOpen,
   MessageCircle,
@@ -66,8 +67,10 @@ import { BlogMarkdownEditor } from './blog-markdown-editor';
 import { titleToBlogSlug } from '../utils/blog-slug';
 import { useI18n } from '../context/I18nContext';
 import { AdminInstagramPanel } from './admin-instagram-panel';
+import { AdminHelpSectionPanel } from './admin-help-section-panel';
 import { adm } from './admin-panel-chrome';
 import { AdminTablePagination } from './admin-table-pagination';
+import { PLACEHOLDER_PET_96 } from '../utils/placeholder-images';
 
 type AdminTab =
   | 'dashboard'
@@ -81,6 +84,7 @@ type AdminTab =
   | 'blog'
   | 'blogCategories'
   | 'partners'
+  | 'helpSection'
   | 'featureFlags'
   | 'instagram'
   | 'telegramBlog'
@@ -95,6 +99,7 @@ const TAB_PRIMARY: Record<AdminTab, AdminPrimarySection> = {
   dashboard: 'dashboard',
   media: 'landing',
   partners: 'landing',
+  helpSection: 'landing',
   faq: 'landing',
   users: 'petSearch',
   profilePets: 'petSearch',
@@ -114,22 +119,14 @@ const TAB_PRIMARY: Record<AdminTab, AdminPrimarySection> = {
 
 const TABS_BY_PRIMARY: Record<AdminPrimarySection, AdminTab[]> = {
   dashboard: ['dashboard'],
-  landing: ['media', 'partners', 'faq'],
+  landing: ['media', 'partners', 'helpSection', 'faq'],
   petSearch: ['users', 'profilePets', 'pets', 'moderation', 'reports', 'rewards'],
   shelter: ['sheltersCatalog', 'sheltersModeration'],
   blog: ['blog', 'blogCategories', 'telegramBlog'],
   administration: ['featureFlags', 'instagram', 'settings'],
 };
 
-const ADMIN_PLACEHOLDER_PHOTO =
-  'data:image/svg+xml;utf8,' +
-  encodeURIComponent(
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96">' +
-      '<rect width="96" height="96" fill="#f3f4f6"/>' +
-      '<path d="M24 63l12-14 15 17 10-9 11 13H24z" fill="#d1d5db"/>' +
-      '<circle cx="39" cy="33" r="8" fill="#d1d5db"/>' +
-    '</svg>'
-  );
+const ADMIN_PLACEHOLDER_PHOTO = PLACEHOLDER_PET_96;
 
 function getAdminPetPreviewPhoto(pet: Pet): string {
   const first = pet.photos?.[0];
@@ -383,50 +380,92 @@ export function AdminPanel({
 
   useEffect(() => {
     if (activeTab !== 'sheltersCatalog' && activeTab !== 'dashboard') return;
+    let cancelled = false;
     setShelterAllLoading(true);
-    sheltersApi
-      .adminListAll()
-      .then(setShelterAllList)
-      .catch(() => setShelterAllList([]))
-      .finally(() => setShelterAllLoading(false));
+
+    (async () => {
+      try {
+        const rows = await sheltersApi.adminListAll();
+        if (!cancelled) setShelterAllList(rows);
+      } catch {
+        if (!cancelled) setShelterAllList([]);
+      } finally {
+        if (!cancelled) setShelterAllLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [activeTab]);
 
   useEffect(() => {
-    settingsApi.get().then((s) => {
-      setSettings({
-        requireModeration: s.require_moderation === 'true',
-        autoArchiveDays: parseInt(s.auto_archive_days, 10) || 90,
-        maxPhotos: parseInt(s.max_photos, 10) || 5,
-        rewardDefaultPoints: parseInt(s.reward_default_points ?? '50', 10) || 50,
-      });
-      setBlogTelegramChatId(s.telegram_blog_chat_id ?? '');
-      setBlogTelegramPublicUsername(s.telegram_blog_public_username ?? '');
-    }).catch((err: unknown) => {
-      console.warn('[AdminPanel] settings load failed', err);
-    });
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const s = await settingsApi.get();
+        if (cancelled) return;
+        setSettings({
+          requireModeration: s.require_moderation === 'true',
+          autoArchiveDays: parseInt(s.auto_archive_days, 10) || 90,
+          maxPhotos: parseInt(s.max_photos, 10) || 5,
+          rewardDefaultPoints: parseInt(s.reward_default_points ?? '50', 10) || 50,
+        });
+        setBlogTelegramChatId(s.telegram_blog_chat_id ?? '');
+        setBlogTelegramPublicUsername(s.telegram_blog_public_username ?? '');
+      } catch (err: unknown) {
+        console.warn('[AdminPanel] settings load failed', err);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
-    rewardsApi.listPointsTransactions({ limit: 300 }).then(setPointsTransactions).catch(() => {
-      setPointsTransactions([]);
-    });
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const rows = await rewardsApi.listPointsTransactions({ limit: 300 });
+        if (!cancelled) setPointsTransactions(rows);
+      } catch {
+        if (!cancelled) setPointsTransactions([]);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
-    featureFlagsApi.get().then((ff) => {
-      setFeatureFlags({
-        ff_landing_show_stats: ff.ff_landing_show_stats === 'true',
-        ff_landing_show_help: ff.ff_landing_show_help === 'true',
-        ff_landing_show_pets_feature:
-          (ff.ff_landing_show_pets_feature ?? 'true') === 'true',
-        ff_landing_show_faq: (ff.ff_landing_show_faq ?? 'true') === 'true',
-        ff_instagram_boost_stories: (ff.ff_instagram_boost_stories ?? 'true') === 'true',
-        ff_reward_enabled: (ff.ff_reward_enabled ?? 'true') === 'true',
-        ff_reward_money_enabled: (ff.ff_reward_money_enabled ?? 'true') === 'true',
-      });
-    }).catch((err: unknown) => {
-      console.warn('[AdminPanel] feature flags load failed', err);
-    });
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const ff = await featureFlagsApi.get();
+        if (cancelled) return;
+        setFeatureFlags({
+          ff_landing_show_stats: ff.ff_landing_show_stats === 'true',
+          ff_landing_show_help: ff.ff_landing_show_help === 'true',
+          ff_landing_show_pets_feature:
+            (ff.ff_landing_show_pets_feature ?? 'true') === 'true',
+          ff_landing_show_faq: (ff.ff_landing_show_faq ?? 'true') === 'true',
+          ff_instagram_boost_stories: (ff.ff_instagram_boost_stories ?? 'true') === 'true',
+          ff_reward_enabled: (ff.ff_reward_enabled ?? 'true') === 'true',
+          ff_reward_money_enabled: (ff.ff_reward_money_enabled ?? 'true') === 'true',
+        });
+      } catch (err: unknown) {
+        console.warn('[AdminPanel] feature flags load failed', err);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const fetchShelterPending = useCallback(() => {
@@ -597,6 +636,7 @@ export function AdminPanel({
         { id: 'dashboard' as const, label: ap.tabs.dashboard, icon: LayoutDashboard },
         { id: 'media' as const, label: ap.tabs.media, icon: Newspaper },
         { id: 'partners' as const, label: ap.tabs.partners, icon: Handshake },
+        { id: 'helpSection' as const, label: ap.tabs.helpSection, icon: Heart },
         { id: 'faq' as const, label: ap.tabs.faq, icon: HelpCircle },
         { id: 'users' as const, label: ap.tabs.users, icon: Users },
         { id: 'profilePets' as const, label: ap.tabs.pets, icon: PawPrint },
@@ -2111,7 +2151,7 @@ export function AdminPanel({
   };
 
   const handleSaveMedia = () => {
-    const dateVal = editPublishedAt ? new Date(editPublishedAt + 'T12:00:00').toISOString() : new Date().toISOString();
+    const dateVal = editPublishedAt ? new Date(`${editPublishedAt}T12:00:00`).toISOString() : new Date().toISOString();
     if (editingMedia === 'create') {
       onMediaCreate({
         logo_url: editLogoUrl.trim() || undefined,
@@ -3770,6 +3810,7 @@ export function AdminPanel({
         {activeTab === 'blogCategories' && renderBlogCategories()}
         {activeTab === 'partners' && renderPartners()}
         {activeTab === 'faq' && renderFaq()}
+        {activeTab === 'helpSection' && <AdminHelpSectionPanel />}
         {activeTab === 'featureFlags' && renderFeatureFlags()}
         {activeTab === 'telegramBlog' && renderTelegramBlogSettings()}
         {activeTab === 'instagram' && <AdminInstagramPanel />}

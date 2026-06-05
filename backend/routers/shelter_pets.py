@@ -4,13 +4,14 @@ from __future__ import annotations
 import uuid
 from typing import Optional
 
-from fastapi import APIRouter, BackgroundTasks, Body, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Body, Depends, HTTPException, Query, Request
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from auth import get_current_user, get_current_user_required
 from database import get_db
-from models import Pet, ShelterMembership, ShelterPetDetails, User
+from models import Pet, Shelter, ShelterMembership, ShelterPetDetails, User
+from rate_limit import limiter
 from routers.pets import _max_photos, save_base64_photo
 from schemas import ShelterPetCreate, ShelterPetResponse, ShelterPetUpdate
 from shelter_subscription_notify import schedule_new_shelter_pet_notifications
@@ -59,6 +60,13 @@ def shelter_pet_to_response(p: Pet) -> ShelterPetResponse:
         updated_by_user_id=p.updated_by_user_id,
         registration_authority=getattr(p, "registration_authority", None),
         registration_token_number=getattr(p, "registration_token_number", None),
+        energy_level=getattr(details, "energy_level", None),
+        friendliness_level=getattr(details, "friendliness_level", None),
+        training_level=getattr(details, "training_level", None),
+        independence_level=getattr(details, "independence_level", None),
+        good_with_kids=getattr(details, "good_with_kids", None),
+        good_with_dogs=getattr(details, "good_with_dogs", None),
+        good_with_cats=getattr(details, "good_with_cats", None),
     )
 
 
@@ -89,6 +97,17 @@ def _is_active_member(db: Session, shelter_id: str, user_id: str) -> bool:
     return m is not None
 
 
+_TRAIT_FIELDS = (
+    "energy_level",
+    "friendliness_level",
+    "training_level",
+    "independence_level",
+    "good_with_kids",
+    "good_with_dogs",
+    "good_with_cats",
+)
+
+
 def _upsert_shelter_details(
     db: Session,
     pet: Pet,
@@ -98,7 +117,9 @@ def _upsert_shelter_details(
     coat_type: Optional[str],
     adoption_status: Optional[str],
     is_published: bool,
+    traits: Optional[dict] = None,
 ) -> None:
+    traits = traits or {}
     details = db.scalar(select(ShelterPetDetails).where(ShelterPetDetails.pet_id == pet.id))
     now = utc_now()
     if details is None:
@@ -112,6 +133,7 @@ def _upsert_shelter_details(
             is_published=is_published,
             created_at=now,
             updated_at=now,
+            **{k: traits.get(k) for k in _TRAIT_FIELDS},
         )
         db.add(details)
         return
@@ -121,6 +143,9 @@ def _upsert_shelter_details(
         details.health_status = health_status
     if coat_type is not None:
         details.coat_type = coat_type
+    for field in _TRAIT_FIELDS:
+        if field in traits and traits[field] is not None:
+            setattr(details, field, traits[field])
     details.adoption_status = adoption_status
     details.is_published = is_published
     details.updated_at = now
@@ -134,18 +159,60 @@ def _assert_can_manage(db: Session, user: User, shelter_id: str) -> None:
     raise HTTPException(status_code=403, detail="Нет прав управлять питомцами этого приюта")
 
 
+def _approved_public_shelter_or_404(db: Session, shelter_id: str) -> Shelter:
+    shelter = db.scalar(select(Shelter).where(Shelter.id == shelter_id))
+    if not shelter or shelter.moderation_status != "approved":
+        raise HTTPException(status_code=404, detail="Не найдено")
+    return shelter
+
+
+@router.get("/shelter-pets/catalog", response_model=list[ShelterPetResponse])
+@limiter.limit("120/minute")
+def list_public_shelter_pets_catalog(
+    request: Request,
+    adoption_status: Optional[str] = Query(None),
+    limit: int = Query(500, ge=1, le=500),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db),
+):
+    """Публичный каталог питомцев опубликованных приютов (один запрос вместо N+1)."""
+    stmt = (
+        select(Pet)
+        .options(joinedload(Pet.shelter_details))
+        .join(Shelter, Shelter.id == Pet.shelter_id)
+        .outerjoin(ShelterPetDetails, ShelterPetDetails.pet_id == Pet.id)
+        .where(
+            Pet.pet_scope == "shelter_pet",
+            Shelter.moderation_status == "approved",
+            Pet.moderation_status == "approved",
+            Pet.is_archived.is_(False),
+            func.coalesce(ShelterPetDetails.is_published, Pet.is_published, True).is_(True),
+        )
+        .order_by(Pet.published_at.desc())
+        .offset(offset)
+        .limit(limit)
+    )
+    if adoption_status:
+        stmt = stmt.where(
+            func.coalesce(ShelterPetDetails.adoption_status, Pet.adoption_status) == adoption_status
+        )
+    pets = db.scalars(stmt).unique().all()
+    return [shelter_pet_to_response(p) for p in pets]
+
+
 @router.get("/shelters/{shelter_id}/pets", response_model=list[ShelterPetResponse])
 def list_shelter_pets(
     shelter_id: str,
     is_archived: Optional[bool] = Query(None),
     adoption_status: Optional[str] = Query(None),
-    limit: Optional[int] = Query(None, ge=1, le=300),
+    limit: int = Query(300, ge=1, le=300),
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
     user: Optional[User] = Depends(get_current_user),
 ):
     stmt = (
         select(Pet)
+        .options(joinedload(Pet.shelter_details))
         .outerjoin(ShelterPetDetails, ShelterPetDetails.pet_id == Pet.id)
         .where(Pet.pet_scope == "shelter_pet", Pet.shelter_id == shelter_id)
     )
@@ -153,20 +220,21 @@ def list_shelter_pets(
         user.role == "admin" or _is_active_member(db, shelter_id, user.id)
     )
     if not can_see_unpublished:
+        _approved_public_shelter_or_404(db, shelter_id)
         stmt = stmt.where(
             Pet.moderation_status == "approved",
+            Pet.is_archived.is_(False),
             func.coalesce(ShelterPetDetails.is_published, Pet.is_published, True).is_(True),
         )
-    if is_archived is not None:
+    elif is_archived is not None:
         stmt = stmt.where(Pet.is_archived == is_archived)
     if adoption_status:
         stmt = stmt.where(
             func.coalesce(ShelterPetDetails.adoption_status, Pet.adoption_status) == adoption_status
         )
-    stmt = stmt.order_by(Pet.published_at.desc()).offset(offset)
-    if limit is not None:
-        stmt = stmt.limit(limit)
-    return [shelter_pet_to_response(p) for p in db.scalars(stmt).all()]
+    stmt = stmt.order_by(Pet.published_at.desc()).offset(offset).limit(limit)
+    pets = db.scalars(stmt).unique().all()
+    return [shelter_pet_to_response(p) for p in pets]
 
 
 @router.post("/shelters/{shelter_id}/pets", response_model=ShelterPetResponse, status_code=201)
@@ -229,6 +297,7 @@ def create_shelter_pet(
         coat_type=data.coat_type,
         adoption_status=data.adoption_status,
         is_published=bool(data.is_published),
+        traits={k: getattr(data, k, None) for k in _TRAIT_FIELDS},
     )
     db.commit()
     db.refresh(pet)
@@ -256,6 +325,7 @@ def update_shelter_pet(
     nickname = d.pop("nickname", None) if "nickname" in d else None
     health_status = d.pop("health_status", None) if "health_status" in d else None
     coat_type = d.pop("coat_type", None) if "coat_type" in d else None
+    traits = {k: d.pop(k) for k in _TRAIT_FIELDS if k in d}
     if "photos" in d and d["photos"] is not None:
         limit = _max_photos(db)
         if len(d["photos"]) > limit:
@@ -282,6 +352,7 @@ def update_shelter_pet(
         coat_type=coat_type,
         adoption_status=pet.adoption_status,
         is_published=bool(pet.is_published),
+        traits=traits,
     )
     db.commit()
     db.refresh(pet)

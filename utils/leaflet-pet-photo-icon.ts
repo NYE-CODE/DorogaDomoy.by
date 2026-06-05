@@ -1,5 +1,6 @@
 import L from 'leaflet';
 import { PET_STATUS_MARKER_BORDER_HEX } from './pet-helpers';
+import { PLACEHOLDER_PET_MAP } from './placeholder-images';
 
 /** Цвет обводки кружка маркера по статусу объявления */
 export const PET_STATUS_MARKER_COLORS: Record<string, string> = {
@@ -15,15 +16,7 @@ export const PET_STATUS_MARKER_COLORS: Record<string, string> = {
 /** Обводка маркера «видел похожее» / выбранная точка на карте формы */
 export const SIGHTING_MARKER_BORDER_COLOR = '#f59e0b';
 
-const FALLBACK_IMAGE =
-  'data:image/svg+xml;utf8,' +
-  encodeURIComponent(
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 120">' +
-      '<rect width="160" height="120" fill="#f3f4f6"/>' +
-      '<path d="M42 78l18-20 22 24 16-14 20 24H42z" fill="#d1d5db"/>' +
-      '<circle cx="63" cy="44" r="10" fill="#d1d5db"/>' +
-    '</svg>',
-  );
+const FALLBACK_IMAGE = PLACEHOLDER_PET_MAP;
 
 export function getSafePetPhotoSrc(url?: string): string {
   if (!url) return FALLBACK_IMAGE;

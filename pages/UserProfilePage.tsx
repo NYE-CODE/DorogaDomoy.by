@@ -71,7 +71,7 @@ export default function UserProfilePage() {
 
     Promise.all([
       usersApi.get(id).catch(() => null),
-      petsApi.list({ author_id: id }).catch(() => []),
+      petsApi.list({ author_id: id, limit: 500 }).catch(() => []),
     ])
       .then(([userData, petsData]) => {
         setUser(userData);

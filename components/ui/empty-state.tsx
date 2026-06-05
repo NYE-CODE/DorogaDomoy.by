@@ -9,7 +9,7 @@ interface EmptyStateProps {
   hint?: string;
   icon?: ReactNode;
   action?: ReactNode;
-  tone?: "default" | "danger";
+  tone?: "default" | "danger" | "brand";
   className?: string;
 }
 
@@ -25,7 +25,9 @@ export function EmptyState({
   const iconWrapClass =
     tone === "danger"
       ? "bg-red-50 text-red-500 dark:bg-red-950/40 dark:text-red-300"
-      : "bg-muted text-muted-foreground";
+      : tone === "brand"
+        ? "bg-[#FF9800]/12 text-[#FF9800]"
+        : "bg-muted text-muted-foreground";
 
   return (
     <div

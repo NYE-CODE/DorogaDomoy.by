@@ -11,8 +11,10 @@ from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session, selectinload
 
 from database import get_db
-from models import Pet, PointsTransaction, Report, ShelterMembership, User
+from models import Pet, PointsTransaction, Report, Shelter, ShelterMembership, User
 from schemas import (
+    ARCHIVE_HAPPY_KEYWORDS,
+    PaginatedPetListResponse,
     PetCreate,
     PetUpdate,
     PetResponse,
@@ -28,12 +30,15 @@ from routers.sightings import (
     run_list_sightings_for_pet,
 )
 from auth import get_current_user, get_current_user_required, require_admin
-from platform_settings import DEFAULT_MAX_PHOTOS, get_bool_setting, get_int_setting
+from platform_settings import DEFAULT_MAX_PHOTOS, get_bool_setting, get_int_setting, get_settings_with_defaults
 from integrations.telegram import send_notifications_for_pet, send_pending_moderation_alert_sync
 from instagram_publications import enqueue_autopublish_for_pet
 from time_utils import utc_now
 from upload_utils import save_data_image
 from rate_limit import limiter
+from ttl_cache import statistics_cache_get, statistics_cache_set
+
+LIST_PETS_DEFAULT_LIMIT = 500
 
 
 def _moderation_required(db: Session) -> bool:
@@ -48,7 +53,8 @@ def _moderation_required(db: Session) -> bool:
 
 def _max_photos(db: Session) -> int:
     try:
-        return get_int_setting(db, "max_photos", default=DEFAULT_MAX_PHOTOS)
+        settings = get_settings_with_defaults(db, {"max_photos": str(DEFAULT_MAX_PHOTOS)})
+        return int(settings.get("max_photos", DEFAULT_MAX_PHOTOS))
     except Exception as e:
         logging.getLogger(__name__).warning(
             "max_photos read failed, default %s: %s", DEFAULT_MAX_PHOTOS, e
@@ -180,35 +186,54 @@ def _is_active_shelter_member(db: Session, shelter_id: Optional[str], user_id: s
     return m is not None
 
 
-@router.get("", response_model=list[PetResponse])
-def list_pets(
-    animal_type: Optional[str] = Query(None),
-    breed: Optional[str] = Query(None),
-    city: Optional[str] = Query(None),
-    status: Optional[str] = Query(None),
-    statuses: Optional[str] = Query(None),  # comma-separated list: searching,found
-    days: Optional[int] = Query(None, ge=1),
-    moderation_status: Optional[str] = Query(None),
-    is_archived: Optional[bool] = Query(None),
-    search: Optional[str] = Query(None),
-    author_id: Optional[str] = Query(None),
-    pet_scope: Optional[str] = Query(None),
-    shelter_id: Optional[str] = Query(None),
-    adoption_status: Optional[str] = Query(None),
-    ids: Optional[str] = Query(
-        None,
-        description="Список id через запятую (до 80), например для страницы избранного без авторизации",
-    ),
-    north: Optional[float] = Query(None),
-    south: Optional[float] = Query(None),
-    east: Optional[float] = Query(None),
-    west: Optional[float] = Query(None),
-    limit: Optional[int] = Query(None, ge=1, le=500),
-    offset: int = Query(0, ge=0),
-    db: Session = Depends(get_db),
-    user: Optional[User] = Depends(get_current_user),
+def pet_favoritable(pet: Pet, user: User) -> bool:
+    """Можно ли добавить объявление в избранное (не черновик / не архив для чужих)."""
+    if user.role == "admin" or pet.author_id == user.id:
+        return True
+    if pet.is_archived:
+        return False
+    if pet.moderation_status != "approved":
+        return False
+    if (pet.pet_scope or "lost_found") == "shelter_pet" and not bool(getattr(pet, "is_published", True)):
+        return False
+    return True
+
+
+def _public_shelter_pet_filters_needed(
+    *,
+    is_admin: bool,
+    viewing_own_ads: bool,
+    shelter_id: Optional[str],
+    pet_scope: Optional[str],
+) -> bool:
+    if is_admin or viewing_own_ads:
+        return False
+    return bool(shelter_id or pet_scope == "shelter_pet")
+
+
+def _apply_pet_list_filters(
+    stmt,
+    *,
+    animal_type: Optional[str],
+    breed: Optional[str],
+    city: Optional[str],
+    status: Optional[str],
+    statuses: Optional[str],
+    days: Optional[int],
+    moderation_status: Optional[str],
+    is_archived: Optional[bool],
+    search: Optional[str],
+    author_id: Optional[str],
+    pet_scope: Optional[str],
+    shelter_id: Optional[str],
+    adoption_status: Optional[str],
+    ids: Optional[str],
+    north: Optional[float],
+    south: Optional[float],
+    east: Optional[float],
+    west: Optional[float],
+    user: Optional[User],
 ):
-    stmt = select(Pet).options(selectinload(Pet.shelter_details))
     if animal_type:
         stmt = stmt.where(Pet.animal_type == animal_type)
     if breed:
@@ -239,19 +264,29 @@ def list_pets(
     else:
         stmt = stmt.where(Pet.moderation_status == "approved")
         stmt = stmt.where(or_(Pet.pet_scope != "shelter_pet", Pet.is_published.is_(True)))
+        stmt = stmt.where(Pet.is_archived.is_(False))
 
-    if is_archived is not None:
-        stmt = stmt.where(Pet.is_archived == is_archived)
+    if is_admin or viewing_own_ads:
+        if is_archived is not None:
+            stmt = stmt.where(Pet.is_archived == is_archived)
+
+    if _public_shelter_pet_filters_needed(
+        is_admin=is_admin,
+        viewing_own_ads=viewing_own_ads,
+        shelter_id=shelter_id,
+        pet_scope=pet_scope,
+    ):
+        stmt = stmt.join(Shelter, Shelter.id == Pet.shelter_id).where(
+            Shelter.moderation_status == "approved",
+        )
     if search:
         stmt = stmt.where(
-            (Pet.description.ilike(f"%{search}%")) |
-            (Pet.breed.ilike(f"%{search}%")) |
-            (Pet.city.ilike(f"%{search}%"))
+            (Pet.description.ilike(f"%{search}%"))
+            | (Pet.breed.ilike(f"%{search}%"))
+            | (Pet.city.ilike(f"%{search}%"))
         )
     if author_id:
         stmt = stmt.where(Pet.author_id == author_id)
-    # В публичной «поисковой» ленте и на карте по умолчанию показываем только lost/found.
-    # Питомцы приютов выводятся в карточках приютов/профильных разделах.
     if not pet_scope and not shelter_id and not ids:
         stmt = stmt.where(or_(Pet.pet_scope.is_(None), Pet.pet_scope != "shelter_pet"))
     if pet_scope:
@@ -271,15 +306,81 @@ def list_pets(
             Pet.location_lng >= west,
             Pet.location_lng <= east,
         )
-    stmt = stmt.order_by(Pet.published_at.desc())
-    if limit is not None:
-        stmt = stmt.offset(offset).limit(limit)
-    pets = db.scalars(stmt).all()
-    return [pet_to_response(p) for p in pets]
+    return stmt
 
 
-@router.get("/statistics", response_model=StatisticsResponse)
-def get_statistics(db: Session = Depends(get_db)):
+@router.get("", response_model=PaginatedPetListResponse)
+def list_pets(
+    animal_type: Optional[str] = Query(None),
+    breed: Optional[str] = Query(None),
+    city: Optional[str] = Query(None),
+    status: Optional[str] = Query(None),
+    statuses: Optional[str] = Query(None),  # comma-separated list: searching,found
+    days: Optional[int] = Query(None, ge=1),
+    moderation_status: Optional[str] = Query(None),
+    is_archived: Optional[bool] = Query(None),
+    search: Optional[str] = Query(None),
+    author_id: Optional[str] = Query(None),
+    pet_scope: Optional[str] = Query(None),
+    shelter_id: Optional[str] = Query(None),
+    adoption_status: Optional[str] = Query(None),
+    ids: Optional[str] = Query(
+        None,
+        description="Список id через запятую (до 80), например для страницы избранного без авторизации",
+    ),
+    north: Optional[float] = Query(None),
+    south: Optional[float] = Query(None),
+    east: Optional[float] = Query(None),
+    west: Optional[float] = Query(None),
+    limit: Optional[int] = Query(None, ge=1, le=500),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db),
+    user: Optional[User] = Depends(get_current_user),
+):
+    filter_kwargs = dict(
+        animal_type=animal_type,
+        breed=breed,
+        city=city,
+        status=status,
+        statuses=statuses,
+        days=days,
+        moderation_status=moderation_status,
+        is_archived=is_archived,
+        search=search,
+        author_id=author_id,
+        pet_scope=pet_scope,
+        shelter_id=shelter_id,
+        adoption_status=adoption_status,
+        ids=ids,
+        north=north,
+        south=south,
+        east=east,
+        west=west,
+        user=user,
+    )
+    filtered = _apply_pet_list_filters(select(Pet), **filter_kwargs)
+    total = db.scalar(select(func.count()).select_from(filtered.subquery())) or 0
+    effective_limit = limit if limit is not None else LIST_PETS_DEFAULT_LIMIT
+    pets = db.scalars(
+        _apply_pet_list_filters(select(Pet), **filter_kwargs)
+        .options(selectinload(Pet.shelter_details))
+        .order_by(Pet.published_at.desc())
+        .offset(offset)
+        .limit(effective_limit)
+    ).all()
+    return PaginatedPetListResponse(
+        items=[pet_to_response(p) for p in pets],
+        total=total,
+        limit=effective_limit,
+        offset=offset,
+    )
+
+
+def _happy_archive_sql_condition():
+    return or_(*[Pet.archive_reason.ilike(f"%{kw}%") for kw in ARCHIVE_HAPPY_KEYWORDS])
+
+
+def _compute_statistics(db: Session) -> StatisticsResponse:
     active_base = (
         Pet.is_archived.is_(False),
         Pet.moderation_status == "approved",
@@ -300,18 +401,21 @@ def get_statistics(db: Session = Depends(get_db)):
         )
     ) or 0
 
-    archived_reasons = db.scalars(
-        select(Pet.archive_reason).where(Pet.is_archived.is_(True))
-    ).all()
-    found_pets = 0
-    not_found = 0
-    for r in archived_reasons:
-        if _is_happy_archive(r):
-            found_pets += 1
-        elif r:
-            not_found += 1
+    happy_cond = _happy_archive_sql_condition()
+    found_pets = db.scalar(
+        select(func.count()).select_from(Pet).where(Pet.is_archived.is_(True), happy_cond)
+    ) or 0
+    not_found = db.scalar(
+        select(func.count())
+        .select_from(Pet)
+        .where(
+            Pet.is_archived.is_(True),
+            Pet.archive_reason.isnot(None),
+            Pet.archive_reason != "",
+            ~happy_cond,
+        )
+    ) or 0
     total_with_outcome = found_pets + not_found
-    # Процент только при выборке >= 5, иначе вводит в заблуждение
     success_rate = (
         round(100.0 * found_pets / total_with_outcome, 1)
         if total_with_outcome >= 5
@@ -331,6 +435,17 @@ def get_statistics(db: Session = Depends(get_db)):
         success_rate=success_rate,
         users_count=users_count,
     )
+
+
+@router.get("/statistics", response_model=StatisticsResponse)
+def get_statistics(db: Session = Depends(get_db)):
+    cached = statistics_cache_get()
+    if cached is not None:
+        return StatisticsResponse(**cached)
+
+    result = _compute_statistics(db)
+    statistics_cache_set(result.model_dump())
+    return result
 
 
 @router.get("/sightings/counts")
@@ -380,6 +495,13 @@ def get_pet(
     is_member = False
     if user is not None and (pet.pet_scope or "lost_found") == "shelter_pet" and pet.shelter_id:
         is_member = _is_active_shelter_member(db, pet.shelter_id, user.id)
+    can_manage = is_admin or is_author or is_member
+    if pet.is_archived and not can_manage:
+        raise HTTPException(status_code=404, detail="Объявление не найдено")
+    if (pet.pet_scope or "lost_found") == "shelter_pet" and pet.shelter_id and not can_manage:
+        shelter = db.scalar(select(Shelter).where(Shelter.id == pet.shelter_id))
+        if not shelter or shelter.moderation_status != "approved":
+            raise HTTPException(status_code=404, detail="Объявление не найдено")
     if pet.moderation_status != "approved" and not is_admin and not is_author:
         raise HTTPException(status_code=404, detail="Объявление не найдено")
     if (pet.pet_scope or "lost_found") == "shelter_pet" and not pet.is_published and not (is_admin or is_author or is_member):
@@ -527,10 +649,16 @@ async def update_pet(
         "approximate_age", "status", "description", "city",
         "location", "contacts", "is_archived", "archive_reason",
         "reward_mode", "reward_amount_byn", "reward_points", "reward_helper_code",
-        "pet_scope", "shelter_id", "adoption_status", "is_published",
         "registration_authority", "registration_token_number",
     }
-    ADMIN_ONLY_FIELDS = {"moderation_status", "moderation_reason"}
+    ADMIN_ONLY_FIELDS = {
+        "moderation_status",
+        "moderation_reason",
+        "pet_scope",
+        "shelter_id",
+        "adoption_status",
+        "is_published",
+    }
     d = data.model_dump(exclude_unset=True)
     if "reward_points" in d and user.role != "admin":
         raise HTTPException(status_code=403, detail="Только администратор может изменять количество очков")

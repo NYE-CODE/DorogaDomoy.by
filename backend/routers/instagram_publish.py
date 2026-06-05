@@ -532,12 +532,12 @@ def create_boost_publication(
     eligible, reason, next_available, _ = _compute_boost_eligibility(db=db, pet=pet, user=user)
     if not eligible:
         if reason == "pet_not_found":
-            raise HTTPException(status_code=404, detail="Pet not found")
+            raise HTTPException(status_code=404, detail="Объявление не найдено")
         if reason == "not_owner":
-            raise HTTPException(status_code=403, detail="Only pet owner can request boost")
+            raise HTTPException(status_code=403, detail="Запросить буст может только автор объявления")
         if reason == "limit_reached":
-            raise HTTPException(status_code=429, detail=f"Boost limit reached until {next_available}")
-        raise HTTPException(status_code=400, detail=reason)
+            raise HTTPException(status_code=429, detail="Лимит буста исчерпан. Попробуйте позже")
+        raise HTTPException(status_code=400, detail="Запрос на буст недоступен")
 
     existing_for_pet = db.scalar(
         select(InstagramPublication).where(

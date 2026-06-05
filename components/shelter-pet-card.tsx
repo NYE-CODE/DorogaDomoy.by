@@ -1,9 +1,10 @@
 import { useId } from 'react';
-import { CircleHelp, Heart, MapPin, Mars, PawPrint, Venus } from 'lucide-react';
+import { CircleHelp, Heart, MapPin, Mars, PawPrint, Venus, Zap } from 'lucide-react';
 import { useI18n } from '../context/I18nContext';
 import type { Pet } from '../types/pet';
 import { cn } from './ui/utils';
 import { FavoriteHeartButton } from './favorite-heart-button';
+import { buildTraitScales, compatBadgeText, getCompatBadges, traitLevelLabel } from '../utils/pet-traits';
 
 interface ShelterPetCardProps {
   pet: Pet;
@@ -13,6 +14,7 @@ interface ShelterPetCardProps {
 
 export function ShelterPetCard({ pet, onClick, compact = false }: ShelterPetCardProps) {
   const { t } = useI18n();
+  const traitScales = buildTraitScales(t.petTraits);
   const treatmentClipId = useId();
 
   const gender = pet.gender ? t.pet.gender[pet.gender] : '—';
@@ -170,6 +172,30 @@ export function ShelterPetCard({ pet, onClick, compact = false }: ShelterPetCard
         <p className="line-clamp-1 text-sm text-muted-foreground">
           Порода: {pet.breed?.trim() || 'не указана'} · Возраст: {age}
         </p>
+        {(() => {
+          const energyDef = traitScales[0];
+          const energy = traitLevelLabel(energyDef, pet.energyLevel);
+          const compat = getCompatBadges(pet).filter((b) => b.value === 'yes');
+          if (!energy && compat.length === 0) return null;
+          return (
+            <div className="flex flex-wrap gap-1.5">
+              {energy && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
+                  <Zap size={11} className="shrink-0" aria-hidden />
+                  {energy}
+                </span>
+              )}
+              {compat.map((b) => (
+                <span
+                  key={b.key}
+                  className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
+                >
+                  {compatBadgeText(b, t.petTraits)}
+                </span>
+              ))}
+            </div>
+          );
+        })()}
         <div className="mt-1 flex flex-col gap-1.5">
           <span className="flex max-w-full items-center gap-1 self-start rounded-md bg-muted/80 px-[10px] py-[4px] text-[11px] text-muted-foreground">
             <MapPin size={12} className="shrink-0 opacity-80" aria-hidden />

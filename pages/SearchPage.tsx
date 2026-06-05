@@ -98,6 +98,7 @@ export default function SearchPage() {
     const params: Parameters<typeof petsApi.list>[0] = {
       moderation_status: 'approved',
       is_archived: false,
+      limit: 500,
     };
 
     if (currentBounds) {
@@ -741,7 +742,7 @@ export default function SearchPage() {
             deletingPet.status === 'searching' && deletingPet.rewardMode === 'points'
           }
           rewardPoints={deletingPet.rewardPoints ?? 50}
-          petDescription={`${deletingPet.animalType === 'cat' ? 'Кот' : deletingPet.animalType === 'dog' ? 'Собака' : 'Животное'} ${deletingPet.breed ? '(' + deletingPet.breed + ')' : ''} - ${deletingPet.city}`}
+          petDescription={`${deletingPet.animalType === 'cat' ? 'Кот' : deletingPet.animalType === 'dog' ? 'Собака' : 'Животное'} ${deletingPet.breed ? `(${deletingPet.breed})` : ''} - ${deletingPet.city}`}
         />
       )}
 

@@ -10,6 +10,7 @@ import { useI18n } from '../context/I18nContext';
 import { shelterPetsApi, settingsApi, sheltersApi, type ShelterPetInput, type ShelterResponse } from '../api/client';
 import type { Pet } from '../types/pet';
 import { BackQuickMenu } from '../components/navigation/BackQuickMenu';
+import { compressImageFileToDataUrl } from '../utils/compress-image';
 
 type FormState = {
   id?: string;
@@ -35,32 +36,6 @@ const emptyForm = (): FormState => ({
   colorsCsv: '',
   isPublished: true,
 });
-
-/** Как в объявлении (`PetForm`): сжатие JPEG до разумного размера перед отправкой на сервер */
-function compressImage(file: File, maxDim = 1200, quality = 0.8): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      let { width, height } = img;
-      if (width > maxDim || height > maxDim) {
-        const ratio = Math.min(maxDim / width, maxDim / height);
-        width = Math.round(width * ratio);
-        height = Math.round(height * ratio);
-      }
-      const canvas = document.createElement('canvas');
-      canvas.width = width;
-      canvas.height = height;
-      canvas.getContext('2d')!.drawImage(img, 0, 0, width, height);
-      resolve(canvas.toDataURL('image/jpeg', quality));
-      URL.revokeObjectURL(img.src);
-    };
-    img.onerror = () => {
-      URL.revokeObjectURL(img.src);
-      reject(new Error('decode'));
-    };
-    img.src = URL.createObjectURL(file);
-  });
-}
 
 export default function MyShelterPetsPage() {
   const { t } = useI18n();
@@ -144,7 +119,7 @@ export default function MyShelterPetsPage() {
         continue;
       }
       try {
-        const compressed = await compressImage(file);
+        const compressed = await compressImageFileToDataUrl(file);
         setForm((prev) => {
           if (prev.photos.length >= maxPhotos) {
             toast.warning(`${pf.maxPhotos} ${maxPhotos}`);

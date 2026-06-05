@@ -38,6 +38,8 @@ const TermsPage = lazy(() => import('./pages/TermsPage.tsx'));
 const BlogListPage = lazy(() => import('./pages/BlogListPage.tsx'));
 const BlogPostPage = lazy(() => import('./pages/BlogPostPage.tsx'));
 const FavoritesPage = lazy(() => import('./pages/FavoritesPage.tsx'));
+const MatchQuizPage = lazy(() => import('./pages/MatchQuizPage.tsx'));
+const MatchSwipePage = lazy(() => import('./pages/MatchSwipePage.tsx'));
 const SheltersPage = lazy(() => import('./pages/SheltersPage.tsx'));
 const ShelterDetailPage = lazy(() => import('./pages/ShelterDetailPage.tsx'));
 const MySheltersPage = lazy(() => import('./pages/MySheltersPage.tsx'));
@@ -210,6 +212,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                   <Route path="/shelters/:shelterId" element={<ShelterDetailPage />} />
                   <Route path="/shelters" element={<SheltersPage />} />
                   <Route path="/shelters/" element={<SheltersPage />} />
+                  <Route path="/match/quiz" element={<MatchQuizPage />} />
+                  <Route path="/match" element={<MatchSwipePage />} />
                   <Route
                     path="/my-shelters/:shelterId/pets"
                     element={
