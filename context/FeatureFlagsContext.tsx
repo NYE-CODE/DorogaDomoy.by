@@ -23,9 +23,12 @@ export function FeatureFlagsProvider({ children }: { children: React.ReactNode }
   const [flags, setFlags] = useState<FeatureFlagsState>(defaultFlags);
 
   useEffect(() => {
-    featureFlagsApi
-      .get()
-      .then((ff) =>
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const ff = await featureFlagsApi.get();
+        if (cancelled) return;
         setFlags({
           ff_landing_show_stats: ff.ff_landing_show_stats === "true",
           ff_landing_show_help: ff.ff_landing_show_help === "true",
@@ -33,11 +36,15 @@ export function FeatureFlagsProvider({ children }: { children: React.ReactNode }
             (ff.ff_landing_show_pets_feature ?? "true") === "true",
           ff_landing_show_faq: (ff.ff_landing_show_faq ?? "true") === "true",
           ff_instagram_boost_stories: (ff.ff_instagram_boost_stories ?? "true") === "true",
-        })
-      )
-      .catch((e) => {
+        });
+      } catch (e) {
         console.warn("[FeatureFlags] failed to load", e);
-      });
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (

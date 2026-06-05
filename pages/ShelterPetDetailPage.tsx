@@ -37,6 +37,7 @@ import { Header } from '../components/layout/Header';
 import { PageLoader } from '../components/ui/page-loader';
 import { Button } from '../components/ui/button';
 import { FavoriteHeartButton } from '../components/favorite-heart-button';
+import { ShelterPetTraits } from '../components/ShelterPetTraits';
 import { useI18n } from '../context/I18nContext';
 import type { Pet } from '../types/pet';
 import { formatCalendarDate, formatRelativeTime } from '../utils/pet-helpers';
@@ -240,6 +241,13 @@ export default function ShelterPetDetailPage() {
                 colors: exact.colors?.length ? exact.colors : row.colors,
                 healthStatus: exact.healthStatus ?? row.healthStatus,
                 coatType: exact.coatType ?? row.coatType,
+                energyLevel: exact.energyLevel ?? row.energyLevel,
+                friendlinessLevel: exact.friendlinessLevel ?? row.friendlinessLevel,
+                trainingLevel: exact.trainingLevel ?? row.trainingLevel,
+                independenceLevel: exact.independenceLevel ?? row.independenceLevel,
+                goodWithKids: exact.goodWithKids ?? row.goodWithKids,
+                goodWithDogs: exact.goodWithDogs ?? row.goodWithDogs,
+                goodWithCats: exact.goodWithCats ?? row.goodWithCats,
               };
             }
           } catch {
@@ -363,8 +371,9 @@ export default function ShelterPetDetailPage() {
     ? [shelter.city?.trim(), shelter.address?.trim()].filter(Boolean).join(', ')
     : '';
 
-  const photos = pet.photos.length > 0 ? pet.photos : [''];
-  const heroPhoto = photos[photoIndex] || photos[0];
+  const photos = (pet.photos?.length ?? 0) > 0 ? pet.photos! : [''];
+  const safePhotoIndex = Math.min(photoIndex, Math.max(0, photos.length - 1));
+  const heroPhoto = photos[safePhotoIndex] || photos[0];
   const canSlide = photos.length > 1;
   const activeCampaign = campaigns.find((item) => item.status === 'active') ?? null;
   const historyCampaigns = campaigns.filter((item) => item.status === 'completed');
@@ -808,6 +817,7 @@ export default function ShelterPetDetailPage() {
                   <p><span className="text-muted-foreground">{t.pet.colorLabel}: </span>{colors}</p>
                   <p><span className="text-muted-foreground">{t.pet.ageLabel}: </span>{pet.approximateAge?.trim() || '—'}</p>
                   <p><span className="text-muted-foreground">Шерсть: </span>{coat}</p>
+                  <ShelterPetTraits pet={pet} className="mt-3" />
                   <div className="border-t border-border pt-3 text-muted-foreground">
                     <p className="inline-flex items-start gap-2">
                       <Calendar className="size-4 shrink-0 mt-0.5" aria-hidden />

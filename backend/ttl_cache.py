@@ -50,3 +50,28 @@ def invalidate_blog_category_titles_cache() -> None:
     global _blog_category_titles
     with _lock:
         _blog_category_titles = None
+
+
+_statistics: tuple[float, dict[str, object]] | None = None
+STATISTICS_TTL_SEC = 60.0
+
+
+def statistics_cache_get() -> dict[str, object] | None:
+    global _statistics
+    now = time.monotonic()
+    with _lock:
+        if _statistics and _statistics[0] > now:
+            return dict(_statistics[1])
+    return None
+
+
+def statistics_cache_set(payload: dict[str, object]) -> None:
+    global _statistics
+    with _lock:
+        _statistics = (time.monotonic() + STATISTICS_TTL_SEC, payload.copy())
+
+
+def invalidate_statistics_cache() -> None:
+    global _statistics
+    with _lock:
+        _statistics = None

@@ -21,7 +21,7 @@ from database import init_db, check_db_writable
 import models  # noqa: F401 — регистрация ORM до init_db()
 from instagram_worker import process_single_publication
 from rate_limit import limiter
-from routers import auth, pets, users, reports, settings, telegram, notifications, sightings, media, partners, feature_flags, profile_pets, blog, faq, social_card, instagram_publish, rewards, favorites, shelters, shelter_pets, shelter_campaigns, shelter_subscriptions
+from routers import auth, pets, users, reports, settings, telegram, notifications, media, partners, feature_flags, profile_pets, blog, faq, social_card, instagram_publish, rewards, favorites, shelters, shelter_pets, shelter_campaigns, shelter_subscriptions, help
 from telegram_bot import BOT_TOKEN, process_telegram_update
 
 logging.basicConfig(
@@ -137,11 +137,16 @@ async def lifespan(app: FastAPI):
             pass
 
 
+_docs_enabled = os.getenv("API_DOCS_ENABLED", "true").lower() in {"1", "true", "yes", "on"}
+
 app = FastAPI(
     title="DorogaDomoy.by API",
     description="API экосистемы помощи животным: поиск, приюты и поддержка",
     version="1.0.0",
     lifespan=lifespan,
+    docs_url="/docs" if _docs_enabled else None,
+    redoc_url="/redoc" if _docs_enabled else None,
+    openapi_url="/openapi.json" if _docs_enabled else None,
 )
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
@@ -191,13 +196,13 @@ api_v1.include_router(reports.router)
 api_v1.include_router(settings.router)
 api_v1.include_router(telegram.router)
 api_v1.include_router(notifications.router)
-api_v1.include_router(sightings.router)
 api_v1.include_router(media.router)
 api_v1.include_router(partners.router)
 api_v1.include_router(feature_flags.router)
 api_v1.include_router(profile_pets.router)
 api_v1.include_router(blog.router)
 api_v1.include_router(faq.router)
+api_v1.include_router(help.router)
 api_v1.include_router(social_card.router)
 api_v1.include_router(instagram_publish.router)
 api_v1.include_router(rewards.router)

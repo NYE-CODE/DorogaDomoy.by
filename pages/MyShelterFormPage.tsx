@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { Image, MapPin, Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
@@ -91,25 +91,27 @@ export default function MyShelterFormPage() {
   }, [isCreate, ms.createCard, ms.editCard, ms.subtitle, shelterId]);
 
   useEffect(() => {
-    if (isCreate) {
-      setForm({ ...emptyForm(defaults, user?.contacts), existingLogo: null, existingCover: null });
-      setEditingStatus(null);
-      setFormStep(1);
-      setBootLoading(false);
-      return;
-    }
-    if (!shelterId) {
-      setBootLoading(false);
-      return;
-    }
-    let cancelled = false;
+    if (!isCreate) return;
+    setForm({ ...emptyForm(defaults, user?.contacts), existingLogo: null, existingCover: null });
+    setEditingStatus(null);
+    setFormStep(1);
+    setBootLoading(false);
+  }, [isCreate, defaults, user?.contacts]);
+
+  useLayoutEffect(() => {
+    if (isCreate || !shelterId) return;
+    setEditingStatus(null);
     setBootLoading(true);
+  }, [isCreate, shelterId]);
+
+  useEffect(() => {
+    if (isCreate || !shelterId || !user?.id) return;
+    let cancelled = false;
     sheltersApi
-      .mine()
-      .then((list) => {
+      .get(shelterId)
+      .then((row) => {
         if (cancelled) return;
-        const row = list.find((x) => x.id === shelterId);
-        if (!row || row.owner_user_id !== user?.id) {
+        if (row.owner_user_id !== user.id) {
           toast.error(ms.loadError);
           navigate('/my-shelters', { replace: true });
           return;
@@ -130,7 +132,7 @@ export default function MyShelterFormPage() {
     return () => {
       cancelled = true;
     };
-  }, [isCreate, shelterId, defaults, user?.contacts, user?.id, ms.loadError, navigate]);
+  }, [isCreate, shelterId, user?.id, ms.loadError, navigate]);
 
   const approvedLocked = editingStatus === 'approved';
 
@@ -276,32 +278,38 @@ export default function MyShelterFormPage() {
           ...(form.coverDataUrl ? { cover_url: form.coverDataUrl } : {}),
         });
         toast.success(ms.createSuccess);
-      } else if (shelterId && editingStatus === 'approved') {
-        await sheltersApi.update(shelterId, {
-          description: form.description.trim() || null,
-          address: form.address.trim() || null,
-          location_lat: form.lat,
-          location_lng: form.lng,
-          contacts,
-          logo_url: logoForUpdate,
-          cover_url: coverForUpdate,
-          animal_focus: form.animalFocus,
-        });
-        toast.success(ms.updateSuccess);
       } else if (shelterId) {
-        await sheltersApi.update(shelterId, {
-          name: form.name.trim(),
-          kind: form.kind,
-          animal_focus: form.animalFocus,
-          description: form.description.trim() || null,
-          city: form.city.trim(),
-          address: form.address.trim() || null,
-          location_lat: form.lat,
-          location_lng: form.lng,
-          contacts,
-          logo_url: logoForUpdate,
-          cover_url: coverForUpdate,
-        });
+        const current = await sheltersApi.get(shelterId);
+        if (current.owner_user_id !== user?.id) {
+          toast.error(ms.loadError);
+          return;
+        }
+        if (current.moderation_status === 'approved') {
+          await sheltersApi.update(shelterId, {
+            description: form.description.trim() || null,
+            address: form.address.trim() || null,
+            location_lat: form.lat,
+            location_lng: form.lng,
+            contacts,
+            logo_url: logoForUpdate,
+            cover_url: coverForUpdate,
+            animal_focus: form.animalFocus,
+          });
+        } else {
+          await sheltersApi.update(shelterId, {
+            name: form.name.trim(),
+            kind: form.kind,
+            animal_focus: form.animalFocus,
+            description: form.description.trim() || null,
+            city: form.city.trim(),
+            address: form.address.trim() || null,
+            location_lat: form.lat,
+            location_lng: form.lng,
+            contacts,
+            logo_url: logoForUpdate,
+            cover_url: coverForUpdate,
+          });
+        }
         toast.success(ms.updateSuccess);
       }
       navigate('/my-shelters', { replace: true });
@@ -665,7 +673,7 @@ export default function MyShelterFormPage() {
                   onClick={handleSave}
                   disabled={saving}
                 >
-                  {saving ? t.common.loading : ms.saveDraft}
+                  {saving ? t.common.loading : approvedLocked ? ms.savePublished : ms.saveDraft}
                 </Button>
               )}
             </div>

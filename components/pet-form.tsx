@@ -14,6 +14,7 @@ import { DEFAULT_CITY, findCityByName } from '../utils/cities';
 import { geocode } from '../utils/geocode';
 import { toast } from 'sonner';
 import { settingsApi } from '../api/client';
+import { compressImageFileToDataUrl } from '../utils/compress-image';
 import {
   BELARUS_MOBILE_PHONE_PLACEHOLDER,
   formatBelarusPhoneStorage,
@@ -260,27 +261,6 @@ export function PetForm({
     setFormData((prev) => ({ ...prev, city: fromFilter.city, location: fromFilter.location }));
   }, [selectedCity, initialData, isEditing]);
 
-  const compressImage = (file: File, maxDim = 1200, quality = 0.8): Promise<string> =>
-    new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => {
-        let { width, height } = img;
-        if (width > maxDim || height > maxDim) {
-          const ratio = Math.min(maxDim / width, maxDim / height);
-          width = Math.round(width * ratio);
-          height = Math.round(height * ratio);
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        canvas.getContext('2d')!.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', quality));
-        URL.revokeObjectURL(img.src);
-      };
-      img.onerror = () => { URL.revokeObjectURL(img.src); reject(new Error(t.petForm.uploadFailed)); };
-      img.src = URL.createObjectURL(file);
-    });
-
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
@@ -295,7 +275,7 @@ export function PetForm({
         continue;
       }
       try {
-        const compressed = await compressImage(file);
+        const compressed = await compressImageFileToDataUrl(file);
         setFormData(prev => {
           if (prev.photos.length >= maxPhotos) {
             toast.warning(`Максимум ${maxPhotos} фото`);

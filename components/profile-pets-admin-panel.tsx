@@ -32,15 +32,9 @@ const genderLabels: Record<string, string> = {
   female: 'Девочка',
 };
 
-const PLACEHOLDER_PHOTO =
-  'data:image/svg+xml;utf8,' +
-  encodeURIComponent(
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96">' +
-      '<rect width="96" height="96" fill="#f3f4f6"/>' +
-      '<path d="M24 63l12-14 15 17 10-9 11 13H24z" fill="#d1d5db"/>' +
-      '<circle cx="39" cy="33" r="8" fill="#d1d5db"/>' +
-    '</svg>'
-  );
+import { PLACEHOLDER_PET_96 } from '../utils/placeholder-images';
+
+const PLACEHOLDER_PHOTO = PLACEHOLDER_PET_96;
 
 function resolvePhoto(url: string): string {
   if (!url || url.startsWith('http') || url.startsWith('data:')) return url;

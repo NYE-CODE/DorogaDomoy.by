@@ -10,6 +10,11 @@ export type ModerationStatus = 'pending' | 'approved' | 'rejected';
 export type PetScope = 'lost_found' | 'shelter_pet';
 export type AdoptionStatus = 'available' | 'reserved' | 'adopted' | 'on_treatment' | 'not_for_adoption';
 
+/** Шкала черты характера: 1–5 (или undefined = «не указано») */
+export type TraitLevel = 1 | 2 | 3 | 4 | 5;
+/** Совместимость с детьми/животными */
+export type Compatibility = 'yes' | 'no' | 'unknown';
+
 export interface Statistics {
   searching: number;
   found: number;
@@ -57,6 +62,14 @@ export interface Pet {
   adoptionStatus?: AdoptionStatus;
   healthStatus?: 'disabled' | 'treatment' | 'good' | 'excellent';
   coatType?: 'smooth' | 'semi' | 'fluffy';
+  /** Черты характера приютского питомца (для подбора) */
+  energyLevel?: TraitLevel;
+  friendlinessLevel?: TraitLevel;
+  trainingLevel?: TraitLevel;
+  independenceLevel?: TraitLevel;
+  goodWithKids?: Compatibility;
+  goodWithDogs?: Compatibility;
+  goodWithCats?: Compatibility;
   isPublished?: boolean;
   publishedByUserId?: string;
   updatedByUserId?: string;

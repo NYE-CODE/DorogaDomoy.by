@@ -81,11 +81,13 @@ export default function ForgotPasswordPage() {
             </form>
           )}
 
-          <p className="mt-6 text-center text-sm text-muted-foreground">
-            <Link to={getHomePath()} className="font-semibold text-primary hover:underline">
-              {fp.backToLogin}
-            </Link>
-          </p>
+          {!sent && (
+            <p className="mt-6 text-center text-sm text-muted-foreground">
+              <Link to={getHomePath()} className="font-semibold text-primary hover:underline">
+                {fp.backToLogin}
+              </Link>
+            </p>
+          )}
         </div>
       </main>
       <Footer />

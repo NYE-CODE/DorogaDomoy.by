@@ -3,6 +3,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { MapPin, Navigation } from 'lucide-react';
 import { toast } from 'sonner';
+import { useI18n } from '../context/I18nContext';
 import { reverseGeocodeStructured } from '../utils/geocode';
 
 interface LocationPickerProps {
@@ -27,6 +28,8 @@ export function LocationPicker({
   onLocationPlaceSync,
   mapHeight = 'h-48',
 }: LocationPickerProps) {
+  const { t } = useI18n();
+  const lp = t.locationPicker;
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
@@ -116,7 +119,7 @@ export function LocationPicker({
 
   const handleMyLocation = () => {
     if (!navigator.geolocation) {
-      alert('Геолокация не поддерживается вашим браузером');
+      toast.error(lp.geoUnsupported);
       return;
     }
     setLocating(true);
@@ -145,7 +148,7 @@ export function LocationPicker({
         mapInstanceRef.current.flyTo([lat, lng], 18, { duration: 0.5 });
       }
       if (accuracy > 100) {
-        toast.info('Позиция приблизительная. Перетащите маркер для точного указания улицы.', { duration: 5000 });
+        toast.info(lp.approximatePosition, { duration: 5000 });
       }
     };
 
@@ -157,20 +160,20 @@ export function LocationPicker({
         geoFallbackTimerRef.current = null;
       }
       setLocating(false);
-      alert(msg);
+      toast.error(msg);
     };
 
     navigator.geolocation.getCurrentPosition(
       (pos) => applyPosition(pos),
       (err) => {
         if (err.code === 1) {
-          fail('Доступ к геолокации запрещён. Разрешите доступ в настройках браузера и обновите страницу.');
+          fail(lp.geoDenied);
         } else if (err.code === 2) {
-          fail('Местоположение недоступно. Убедитесь, что GPS/Wi‑Fi включены, и попробуйте снова.');
+          fail(lp.geoUnavailable);
         } else if (err.code === 3) {
-          fail('Превышено время ожидания. Попробуйте выбрать точку на карте вручную.');
+          fail(lp.geoTimeout);
         } else {
-          fail('Не удалось определить местоположение. Выберите точку на карте вручную.');
+          fail(lp.geoFailed);
         }
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
@@ -183,7 +186,7 @@ export function LocationPicker({
       if (!resolved) {
         resolved = true;
         setLocating(false);
-        alert('Геолокация не отвечает. Разрешите доступ к местоположению в браузере или выберите точку на карте.');
+        toast.error(lp.geoNotResponding);
       }
     }, 12000);
   };
@@ -193,7 +196,7 @@ export function LocationPicker({
       <div className="flex items-center justify-between gap-2">
         <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
           <MapPin className="w-3.5 h-3.5 shrink-0" />
-          Нажмите на карту, перетащите маркер или укажите текущее местоположение
+          {lp.hint}
         </p>
         <button
           type="button"
@@ -202,7 +205,7 @@ export function LocationPicker({
           className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-primary bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed shrink-0"
         >
           <Navigation className={`w-4 h-4 ${locating ? 'animate-pulse' : ''}`} />
-          {locating ? 'Определение…' : 'Моё местоположение'}
+          {locating ? lp.locating : lp.myLocation}
         </button>
       </div>
       <div ref={mapContainerRef} className={`${mapHeight} w-full rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden z-0`} />

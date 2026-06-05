@@ -8,8 +8,9 @@ import { Button } from '../components/ui/button';
 import { PageLoader } from '../components/ui/page-loader';
 import { BackQuickMenu } from '../components/navigation/BackQuickMenu';
 import { settingsApi, shelterPetsApi, sheltersApi, type ShelterPetInput, type ShelterResponse } from '../api/client';
-import type { Pet } from '../types/pet';
+import type { Compatibility, Pet } from '../types/pet';
 import { useI18n } from '../context/I18nContext';
+import { compressImageFileToDataUrl } from '../utils/compress-image';
 
 type FormState = {
   photos: string[];
@@ -26,6 +27,14 @@ type FormState = {
   isPublished: boolean;
   registrationAuthority: string;
   registrationTokenNumber: string;
+  /** Шкалы 1–5; 0 = не указано */
+  energyLevel: number;
+  friendlinessLevel: number;
+  trainingLevel: number;
+  independenceLevel: number;
+  goodWithKids: Compatibility;
+  goodWithDogs: Compatibility;
+  goodWithCats: Compatibility;
 };
 
 const emptyForm = (): FormState => ({
@@ -43,31 +52,109 @@ const emptyForm = (): FormState => ({
   isPublished: true,
   registrationAuthority: '',
   registrationTokenNumber: '',
+  energyLevel: 0,
+  friendlinessLevel: 0,
+  trainingLevel: 0,
+  independenceLevel: 0,
+  goodWithKids: 'unknown',
+  goodWithDogs: 'unknown',
+  goodWithCats: 'unknown',
 });
 
-function compressImage(file: File, maxDim = 1200, quality = 0.8): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      let { width, height } = img;
-      if (width > maxDim || height > maxDim) {
-        const ratio = Math.min(maxDim / width, maxDim / height);
-        width = Math.round(width * ratio);
-        height = Math.round(height * ratio);
-      }
-      const canvas = document.createElement('canvas');
-      canvas.width = width;
-      canvas.height = height;
-      canvas.getContext('2d')!.drawImage(img, 0, 0, width, height);
-      resolve(canvas.toDataURL('image/jpeg', quality));
-      URL.revokeObjectURL(img.src);
-    };
-    img.onerror = () => {
-      URL.revokeObjectURL(img.src);
-      reject(new Error('decode'));
-    };
-    img.src = URL.createObjectURL(file);
-  });
+const TRAIT_SCALE_HINTS: Record<string, [string, string]> = {
+  energyLevel: ['Спокойный', 'Очень активный'],
+  friendlinessLevel: ['Осторожный', 'Очень контактный'],
+  trainingLevel: ['Без навыков', 'Отлично воспитан'],
+  independenceLevel: ['Нужна компания', 'Легко один'],
+};
+
+function TraitScale({
+  label,
+  field,
+  value,
+  onChange,
+}: {
+  label: string;
+  field: keyof typeof TRAIT_SCALE_HINTS;
+  value: number;
+  onChange: (v: number) => void;
+}) {
+  const [low, high] = TRAIT_SCALE_HINTS[field];
+  return (
+    <div className="rounded-lg border border-border bg-background px-3 py-2.5 sm:col-span-2">
+      <div className="mb-2 flex items-center justify-between">
+        <span className="text-sm font-medium text-foreground">{label}</span>
+        {value > 0 && (
+          <button
+            type="button"
+            onClick={() => onChange(0)}
+            className="text-xs text-muted-foreground hover:text-foreground"
+          >
+            Сбросить
+          </button>
+        )}
+      </div>
+      <div className="flex gap-1.5">
+        {[1, 2, 3, 4, 5].map((n) => (
+          <button
+            key={n}
+            type="button"
+            onClick={() => onChange(n)}
+            aria-pressed={value === n}
+            className={`flex-1 rounded-md border py-1.5 text-sm font-semibold transition-colors ${
+              value >= n && value > 0
+                ? 'border-[#FF9800] bg-[#FF9800] text-white'
+                : 'border-border bg-muted/40 text-muted-foreground hover:bg-muted'
+            }`}
+          >
+            {n}
+          </button>
+        ))}
+      </div>
+      <div className="mt-1 flex justify-between text-[11px] text-muted-foreground">
+        <span>{low}</span>
+        <span>{high}</span>
+      </div>
+    </div>
+  );
+}
+
+function CompatibilitySelect({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: Compatibility;
+  onChange: (v: Compatibility) => void;
+}) {
+  const options: { v: Compatibility; t: string }[] = [
+    { v: 'yes', t: 'Да' },
+    { v: 'no', t: 'Нет' },
+    { v: 'unknown', t: 'Не знаю' },
+  ];
+  return (
+    <div className="rounded-lg border border-border bg-background px-3 py-2.5">
+      <div className="mb-2 text-sm font-medium text-foreground">{label}</div>
+      <div className="flex gap-1.5">
+        {options.map((o) => (
+          <button
+            key={o.v}
+            type="button"
+            onClick={() => onChange(o.v)}
+            aria-pressed={value === o.v}
+            className={`flex-1 rounded-md border py-1.5 text-xs font-semibold transition-colors ${
+              value === o.v
+                ? 'border-[#FF9800] bg-[#FF9800] text-white'
+                : 'border-border bg-muted/40 text-muted-foreground hover:bg-muted'
+            }`}
+          >
+            {o.t}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export default function MyShelterPetFormPage() {
@@ -121,6 +208,13 @@ export default function MyShelterPetFormPage() {
             isPublished: pet.isPublished ?? true,
             registrationAuthority: pet.registrationAuthority ?? '',
             registrationTokenNumber: pet.registrationTokenNumber ?? '',
+            energyLevel: pet.energyLevel ?? 0,
+            friendlinessLevel: pet.friendlinessLevel ?? 0,
+            trainingLevel: pet.trainingLevel ?? 0,
+            independenceLevel: pet.independenceLevel ?? 0,
+            goodWithKids: pet.goodWithKids ?? 'unknown',
+            goodWithDogs: pet.goodWithDogs ?? 'unknown',
+            goodWithCats: pet.goodWithCats ?? 'unknown',
           });
         }
       })
@@ -149,7 +243,7 @@ export default function MyShelterPetFormPage() {
         continue;
       }
       try {
-        const compressed = await compressImage(file);
+        const compressed = await compressImageFileToDataUrl(file);
         setForm((prev) => {
           if (prev.photos.length >= maxPhotos) return prev;
           return { ...prev, photos: [...prev.photos, compressed] };
@@ -177,6 +271,16 @@ export default function MyShelterPetFormPage() {
   const onSubmit = async () => {
     if (!shelterId || !shelter) return;
     const colors = form.colorsCsv.split(',').map((x) => x.trim()).filter(Boolean);
+    const lvl = (v: number) => (v >= 1 && v <= 5 ? v : undefined);
+    const traits = {
+      energyLevel: lvl(form.energyLevel),
+      friendlinessLevel: lvl(form.friendlinessLevel),
+      trainingLevel: lvl(form.trainingLevel),
+      independenceLevel: lvl(form.independenceLevel),
+      goodWithKids: form.goodWithKids,
+      goodWithDogs: form.goodWithDogs,
+      goodWithCats: form.goodWithCats,
+    };
     setSaving(true);
     try {
       if (isEdit && petId) {
@@ -197,6 +301,7 @@ export default function MyShelterPetFormPage() {
           location: { lat: shelter.location_lat, lng: shelter.location_lng },
           registrationAuthority: form.registrationAuthority,
           registrationTokenNumber: form.registrationTokenNumber,
+          ...traits,
         });
       } else {
         const payload: ShelterPetInput = {
@@ -217,6 +322,7 @@ export default function MyShelterPetFormPage() {
           contacts: {},
           registrationAuthority: form.registrationAuthority,
           registrationTokenNumber: form.registrationTokenNumber,
+          ...traits,
         };
         await sheltersApi.createPet(shelterId, payload);
       }
@@ -331,6 +437,20 @@ export default function MyShelterPetFormPage() {
                   <textarea value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} className="min-h-24 rounded-lg border border-border bg-background px-3 py-2 text-sm sm:col-span-2" placeholder="Описание питомца" />
                   <input value={form.registrationAuthority} onChange={(e) => setForm((p) => ({ ...p, registrationAuthority: e.target.value }))} className="rounded-lg border border-border bg-background px-3 py-2 text-sm sm:col-span-2" placeholder={t.petForm.registrationAuthorityPlaceholder} maxLength={300} />
                   <input value={form.registrationTokenNumber} onChange={(e) => setForm((p) => ({ ...p, registrationTokenNumber: e.target.value }))} className="rounded-lg border border-border bg-background px-3 py-2 text-sm sm:col-span-2" placeholder={t.petForm.registrationTokenPlaceholder} maxLength={80} />
+
+                  <div className="sm:col-span-2 mt-2 border-t border-border pt-4">
+                    <h3 className="text-sm font-semibold text-foreground">Характер и совместимость</h3>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      Помогает будущим хозяевам подобрать питомца под свой образ жизни. Можно пропустить.
+                    </p>
+                  </div>
+                  <TraitScale label="Уровень активности" field="energyLevel" value={form.energyLevel} onChange={(v) => setForm((p) => ({ ...p, energyLevel: v }))} />
+                  <TraitScale label="Доверие к людям" field="friendlinessLevel" value={form.friendlinessLevel} onChange={(v) => setForm((p) => ({ ...p, friendlinessLevel: v }))} />
+                  <TraitScale label="Воспитанность" field="trainingLevel" value={form.trainingLevel} onChange={(v) => setForm((p) => ({ ...p, trainingLevel: v }))} />
+                  <TraitScale label="Самостоятельность" field="independenceLevel" value={form.independenceLevel} onChange={(v) => setForm((p) => ({ ...p, independenceLevel: v }))} />
+                  <CompatibilitySelect label="Ладит с детьми" value={form.goodWithKids} onChange={(v) => setForm((p) => ({ ...p, goodWithKids: v }))} />
+                  <CompatibilitySelect label="Ладит с собаками" value={form.goodWithDogs} onChange={(v) => setForm((p) => ({ ...p, goodWithDogs: v }))} />
+                  <CompatibilitySelect label="Ладит с кошками" value={form.goodWithCats} onChange={(v) => setForm((p) => ({ ...p, goodWithCats: v }))} />
                 </div>
               ) : null}
 

@@ -10,24 +10,36 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
-import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
 import { useI18n } from '../../context/I18nContext';
 import { useShelterPetBrowseOptional } from '../../context/ShelterPetBrowseContext';
 import { useIsMobile } from '../ui/use-mobile';
 import { cn } from '../ui/utils';
 import type { HomeMode } from '../../landing/app/App';
+import { readAdopterProfile } from '../../utils/adopter-profile-storage';
 import { HOME_MODE_STORAGE_KEY } from '../../utils/home-route';
+import { matchOrangeFabActiveClass, matchOrangeFabClass } from '../../styles/match-styles';
 
-const HIDDEN_PREFIXES = ['/create', '/edit/', '/admin', '/terms', '/my-pets/add'];
+const HIDDEN_PREFIXES = ['/create', '/edit/', '/admin', '/terms', '/my-pets/add', '/match/quiz'];
 
-/** Базовые 3 позиции одинаковы в режимах поиска и приютов: левый пункт / FAB / режим. */
-const BASE_NAV_CLASS = 'relative mx-auto flex h-16 w-[16rem] max-w-[calc(100%-5.5rem)] items-end justify-between';
-const SIDE_BTN_CLASS = 'flex min-w-[4rem] flex-col items-center justify-center gap-0.5 pb-2 pt-2 transition-colors';
+/** Базовые позиции: левый пункт / FAB / (мои орг.) / режим. */
+const SIDE_BTN_CLASS =
+  'flex w-full min-w-0 flex-col items-center justify-center gap-0.5 pb-2 pt-2 transition-colors';
 const SIDE_ICON = 22;
 const SIDE_LABEL = 'text-[11px] font-medium leading-tight';
 const FAB_CLASS =
   'flex size-14 shrink-0 -mt-4 items-center justify-center rounded-full shadow-lg active:scale-95 transition-transform';
+
+function navShellClass(showBrowseArrows: boolean, hasExtraOrgSlot: boolean) {
+  if (showBrowseArrows) {
+    return hasExtraOrgSlot
+      ? 'w-full max-w-[calc(100%-7rem)] sm:max-w-[22rem]'
+      : 'w-[16rem] max-w-[calc(100%-5.75rem)]';
+  }
+  return hasExtraOrgSlot
+    ? 'w-[20rem] max-w-[calc(100%-1rem)]'
+    : 'w-[16rem] max-w-[calc(100%-1rem)]';
+}
 
 function shouldHide(pathname: string): boolean {
   if (HIDDEN_PREFIXES.some((p) => pathname.startsWith(p))) return true;
@@ -139,9 +151,8 @@ export function MobileBottomNav() {
   };
 
   const handleMatchPet = () => {
-    toast.info('Скоро', {
-      description: 'Подбор питомца по анкете появится в ближайших обновлениях.',
-    });
+    const profile = readAdopterProfile();
+    navigate(profile?.completedAt ? '/match' : '/match/quiz');
   };
 
   const setModeAndNavigate = (mode: HomeMode) => {
@@ -194,13 +205,18 @@ export function MobileBottomNav() {
     </button>
   );
 
+  const isMatchRoute = pathname === '/match' || pathname === '/match/quiz';
   const centerFab = isSheltersMode ? (
     <button
       type="button"
       onClick={handleMatchPet}
-      className={cn(FAB_CLASS, 'border border-border bg-muted text-muted-foreground shadow-md')}
+      className={cn(
+        FAB_CLASS,
+        matchOrangeFabClass,
+        isMatchRoute && matchOrangeFabActiveClass,
+      )}
       aria-label="Подобрать питомца"
-      title="Скоро: подбор по анкете"
+      aria-current={pathname === '/match' ? 'page' : undefined}
     >
       <PawPrint size={28} strokeWidth={2.5} />
     </button>
@@ -237,7 +253,13 @@ export function MobileBottomNav() {
         </button>
       </EdgeButton>
 
-      <div className={BASE_NAV_CLASS}>
+      <div
+        className={cn(
+          'relative mx-auto grid h-16 items-end',
+          isSheltersMode && isVolunteerOrAdmin ? 'grid-cols-4' : 'grid-cols-3',
+          navShellClass(showBrowseArrows, isSheltersMode && isVolunteerOrAdmin),
+        )}
+      >
         {isSheltersMode ? (
           <button
             type="button"
@@ -271,22 +293,22 @@ export function MobileBottomNav() {
 
         <div className="flex justify-center">{centerFab}</div>
 
-        <div className="relative flex min-w-[4rem] items-end justify-center" ref={modeMenuRef}>
-          {isSheltersMode && isVolunteerOrAdmin ? (
-            <button
-              type="button"
-              onClick={handleMyShelters}
-              className={cn(
-                SIDE_BTN_CLASS,
-                'absolute -left-[4.2rem] bottom-0',
-                pathname.startsWith('/my-shelters') ? 'text-primary' : 'text-muted-foreground',
-              )}
-              aria-label={t.header.myShelterOrg ?? 'Мои организации'}
-            >
-              <Building2 size={SIDE_ICON} />
-              <SideLabel>Мои орг.</SideLabel>
-            </button>
-          ) : null}
+        {isSheltersMode && isVolunteerOrAdmin ? (
+          <button
+            type="button"
+            onClick={handleMyShelters}
+            className={cn(
+              SIDE_BTN_CLASS,
+              pathname.startsWith('/my-shelters') ? 'text-primary' : 'text-muted-foreground',
+            )}
+            aria-label={t.header.myShelterOrg ?? 'Мои организации'}
+          >
+            <Building2 size={SIDE_ICON} />
+            <SideLabel>Мои орг.</SideLabel>
+          </button>
+        ) : null}
+
+        <div className="relative flex min-w-0 items-end justify-center" ref={modeMenuRef}>
           {modeMenuOpen ? modeDropdown : null}
           {modeButton}
         </div>

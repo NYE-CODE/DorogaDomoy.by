@@ -6,7 +6,7 @@ import { useI18n } from '../context/I18nContext';
 import { sheltersApi, type ShelterResponse } from '../api/client';
 import type { Pet } from '../types/pet';
 import { MapPin, Building2, ChevronRight, Search } from 'lucide-react';
-import { buildShelterPetUrl } from '../utils/shelter-pet-browse';
+import { buildShelterPetUrl, loadCatalogShelterPets } from '../utils/shelter-pet-browse';
 import {
   shelterAnimalFocusLabel,
   shelterKindLabel,
@@ -144,38 +144,32 @@ export default function SheltersPage() {
   }, [activeTab, petCityFilter, petAnimalFilter]);
 
   useEffect(() => {
-    if (activeTab !== 'pets' || shelterPets.length > 0 || petsLoading) return;
+    if (activeTab !== 'pets') return;
+
+    let cancelled = false;
     setPetsLoading(true);
     setPetsError(false);
-    sheltersApi
-      .list()
-      .then(async (shelters) => {
-        const buckets = await Promise.all(
-          shelters.map(async (shelter) => {
-            try {
-              return await sheltersApi.listPets(shelter.id, {
-                is_archived: false,
-                limit: 200,
-              });
-            } catch {
-              return [];
-            }
-          }),
-        );
-        const merged = buckets
-          .flat()
-          .filter((p) => (p.petScope ?? 'lost_found') === 'shelter_pet' && p.moderationStatus === 'approved');
-        setShelterPets(merged);
+    loadCatalogShelterPets()
+      .then((rows) => {
+        if (!cancelled) setShelterPets(rows);
       })
       .catch(() => {
-        setShelterPets([]);
-        setPetsError(true);
+        if (!cancelled) {
+          setShelterPets([]);
+          setPetsError(true);
+        }
       })
-      .finally(() => setPetsLoading(false));
-  }, [activeTab, petsLoading, shelterPets.length]);
+      .finally(() => {
+        if (!cancelled) setPetsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab]);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="flex min-h-screen flex-col bg-background max-md:pb-[calc(4.75rem+max(env(safe-area-inset-bottom,0px),8px))]">
       <Header showCitySelector={false} />
       <main className="flex-1 py-6 sm:py-10">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -435,8 +429,24 @@ export default function SheltersPage() {
         ) : petsError ? (
           <p className="text-destructive">{s.loadError}</p>
         ) : filteredPets.length === 0 ? (
-          <div className="rounded-xl border border-border bg-muted/30 p-6">
-            <p className="text-sm text-muted-foreground">{s.emptyPets}</p>
+          <div className="rounded-xl border border-border bg-muted/30 p-6 space-y-3">
+            <p className="text-sm text-muted-foreground">
+              {shelterPets.length > 0
+                ? 'По выбранным фильтрам питомцев не найдено. Сбросьте фильтры или выберите другой город.'
+                : s.emptyPets}
+            </p>
+            {shelterPets.length > 0 ? (
+              <button
+                type="button"
+                className="text-sm font-medium text-primary hover:underline"
+                onClick={() => {
+                  setPetCityFilter('');
+                  setPetAnimalFilter('all');
+                }}
+              >
+                Сбросить фильтры
+              </button>
+            ) : null}
           </div>
         ) : (
           <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -460,7 +470,9 @@ export default function SheltersPage() {
         )}
         </div>
       </main>
-      <Footer />
+      <div className="hidden lg:block">
+        <Footer />
+      </div>
     </div>
   );
 }

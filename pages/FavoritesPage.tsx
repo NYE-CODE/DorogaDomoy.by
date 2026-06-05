@@ -105,7 +105,9 @@ export default function FavoritesPage() {
       <div className="min-h-screen bg-background">
         <Header showCitySelector={false} />
         <PageLoader />
-        <Footer />
+        <div className="hidden lg:block">
+          <Footer />
+        </div>
       </div>
     );
   }
@@ -247,7 +249,9 @@ export default function FavoritesPage() {
           </ul>
         )}
       </main>
-      <Footer />
+      <div className="hidden lg:block">
+        <Footer />
+      </div>
     </div>
   );
 }

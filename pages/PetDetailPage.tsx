@@ -37,16 +37,9 @@ import {
   appPrimaryCtaClass,
 } from '../styles/cta-classes';
 import { getHomePath } from '../utils/home-route';
+import { PLACEHOLDER_PRINT_FLYER } from '../utils/placeholder-images';
 
-const PRINT_PLACEHOLDER_IMAGE =
-  'data:image/svg+xml;utf8,' +
-  encodeURIComponent(
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">' +
-      '<rect width="800" height="600" fill="#f3f4f6"/>' +
-      '<path d="M210 390l90-102 116 128 86-74 98 118H210z" fill="#d1d5db"/>' +
-      '<circle cx="318" cy="214" r="42" fill="#d1d5db"/>' +
-    '</svg>'
-  );
+const PRINT_PLACEHOLDER_IMAGE = PLACEHOLDER_PRINT_FLYER;
 
 function escapeHtml(value: string | null | undefined): string {
   return String(value ?? '')

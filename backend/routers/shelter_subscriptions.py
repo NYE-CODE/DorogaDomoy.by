@@ -86,7 +86,7 @@ def subscribe(
     return ShelterSubscriptionOkResponse()
 
 
-@router.delete("/{shelter_id}/subscribe", response_model=ShelterSubscriptionOkResponse)
+@router.delete("/{shelter_id}/subscribe", status_code=204)
 def unsubscribe(
     shelter_id: str,
     user: User = Depends(get_current_user_required),
@@ -105,4 +105,4 @@ def unsubscribe(
     if sub:
         db.delete(sub)
         db.commit()
-    return ShelterSubscriptionOkResponse()
+    return None

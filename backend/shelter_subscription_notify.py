@@ -5,10 +5,10 @@ import html
 import logging
 import os
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from database import SessionLocal
-from models import Pet, Shelter, ShelterCampaign, ShelterPetDetails, ShelterSubscription, User
+from models import Pet, Shelter, ShelterCampaign, ShelterSubscription, User
 from telegram_bot import _send_telegram_message_sync
 
 logger = logging.getLogger(__name__)
@@ -36,15 +36,20 @@ def _subscriber_chat_ids(db: Session, shelter_id: str) -> list[int]:
     return out
 
 
-def _pet_public_title(db: Session, pet: Pet) -> str:
-    det = db.scalar(select(ShelterPetDetails).where(ShelterPetDetails.pet_id == pet.id))
+def _load_pet_with_details(db: Session, pet_id: str) -> Pet | None:
+    return db.scalar(
+        select(Pet).options(joinedload(Pet.shelter_details)).where(Pet.id == pet_id)
+    )
+
+
+def _pet_public_title(pet: Pet) -> str:
+    det = getattr(pet, "shelter_details", None)
     nick = (getattr(det, "nickname", None) or "").strip() if det else ""
     if nick:
         return nick
     breed = (pet.breed or "").strip()
     if breed:
         return breed
-    # animal type label minimal
     at = (pet.animal_type or "").strip().lower()
     if at == "dog":
         return "Собака"
@@ -59,7 +64,7 @@ def schedule_campaign_activated_notifications(campaign_id: str) -> None:
         campaign = db.scalar(select(ShelterCampaign).where(ShelterCampaign.id == campaign_id))
         if not campaign or campaign.status != "active":
             return
-        pet = db.scalar(select(Pet).where(Pet.id == campaign.pet_id))
+        pet = _load_pet_with_details(db, campaign.pet_id)
         shelter = db.scalar(select(Shelter).where(Shelter.id == campaign.shelter_id))
         if not pet or not shelter:
             return
@@ -67,7 +72,7 @@ def schedule_campaign_activated_notifications(campaign_id: str) -> None:
         if not chat_ids:
             return
         pet_url = f"{SITE_URL}/shelter-pet/{pet.id}"
-        title = _pet_public_title(db, pet)
+        title = _pet_public_title(pet)
         lines = [
             "🔔 <b>Новый сбор</b>",
             "",
@@ -93,7 +98,7 @@ def schedule_campaign_closed_notifications(campaign_id: str) -> None:
         campaign = db.scalar(select(ShelterCampaign).where(ShelterCampaign.id == campaign_id))
         if not campaign or campaign.status not in ("completed", "cancelled"):
             return
-        pet = db.scalar(select(Pet).where(Pet.id == campaign.pet_id))
+        pet = _load_pet_with_details(db, campaign.pet_id)
         shelter = db.scalar(select(Shelter).where(Shelter.id == campaign.shelter_id))
         if not pet or not shelter:
             return
@@ -101,7 +106,7 @@ def schedule_campaign_closed_notifications(campaign_id: str) -> None:
         if not chat_ids:
             return
         pet_url = f"{SITE_URL}/shelter-pet/{pet.id}"
-        title = _pet_public_title(db, pet)
+        title = _pet_public_title(pet)
         status_ru = "Завершён" if campaign.status == "completed" else "Отменён"
         lines = [
             f"🏁 <b>Сбор {status_ru.lower()}</b>",
@@ -126,7 +131,7 @@ def schedule_campaign_closed_notifications(campaign_id: str) -> None:
 def schedule_new_shelter_pet_notifications(pet_id: str) -> None:
     db = SessionLocal()
     try:
-        pet = db.scalar(select(Pet).where(Pet.id == pet_id))
+        pet = _load_pet_with_details(db, pet_id)
         if not pet or pet.pet_scope != "shelter_pet" or not pet.shelter_id:
             return
         shelter = db.scalar(select(Shelter).where(Shelter.id == pet.shelter_id))
@@ -136,7 +141,7 @@ def schedule_new_shelter_pet_notifications(pet_id: str) -> None:
         if not chat_ids:
             return
         pet_url = f"{SITE_URL}/shelter-pet/{pet.id}"
-        title = _pet_public_title(db, pet)
+        title = _pet_public_title(pet)
         lines = [
             "🐾 <b>Новый питомец в приюте</b>",
             "",

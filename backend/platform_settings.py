@@ -17,6 +17,8 @@ PLATFORM_SETTINGS_DEFAULTS = {
     "instagram_autopublish_enabled": "false",
     "instagram_story_enabled": "true",
     "instagram_manual_when_auto_off": "true",
+    # Секция «Как нам помочь» на лендинге
+    "help_volunteer_url": "",
 }
 
 FEATURE_FLAG_DEFAULTS = {

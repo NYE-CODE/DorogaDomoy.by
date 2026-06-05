@@ -1,4 +1,4 @@
-"""Sightings API: видения «видел похожее животное» на карте объявления."""
+"""Sightings: бизнес-логика видений «видел похожее животное» (REST-маршруты в pets.py)."""
 import hashlib
 import logging
 import os
@@ -6,20 +6,16 @@ import uuid
 from datetime import timedelta
 from typing import Optional
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
+from fastapi import BackgroundTasks, HTTPException, Request
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from database import get_db
 from models import Pet, Sighting, User
 from schemas import SightingCreate, SightingResponse
-from auth import get_current_user
 from integrations.telegram import send_sighting_notification_sync
-from rate_limit import limiter
 from time_utils import utc_now
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/sightings", tags=["sightings"])
 TRUST_PROXY_HEADERS = os.getenv("TRUST_PROXY_HEADERS", "false").lower() in {"1", "true", "yes", "on"}
 
 
@@ -55,7 +51,7 @@ def run_create_sighting(
     db: Session,
     user: Optional[User],
 ) -> SightingResponse:
-    """Общая логика создания видения (legacy POST /sightings и POST /pets/{id}/sightings)."""
+    """Создание видения (POST /pets/{pet_id}/sightings)."""
     pet_id = data.pet_id
     pet = db.scalar(select(Pet).where(Pet.id == pet_id))
     if not pet:
@@ -166,32 +162,3 @@ def run_get_sighting_counts(pet_ids: str, db: Session) -> dict[str, int]:
         .group_by(Sighting.pet_id)
     ).all()
     return {str(r.pet_id): r.cnt for r in rows}
-
-
-@router.post("", response_model=SightingResponse, status_code=201)
-@limiter.limit("30/minute")
-def create_sighting(
-    request: Request,
-    data: SightingCreate,
-    background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db),
-    user: Optional[User] = Depends(get_current_user),
-):
-    return run_create_sighting(request, data, background_tasks, db, user)
-
-
-@router.get("/pet/{pet_id}", response_model=list[SightingResponse])
-def list_sightings(
-    pet_id: str,
-    days: Optional[int] = Query(7, ge=1, le=90),
-    db: Session = Depends(get_db),
-):
-    return run_list_sightings_for_pet(pet_id, days, db)
-
-
-@router.get("/counts")
-def get_sighting_counts(
-    pet_ids: str = Query(..., description="Comma-separated pet IDs"),
-    db: Session = Depends(get_db),
-):
-    return run_get_sighting_counts(pet_ids, db)

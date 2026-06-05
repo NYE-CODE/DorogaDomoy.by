@@ -2,7 +2,8 @@ import { MapPin, Clock } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { Button } from "./ui/button";
-import { petsApi, sheltersApi } from "../../../api/client";
+import { petsApi } from "../../../api/client";
+import { loadCatalogShelterPets } from "../../../utils/shelter-pet-browse";
 import { useI18n } from "../../../context/I18nContext";
 import type { Pet } from "../../../types/pet";
 import { formatRelativeTime, petStatusPhotoPillClass } from "../../../utils/pet-helpers";
@@ -40,26 +41,15 @@ export function Announcements({ mode = "search" }: { mode?: HomeMode }) {
   useEffect(() => {
     setLoading(true);
     if (isSheltersMode) {
-      sheltersApi
-        .list()
-        .then(async (shelters) => {
-          const chunks = await Promise.all(
-            shelters.map((shelter) =>
-              sheltersApi
-                .listPets(shelter.id, { is_archived: false, limit: 50 })
-                .catch(() => []),
-            ),
-          );
-          const flat = chunks.flat();
-          setPets(flat.slice(0, 8));
-        })
+      loadCatalogShelterPets()
+        .then((flat) => setPets(flat.slice(0, 8)))
         .catch(() => setPets([]))
         .finally(() => setLoading(false));
       return;
     }
 
     petsApi
-      .list({ moderation_status: "approved" as const, is_archived: false })
+      .list({ moderation_status: "approved" as const, is_archived: false, limit: 500 })
       .then((list) => setPets(list.slice(0, 8)))
       .catch(() => setPets([]))
       .finally(() => setLoading(false));
@@ -80,10 +70,10 @@ export function Announcements({ mode = "search" }: { mode?: HomeMode }) {
     type: isSheltersMode ? "adoption" : pet.status === "searching" ? "lost" : "found",
     petType: animalTypeLabels[pet.animalType] ?? pet.animalType,
     breed: pet.breed || t.landing.announcements.breedDefault,
-    color: pet.colors.length ? pet.colors.map((c) => colorLabels[c] ?? c).join(", ") : "—",
+    color: pet.colors?.length ? pet.colors.map((c) => colorLabels[c] ?? c).join(", ") : "—",
     location: pet.city,
     time: formatRelativeTime(pet.publishedAt),
-    image: pet.photos[0] || DEFAULT_PHOTO,
+    image: pet.photos?.[0] || DEFAULT_PHOTO,
     reward: getRewardBadgeMeta(pet),
   }));
 

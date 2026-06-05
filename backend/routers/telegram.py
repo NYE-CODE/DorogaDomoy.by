@@ -31,7 +31,9 @@ def _generate_code() -> str:
 
 
 @router.post("/telegram-link/request", response_model=TelegramLinkRequestResponse)
+@limiter.limit("10/minute")
 def request_telegram_link(
+    request: Request,
     user: User = Depends(get_current_user_required),
     db: Session = Depends(get_db),
 ):
@@ -79,7 +81,9 @@ def request_telegram_link(
 
 
 @router.get("/telegram-link/status", response_model=TelegramLinkStatusResponse)
+@limiter.limit("60/minute")
 def check_telegram_link_status(
+    request: Request,
     user: User = Depends(get_current_user_required),
     db: Session = Depends(get_db),
 ):
@@ -91,7 +95,9 @@ def check_telegram_link_status(
 
 
 @router.delete("/telegram-unlink")
+@limiter.limit("12/minute")
 async def unlink_telegram(
+    request: Request,
     user: User = Depends(get_current_user_required),
     db: Session = Depends(get_db),
 ):
