@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+﻿import { useState, useEffect, useMemo } from 'react';
 import { CheckIcon, ChevronsUpDownIcon } from 'lucide-react';
 import { Command, CommandGroup, CommandInput, CommandItem, CommandList } from './ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
@@ -79,11 +79,11 @@ export function BreedCombobox({
             'flex min-h-[3rem] w-full items-center justify-between rounded-lg border border-border bg-background hover:border-primary/50 px-4 py-3 text-sm text-foreground',
             'focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary',
             'disabled:cursor-not-allowed disabled:opacity-50',
-            value ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400',
+            value ? 'text-foreground' : 'text-muted-foreground',
             className
           )}
         >
-          <span className={cn('truncate', !value && 'text-gray-400 dark:text-gray-500')}>
+          <span className={cn('truncate', !value && 'text-muted-foreground/80')}>
             {displayValue}
           </span>
           <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />

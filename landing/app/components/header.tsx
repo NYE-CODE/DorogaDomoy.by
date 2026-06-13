@@ -1,6 +1,6 @@
-import { MapPin, User, Settings, FileText, Shield, LogOut, ChevronDown, PawPrint, Menu, Heart, Building2, Search } from "lucide-react";
+﻿import { MapPin, User, Settings, FileText, Shield, LogOut, ChevronDown, PawPrint, Menu, Heart, Building2, Search, CirclePlay } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import { Button } from "./ui/button";
 import { CitySelectModal } from "../../../components/city-select-modal";
 import { MobileMenuDrawer } from "../../../components/layout/MobileMenuDrawer";
@@ -11,6 +11,11 @@ import { landingContainerWide, landingHeaderPrimaryCtaClass } from "./landing-se
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import type { HomeMode } from "../App";
 import { trackYmGoal } from "../../../utils/ym";
+import {
+  getLogoHref,
+  persistHomeMode,
+  resolveHomeModeForLanding,
+} from "@/shared/lib/home-route";
 
 function trackHeaderNavClick(target: string, mode?: HomeMode) {
   trackYmGoal("header_nav_click", { target, mode: mode ?? "unknown" });
@@ -39,6 +44,16 @@ export function Header(props: HeaderProps = {}) {
   const { t } = useI18n();
   const { user, isAuthenticated, openAuthModal, logout } = useAuth();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const logoHref = getLogoHref();
+  const handleLogoClick = () => {
+    const mode = resolveHomeModeForLanding(
+      pathname,
+      showHomeModeToggle ? homeMode : undefined,
+    );
+    persistHomeMode(mode);
+    trackHeaderNavClick("logo", mode);
+  };
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isRegionOpen, setIsRegionOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -87,10 +102,10 @@ export function Header(props: HeaderProps = {}) {
       <div className={landingContainerWide}>
         <div className="flex items-center justify-between py-4 md:py-5">
           <div className="flex items-center gap-3">
-            <Link to="/" className="flex items-center gap-3 min-w-0">
+            <Link to={logoHref} onClick={handleLogoClick} className="flex items-center gap-3 min-w-0">
               <img src="/logo.png" alt="DorogaDomoy.by" className="w-10 h-10 shrink-0 object-contain" />
               <div className="flex flex-col min-w-0">
-                <span className="text-xl font-bold text-foreground leading-tight">DorogaDomoy.by</span>
+                <span className="typo-h1 leading-tight">DorogaDomoy.by</span>
                 <span className="text-sm text-muted-foreground leading-tight hidden md:block">{ecosystemTagline}</span>
               </div>
             </Link>
@@ -145,22 +160,24 @@ export function Header(props: HeaderProps = {}) {
               </div>
             )}
             {showHomeModeToggle ? (
-              <Button asChild>
-                <Link
-                  to={isSheltersMode ? "/shelters" : "/create"}
-                  className={`${landingHeaderPrimaryCtaClass} shrink-0`}
-                  onClick={() => trackHeaderNavClick(isSheltersMode ? "view_shelters" : "create_ad", homeMode)}
-                >
-                  {isSheltersMode ? (
-                    <span>Смотреть приюты</span>
-                  ) : (
-                    <>
-                      <span className="text-xl leading-none">+</span>
-                      <span>{t.landing.header.createAd}</span>
-                    </>
-                  )}
-                </Link>
-              </Button>
+              <>
+                <Button asChild>
+                  <Link
+                    to={isSheltersMode ? "/shelters" : "/create?mode=quick"}
+                    className={`${landingHeaderPrimaryCtaClass} shrink-0`}
+                    onClick={() => trackHeaderNavClick(isSheltersMode ? "view_shelters" : "create_ad", homeMode)}
+                  >
+                    {isSheltersMode ? (
+                      <span>Смотреть приюты</span>
+                    ) : (
+                      <>
+                        <span className="text-xl leading-none">+</span>
+                        <span>{t.landing.header.createAd}</span>
+                      </>
+                    )}
+                  </Link>
+                </Button>
+              </>
             ) : null}
             
             {showCitySelector && (
@@ -226,6 +243,10 @@ export function Header(props: HeaderProps = {}) {
                         <button type="button" onClick={() => { navigate("/blog"); setIsProfileOpen(false); trackHeaderNavClick("blog_profile_menu", homeMode); }} className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-muted">
                           <FileText size={18} className="text-muted-foreground" />
                           <span className="text-foreground">{t.landing.header.blog}</span>
+                        </button>
+                        <button type="button" onClick={() => { navigate("/guides"); setIsProfileOpen(false); trackHeaderNavClick("guides_profile_menu", homeMode); }} className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-muted">
+                          <CirclePlay size={18} className="text-muted-foreground" />
+                          <span className="text-foreground">{t.header.guides}</span>
                         </button>
                         {user.role === "admin" && (
                           <>

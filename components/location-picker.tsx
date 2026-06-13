@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+﻿import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { MapPin, Navigation } from 'lucide-react';
 import { toast } from 'sonner';
 import { useI18n } from '../context/I18nContext';
 import { reverseGeocodeStructured } from '../utils/geocode';
+import { tokens } from '@/shared/styles/tokens';
 
 interface LocationPickerProps {
   initialLocation: { lat: number; lng: number };
@@ -63,7 +64,7 @@ export function LocationPicker({
 
     const pinIcon = L.divIcon({
       html: `<div style="width:30px;height:30px;display:flex;align-items:center;justify-content:center">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#2563eb" width="30" height="30">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${tokens.colors.mapPin}" width="30" height="30">
           <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z"/>
         </svg>
       </div>`,
@@ -194,7 +195,7 @@ export function LocationPicker({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+        <p className="text-xs text-muted-foreground flex items-center gap-1">
           <MapPin className="w-3.5 h-3.5 shrink-0" />
           {lp.hint}
         </p>
@@ -208,7 +209,7 @@ export function LocationPicker({
           {locating ? lp.locating : lp.myLocation}
         </button>
       </div>
-      <div ref={mapContainerRef} className={`${mapHeight} w-full rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden z-0`} />
+      <div ref={mapContainerRef} className={`${mapHeight} w-full rounded-lg border border-border overflow-hidden z-0`} />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+﻿import { useCallback, useRef } from 'react';
 import { useI18n } from '../context/I18nContext';
 import {
   Bold,
@@ -91,11 +91,11 @@ export function BlogMarkdownEditor({ value, onChange, rows = 14, id }: BlogMarkd
   );
 
   const toolbarBtn =
-    'inline-flex items-center justify-center w-8 h-8 rounded-md border border-gray-300 dark:border-gray-600 bg-background dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-muted dark:hover:bg-gray-700 shrink-0 disabled:opacity-40';
+    'inline-flex items-center justify-center w-8 h-8 rounded-md border border-border bg-background dark:bg-card text-foreground/90 dark:text-foreground hover:bg-muted dark:hover:bg-muted shrink-0 disabled:opacity-40';
 
   return (
-    <div className="rounded-lg border border-gray-300 dark:border-gray-600 overflow-hidden focus-within:ring-2 focus-within:ring-primary/40">
-      <div className="flex flex-wrap gap-1 p-2 border-b border-gray-200 dark:border-gray-600 bg-muted/50 dark:bg-gray-800/80">
+    <div className="rounded-lg border border-border overflow-hidden focus-within:ring-2 focus-within:ring-primary/40">
+      <div className="flex flex-wrap gap-1 p-2 border-b border-border dark:border-border bg-muted/50 dark:bg-muted/80">
         <button
           type="button"
           className={toolbarBtn}
@@ -227,7 +227,7 @@ export function BlogMarkdownEditor({ value, onChange, rows = 14, id }: BlogMarkd
         onMouseUp={rememberSelection}
         onFocus={rememberSelection}
         rows={rows}
-        className="w-full px-3 py-2.5 dark:bg-gray-700 dark:text-white font-mono text-sm resize-y min-h-[200px] border-0 focus:ring-0 focus:outline-none"
+        className="w-full px-3 py-2.5 dark:bg-muted dark:text-white font-mono text-sm resize-y min-h-[200px] border-0 focus:ring-0 focus:outline-none"
         spellCheck
       />
     </div>

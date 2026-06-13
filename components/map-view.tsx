@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+﻿import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet.markercluster';
@@ -6,6 +6,10 @@ import 'leaflet.markercluster/dist/MarkerCluster.css';
 import { Pet } from '../types/pet';
 import { statusLabels, animalTypeLabels, statusColors, formatDate } from '../utils/pet-helpers';
 import { getPetPhotoCircleDivIcon, getSafePetPhotoSrc } from '../utils/leaflet-pet-photo-icon';
+import { tokens } from '@/shared/styles/tokens';
+
+const { textSecondary, textDisabled, primary, textOnBrand, bgBase } = tokens.colors;
+const mapClusterShadow = tokens.shadow.mapCluster;
 
 interface MapViewProps {
   pets: Pet[];
@@ -59,14 +63,14 @@ function createPreviewContent(pet: Pet): HTMLDivElement {
 
   const city = document.createElement('p');
   city.style.fontSize = '12px';
-  city.style.color = '#4b5563';
+  city.style.color = textSecondary;
   city.style.margin = '0';
   city.textContent = pet.city;
   info.appendChild(city);
 
   const publishedAt = document.createElement('p');
   publishedAt.style.fontSize = '12px';
-  publishedAt.style.color = '#6b7280';
+  publishedAt.style.color = textDisabled;
   publishedAt.style.margin = '0';
   publishedAt.textContent = formatDate(pet.publishedAt);
   info.appendChild(publishedAt);
@@ -87,7 +91,7 @@ function createClusterGroup(): L.MarkerClusterGroup {
       const size = count < 10 ? 40 : count < 100 ? 48 : 56;
       const half = Math.round(size / 2);
       return L.divIcon({
-        html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:#FF9800;color:#fff;font-weight:700;font-size:${count >= 100 ? 13 : 15}px;display:flex;align-items:center;justify-content:center;border:3px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,.28)">${count}</div>`,
+        html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${primary};color:${textOnBrand};font-weight:700;font-size:${count >= 100 ? 13 : 15}px;display:flex;align-items:center;justify-content:center;border:3px solid ${bgBase};box-shadow:${mapClusterShadow}">${count}</div>`,
         className: 'pet-map-cluster',
         iconSize: [size, size],
         iconAnchor: [half, half],
@@ -191,7 +195,7 @@ export default function MapView({ pets, onPetClick, onBoundsChange, center = [53
   }, [pets, onPetClick]);
 
   return (
-    <div className="h-full w-full rounded-lg overflow-hidden border border-gray-200">
+    <div className="h-full w-full rounded-lg overflow-hidden border border-border">
       <div ref={mapContainerRef} className="h-full w-full z-0" />
     </div>
   );

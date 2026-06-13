@@ -1,4 +1,4 @@
-import { FileText, Map, Heart } from "lucide-react";
+﻿import { FileText, Map, Heart } from "lucide-react";
 import { useI18n } from "../../../context/I18nContext";
 import type { HomeMode } from "../App";
 import {
@@ -58,7 +58,7 @@ export function HowItWorks({ mode = "search" }: { mode?: HomeMode }) {
                     <StepIcon size={24} />
                   </div>
                 </div>
-                <h3 className="text-lg md:text-xl font-bold text-foreground mb-2 leading-tight">
+                <h3 className="text-lg md:typo-h1 mb-2 leading-tight">
                   {step.title}
                 </h3>
                 <p className="text-sm md:text-base text-muted-foreground leading-relaxed">

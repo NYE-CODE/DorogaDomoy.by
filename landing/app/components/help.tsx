@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+﻿import { useCallback, useEffect, useMemo, useState } from "react";
 import { Heart, Share2, Users } from "lucide-react";
 import { Button } from "./ui/button";
 import {
@@ -146,7 +146,7 @@ export function Help() {
                     {(index + 1).toString().padStart(2, "0")}
                   </span>
                 </div>
-                <h3 className="text-lg md:text-xl font-bold text-foreground mb-2 leading-tight">{w.title}</h3>
+                <h3 className="text-lg md:typo-h1 mb-2 leading-tight">{w.title}</h3>
                 <p className="text-sm md:text-base text-muted-foreground mb-5 leading-relaxed flex-grow">{w.desc}</p>
                 <Button
                   type="button"

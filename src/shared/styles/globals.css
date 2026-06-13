@@ -1,0 +1,240 @@
+@import "tailwindcss";
+@import "./tokens.css";
+@import "./typography.css";
+@import "./layout.css";
+@import "./interaction.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--color-primary-hover);
+  --color-primary-light: var(--color-primary-light);
+  --color-primary-soft: var(--color-primary-soft);
+  --color-primary-soft-hover: var(--color-primary-soft-hover);
+  --color-primary-emphasis: var(--color-primary-emphasis);
+  --color-primary-surface: var(--color-primary-surface);
+  --color-brand: var(--color-brand);
+  --color-brand-light: var(--color-brand-light);
+  --color-brand-dark: var(--color-brand-dark);
+  --color-text-primary: var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-text-muted: var(--color-text-muted);
+  --color-text-disabled: var(--color-text-disabled);
+  --color-bg-subtle: var(--color-bg-subtle);
+  --color-bg-elevated: var(--color-bg-elevated);
+  --color-bg-landing-dark: var(--color-bg-landing-dark);
+  --color-warning: var(--color-warning);
+  --color-info: var(--color-info);
+  --color-viber-alt: var(--color-viber-alt);
+  --color-viber-alt-hover: var(--color-viber-alt-hover);
+  --color-telegram-bright: var(--color-telegram-bright);
+  --color-telegram-bright-hover: var(--color-telegram-bright-hover);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--color-success);
+  --color-telegram: var(--color-telegram);
+  --color-telegram-hover: var(--color-telegram-hover);
+  --color-viber: var(--color-viber);
+  --color-viber-hover: var(--color-viber-hover);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-input-background: var(--input-background);
+  --color-switch-background: var(--switch-background);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-2xl: var(--radius-2xl);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --tracking-heading: var(--tracking-heading);
+  --font-size-md: var(--text-md);
+  --spacing-section: var(--section-gap);
+  --max-width-content: var(--content-max-width);
+  --max-width-content-medium: var(--content-max-width-medium);
+  --max-width-content-narrow: var(--content-max-width-narrow);
+  --max-width-content-readable: var(--content-max-width-readable);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  input[type='button']:not(:disabled),
+  input[type='submit']:not(:disabled),
+  input[type='reset']:not(:disabled),
+  summary,
+  label[for] {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [role='button'][aria-disabled='true'],
+  input[type='button']:disabled,
+  input[type='submit']:disabled,
+  input[type='reset']:disabled {
+    cursor: not-allowed;
+  }
+
+  a:not([class*='focus-visible']):focus-visible {
+    @apply outline-none ring-[3px] ring-ring/50 rounded-sm;
+  }
+
+  [role='button']:focus-visible {
+    @apply outline-none ring-[3px] ring-ring/50 rounded-lg;
+  }
+}
+
+/**
+ * Base typography. This is not applied to elements which have an ancestor with a Tailwind text class.
+ */
+@layer base {
+  :where(:not(:has([class*=' text-']), :not(:has([class^='text-'])))) {
+    h1 {
+      font-size: var(--text-4xl);
+      font-weight: var(--weight-semibold);
+      line-height: var(--leading-tight);
+      letter-spacing: var(--tracking-heading);
+      color: var(--color-text-primary);
+    }
+
+    h2 {
+      font-size: var(--text-3xl);
+      font-weight: var(--weight-semibold);
+      line-height: var(--leading-tight);
+      letter-spacing: var(--tracking-heading);
+      color: var(--color-text-primary);
+    }
+
+    h3 {
+      font-size: var(--text-xl);
+      font-weight: var(--weight-medium);
+      line-height: var(--leading-normal);
+      color: var(--color-text-primary);
+    }
+
+    h4 {
+      font-size: var(--text-lg);
+      font-weight: var(--weight-medium);
+      line-height: var(--leading-normal);
+      color: var(--color-text-primary);
+    }
+
+    p {
+      font-size: var(--text-md);
+      font-weight: var(--weight-regular);
+      line-height: var(--leading-relaxed);
+      color: var(--color-text-secondary);
+    }
+
+    small {
+      font-size: var(--text-sm);
+      color: var(--color-text-muted);
+    }
+
+    label {
+      font-size: var(--font-size-md);
+      font-weight: var(--font-weight-medium);
+      line-height: var(--line-height-tight);
+    }
+
+    button {
+      font-size: var(--font-size-md);
+      font-weight: var(--font-weight-medium);
+      line-height: var(--line-height-tight);
+    }
+
+    input {
+      font-size: var(--font-size-md);
+      font-weight: var(--font-weight-regular);
+      line-height: var(--line-height-tight);
+    }
+  }
+}
+
+html {
+  font-family: var(--font-family-base);
+  font-size: var(--font-size);
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+/* Leaflet Map Styles */
+.leaflet-container {
+  font-family: inherit;
+}
+
+.custom-marker-icon,
+.location-picker-icon {
+  background: none;
+  border: none;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: var(--radius-lg);
+  padding: 0;
+}
+
+.leaflet-popup-content {
+  margin: 0;
+  padding: var(--spacing-3);
+}
+
+.leaflet-popup-tip {
+  background-color: var(--color-bg-surface);
+}
+
+html.dark .leaflet-popup-content-wrapper {
+  background: var(--card);
+  color: var(--foreground);
+}
+
+html.dark .leaflet-popup-tip {
+  background-color: var(--card);
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

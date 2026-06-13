@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import {
   Trash2,
   ExternalLink,
@@ -54,7 +54,7 @@ export function ProfilePetsAdminPanel({ profilePets, onDeleteProfilePet }: Profi
   const perPage = 15;
 
   const sortThBtn =
-    'w-full px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400 inline-flex items-center gap-1 hover:bg-muted/50 dark:hover:bg-muted/30 transition-colors';
+    'w-full px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground inline-flex items-center gap-1 hover:bg-muted/50 dark:hover:bg-muted/30 transition-colors';
 
   const filtered = profilePets
     .filter(p => {
@@ -119,13 +119,13 @@ export function ProfilePetsAdminPanel({ profilePets, onDeleteProfilePet }: Profi
           <div className="flex-1 min-w-[250px]">
             <label className={adm.labelFilter}>Поиск</label>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/80" />
               <input
                 type="text"
                 placeholder="Имя, порода, владелец, чип..."
                 value={searchQuery}
                 onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
-                className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="w-full pl-9 pr-4 py-2.5 text-sm border border-border dark:bg-muted dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               />
             </div>
           </div>
@@ -145,7 +145,7 @@ export function ProfilePetsAdminPanel({ profilePets, onDeleteProfilePet }: Profi
             </Select>
           </div>
 
-          <div className="text-sm text-gray-600 dark:text-gray-400 ml-auto">
+          <div className="text-sm text-muted-foreground ml-auto">
             Найдено: {sorted.length} профилей
           </div>
         </div>
@@ -194,14 +194,14 @@ export function ProfilePetsAdminPanel({ profilePets, onDeleteProfilePet }: Profi
                     />
                   </td>
                   <td className="px-4 py-3">
-                    <p className="font-medium text-gray-900 dark:text-white text-sm">{pet.name}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <p className="font-medium text-foreground text-sm">{pet.name}</p>
+                    <p className="text-xs text-muted-foreground">
                       {genderLabels[pet.gender] || pet.gender}{pet.age ? ` · ${pet.age}` : ''}
                     </p>
                   </td>
                   <td className="px-4 py-3">
-                    <p className="text-sm text-gray-900 dark:text-white">{speciesLabels[pet.species] || pet.species}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{pet.breed || '—'}</p>
+                    <p className="text-sm text-foreground">{speciesLabels[pet.species] || pet.species}</p>
+                    <p className="text-xs text-muted-foreground">{pet.breed || '—'}</p>
                   </td>
                   <td className="px-4 py-3">
                     {pet.owner_name ? (
@@ -214,10 +214,10 @@ export function ProfilePetsAdminPanel({ profilePets, onDeleteProfilePet }: Profi
                         {pet.owner_name}
                       </a>
                     ) : (
-                      <span className="text-sm text-gray-400">—</span>
+                      <span className="text-sm text-muted-foreground/80">—</span>
                     )}
                     {pet.owner_email && (
-                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[140px]">{pet.owner_email}</p>
+                      <p className="text-xs text-muted-foreground truncate max-w-[140px]">{pet.owner_email}</p>
                     )}
                   </td>
                   <td className="px-4 py-3">
@@ -226,10 +226,10 @@ export function ProfilePetsAdminPanel({ profilePets, onDeleteProfilePet }: Profi
                         {pet.chip_number || 'Да'}
                       </span>
                     ) : (
-                      <span className="text-xs text-gray-400 dark:text-gray-500">Нет</span>
+                      <span className="text-xs text-muted-foreground/80">Нет</span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                  <td className="px-4 py-3 text-sm text-muted-foreground">
                     {new Date(pet.created_at).toLocaleDateString('ru-RU')}
                   </td>
                   <td className="px-4 py-3">
@@ -245,7 +245,7 @@ export function ProfilePetsAdminPanel({ profilePets, onDeleteProfilePet }: Profi
                         href={`/pet-profile/${pet.id}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="p-1.5 text-gray-600 dark:text-gray-400 hover:bg-accent dark:hover:bg-accent rounded transition-colors"
+                        className="p-1.5 text-muted-foreground hover:bg-accent dark:hover:bg-accent rounded transition-colors"
                         title="Открыть публичный профиль"
                       >
                         <ExternalLink className="w-4 h-4" />
@@ -280,10 +280,10 @@ export function ProfilePetsAdminPanel({ profilePets, onDeleteProfilePet }: Profi
           labels={pg}
           summary={
             <>
-              <span className="text-sm text-gray-600 dark:text-gray-400">
+              <span className="text-sm text-muted-foreground">
                 {ap.users.pageOf(page, totalPages)}
               </span>
-              <span className="text-xs text-gray-500 dark:text-gray-400">
+              <span className="text-xs text-muted-foreground">
                 {ap.users.totalShort(sorted.length)}
               </span>
             </>
@@ -295,10 +295,10 @@ export function ProfilePetsAdminPanel({ profilePets, onDeleteProfilePet }: Profi
       {viewingPet && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4" onClick={() => setViewingPet(null)}>
           <div className="bg-card rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-6 py-4 border-b dark:border-gray-700 sticky top-0 bg-card z-10">
-              <h3 className="font-semibold text-gray-900 dark:text-white">Профиль питомца</h3>
+            <div className="flex items-center justify-between px-6 py-4 border-b dark:border-border sticky top-0 bg-card z-10">
+              <h3 className="font-semibold text-foreground">Профиль питомца</h3>
               <button onClick={() => setViewingPet(null)} className="p-1 hover:bg-accent dark:hover:bg-accent rounded">
-                <X className="w-5 h-5 dark:text-gray-400" />
+                <X className="w-5 h-5 dark:text-muted-foreground/80" />
               </button>
             </div>
             <div className="px-6 py-4 space-y-4">
@@ -353,8 +353,8 @@ export function ProfilePetsAdminPanel({ profilePets, onDeleteProfilePet }: Profi
               )}
 
               {/* Owner */}
-              <div className="border-t dark:border-gray-700 pt-4">
-                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-2">Владелец</p>
+              <div className="border-t dark:border-border pt-4">
+                <p className="text-xs font-medium text-muted-foreground uppercase mb-2">Владелец</p>
                 <div className="grid grid-cols-2 gap-3">
                   <InfoField label="Имя" value={viewingPet.owner_name} />
                   <InfoField label="Email" value={viewingPet.owner_email} />
@@ -364,7 +364,7 @@ export function ProfilePetsAdminPanel({ profilePets, onDeleteProfilePet }: Profi
               </div>
 
               {/* Dates */}
-              <div className="border-t dark:border-gray-700 pt-4">
+              <div className="border-t dark:border-border pt-4">
                 <div className="grid grid-cols-2 gap-3">
                   <InfoField label="Создан" value={new Date(viewingPet.created_at).toLocaleString('ru-RU')} />
                   <InfoField label="Обновлён" value={new Date(viewingPet.updated_at).toLocaleString('ru-RU')} />
@@ -381,8 +381,8 @@ export function ProfilePetsAdminPanel({ profilePets, onDeleteProfilePet }: Profi
 function InfoField({ label, value }: { label: string; value: string | null | undefined }) {
   return (
     <div>
-      <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
-      <p className="text-sm text-gray-900 dark:text-white">{value || '—'}</p>
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="text-sm text-foreground">{value || '—'}</p>
     </div>
   );
 }
@@ -390,8 +390,8 @@ function InfoField({ label, value }: { label: string; value: string | null | und
 function InfoBlock({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{label}</p>
-      <p className="text-sm text-gray-700 dark:text-gray-300 bg-accent dark:bg-accent p-3 rounded-lg">{value}</p>
+      <p className="text-xs font-medium text-muted-foreground mb-1">{label}</p>
+      <p className="text-sm text-foreground/90 bg-accent dark:bg-accent p-3 rounded-lg">{value}</p>
     </div>
   );
 }

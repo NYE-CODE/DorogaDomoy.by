@@ -11,6 +11,7 @@ import { FAQ } from "./components/faq";
 import { Help } from "./components/help";
 import { Footer } from "./components/footer";
 import { ScrollToTop } from "./components/scroll-to-top";
+import { ReturnToAppBanner } from "../../components/landing/ReturnToAppBanner";
 import { useFeatureFlags } from "../../context/FeatureFlagsContext";
 import { useEffect, useRef, useState } from "react";
 import { trackYmGoal } from "../../utils/ym";
@@ -51,6 +52,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen overflow-x-clip">
+      <ReturnToAppBanner />
       <Header
         showCitySelector={false}
         showHomeModeToggle

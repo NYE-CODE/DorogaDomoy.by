@@ -43,7 +43,7 @@ interface MyAdsPageProps {
   onEditPet: (pet: Pet) => void;
   onDeletePet: (pet: Pet) => void;
   onBoostPet: (pet: Pet) => void;
-  /** Выключите через ff_instagram_boost_stories в админке */
+  /** Зависит от ff_instagram_boost_stories в профиле */
   instagramBoostEnabled?: boolean;
 }
 
@@ -176,11 +176,11 @@ export function MyAdsPage({
   const totalActive = publishedCount + pendingCount + rejectedCount;
 
   return (
-    <div className="flex min-h-screen flex-col bg-background dark:bg-gray-950">
+    <div className="flex min-h-screen flex-col bg-background dark:bg-background">
       <Header />
 
       <main className="flex-1 py-6 sm:py-10">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="page-container">
           <div className="mb-6 flex flex-col gap-4 rounded-2xl border border-border bg-muted/25 p-6 sm:mb-8 sm:flex-row sm:items-end sm:justify-between sm:p-8">
             <div className="min-w-0">
               <button
@@ -188,7 +188,7 @@ export function MyAdsPage({
                 onClick={onBack}
                 className="mb-3 text-sm font-medium text-primary underline-offset-4 hover:underline"
               >
-                ← {t.header.searchAds}
+                ? {t.header.searchAds}
               </button>
               <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">{t.myAds.title}</h1>
               <p className="mt-2 max-w-2xl text-sm text-muted-foreground sm:text-base">{t.myAds.subtitle}</p>
@@ -407,7 +407,7 @@ export function MyAdsPage({
                                   <h3 className="text-sm font-semibold text-foreground sm:text-base">
                                     {getStatusTitle(pet)}
                                   </h3>
-                                  <span className="hidden text-muted-foreground sm:inline">•</span>
+                                  <span className="hidden text-muted-foreground sm:inline">·</span>
                                   <span className="hidden text-xs text-muted-foreground sm:inline sm:text-sm">
                                     {getPetTypeLabel(pet)}
                                   </span>
@@ -415,7 +415,7 @@ export function MyAdsPage({
                                     pet.status === 'searching' &&
                                     sightingCount > 0 && (
                                       <>
-                                        <span className="hidden text-muted-foreground sm:inline">•</span>
+                                        <span className="hidden text-muted-foreground sm:inline">·</span>
                                         <span className="flex items-center gap-1 text-xs text-muted-foreground sm:text-sm">
                                           <Eye className="size-3.5 sm:size-4" aria-hidden />
                                           {sightingCount}
@@ -448,9 +448,7 @@ export function MyAdsPage({
                                       >
                                         <AlertCircle className="size-3 shrink-0" />
                                         <span className="hidden sm:inline">{t.moderation.rejected}</span>
-                                        <span className="sm:hidden" aria-hidden>
-                                          ⚠️
-                                        </span>
+                                        <span className="sm:hidden">{t.myAds.rejectedShort}</span>
                                       </span>
 
                                       {showRejectionTooltip && (
@@ -468,7 +466,7 @@ export function MyAdsPage({
 
                                 <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground sm:gap-2 sm:text-sm">
                                   <span className="truncate">{pet.city}</span>
-                                  <span className="shrink-0">•</span>
+                                  <span className="shrink-0" aria-hidden>·</span>
                                   <span className="shrink-0">{formatDate(pet.publishedAt)}</span>
                                 </div>
                               </div>

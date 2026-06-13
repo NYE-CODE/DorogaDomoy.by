@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router';
-import { Mail, Lock, User, ArrowRight } from 'lucide-react';
+﻿import { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router';
+import { Mail, Lock, User as UserIcon, ArrowRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useI18n } from '../../context/I18nContext';
 import { toast } from 'sonner';
@@ -9,6 +9,8 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { TelegramLoginButton } from './TelegramLoginButton';
 import { authApi, type TelegramAuthPayload } from '../../api/client';
+import type { User } from '@/entities/user/model/types';
+import { getSafeReturnPath } from '@/shared/lib/auth-return-path';
 
 interface AuthModalProps {
   onNavigateToTerms?: () => void;
@@ -18,6 +20,10 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
   const { isAuthModalOpen, closeAuthModal, login, register, loginWithTelegram } = useAuth();
   const { t } = useI18n();
   const navigate = useNavigate();
+  const location = useLocation();
+  const returnPath = getSafeReturnPath(
+    (location.state as { fromProtected?: string } | null)?.fromProtected,
+  );
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -43,13 +49,33 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
 
   if (!isAuthModalOpen) return null;
 
+  const navigateAfterAuth = (user: User) => {
+    if (user.profileCompleted === false) {
+      navigate('/complete-profile', {
+        replace: true,
+        state: returnPath ? { fromProtected: returnPath } : undefined,
+      });
+      return;
+    }
+    if (returnPath) {
+      navigate(returnPath, { replace: true });
+    }
+  };
+
   const handleTelegramAuth = async (payload: TelegramAuthPayload) => {
     setIsLoading(true);
     try {
       const u = await loginWithTelegram(payload);
       toast.success(t.auth.telegramLoginSuccess);
       if (!u.profileCompleted) {
-        navigate('/complete-profile', { replace: true });
+        navigate('/complete-profile', {
+          replace: true,
+          state: returnPath ? { fromProtected: returnPath } : undefined,
+        });
+        return;
+      }
+      if (returnPath) {
+        navigate(returnPath, { replace: true });
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t.auth.genericError);
@@ -80,11 +106,13 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
 
     try {
       if (mode === 'login') {
-        await login(email, password);
+        const u = await login(email, password);
         toast.success(t.auth.welcomeBack);
+        navigateAfterAuth(u);
       } else {
-        await register(email, name, password, {}, signupRole);
+        const u = await register(email, name, password, {}, signupRole);
         toast.success(t.auth.registerSuccess);
+        navigateAfterAuth(u);
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t.auth.genericError);
@@ -132,7 +160,7 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-foreground">{t.auth.yourName}</label>
                   <div className="relative">
-                    <User className="absolute left-3 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" />
+                    <UserIcon className="absolute left-3 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" />
                     <Input
                       type="text"
                       required
@@ -184,8 +212,12 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
                     onChange={(e) => setPassword(e.target.value)}
                     className="pl-10"
                     placeholder="••••••••"
+                    aria-describedby="auth-password-hint"
                   />
                 </div>
+                <p id="auth-password-hint" className="mt-1.5 text-xs text-muted-foreground">
+                  {t.auth.passwordHint}
+                </p>
               </div>
 
               {mode === 'register' && (
@@ -224,20 +256,17 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
                     type="checkbox"
                     checked={agreedToTerms}
                     onChange={(e) => setAgreedToTerms(e.target.checked)}
-                    className="size-4 rounded border-gray-300 text-primary focus:ring-primary focus:ring-2 dark:border-gray-600 dark:bg-gray-700"
+                    className="size-4 rounded border-border text-primary focus:ring-primary focus:ring-2 dark:border-border dark:bg-muted"
                   />
-                  <label className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                  <label className="ml-2 text-sm text-foreground/90">
                     {t.auth.agreeWith}{' '}
-                    <a
-                      href="#"
+                    <button
+                      type="button"
                       className="font-semibold text-primary transition-colors hover:text-primary/90"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        onNavigateToTerms?.();
-                      }}
+                      onClick={() => onNavigateToTerms?.()}
                     >
                       {t.auth.terms}
-                    </a>
+                    </button>
                   </label>
                 </div>
               )}

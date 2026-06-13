@@ -1,8 +1,11 @@
-import { Pet } from "../types/pet";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+﻿import { Coins, Target } from 'lucide-react';
+import { Pet } from '../types/pet';
+import { Badge } from './ui/badge';
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
+import { cn } from './ui/utils';
 
 interface RewardBadgeProps {
-  pet: Pick<Pet, "status" | "rewardMode" | "rewardAmountByn" | "rewardPoints">;
+  pet: Pick<Pet, 'status' | 'rewardMode' | 'rewardAmountByn' | 'rewardPoints'>;
   className?: string;
   compact?: boolean;
   /** Полная ширина + перенос строк (список поиска в узкой колонке) */
@@ -10,31 +13,31 @@ interface RewardBadgeProps {
 }
 
 export function getRewardBadgeMeta(
-  pet: Pick<Pet, "status" | "rewardMode" | "rewardAmountByn" | "rewardPoints">,
+  pet: Pick<Pet, 'status' | 'rewardMode' | 'rewardAmountByn' | 'rewardPoints'>,
 ) {
-  if (pet.status !== "searching") return null;
+  if (pet.status !== 'searching') return null;
 
-  if (pet.rewardMode === "money" && pet.rewardAmountByn) {
+  if (pet.rewardMode === 'money' && pet.rewardAmountByn) {
     return {
-      text: `💰 ${pet.rewardAmountByn} BYN`,
+      label: `${pet.rewardAmountByn} BYN`,
+      icon: Coins,
       tooltip:
-        "Денежное вознаграждение за помощь в поиске. Владелец передает его помощнику напрямую.",
-      className:
-        "bg-amber-100 dark:bg-amber-900/35 text-amber-950 dark:text-amber-100",
+        'Денежное вознаграждение за помощь в поиске. Владелец передает его помощнику напрямую.',
+      variant: 'warning' as const,
     };
   }
 
   return {
-    text: `🎯 +${pet.rewardPoints ?? 50} очков`,
-    tooltip: "Награда очками платформы за подтвержденную помощь в поиске питомца.",
-    className:
-      "bg-violet-100 dark:bg-violet-900/30 text-violet-800 dark:text-violet-200",
+    label: `+${pet.rewardPoints ?? 50} очков`,
+    icon: Target,
+    tooltip: 'Награда очками платформы за подтвержденную помощь в поиске питомца.',
+    variant: 'info' as const,
   };
 }
 
 export function RewardBadge({
   pet,
-  className = "",
+  className = '',
   compact = false,
   compactWrap = false,
 }: RewardBadgeProps) {
@@ -42,25 +45,24 @@ export function RewardBadge({
 
   if (!badge) return null;
 
-  const wrapClass =
-    "block w-full max-w-full min-w-0 rounded-md px-2 py-1 text-left text-[11px] font-semibold leading-snug whitespace-normal break-words";
-  const compactInlineClass =
-    "inline-flex items-center rounded-full px-2 py-0.5 text-[11px]";
+  const Icon = badge.icon;
+
+  const sizeClass = compact && compactWrap
+    ? 'max-w-full min-w-0 self-start rounded-full px-2 py-0.5 text-xs leading-snug whitespace-normal break-words'
+    : compact
+      ? 'rounded-full px-2 py-0.5'
+      : 'rounded-full px-3 py-1 text-sm';
 
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span
-          className={`font-semibold ${
-            compact && compactWrap
-              ? wrapClass
-              : compact
-                ? compactInlineClass
-                : "inline-flex items-center rounded-full px-3 py-1 text-sm"
-          } ${badge.className} ${className}`.trim()}
+        <Badge
+          variant={badge.variant}
+          className={cn('gap-1 font-semibold', sizeClass, className)}
         >
-          {badge.text}
-        </span>
+          <Icon className="size-3.5 shrink-0" aria-hidden />
+          {badge.label}
+        </Badge>
       </TooltipTrigger>
       <TooltipContent sideOffset={8} className="max-w-64 text-center">
         {badge.tooltip}

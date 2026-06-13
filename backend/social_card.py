@@ -4,6 +4,7 @@ from __future__ import annotations
 import base64
 import io
 import logging
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
@@ -94,6 +95,48 @@ TYPE_BE = {"cat": "Кот", "dog": "Сабака", "other": "Іншае"}
 
 CardFormat = Literal["feed", "story"]
 CardMediaType = Literal["image/png", "image/jpeg"]
+
+QR_BAND_BG = (249, 250, 251)
+
+
+@dataclass(frozen=True)
+class CardLayout:
+    width: int
+    height: int
+    photo_h: int
+    footer_h: int
+    qr_band_h: int
+    pad: int
+    qr_target: int
+    qr_min: int
+    compact_info: bool = False
+
+
+def _layout_for(card_format: CardFormat, is_adoption: bool) -> CardLayout:
+    """Размеры холста и зон под feed (4:5) и story (9:16)."""
+    if card_format == "story":
+        return CardLayout(
+            width=1080,
+            height=1920,
+            photo_h=1180 if is_adoption else 1120,
+            footer_h=72,
+            qr_band_h=320 if is_adoption else 300,
+            pad=44,
+            qr_target=240,
+            qr_min=210,
+            compact_info=is_adoption,
+        )
+    return CardLayout(
+        width=1080,
+        height=1350,
+        photo_h=680 if is_adoption else 580,
+        footer_h=72,
+        qr_band_h=300 if is_adoption else 280,
+        pad=44,
+        qr_target=220,
+        qr_min=200,
+        compact_info=is_adoption,
+    )
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -211,12 +254,127 @@ def _crop_center(img: Image.Image, tw: int, th: int) -> Image.Image:
 
 
 def _make_qr(url: str, size: int) -> Image.Image:
-    qr = qrcode.QRCode(version=None, error_correction=qrcode.constants.ERROR_CORRECT_M,
-                        box_size=10, border=2)
+    qr = qrcode.QRCode(
+        version=None,
+        error_correction=qrcode.constants.ERROR_CORRECT_H,
+        box_size=12,
+        border=2,
+    )
     qr.add_data(url)
     qr.make(fit=True)
-    return qr.make_image(fill_color="black", back_color="white").convert("RGB").resize(
-        (size, size), Image.LANCZOS)
+    img = qr.make_image(fill_color="black", back_color="white").convert("RGB")
+    if img.size[0] != size:
+        return img.resize((size, size), Image.LANCZOS)
+    return img
+
+
+def _color_labels(keys: list[str], lang: str) -> list[str]:
+    tbl = COLOR_LABELS_BE if lang == "be" else COLOR_LABELS_RU
+    out: list[str] = []
+    for k in keys:
+        key = (k or "").strip()
+        if not key:
+            continue
+        label = tbl.get(key.lower(), key)
+        if len(label) <= 2 and key.lower() not in tbl:
+            continue
+        out.append(label)
+    return out
+
+
+def _draw_qr_band(
+    img: Image.Image,
+    *,
+    layout: CardLayout,
+    band_top: int,
+    qr_url: str,
+    hint: str,
+    shelter_name: str | None = None,
+    shelter_city: str | None = None,
+    city: str | None = None,
+    labels: dict[str, str] | None = None,
+    adoption_panel: bool = False,
+) -> None:
+    """QR-полоса: для приютов — приют слева, код справа; иначе код по центру."""
+    draw = ImageDraw.Draw(img)
+    band_bottom = band_top + layout.qr_band_h
+    pad = layout.pad
+    draw.rectangle([(0, band_top), (layout.width, band_bottom)], fill=QR_BAND_BG)
+    draw.line([(pad, band_top), (layout.width - pad, band_top)], fill=DIVIDER, width=1)
+
+    hint_f = _font("regular", 22 if layout.height <= 1400 else 24)
+    qr_border = 8
+    hint_h = _lh(hint_f) + 10
+
+    sn = (shelter_name or "").strip()
+    show_shelter_panel = adoption_panel and labels is not None
+
+    if show_shelter_panel:
+        lbl_f = _font("regular", 24)
+        name_f = _font("semibold", 30 if layout.height <= 1400 else 32)
+        city_f = _font("regular", 26)
+
+        qr_sz = min(
+            layout.qr_target,
+            layout.qr_band_h - pad,
+            layout.width // 3 + 40,
+        )
+        qr_sz = max(layout.qr_min, qr_sz)
+
+        qr_x = layout.width - pad - qr_sz
+        qr_y = band_top + (layout.qr_band_h - qr_sz - hint_h) // 2
+        text_left = pad
+        text_w = qr_x - text_left - 24
+
+        ty = band_top + pad - 4
+        draw.text((text_left, ty), labels["shelter_org"], font=lbl_f, fill=GRAY_400)
+        ty += _lh(lbl_f) + 8
+
+        display_name = sn or labels["not_specified"]
+        max_name_lines = 3 if layout.height > 1400 else 2
+        for ln in _wrap(display_name, name_f, text_w, max_name_lines):
+            draw.text((text_left, ty), ln, font=name_f, fill=DARK)
+            ty += _lh(name_f) + 4
+
+        loc = (shelter_city or city or "").strip()
+        if loc:
+            ty += 6
+            for ln in _wrap(loc, city_f, text_w, 1):
+                draw.text((text_left, ty), ln, font=city_f, fill=GRAY_600)
+    else:
+        max_qr = min(
+            layout.qr_target,
+            layout.qr_band_h - hint_h - 24,
+            layout.width - pad * 2 - qr_border * 2,
+        )
+        qr_sz = min(layout.qr_target, max_qr)
+        if qr_sz < layout.qr_min and max_qr >= layout.qr_min:
+            qr_sz = layout.qr_min
+        qr_x = (layout.width - qr_sz) // 2
+        qr_y = band_top + (layout.qr_band_h - qr_sz - hint_h) // 2
+
+    draw.rounded_rectangle(
+        (
+            qr_x - qr_border,
+            qr_y - qr_border,
+            qr_x + qr_sz + qr_border,
+            qr_y + qr_sz + qr_border,
+        ),
+        radius=16,
+        fill=BG_WHITE,
+        outline=DIVIDER,
+        width=2,
+    )
+    img.paste(_make_qr(qr_url, qr_sz), (qr_x, qr_y))
+
+    hint_w = _tw(hint_f, hint)
+    hint_x = qr_x + (qr_sz - hint_w) // 2
+    draw.text(
+        (hint_x, qr_y + qr_sz + qr_border + 8),
+        hint,
+        font=hint_f,
+        fill=GRAY_600,
+    )
 
 
 def _gradient(img: Image.Image, y0: int, h: int, alpha: int = 210):
@@ -249,11 +407,6 @@ def _type_name(t: str, lang: str) -> str:
     return tbl.get(t, t)
 
 
-def _color_labels(keys: list[str], lang: str) -> list[str]:
-    tbl = COLOR_LABELS_BE if lang == "be" else COLOR_LABELS_RU
-    return [tbl.get(k, k) for k in keys] if keys else []
-
-
 def _draw_coat_tags(
     draw: ImageDraw.ImageDraw,
     x: int,
@@ -261,13 +414,15 @@ def _draw_coat_tags(
     max_right: int,
     texts: list[str],
     font: ImageFont.FreeTypeFont,
+    *,
+    compact: bool = False,
 ) -> int:
     """Окрас — скруглённые теги в одну/несколько строк."""
     pad_x = 18
     pad_top = 10
-    pad_bottom = 15  # чуть больше снизу: у Inter нижний вынос букв визуально «съедает» паддинг
+    pad_bottom = 15
     gap_x, gap_y = 12, 12
-    margin_below_block = 34  # явный зазор под последним рядом тегов до следующего блока
+    margin_below_block = 18 if compact else 34
     cx = x
     line_y = y
     row_h = 0
@@ -321,18 +476,16 @@ def generate_social_card(
     is_adoption = (pet_scope or "").strip().lower() == "shelter_pet"
     is_lost = status == "searching"
 
-    # ── Canvas ──
-    if card_format == "story":
-        W, H = 1080, 1920
-        PHOTO_H = 1060
-        qr_sz = 280
-    else:
-        W, H = 1080, 1350
-        PHOTO_H = 580
-        qr_sz = 238
+    layout = _layout_for(card_format, is_adoption)
+    W, H = layout.width, layout.height
+    PHOTO_H = layout.photo_h
+    PAD = layout.pad
+    FOOTER_H = layout.footer_h
 
-    PAD = 40
-    FOOTER_H = 68
+    footer_y = H - FOOTER_H
+    qr_band_top = footer_y - layout.qr_band_h
+    info_top = PHOTO_H + 5
+    info_bottom = qr_band_top - 8
 
     img = Image.new("RGB", (W, H), BG_WHITE)
     draw = ImageDraw.Draw(img)
@@ -347,7 +500,6 @@ def generate_social_card(
     img = _gradient(img, PHOTO_H - 220, 220, alpha=230)
     draw = ImageDraw.Draw(img)
 
-    # Status pill (top-left) — те же вертикальные отступы, что у тегов окраса
     pill_f = _font("semibold", 30)
     if is_adoption:
         pill_txt = L["pill_adoption"]
@@ -362,11 +514,9 @@ def generate_social_card(
     pill_pad_bottom = 15
     ptw = _tw(pill_f, pill_txt) + pill_pad_x * 2
     pth = pill_pad_top + _lh(pill_f) + pill_pad_bottom
-    draw.rounded_rectangle((PAD, PAD, PAD + ptw, PAD + pth), radius=pth // 2,
-                           fill=pill_bg)
+    draw.rounded_rectangle((PAD, PAD, PAD + ptw, PAD + pth), radius=pth // 2, fill=pill_bg)
     draw.text((PAD + pill_pad_x, PAD + pill_pad_top), pill_txt, font=pill_f, fill=pill_fg)
 
-    # Hero text over gradient: "Собака · Лабрадор-ретривер"
     hero_parts = [_type_name(animal_type, lang)]
     breed_txt = (breed or "").strip()
     if breed_txt:
@@ -379,186 +529,150 @@ def generate_social_card(
     # ═══ 2. ORANGE BAR ═══
     draw.rectangle([(0, PHOTO_H), (W, PHOTO_H + 5)], fill=BRAND_ORANGE)
 
-    # ═══ 3. INFO SECTION ═══
-    info_top = PHOTO_H + 5
-    footer_y = H - FOOTER_H
-    draw.rectangle([(0, info_top), (W, footer_y)], fill=BG_WHITE)
+    # ═══ 3. INFO SECTION (ограничена зоной над QR-полосой) ═══
+    draw.rectangle([(0, info_top), (W, qr_band_top)], fill=BG_WHITE)
 
     x0 = PAD
     x1 = W - PAD
     full_w = x1 - x0
-    y = info_top + 28
+    compact = layout.compact_info
+    y = info_top + (16 if compact else 24)
 
-    # Fonts for info
-    lbl_f = _font("regular", 28)
-    val_f = _font("semibold", 36)
-    small_lbl_f = _font("regular", 26)
-    loc_f = _font("regular", 32)
-    chip_f = _font("regular", 28)
-    contact_lbl_f = _font("regular", 26)
-    contact_val_f = _font("semibold", 34)
+    lbl_f = _font("regular", 26 if compact else 28)
+    val_f = _font("semibold", 32 if compact else 36)
+    small_lbl_f = _font("regular", 24 if compact else 26)
+    loc_f = _font("regular", 30 if compact else 32)
+    chip_f = _font("regular", 26 if compact else 28)
+    contact_lbl_f = _font("regular", 24 if compact else 26)
+    contact_val_f = _font("semibold", 30 if compact else 34)
+    gap_sm = 8 if compact else 11
+    gap_md = 12 if compact else 16
+
+    def _room(need: int) -> bool:
+        return y + need <= info_bottom
 
     # ── Nickname (пристройство) ──
     if is_adoption and (pet_nickname or "").strip():
         nk = (pet_nickname or "").strip()
-        draw.text((x0, y), L["nickname"], font=lbl_f, fill=GRAY_400)
-        y += _lh(lbl_f) + 11
-        nick_lines = _wrap(nk, val_f, full_w, 2)
-        for ln in nick_lines:
-            draw.text((x0, y), ln, font=val_f, fill=DARK)
-            y += _lh(val_f) + 6
-        y += 18
+        need = _lh(lbl_f) + 11 + _lh(val_f) * min(2, len(nk) // 18 + 1) + 18
+        if _room(need):
+            draw.text((x0, y), L["nickname"], font=lbl_f, fill=GRAY_400)
+            y += _lh(lbl_f) + gap_sm
+            nick_lines = _wrap(nk, val_f, full_w, 1 if compact else 2)
+            for ln in nick_lines:
+                draw.text((x0, y), ln, font=val_f, fill=DARK)
+                y += _lh(val_f) + 4
+            y += gap_md
 
-    # ── Two-column row: Sex | Age ──
-    col_w = (full_w - 32) // 2
-    gender_val = _gender(gender, lang)
-    age_val = (str(approximate_age).strip() if approximate_age else "").strip()
+    # ── Sex | Age ──
+    if _room(_lh(lbl_f) + gap_sm + _lh(val_f) + gap_md):
+        col_w = (full_w - 32) // 2
+        gender_val = _gender(gender, lang)
+        age_val = (str(approximate_age).strip() if approximate_age else "").strip()
 
-    draw.text((x0, y), L["sex"], font=lbl_f, fill=GRAY_400)
-    draw.text((x0 + col_w + 32, y), L["age"], font=lbl_f, fill=GRAY_400)
-    y += _lh(lbl_f) + 10
-    draw.text((x0, y), gender_val, font=val_f, fill=DARK)
-    if age_val:
-        draw.text((x0 + col_w + 32, y), age_val, font=val_f, fill=DARK)
-    else:
-        draw.text((x0 + col_w + 32, y), "—", font=val_f, fill=GRAY_400)
-    y += _lh(val_f) + 20
+        draw.text((x0, y), L["sex"], font=lbl_f, fill=GRAY_400)
+        draw.text((x0 + col_w + 32, y), L["age"], font=lbl_f, fill=GRAY_400)
+        y += _lh(lbl_f) + gap_sm
+        draw.text((x0, y), gender_val, font=val_f, fill=DARK)
+        if age_val:
+            draw.text((x0 + col_w + 32, y), age_val, font=val_f, fill=DARK)
+        else:
+            draw.text((x0 + col_w + 32, y), "—", font=val_f, fill=GRAY_400)
+        y += _lh(val_f) + gap_md
 
-    # ── Coat (теги) ──
+    # ── Coat ──
     color_names = _color_labels(colors or [], lang)
     tag_texts = color_names if color_names else [L["not_specified"]]
-    draw.text((x0, y), L["coat"], font=lbl_f, fill=GRAY_400)
-    y += _lh(lbl_f) + 11
-    y = _draw_coat_tags(draw, x0, y, x1, tag_texts, chip_f)
+    coat_need = _lh(lbl_f) + gap_sm + 48 + 12
+    if _room(coat_need):
+        draw.text((x0, y), L["coat"], font=lbl_f, fill=GRAY_400)
+        y += _lh(lbl_f) + gap_sm
+        y = _draw_coat_tags(draw, x0, y, x1, tag_texts[:2], chip_f, compact=compact)
 
-    # ── Divider ──
-    draw.line([(x0, y), (x1, y)], fill=DIVIDER, width=1)
-    y += 20
+    # ── Location (не для карточек приюта — город в блоке приюта у QR) ──
+    if not is_adoption:
+        if _room(20):
+            draw.line([(x0, y), (x1, y)], fill=DIVIDER, width=1)
+            y += 14 if compact else 18
 
-    # ── Location ──
-    if is_adoption:
-        place_lbl = L["place_adoption"]
-    else:
         place_lbl = L["place_lost"] if is_lost else L["place_found"]
-    city_txt = city.strip() or L["not_specified"]
-    draw.text((x0, y), place_lbl, font=lbl_f, fill=GRAY_400)
-    y += _lh(lbl_f) + 11
+        city_txt = city.strip() or L["not_specified"]
+        loc_need = _lh(lbl_f) + gap_sm + _lh(loc_f) + 8
+        if _room(loc_need):
+            draw.text((x0, y), place_lbl, font=lbl_f, fill=GRAY_400)
+            y += _lh(lbl_f) + gap_sm
+            pin_r = 8
+            pin_cy = y + _lh(loc_f) // 2
+            draw.ellipse((x0, pin_cy - pin_r, x0 + pin_r * 2, pin_cy + pin_r), fill=BRAND_ORANGE)
+            max_lines = 2
+            loc_lines = _wrap(city_txt, loc_f, full_w - 36, max_lines)
+            loc_x = x0 + 28
+            for ln in loc_lines:
+                if not _room(_lh(loc_f) + 4):
+                    break
+                draw.text((loc_x, y), ln, font=loc_f, fill=GRAY_600)
+                y += _lh(loc_f) + 4
+            y += 6
 
-    pin_r = 8
-    pin_cy = y + _lh(loc_f) // 2
-    draw.ellipse((x0, pin_cy - pin_r, x0 + pin_r * 2, pin_cy + pin_r), fill=BRAND_ORANGE)
-    max_lines = 4 if card_format == "story" else 3
-    loc_lines = _wrap(city_txt, loc_f, full_w - 36, max_lines)
-    loc_x = x0 + 28
-    for ln in loc_lines:
-        draw.text((loc_x, y), ln, font=loc_f, fill=GRAY_600)
-        y += _lh(loc_f) + 6
-    y += 12
+    # ── Contacts ──
+    if _room(36) and not (compact and is_adoption):
+        if y < info_bottom - 36:
+            draw.line([(x0, y), (x1, y)], fill=DIVIDER, width=1)
+            y += 16
+        shown_contacts = 0
+        max_contacts = 2 if card_format == "feed" else 3
+        for key, lbl_key in [("phone", "phone"), ("telegram", "telegram"), ("viber", "viber")]:
+            if shown_contacts >= max_contacts:
+                break
+            raw = (str(contacts.get(key, "")).strip()) if contacts.get(key) else ""
+            if not raw:
+                continue
+            block_h = _lh(contact_lbl_f) + 7 + _lh(contact_val_f) + 8
+            if not _room(block_h):
+                break
+            draw.text((x0, y), L[lbl_key], font=contact_lbl_f, fill=GRAY_400)
+            y += _lh(contact_lbl_f) + 7
+            val_lines = _wrap(raw, contact_val_f, full_w, 1)
+            for ln in val_lines:
+                draw.text((x0, y), ln, font=contact_val_f, fill=DARK)
+                y += _lh(contact_val_f) + 4
+            y += 8
+            shown_contacts += 1
 
-    # ── Shelter (пристройство): отступ и разделитель перед блоком приюта ──
-    if is_adoption and (shelter_name or "").strip():
-        y += 18
-        draw.line([(x0, y), (x1, y)], fill=DIVIDER, width=1)
-        y += 22
+        if shown_contacts == 0 and not is_adoption and _room(_lh(small_lbl_f) + 4):
+            draw.text((x0, y), L["scan_qr"], font=small_lbl_f, fill=GRAY_400)
 
-    # ── Shelter: название и город ──
-    if is_adoption and (shelter_name or "").strip():
-        sn = (shelter_name or "").strip()
-        draw.text((x0, y), L["shelter_org"], font=lbl_f, fill=GRAY_400)
-        y += _lh(lbl_f) + 11
-        max_nm = 4 if card_format == "story" else 3
-        name_lines = _wrap(sn, loc_f, full_w - 36, max_nm)
-        for ln in name_lines:
-            draw.text((x0, y), ln, font=loc_f, fill=GRAY_600)
-            y += _lh(loc_f) + 6
-        sc = (shelter_city or "").strip()
-        if sc:
-            draw.text((x0, y), sc, font=small_lbl_f, fill=GRAY_400)
-            y += _lh(small_lbl_f) + 10
-        y += 14
-
-    # ── Divider ──
-    draw.line([(x0, y), (x1, y)], fill=DIVIDER, width=1)
-    y += 20
-
-    # ── Contacts + QR side by side ──
+    # ═══ 4. QR BAND ═══
     if is_adoption:
         qr_url = f"{site_url.rstrip('/')}/shelter-pet/{pet_id}"
     else:
         qr_url = f"{site_url.rstrip('/')}/pet/{pet_id}"
-
-    scan_f = _font("regular", 22)
-    scan_h = _lh(scan_f)
-    qr_border = 8
-    footer_gap = 12
-    min_qr = 176 if card_format == "feed" else 208
-    qr_right_pad = PAD + qr_border + 6
-    min_contact_w = 200
-
-    def _fit_qr_size() -> tuple[int, int, int]:
-        """Подбирает размер QR и X так, чтобы рамка и код не обрезались краем холста и футером."""
-        sz = qr_sz
-        vc = footer_y - y - 10 - scan_h - footer_gap
-        if vc >= min_qr:
-            sz = min(sz, vc)
-        else:
-            sz = min(sz, max(80, vc))
-        qx = W - qr_right_pad - sz
-        cw = qx - x0 - 28
-        if cw < min_contact_w and sz > 80:
-            need = min_contact_w - cw
-            sz = max(80, sz - need)
-            qx = W - qr_right_pad - sz
-        vc2 = footer_y - y - 10 - scan_h - footer_gap
-        if sz > vc2:
-            if vc2 >= min_qr:
-                sz = min(sz, vc2)
-            else:
-                sz = min(sz, max(80, vc2))
-            qx = W - qr_right_pad - sz
-        return sz, qx, max(100, qx - x0 - 28)
-
-    qr_sz, qr_x, contact_w = _fit_qr_size()
-    qr_img = _make_qr(qr_url, qr_sz)
-    qr_y = y
-
-    has_any = False
-    for key, lbl_key in [("phone", "phone"), ("telegram", "telegram"), ("viber", "viber")]:
-        raw = (str(contacts.get(key, "")).strip()) if contacts.get(key) else ""
-        if not raw:
-            continue
-        has_any = True
-        draw.text((x0, y), L[lbl_key], font=contact_lbl_f, fill=GRAY_400)
-        y += _lh(contact_lbl_f) + 7
-        val_lines = _wrap(raw, contact_val_f, contact_w, 2)
-        for ln in val_lines:
-            draw.text((x0, y), ln, font=contact_val_f, fill=DARK)
-            y += _lh(contact_val_f) + 4
-        y += 10
-
-    if not has_any and not is_adoption:
-        draw.text((x0, y), L["scan_qr"], font=small_lbl_f, fill=GRAY_400)
-
-    # QR code
-    draw.rounded_rectangle(
-        (qr_x - qr_border, qr_y - qr_border,
-         qr_x + qr_sz + qr_border, qr_y + qr_sz + qr_border),
-        radius=14, fill=BG_WHITE, outline=DIVIDER, width=1,
-    )
-    img.paste(qr_img, (qr_x, qr_y))
-
     scan_txt = L["qr_hint_adoption"] if is_adoption else L["scan_qr"]
-    scan_w = _tw(scan_f, scan_txt)
-    draw.text((qr_x + (qr_sz - scan_w) // 2, qr_y + qr_sz + 10),
-              scan_txt, font=scan_f, fill=GRAY_400)
+    _draw_qr_band(
+        img,
+        layout=layout,
+        band_top=qr_band_top,
+        qr_url=qr_url,
+        hint=scan_txt,
+        shelter_name=shelter_name,
+        shelter_city=shelter_city,
+        city=city,
+        labels=L if is_adoption else None,
+        adoption_panel=is_adoption,
+    )
 
-    # ═══ 4. FOOTER ═══
+    # ═══ 5. FOOTER ═══
+    draw = ImageDraw.Draw(img)
     draw.rectangle([(0, footer_y), (W, H)], fill=BRAND_ORANGE)
     footer_f = _font("bold", 36)
     site = L["site"]
     stw = _tw(footer_f, site)
-    draw.text(((W - stw) // 2, footer_y + (FOOTER_H - _lh(footer_f)) // 2),
-              site, font=footer_f, fill=WHITE)
+    draw.text(
+        ((W - stw) // 2, footer_y + (FOOTER_H - _lh(footer_f)) // 2),
+        site,
+        font=footer_f,
+        fill=WHITE,
+    )
 
     buf = io.BytesIO()
     if card_format == "story":

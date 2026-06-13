@@ -1,4 +1,4 @@
-import { MapPin, Clock } from "lucide-react";
+﻿import { MapPin, Clock } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { Button } from "./ui/button";
@@ -7,7 +7,7 @@ import { loadCatalogShelterPets } from "../../../utils/shelter-pet-browse";
 import { useI18n } from "../../../context/I18nContext";
 import type { Pet } from "../../../types/pet";
 import { formatRelativeTime, petStatusPhotoPillClass } from "../../../utils/pet-helpers";
-import { getRewardBadgeMeta } from "../../../components/reward-badge";
+import { RewardBadge, getRewardBadgeMeta } from "../../../components/reward-badge";
 import { FavoriteHeartButton } from "../../../components/favorite-heart-button";
 import { ShelterPetCard } from "../../../components/shelter-pet-card";
 import type { HomeMode } from "../App";
@@ -66,6 +66,7 @@ export function Announcements({ mode = "search" }: { mode?: HomeMode }) {
   const viewAllHref = isSheltersMode ? "/shelters?tab=pets" : "/search";
 
   const cards = pets.map((pet) => ({
+    pet,
     id: pet.id,
     type: isSheltersMode ? "adoption" : pet.status === "searching" ? "lost" : "found",
     petType: animalTypeLabels[pet.animalType] ?? pet.animalType,
@@ -74,7 +75,6 @@ export function Announcements({ mode = "search" }: { mode?: HomeMode }) {
     location: pet.city,
     time: formatRelativeTime(pet.publishedAt),
     image: pet.photos?.[0] || DEFAULT_PHOTO,
-    reward: getRewardBadgeMeta(pet),
   }));
 
   return (
@@ -124,7 +124,7 @@ export function Announcements({ mode = "search" }: { mode?: HomeMode }) {
                     <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
                     <div className="absolute left-3 right-3 top-3 flex items-start justify-between gap-2">
                       <span
-                        className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+                        className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${
                           announcement.type === "adoption"
                             ? "bg-emerald-500/90 text-white"
                             : petStatusPhotoPillClass[announcement.type === "lost" ? "searching" : "found"]
@@ -136,13 +136,12 @@ export function Announcements({ mode = "search" }: { mode?: HomeMode }) {
                             ? t.landing.announcements.lost
                             : t.landing.announcements.found}
                       </span>
-                      {announcement.reward && !isSheltersMode && (
-                        <span
-                          title={announcement.reward.tooltip}
-                          className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold shadow-sm ${announcement.reward.className.replace(" dark:bg-violet-900/30", " dark:bg-violet-900/85").replace(" dark:bg-amber-900/35", " dark:bg-amber-900/85")}`}
-                        >
-                          {announcement.reward.text}
-                        </span>
+                      {getRewardBadgeMeta(announcement.pet) && !isSheltersMode && (
+                        <RewardBadge
+                          pet={announcement.pet}
+                          compact
+                          className="rounded-full px-2.5 py-1 text-xs shadow-sm"
+                        />
                       )}
                     </div>
                   </div>

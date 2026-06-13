@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router";
+﻿import { useNavigate } from "react-router";
 import {
   QrCode,
   Zap,
@@ -31,21 +31,21 @@ export function PetsFeature() {
   const features = [
     {
       icon: QrCode,
-      boxClass: "bg-[#FDB913]",
+      boxClass: "bg-primary-light",
       iconClass: "text-black",
       title: p.features[0].title,
       desc: p.features[0].desc,
     },
     {
       icon: Zap,
-      boxClass: "bg-[#FF9800]",
+      boxClass: "bg-primary",
       iconClass: "text-white",
       title: p.features[1].title,
       desc: p.features[1].desc,
     },
     {
       icon: Shield,
-      boxClass: "bg-[#FDB913]",
+      boxClass: "bg-primary-light",
       iconClass: "text-black",
       title: p.features[2].title,
       desc: p.features[2].desc,
@@ -55,22 +55,22 @@ export function PetsFeature() {
   const steps = [
     {
       icon: UserPlus,
-      iconWrap: "bg-[#FDB913]/15",
-      iconClass: "text-[#FDB913]",
+      iconWrap: "bg-primary-light/15",
+      iconClass: "text-primary-light",
       title: p.steps[0].title,
       desc: p.steps[0].desc,
     },
     {
       icon: Download,
-      iconWrap: "bg-[#FF9800]/15",
-      iconClass: "text-[#FF9800]",
+      iconWrap: "bg-primary/15",
+      iconClass: "text-primary",
       title: p.steps[1].title,
       desc: p.steps[1].desc,
     },
     {
       icon: CircleCheckBig,
-      iconWrap: "bg-[#FDB913]/15",
-      iconClass: "text-[#FDB913]",
+      iconWrap: "bg-primary-light/15",
+      iconClass: "text-primary-light",
       title: p.steps[2].title,
       desc: p.steps[2].desc,
     },
@@ -79,7 +79,7 @@ export function PetsFeature() {
   return (
     <section
       id="pets-feature"
-      className={`${landingSectionY} scroll-mt-24 bg-gradient-to-br from-[#FDB913]/8 via-background to-[#FF9800]/10 dark:from-[#FDB913]/18 dark:via-[#15120f] dark:to-[#FF9800]/15`}
+      className={`${landingSectionY} scroll-mt-24 bg-gradient-to-br from-primary-light/8 via-background to-primary/10 dark:from-primary-light/18 dark:via-bg-landing-dark dark:to-primary/15`}
     >
       <div className={landingContainerNarrow}>
         <header className={landingSectionHeader}>
@@ -101,8 +101,8 @@ export function PetsFeature() {
                 decoding="async"
               />
             </div>
-            <div className="pointer-events-none absolute -top-4 -right-4 size-24 rounded-full bg-[#FDB913]/25 blur-2xl dark:bg-[#FDB913]/30" />
-            <div className="pointer-events-none absolute -bottom-4 -left-4 size-24 rounded-full bg-[#FF9800]/20 blur-2xl dark:bg-[#FF9800]/25" />
+            <div className="pointer-events-none absolute -top-4 -right-4 size-24 rounded-full bg-primary-light/25 blur-2xl dark:bg-primary-light/30" />
+            <div className="pointer-events-none absolute -bottom-4 -left-4 size-24 rounded-full bg-primary/20 blur-2xl dark:bg-primary/25" />
           </div>
 
           <div className="divide-y divide-border rounded-xl border border-border bg-card/80 backdrop-blur-[2px] shadow-sm">

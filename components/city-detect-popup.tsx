@@ -1,4 +1,4 @@
-import { MapPin } from 'lucide-react';
+﻿import { MapPin } from 'lucide-react';
 import { useScrollLock } from './ui/use-scroll-lock';
 import { useI18n } from '../context/I18nContext';
 
@@ -24,17 +24,17 @@ export function CityDetectPopup({ open, detectedCity, onConfirm, onReject }: Cit
           <MapPin className="w-7 h-7 text-primary" />
         </div>
 
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+        <h2 className="text-lg font-semibold text-foreground mb-1">
           {t.cityDetect.yourCity} {detectedCity}{t.cityDetect.question}
         </h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+        <p className="text-sm text-muted-foreground mb-6">
           {t.cityDetect.showAds}
         </p>
 
         <div className="flex gap-3">
           <button
             onClick={onReject}
-            className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-accent dark:hover:bg-accent rounded-lg transition-colors"
+            className="flex-1 px-4 py-2.5 text-sm font-medium text-foreground/90 bg-muted hover:bg-accent dark:hover:bg-accent rounded-lg transition-colors"
           >
             {t.cityDetect.no}
           </button>

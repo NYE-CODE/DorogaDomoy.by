@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+﻿import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router";
 import { Plus, QrCode, Edit, PawPrint, MoreVertical, AlertCircle, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
@@ -9,6 +9,7 @@ import { PageLoader } from "./ui/page-loader";
 import { EmptyState } from "./ui/empty-state";
 import { ConfirmDialog } from "./confirm-dialog";
 import { Button } from "./ui/button";
+import { appPrimaryCtaClass } from "@/shared/styles/cta-classes";
 
 export function MyPetsContent() {
   const { t } = useI18n();
@@ -74,7 +75,7 @@ export function MyPetsContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-background py-4 sm:py-8">
+    <div className="min-h-screen bg-muted/30 dark:bg-background py-4 sm:py-8">
       <ConfirmDialog
         open={!!deleteTarget}
         onOpenChange={(open) => {
@@ -90,19 +91,18 @@ export function MyPetsContent() {
         confirmClass="bg-red-600 hover:bg-red-700 text-white disabled:opacity-60"
       />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
+      <div className="page-container">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 page-header-block">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-black dark:text-white mb-2">{mp.title}</h1>
-            <p className="text-sm sm:text-base text-gray-600 dark:text-muted-foreground">{mp.subtitle}</p>
+            <h1 className="typo-h1 mb-2">{mp.title}</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">{mp.subtitle}</p>
           </div>
-          <Link
-            to="/my-pets/add"
-            className="bg-[#FF9800] text-white hover:bg-[#F57C00] rounded-lg px-6 h-12 flex items-center gap-2 text-lg transition-colors whitespace-nowrap shadow-sm"
-          >
-            <Plus size={20} />
-            <span>{mp.addPet}</span>
-          </Link>
+          <Button className={appPrimaryCtaClass} asChild>
+            <Link to="/my-pets/add">
+              <Plus size={20} />
+              <span>{mp.addPet}</span>
+            </Link>
+          </Button>
         </div>
 
         {loadError ? (
@@ -177,7 +177,7 @@ function PetCard({
   };
 }) {
   return (
-    <div className="bg-white dark:bg-card rounded-2xl shadow-sm hover:shadow-md transition-all border border-gray-200 dark:border-border overflow-hidden group relative">
+    <div className="bg-white dark:bg-card rounded-2xl shadow-sm hover:shadow-md transition-all border border-border overflow-hidden group relative">
       <div className="absolute top-3 right-3 z-10 pet-card-menu">
         <button
           type="button"
@@ -190,39 +190,39 @@ function PetCard({
           aria-expanded={openMenuId === pet.id}
           aria-label={labels.menuAria}
         >
-          <MoreVertical size={18} className="text-gray-600 dark:text-muted-foreground" />
+          <MoreVertical size={18} className="text-muted-foreground" />
         </button>
 
         {openMenuId === pet.id && (
-          <div className="absolute right-0 mt-1 w-52 bg-white dark:bg-card rounded-lg shadow-lg border border-gray-200 dark:border-border py-1 z-20">
+          <div className="absolute right-0 mt-1 w-52 bg-white dark:bg-card rounded-lg shadow-lg border border-border py-1 z-20">
             <button
               type="button"
-              className="flex w-full items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-muted transition-colors text-sm text-left"
+              className="flex w-full items-center gap-3 px-4 py-2.5 hover:bg-muted/50 transition-colors text-sm text-left"
               onClick={() => {
                 setOpenMenuId(null);
                 window.open(`/pet-profile/${encodeURIComponent(pet.id)}`, "_blank", "noopener,noreferrer");
               }}
             >
-              <QrCode size={16} className="text-gray-600 dark:text-muted-foreground shrink-0" />
-              <span className="text-gray-700 dark:text-foreground">{labels.menuQr}</span>
+              <QrCode size={16} className="text-muted-foreground shrink-0" />
+              <span className="text-foreground/90 dark:text-foreground">{labels.menuQr}</span>
             </button>
             <Link
               to={`/my-pets/${pet.id}/edit`}
-              className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-muted transition-colors text-sm"
+              className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/50 transition-colors text-sm"
               onClick={() => setOpenMenuId(null)}
             >
-              <Edit size={16} className="text-gray-600 dark:text-muted-foreground" />
-              <span className="text-gray-700 dark:text-foreground">{labels.menuEdit}</span>
+              <Edit size={16} className="text-muted-foreground" />
+              <span className="text-foreground/90 dark:text-foreground">{labels.menuEdit}</span>
             </Link>
             <Link
               to={`/create?petId=${encodeURIComponent(pet.id)}`}
-              className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-muted transition-colors text-sm"
+              className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/50 transition-colors text-sm"
               onClick={() => setOpenMenuId(null)}
             >
-              <AlertCircle size={16} className="text-gray-600 dark:text-muted-foreground" />
-              <span className="text-gray-700 dark:text-foreground">{labels.menuCreateAd}</span>
+              <AlertCircle size={16} className="text-muted-foreground" />
+              <span className="text-foreground/90 dark:text-foreground">{labels.menuCreateAd}</span>
             </Link>
-            <div className="border-t border-gray-100 dark:border-border mt-1 pt-1">
+            <div className="border-t border-border/60 mt-1 pt-1">
               <button
                 type="button"
                 className="flex w-full items-center gap-3 px-4 py-2.5 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors text-sm text-left text-red-600 dark:text-red-400"
@@ -242,7 +242,7 @@ function PetCard({
       </div>
 
       <Link to={`/my-pets/${pet.id}`}>
-        <div className="aspect-square overflow-hidden bg-gray-100 relative">
+        <div className="aspect-square overflow-hidden bg-muted relative">
           {pet.photo ? (
             <img
               src={pet.photo}
@@ -255,14 +255,14 @@ function PetCard({
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
-              <PawPrint size={48} className="text-gray-300 dark:text-muted-foreground/60" />
+              <PawPrint size={48} className="text-muted-foreground/50 dark:text-muted-foreground/60" />
             </div>
           )}
         </div>
 
         <div className="p-4">
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-0.5 transition-colors">{pet.name}</h3>
-          <p className="text-sm text-gray-500 dark:text-muted-foreground">
+          <h3 className="typo-h1 mb-0.5 transition-colors">{pet.name}</h3>
+          <p className="text-sm text-muted-foreground">
             {pet.subtitle}
           </p>
         </div>

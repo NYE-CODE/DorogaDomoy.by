@@ -1,0 +1,7 @@
+.overlay {
+  background: rgb(0 0 0 / 50%);
+}
+
+.content {
+  box-shadow: var(--elevation-300);
+}

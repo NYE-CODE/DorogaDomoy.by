@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router';
 import { ArrowLeft, Building2, Home, Search, History } from 'lucide-react';
 import { useI18n } from '../../context/I18nContext';
 import { getHomePath } from '../../utils/home-route';
+import { useClickOutside } from '@/shared/hooks/useClickOutside';
 
 const PREV_ROUTE_KEY = 'dd_previous_path';
 
@@ -10,24 +11,53 @@ function isPrimaryRoute(path: string): boolean {
   return path === '/search' || path === '/shelters' || path === '/shelters/';
 }
 
-function routeLabel(path: string, fallback: string): string {
-  if (path === '/') return 'Главная';
-  if (path === '/search') return 'Поиск';
-  if (path === '/shelters' || path === '/shelters/') return 'Приюты';
-  if (path.startsWith('/shelters/')) return 'Страница приюта';
-  if (path.startsWith('/pet/')) return 'Объявление';
-  if (path.startsWith('/shelter-pet/')) return 'Питомец приюта';
-  if (path.startsWith('/blog/')) return 'Статья блога';
-  if (path === '/blog') return 'Блог';
-  if (path === '/favorites') return 'Избранное';
-  if (path === '/profile') return 'Профиль';
-  return fallback;
+function routeLabel(path: string, labels: {
+  home: string;
+  search: string;
+  shelters: string;
+  shelterPage: string;
+  adListing: string;
+  shelterPet: string;
+  blog: string;
+  blogPost: string;
+  favorites: string;
+  profile: string;
+  fallback: string;
+}): string {
+  if (path === '/') return labels.home;
+  if (path === '/search') return labels.search;
+  if (path === '/shelters' || path === '/shelters/') return labels.shelters;
+  if (path.startsWith('/shelters/')) return labels.shelterPage;
+  if (path.startsWith('/pet/')) return labels.adListing;
+  if (path.startsWith('/shelter-pet/')) return labels.shelterPet;
+  if (path.startsWith('/blog/')) return labels.blogPost;
+  if (path === '/blog') return labels.blog;
+  if (path === '/favorites') return labels.favorites;
+  if (path === '/profile') return labels.profile;
+  return labels.fallback;
 }
 
 export function BackQuickMenu() {
   const navigate = useNavigate();
   const { pathname, search } = useLocation();
   const { t } = useI18n();
+  const bqm = t.backQuickMenu;
+  const routeLabels = useMemo(
+    () => ({
+      home: t.common.home,
+      search: t.common.search,
+      shelters: t.header.shelters,
+      shelterPage: bqm.shelterPage,
+      adListing: bqm.adListing,
+      shelterPet: bqm.shelterPet,
+      blog: t.header.blog,
+      blogPost: bqm.blogPost,
+      favorites: t.header.favorites,
+      profile: t.header.profile,
+      fallback: t.common.back,
+    }),
+    [t, bqm],
+  );
   const [open, setOpen] = useState(false);
   const [previousPath, setPreviousPath] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
@@ -37,19 +67,7 @@ export function BackQuickMenu() {
     setPreviousPath(saved);
   }, [pathname, search]);
 
-  useEffect(() => {
-    const onOutside = (event: MouseEvent | TouchEvent) => {
-      if (!ref.current) return;
-      if (!ref.current.contains(event.target as Node)) setOpen(false);
-    };
-    if (!open) return;
-    document.addEventListener('mousedown', onOutside);
-    document.addEventListener('touchstart', onOutside);
-    return () => {
-      document.removeEventListener('mousedown', onOutside);
-      document.removeEventListener('touchstart', onOutside);
-    };
-  }, [open]);
+  useClickOutside(ref, () => setOpen(false), open);
 
   const current = `${pathname}${search}`;
   const canShowPrevious = useMemo(() => {
@@ -63,12 +81,12 @@ export function BackQuickMenu() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="rounded-lg p-2 transition-colors hover:bg-gray-100 dark:hover:bg-muted"
+        className="rounded-lg p-2 transition-[background-color] duration-150 ease-in-out hover:bg-muted focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
         aria-label={t.common.back}
         aria-expanded={open}
         aria-haspopup="menu"
       >
-        <ArrowLeft className="size-6 text-gray-600 dark:text-muted-foreground" />
+        <ArrowLeft className="size-6 text-muted-foreground" />
       </button>
 
       {open && (
@@ -82,7 +100,7 @@ export function BackQuickMenu() {
             className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-foreground transition-colors hover:bg-muted"
           >
             <Home size={17} />
-            <span>Главная</span>
+            <span>{t.common.home}</span>
           </button>
           <button
             type="button"
@@ -118,7 +136,7 @@ export function BackQuickMenu() {
                 className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-foreground transition-colors hover:bg-muted"
               >
                 <History size={17} />
-                <span>Назад</span>
+                <span>{routeLabel(previousPath.split('?')[0] || previousPath, routeLabels)}</span>
               </button>
             </>
           ) : null}

@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useLayoutEffect } from 'react';
+﻿import { useState, useRef, useCallback, useLayoutEffect } from 'react';
 
 /** Минимальная высота: ручка + заголовок (можно опустить вниз) */
 const COLLAPSED_HEIGHT = 96;
@@ -159,7 +159,7 @@ export function MobileListSheet({ header, children }: MobileListSheetProps) {
   return (
     <div
       ref={rootRef}
-      className="absolute inset-x-0 z-30 flex flex-col bg-card border-t border-gray-200 dark:border-gray-700 rounded-t-2xl shadow-lg overflow-hidden"
+      className="absolute inset-x-0 z-30 flex flex-col bg-card border-t border-border rounded-t-2xl shadow-lg overflow-hidden"
       style={{
         height: `${height}px`,
         bottom: bottomReserve || 0,
@@ -182,7 +182,7 @@ export function MobileListSheet({ header, children }: MobileListSheetProps) {
       >
         <div className="shrink-0 w-full" style={{ height: HANDLE_SPACER }} aria-hidden />
         <div className="shrink-0 pb-1 flex justify-center">
-          <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-gray-600" aria-hidden />
+          <div className="w-10 h-1 rounded-full bg-muted dark:bg-muted/80" aria-hidden />
         </div>
       </div>
       <div

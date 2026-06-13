@@ -1,0 +1,100 @@
+/**
+ * Layout utility-классы.
+ * Подключено через globals.css.
+ */
+
+@layer components {
+  .page-container,
+  .page-container-medium,
+  .page-container-narrow,
+  .page-container-readable {
+    width: 100%;
+    margin-inline: auto;
+    padding-inline: var(--page-padding-x);
+  }
+
+  @media (min-width: 640px) {
+    .page-container,
+    .page-container-medium,
+    .page-container-narrow,
+    .page-container-readable {
+      padding-inline: var(--page-padding-x-sm);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .page-container,
+    .page-container-medium,
+    .page-container-narrow,
+    .page-container-readable {
+      padding-inline: var(--page-padding-x-lg);
+    }
+  }
+
+  .page-container {
+    max-width: var(--content-max-width);
+  }
+
+  .page-container-medium {
+    max-width: var(--content-max-width-medium);
+  }
+
+  .page-container-narrow {
+    max-width: var(--content-max-width-narrow);
+  }
+
+  .page-container-readable {
+    max-width: var(--content-max-width-readable);
+  }
+
+  /** Вертикальные отступы типовой секции приложения. */
+  .page-section-y {
+    padding-block: var(--section-y);
+  }
+
+  @media (min-width: 768px) {
+    .page-section-y {
+      padding-block: var(--section-y-lg);
+    }
+  }
+
+  /** Лендинг: стандартная секция (64 → 80px). */
+  .landing-section-y {
+    padding-block: var(--space-16);
+  }
+
+  @media (min-width: 768px) {
+    .landing-section-y {
+      padding-block: var(--space-20);
+    }
+  }
+
+  /** Лендинг: hero (64 → 96px). */
+  .landing-hero-y {
+    padding-block: var(--space-16);
+  }
+
+  @media (min-width: 768px) {
+    .landing-hero-y {
+      padding-block: var(--space-24);
+    }
+  }
+
+  /** Стек блоков на странице — gap 24px. */
+  .page-stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--section-gap);
+  }
+
+  /** Отступ под page header (title + lead). */
+  .page-header-block {
+    margin-bottom: var(--space-6);
+  }
+
+  @media (min-width: 640px) {
+    .page-header-block {
+      margin-bottom: var(--space-8);
+    }
+  }
+}
