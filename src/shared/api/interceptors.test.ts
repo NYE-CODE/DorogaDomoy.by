@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { createApiError, formatApiErrorBody } from '@/shared/api/interceptors';
+import { LEGACY_TOKEN_KEY } from '@/shared/api/base';
+import { clearLegacyToken, createApiError, formatApiErrorBody } from '@/shared/api/interceptors';
 
 describe('formatApiErrorBody', () => {
   it('extracts string detail', () => {
@@ -19,12 +20,22 @@ describe('formatApiErrorBody', () => {
 
 describe('createApiError', () => {
   it('maps 401 to session message', () => {
+    localStorage.setItem(LEGACY_TOKEN_KEY, 'legacy');
     const err = createApiError({ status: 401, statusText: 'Unauthorized', body: {} });
     expect(err.message).toBe('Сессия истекла');
+    expect(localStorage.getItem(LEGACY_TOKEN_KEY)).toBeNull();
   });
 
   it('maps 413 to payload size message', () => {
     const err = createApiError({ status: 413, statusText: 'Payload Too Large', body: {} });
     expect(err.message).toContain('большой размер');
+  });
+});
+
+describe('clearLegacyToken', () => {
+  it('removes legacy key without throwing', () => {
+    localStorage.setItem(LEGACY_TOKEN_KEY, 'legacy');
+    expect(() => clearLegacyToken()).not.toThrow();
+    expect(localStorage.getItem(LEGACY_TOKEN_KEY)).toBeNull();
   });
 });

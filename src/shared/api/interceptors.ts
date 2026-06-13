@@ -2,8 +2,12 @@ import { LEGACY_TOKEN_KEY } from '@/shared/api/base';
 
 /** Удаляет legacy JWT из localStorage (до cookie-only auth). */
 export function clearLegacyToken(): void {
-  if (typeof window === 'undefined') return;
-  localStorage.removeItem(LEGACY_TOKEN_KEY);
+  if (typeof localStorage === 'undefined') return;
+  try {
+    localStorage.removeItem(LEGACY_TOKEN_KEY);
+  } catch {
+    /* quota / private mode — не должно ломать login/logout после 200 */
+  }
 }
 
 /** Сообщение для UI из тела ошибки FastAPI без утечки полного JSON. */

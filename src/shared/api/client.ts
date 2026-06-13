@@ -11,7 +11,12 @@ import type { Pet } from '@/entities/pet/model/types';
 import type { User } from '@/entities/user/model/types';
 import type { Report, ReportReason } from '@/entities/admin/model/types';
 import { API_BASE, API_V1_BASE } from '@/shared/api/base';
-import { createApiError, logApiError } from '@/shared/api/interceptors';
+import {
+  clearLegacyToken,
+  createApiError,
+  formatApiErrorBody,
+  logApiError,
+} from '@/shared/api/interceptors';
 
 export { API_BASE, API_V1_BASE } from '@/shared/api/base';
 
@@ -40,6 +45,33 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
 
   if (res.status === 204) return undefined as T;
   return res.json();
+}
+
+/** Загрузка multipart/form-data с cookie-сессией и единой обработкой 401/413. */
+async function uploadMultipart(
+  path: string,
+  file: File,
+  opts?: { field?: string; tooLargeMessage?: string; errorFallback?: string },
+): Promise<Response> {
+  const formData = new FormData();
+  formData.append(opts?.field ?? 'file', file);
+  const res = await fetch(`${API_V1_BASE}${path}`, {
+    method: 'POST',
+    credentials: 'include',
+    body: formData,
+  });
+  if (res.status === 401) {
+    clearLegacyToken();
+    throw new Error('Сессия истекла');
+  }
+  if (res.status === 413 && opts?.tooLargeMessage) {
+    throw new Error(opts.tooLargeMessage);
+  }
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(formatApiErrorBody(err, opts?.errorFallback ?? `Ошибка загрузки (${res.status})`));
+  }
+  return res;
 }
 
 // --- Auth ---
@@ -93,6 +125,11 @@ function toUser(u: UserResponse): User {
   };
 }
 
+function userFromTokenResponse(r: TokenResponse): User {
+  clearLegacyToken();
+  return toUser(r.user);
+}
+
 export interface AuthPublicConfig {
   telegram_bot_username?: string | null;
   telegram_login_enabled: boolean;
@@ -115,10 +152,7 @@ export const authApi = {
     api<TokenResponse>('/auth/telegram/login', {
       method: 'POST',
       body: JSON.stringify(payload),
-    }).then((r) => {
-      clearLegacyToken();
-      return toUser(r.user);
-    }),
+    }).then(userFromTokenResponse),
 
   completeProfile: (data: { email: string; role: 'user' | 'volunteer'; password?: string }) =>
     api<UserResponse>('/auth/complete-profile', {
@@ -148,10 +182,7 @@ export const authApi = {
     api<TokenResponse>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
-    }).then((r) => {
-      clearLegacyToken();
-      return toUser(r.user);
-    }),
+    }).then(userFromTokenResponse),
 
   register: (
     email: string,
@@ -163,10 +194,7 @@ export const authApi = {
     api<TokenResponse>('/auth/register', {
       method: 'POST',
       body: JSON.stringify({ email, name, password, contacts, role: signupRole }),
-    }).then((r) => {
-      clearLegacyToken();
-      return toUser(r.user);
-    }),
+    }).then(userFromTokenResponse),
 
   me: () => api<UserResponse>('/auth/me').then(toUser),
 
@@ -189,30 +217,18 @@ export const authApi = {
     }),
 
   uploadAvatar: async (file: File) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    const res = await fetch(`${API_V1_BASE}/auth/avatar-upload`, {
-      method: 'POST',
-      credentials: 'include',
-      body: formData,
+    const res = await uploadMultipart('/auth/avatar-upload', file, {
+      errorFallback: 'Не удалось загрузить аватар',
     });
-    if (res.status === 401) {
-      clearLegacyToken();
-      throw new Error('Сессия истекла');
-    }
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ detail: res.statusText }));
-      throw new Error(
-        formatApiErrorBody(err, `Не удалось загрузить аватар (${res.status})`)
-      );
-    }
-    const data = await res.json();
-    return data.avatar as string;
+    const data = (await res.json()) as { avatar: string };
+    return data.avatar;
   },
 
   logout: async () => {
     try {
       await api<void>('/auth/logout', { method: 'POST' });
+    } catch {
+      /* Локальный выход важнее: cookie могла уже сброситься или сеть недоступна. */
     } finally {
       clearLegacyToken();
     }
@@ -1335,27 +1351,11 @@ export const profilePetsApi = {
     }).then(resolveProfilePetPhotos),
 
   uploadPhoto: async (file: File) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    const res = await fetch(`${API_V1_BASE}/profile-pets/upload-photo`, {
-      method: 'POST',
-      credentials: 'include',
-      body: formData,
+    const res = await uploadMultipart('/profile-pets/upload-photo', file, {
+      tooLargeMessage: 'Файл слишком большой. Уменьшите фото и попробуйте снова.',
+      errorFallback: 'Не удалось загрузить фото',
     });
-    if (res.status === 401) {
-      clearLegacyToken();
-      throw new Error('Сессия истекла');
-    }
-    if (res.status === 413) {
-      throw new Error('Файл слишком большой. Уменьшите фото и попробуйте снова.');
-    }
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ detail: res.statusText }));
-      throw new Error(
-        formatApiErrorBody(err, `Не удалось загрузить фото (${res.status})`)
-      );
-    }
-    const data = await res.json() as { photo: string };
+    const data = (await res.json()) as { photo: string };
     return resolvePhotoUrl(data.photo);
   },
 
