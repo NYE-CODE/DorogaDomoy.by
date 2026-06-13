@@ -264,8 +264,8 @@ export default function ShelterPetDetailPage() {
       if (s === 'not_for_adoption') return t.myShelterPetsList.statusNotForAdoption;
       return t.myShelterPetsList.statusAvailable;
     })();
-    const title = `${pet.name?.trim() || pet.breed || t.pet.animalType[pet.animalType]} ? ??????? ??????`;
-    const description = `${adoptionSeo} � ${pet.city}. ???????? ??????? ?? ?????? ?? DorogaDomoy.by`;
+    const title = `${pet.name?.trim() || pet.breed || t.pet.animalType[pet.animalType]} — ищет дом`;
+    const description = `${adoptionSeo} · ${pet.city}. Узнайте больше о питомце на DorogaDomoy.by`;
     applySeo({
       title,
       description,
@@ -517,7 +517,7 @@ export default function ShelterPetDetailPage() {
               : 'text-muted-foreground hover:bg-muted',
           )}
         >
-          ????
+          Сбор
         </button>
         <button
           type="button"
@@ -529,15 +529,15 @@ export default function ShelterPetDetailPage() {
               : 'text-muted-foreground hover:bg-muted',
           )}
         >
-          ??????? ?????
+          История сборов
         </button>
       </div>
 
       {showCampaign ? (
         <div>
-          <h2 className="typo-h2">???? ???????</h2>
+          <h2 className="typo-h2">Текущий сбор</h2>
           {campaignsLoading ? (
-            <p className="mt-3 text-sm text-muted-foreground">????????? ?????...</p>
+            <p className="mt-3 text-sm text-muted-foreground">Загрузка сбора...</p>
           ) : currentCampaign ? (
             <div className="mt-4 space-y-4 rounded-xl border border-border/70 bg-muted/20 p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
@@ -547,43 +547,43 @@ export default function ShelterPetDetailPage() {
                     <p className="mt-1 text-sm text-muted-foreground">{currentCampaign.description}</p>
                   ) : null}
                 </div>
-                <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">???????</span>
+                <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">Активный</span>
               </div>
               <div className="grid gap-2 text-sm sm:grid-cols-3">
-                <p><span className="text-muted-foreground">????: </span>{currentCampaign.goal_amount} BYN</p>
-                <p><span className="text-muted-foreground">???????: </span>{currentCampaign.collected_amount} BYN</p>
-                <p><span className="text-muted-foreground">????????: </span>{progressPercent}%</p>
+                <p><span className="text-muted-foreground">Цель: </span>{currentCampaign.goal_amount} BYN</p>
+                <p><span className="text-muted-foreground">Собрано: </span>{currentCampaign.collected_amount} BYN</p>
+                <p><span className="text-muted-foreground">Прогресс: </span>{progressPercent}%</p>
               </div>
               <p className="text-xs text-muted-foreground">
-                ?????????: {formatCalendarDate(new Date(currentCampaign.updated_at))}
+                Обновлено: {formatCalendarDate(new Date(currentCampaign.updated_at))}
               </p>
               <div className="h-2 rounded-full bg-muted">
                 <div className="h-2 rounded-full bg-primary transition-all" style={{ width: `${progressPercent}%` }} />
               </div>
               {hasValidCurrentCampaignEndsAt && currentCampaignEndsAt ? (
                 <p className="text-xs text-muted-foreground">
-                  ????: ?? {formatCalendarDate(currentCampaignEndsAt)}
+                  Срок: до {formatCalendarDate(currentCampaignEndsAt)}
                 </p>
               ) : null}
               <Button type="button" variant="outline" onClick={() => setShowHelpDetails((v) => !v)}>
-                {showHelpDetails ? '?????? ?????????' : '??? ??????'}
+                {showHelpDetails ? 'Скрыть реквизиты' : 'Как помочь'}
               </Button>
               {showHelpDetails ? (
                 <div className="rounded-lg border border-border bg-background p-3 text-sm whitespace-pre-line">
-                  {currentCampaign.help_details?.trim() || '????? ???? ?? ??????? ?????????? ?? ????????.'}
+                  {currentCampaign.help_details?.trim() || 'Реквизиты пока не указаны организацией.'}
                 </div>
               ) : null}
             </div>
           ) : (
             <div className="mt-3 space-y-3">
-              <p className="text-muted-foreground">????????? ????? ???? ???.</p>
+              <p className="text-muted-foreground">Активного сбора пока нет.</p>
             </div>
           )}
         </div>
       ) : null}
       {showHistory ? (
         <div>
-          <h2 className="typo-h2">??????? ??????</h2>
+          <h2 className="typo-h2">История сборов</h2>
           {historyCampaigns.length === 0 ? (
             <p className="mt-3 text-muted-foreground">
               {t.petDetail.shelterCampaignHistoryEmpty}
@@ -594,14 +594,14 @@ export default function ShelterPetDetailPage() {
                 <div key={item.id} className="rounded-xl border border-border/70 p-4">
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <p className="font-medium">{item.title}</p>
-                    <span className="text-xs text-muted-foreground">????????</span>
+                    <span className="text-xs text-muted-foreground">Завершён</span>
                   </div>
                   <p className="mt-1 text-sm text-muted-foreground">
                     {item.collected_amount} / {item.goal_amount} BYN
                   </p>
                   {item.close_reason ? (
                     <p className="mt-1 text-xs text-muted-foreground">
-                      ???????: {item.close_reason}
+                      Причина: {item.close_reason}
                     </p>
                   ) : null}
                 </div>
@@ -622,7 +622,7 @@ export default function ShelterPetDetailPage() {
           onClick={goPrev}
           disabled={!canPrev}
           className="fixed left-2 top-[42%] z-30 hidden size-10 -translate-y-1/2 items-center justify-center rounded-full border border-border/70 bg-background/85 text-muted-foreground shadow-sm backdrop-blur-sm transition hover:border-border hover:bg-muted/80 hover:text-foreground disabled:pointer-events-none disabled:opacity-25 lg:inline-flex"
-          aria-label="?????????? ???????"
+          aria-label={t.nav.prevPet}
         >
           <ChevronLeft className="size-5" />
         </button>
@@ -631,7 +631,7 @@ export default function ShelterPetDetailPage() {
           onClick={goNext}
           disabled={!canNext}
           className="fixed right-2 top-[42%] z-30 hidden size-10 -translate-y-1/2 items-center justify-center rounded-full border border-border/70 bg-background/85 text-muted-foreground shadow-sm backdrop-blur-sm transition hover:border-border hover:bg-muted/80 hover:text-foreground disabled:pointer-events-none disabled:opacity-25 lg:inline-flex"
-          aria-label="????????? ???????"
+          aria-label={t.nav.nextPet}
         >
           <ChevronRight className="size-5" />
         </button>
@@ -652,7 +652,7 @@ export default function ShelterPetDetailPage() {
                 {heroPhoto ? (
                   <img src={heroPhoto} alt={title} className="block size-full max-h-full object-cover" />
                 ) : (
-                  <div className="flex size-full items-center justify-center text-muted-foreground">??? ????</div>
+                  <div className="flex size-full items-center justify-center text-muted-foreground">{t.match.card.noPhoto}</div>
                 )}
                 {canSlide ? (
                   <>
@@ -660,7 +660,7 @@ export default function ShelterPetDetailPage() {
                       type="button"
                       onClick={() => setPhotoIndex((p) => (p - 1 + photos.length) % photos.length)}
                       className="absolute left-3 top-1/2 z-10 inline-flex size-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/40 bg-black/30 text-white backdrop-blur-sm hover:bg-black/45"
-                      aria-label="?????????? ????"
+                      aria-label={t.match.card.photoPrev}
                     >
                       <ChevronLeft className="size-5" />
                     </button>
@@ -668,7 +668,7 @@ export default function ShelterPetDetailPage() {
                       type="button"
                       onClick={() => setPhotoIndex((p) => (p + 1) % photos.length)}
                       className="absolute right-3 top-1/2 z-10 inline-flex size-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/40 bg-black/30 text-white backdrop-blur-sm hover:bg-black/45"
-                      aria-label="????????? ????"
+                      aria-label={t.match.card.photoNext}
                     >
                       <ChevronRight className="size-5" />
                     </button>
@@ -691,7 +691,7 @@ export default function ShelterPetDetailPage() {
                         'h-16 w-16 shrink-0 overflow-hidden rounded-lg border transition-colors',
                         idx === photoIndex ? 'border-primary' : 'border-border hover:border-primary/60',
                       )}
-                      aria-label={`???? ${idx + 1}`}
+                      aria-label={t.shelterPet.photoAlt.replace('{name}', title).replace('{n}', String(idx + 1))}
                     >
                       <img
                         src={photo}
@@ -717,7 +717,7 @@ export default function ShelterPetDetailPage() {
             <div
               className="flex gap-1 rounded-xl border border-border bg-background p-1 lg:hidden"
               role="tablist"
-              aria-label="??????? ??????? ???????"
+              aria-label="Разделы карточки питомца"
             >
               <button
                 type="button"
@@ -731,7 +731,7 @@ export default function ShelterPetDetailPage() {
                     : 'text-muted-foreground hover:bg-muted',
                 )}
               >
-                ? ???????
+                О питомце
               </button>
               <button
                 type="button"
@@ -745,7 +745,7 @@ export default function ShelterPetDetailPage() {
                     : 'text-muted-foreground hover:bg-muted',
                 )}
               >
-                ????
+                Сбор
               </button>
               <button
                 type="button"
@@ -759,7 +759,7 @@ export default function ShelterPetDetailPage() {
                     : 'text-muted-foreground hover:bg-muted',
                 )}
               >
-                ??????? ?????
+                История сборов
               </button>
             </div>
 
@@ -770,7 +770,7 @@ export default function ShelterPetDetailPage() {
                 !showAbout && 'hidden',
               )}
             >
-                <h2 className="typo-h2 mb-4 max-lg:hidden">? ???????</h2>
+                <h2 className="typo-h2 mb-4 max-lg:hidden">О питомце</h2>
                 <div className="space-y-3 text-sm">
                   <h1 className="typo-h1">{title}</h1>
                   <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
@@ -780,7 +780,7 @@ export default function ShelterPetDetailPage() {
                     </div>
                     <div
                       className="flex shrink-0 items-center gap-2.5"
-                      aria-label={`${t.pet.genderLabel}: ${t.pet.gender[pet.gender]}. ????????: ${health}`}
+                      aria-label={`${t.pet.genderLabel}: ${t.pet.gender[pet.gender]}. Здоровье: ${health}`}
                     >
                       <span
                         title={`${t.pet.genderLabel}: ${t.pet.gender[pet.gender]}`}
@@ -788,7 +788,7 @@ export default function ShelterPetDetailPage() {
                       >
                         <ShelterPetGenderGlyph gender={pet.gender} />
                       </span>
-                      <span title={`????????: ${health}`} className="inline-flex text-rose-500">
+                      <span title={`Здоровье: ${health}`} className="inline-flex text-rose-500">
                         <ShelterPetHealthGlyph healthStatus={pet.healthStatus} clipId={treatmentClipId} />
                       </span>
                     </div>
@@ -815,7 +815,7 @@ export default function ShelterPetDetailPage() {
                   <p><span className="text-muted-foreground">{t.pet.breedLabel}: </span>{pet.breed?.trim() || '?'}</p>
                   <p><span className="text-muted-foreground">{t.pet.colorLabel}: </span>{colors}</p>
                   <p><span className="text-muted-foreground">{t.pet.ageLabel}: </span>{pet.approximateAge?.trim() || '?'}</p>
-                  <p><span className="text-muted-foreground">??????: </span>{coat}</p>
+                  <p><span className="text-muted-foreground">Шерсть: </span>{coat}</p>
                   <ShelterPetTraits pet={pet} className="mt-3" />
                   <div className="border-t border-border pt-3 text-muted-foreground">
                     <p className="inline-flex items-start gap-2">
@@ -950,7 +950,7 @@ export default function ShelterPetDetailPage() {
             </div>
 
             <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-              <h2 className="typo-h2 mb-4">????????</h2>
+              <h2 className="typo-h2 mb-4">{t.landing.shelters.detailContacts}</h2>
               {shelter ? (
                 <div className="mb-4 rounded-xl border border-border/70 bg-muted/30 p-3 text-sm">
                   <div className="flex gap-3">
@@ -975,7 +975,7 @@ export default function ShelterPetDetailPage() {
                         to={`/shelters/${shelter.id}`}
                         className="inline-flex items-center gap-1 font-medium text-primary hover:text-primary/80"
                       >
-                        ???????? ??????
+                        {t.backQuickMenu.shelterPage}
                       </Link>
                     </div>
                   </div>
@@ -1018,7 +1018,7 @@ export default function ShelterPetDetailPage() {
                   <Button className={cn(appOutlineCtaClass, 'w-full')} asChild>
                     <a href={displayWebsiteUrl} target="_blank" rel="noopener noreferrer">
                       <Globe className="size-5" />
-                      ???? ??????
+                      Открыть сайт
                     </a>
                   </Button>
                 ) : null}
@@ -1026,14 +1026,14 @@ export default function ShelterPetDetailPage() {
                   <p className="text-sm text-muted-foreground">
                     {shelter ? (
                       <>
-                        ? ???????? ??????? ?? ??????? ??????? ? ??????????? ? ???????? ?????{' '}
+                        У организации нет прямых контактов — напишите через{' '}
                         <Link to={`/shelters/${shelter.id}`} className="font-medium text-primary underline-offset-4 hover:underline">
-                          ???????? ??????
+                          {t.backQuickMenu.shelterPage}
                         </Link>
                         .
                       </>
                     ) : (
-                      <>???????? ????????, ????? ?? ??????? ?????.</>
+                      <>{t.landing.shelters.detailNoContacts}</>
                     )}
                   </p>
                 ) : null}

@@ -344,7 +344,7 @@ export default function MatchSwipePage() {
                     matchMobileCardWrapClass,
                     'w-full',
                     (showSwipeStage || showComplete) && 'flex-1 min-h-0 max-lg:flex max-lg:flex-col',
-                    showSwipeStage && 'relative lg:min-h-[36rem] lg:h-auto',
+                    showSwipeStage && 'relative lg:h-auto',
                     showComplete && 'max-lg:overflow-hidden',
                   )}
                 >
@@ -358,7 +358,7 @@ export default function MatchSwipePage() {
                       match={current.match}
                       onSwipeLeft={handlePass}
                       onSwipeRight={() => void handleLike()}
-                      className="absolute inset-0 lg:static lg:min-h-[36rem]"
+                      className="absolute inset-0 lg:static lg:h-auto"
                     />
                   ) : ranked.length === 0 ? (
                     <MatchNoResultsView

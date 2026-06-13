@@ -77,15 +77,23 @@ export const matchSwipePassStampClass =
 export const matchSwipeStampLabelClass =
   'text-lg font-black uppercase leading-none tracking-[0.18em] sm:text-xl';
 
-/** Десктоп: фото cover, не contain. */
+/** Десктоп: колонка фото — главное изображение + полоска миниатюр. */
 export const matchDesktopPhotoClass =
-  'relative min-h-0 overflow-hidden bg-muted/50 dark:bg-muted/30';
+  'relative flex min-h-0 flex-col overflow-hidden bg-muted/50 dark:bg-muted/30';
 
-export const matchDesktopPhotoImgClass = 'size-full object-cover object-center';
+/** Десктоп: главное фото (компактнее, чтобы кнопки справа без пустоты снизу). */
+export const matchDesktopPhotoMainClass =
+  'relative w-full shrink-0 overflow-hidden aspect-[5/6] max-h-[21rem] xl:max-h-[23rem]';
+
+export const matchDesktopPhotoImgClass = 'size-full object-contain object-center bg-muted/40';
+
+/** Полоска миниатюр под главным фото. */
+export const matchDesktopThumbStripClass =
+  'shrink-0 border-t border-border/40 bg-background/90 px-3 py-2.5 backdrop-blur-sm';
 
 /** Десктоп: футер карточки с кнопками pass/like. */
 export const matchDesktopActionsFooterClass =
-  'shrink-0 border-t border-border/70 bg-muted/25 px-5 py-4 dark:bg-muted/10';
+  'shrink-0 border-t border-border/70 bg-muted/25 px-5 py-3 dark:bg-muted/10';
 
 export const matchDesktopActionsRowClass =
   'flex items-center justify-center gap-5 sm:gap-8';

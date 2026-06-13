@@ -53,7 +53,7 @@ export function MobileMenuDrawer({ open, onClose }: MobileMenuDrawerProps) {
 
   const handleLogout = () => {
     onClose();
-    logout();
+    void logout();
   };
 
   const isActive = (path: string) => pathname === path;

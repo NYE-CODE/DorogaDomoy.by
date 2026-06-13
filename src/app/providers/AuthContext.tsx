@@ -97,8 +97,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
-    await authApi.logout();
-    setUser(null);
+    try {
+      await authApi.logout();
+    } catch {
+      /* authApi.logout уже очищает legacy-токен; здесь — только сброс UI. */
+    } finally {
+      setUser(null);
+      setIsAuthModalOpen(false);
+    }
   };
 
   const updateContacts = async (contacts: User['contacts']) => {
