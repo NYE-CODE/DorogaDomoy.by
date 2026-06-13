@@ -386,7 +386,7 @@ function MatchDesktopPhotoGallery({
                     .replace('{total}', String(photos.length))}
                   aria-current={photoIndex === safeIndex ? 'true' : undefined}
                 >
-                  <img src={url} alt="" className="size-full object-cover object-center" draggable={false} />
+                  <img src={url} alt="" className="size-full object-contain object-center" draggable={false} />
                 </button>
               ))}
             </div>
@@ -787,11 +787,11 @@ const MatchSwipeCardDesktop = forwardRef<MatchSwipeCardHandle, MatchSwipeCardPro
         className={cn(matchCardShellDesktopClass, dragging && 'cursor-grabbing')}
         style={shellStyle}
       >
-        <div className="grid h-full min-h-[36rem] grid-cols-1 lg:grid-cols-[minmax(0,3fr)_minmax(16rem,2fr)] xl:min-h-[38rem]">
+        <div className="grid min-h-[36rem] grid-cols-1 lg:grid-cols-[minmax(0,3fr)_minmax(16rem,2fr)] lg:items-start xl:min-h-[38rem]">
           <MatchDesktopPhotoGallery
             pet={pet}
             noPhotoLabel={c.noPhoto}
-            className="min-h-[16rem] lg:min-h-full lg:rounded-l-2xl"
+            className="min-h-[16rem] lg:min-h-[36rem] lg:rounded-l-2xl"
             swipeHandlers={swipeHandlers}
             dragging={dragging}
             likeOpacity={likeOpacity}
@@ -800,7 +800,7 @@ const MatchSwipeCardDesktop = forwardRef<MatchSwipeCardHandle, MatchSwipeCardPro
             passLabel={c.passStamp}
           />
 
-          <div className="flex min-h-0 min-w-0 flex-col border-t border-border/60 lg:border-l lg:border-t-0 lg:rounded-r-2xl lg:bg-card">
+          <div className="flex min-w-0 flex-col border-t border-border/60 lg:border-l lg:border-t-0 lg:rounded-r-2xl lg:bg-card">
             <header className="shrink-0 border-b border-border/70 px-4 py-4 sm:px-5">
               <div className="flex items-start gap-3 sm:gap-4">
                 <div className="min-w-0 flex-1">
@@ -823,7 +823,7 @@ const MatchSwipeCardDesktop = forwardRef<MatchSwipeCardHandle, MatchSwipeCardPro
               </div>
             </header>
 
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-5">
+            <div className="px-4 py-4 sm:px-5">
               <MatchPetDetailsBody pet={pet} match={match} detailItems={detailItems} />
             </div>
 

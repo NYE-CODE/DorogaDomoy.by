@@ -1,6 +1,6 @@
 ﻿import { sheltersApi, shelterPetsApi } from '@/shared/api/client';
 import type { Pet } from '@/entities/pet/model/types';
-import { readAdopterProfile, readMatchLikedPetIdsOrdered } from './adopter-profile-storage';
+import { adopterProfileScope, readAdopterProfile, readMatchLikedPetIdsOrdered } from './adopter-profile-storage';
 import {
   defaultShelterPetFilters,
   petMatchesShelterFilters,
@@ -124,9 +124,10 @@ function filterCatalogPets(pets: Pet[], ctx: ShelterPetBrowseContext): Pet[] {
 export async function resolveShelterPetBrowseIds(
   ctx: ShelterPetBrowseContext | null,
   fallbackShelterId?: string | null,
+  userId?: string | null,
 ): Promise<string[]> {
   if (ctx?.source === 'match') {
-    const profile = readAdopterProfile();
+    const profile = readAdopterProfile(adopterProfileScope(userId));
     if (!profile) return [];
     return readMatchLikedPetIdsOrdered(profile.completedAt);
   }

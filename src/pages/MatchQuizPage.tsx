@@ -6,10 +6,11 @@ import { Button } from '@/shared/ui/button';
 import { PageLoader } from '@/shared/ui/page-loader';
 import { BackQuickMenu } from '../../components/navigation/BackQuickMenu';
 import { useCityOptional } from '@/app/providers/CityContext';
+import { useAuth } from '@/app/providers/AuthContext';
 import { useI18n } from '@/app/providers/I18nContext';
 import type { AdopterProfile } from '@/entities/adopter-profile/model/types';
 import type { TraitLevel } from '@/entities/pet/model/types';
-import { saveAdopterProfile, readAdopterProfile } from '@/shared/lib/adopter-profile-storage';
+import { adopterProfileScope, saveAdopterProfile, readAdopterProfile } from '@/shared/lib/adopter-profile-storage';
 import { applySeo, canonicalUrlFromPath, SEO_ROBOTS_PRIVATE } from '@/shared/lib/seo';
 import { appPrimaryCtaClass } from '@/shared/styles/cta-classes';
 import { matchChoiceActiveClass, matchProgressBarClass } from '@/shared/styles/match-styles';
@@ -42,6 +43,8 @@ function ChoiceBtn({
 
 export default function MatchQuizPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const profileScope = adopterProfileScope(user?.id);
   const { t } = useI18n();
   const q = t.match.quiz;
   const cityCtx = useCityOptional();
@@ -69,7 +72,7 @@ export default function MatchQuizPage() {
   }, [t.match.seo.quizDescription, t.match.seo.quizTitle]);
 
   useEffect(() => {
-    const existing = readAdopterProfile();
+    const existing = readAdopterProfile(profileScope);
     if (!existing) return;
     setAnimalType(existing.animalType);
     setEnergyLevel(existing.energyLevel);
@@ -83,7 +86,7 @@ export default function MatchQuizPage() {
     setAcceptsTreatment(existing.acceptsTreatment);
     setAcceptsDisability(existing.acceptsDisability);
     if (existing.city) setCity(existing.city);
-  }, []);
+  }, [profileScope]);
 
   useEffect(() => {
     if (cityCtx?.selectedCity && !city) setCity(cityCtx.selectedCity);
@@ -118,7 +121,7 @@ export default function MatchQuizPage() {
       city: city.trim(),
       completedAt: new Date().toISOString(),
     };
-    saveAdopterProfile(profile);
+    saveAdopterProfile(profile, profileScope);
     navigate('/match', { replace: true });
   };
 

@@ -28,18 +28,51 @@ export function clampTraitLevel(value: unknown, fallback: TraitLevel = 3): Trait
   return fallback;
 }
 
-const PROFILE_KEY = 'dd_adopter_profile_v1';
+/** Старый общий ключ — анкета не была привязана к аккаунту. */
+const LEGACY_PROFILE_KEY = 'dd_adopter_profile_v1';
+const PROFILE_KEY_PREFIX = 'dd_adopter_profile_v1:';
+/** Анкета без входа в аккаунт (отдельно от профилей пользователей). */
+export const GUEST_ADOPTER_SCOPE = '__guest__';
 const PASSED_KEY = 'dd_match_passed_v1';
 const LIKED_KEY = 'dd_match_liked_v1';
+
+export function adopterProfileScope(userId?: string | null): string {
+  const id = userId?.trim();
+  return id ? id : GUEST_ADOPTER_SCOPE;
+}
+
+function profileStorageKey(scope: string): string {
+  return `${PROFILE_KEY_PREFIX}${scope}`;
+}
+
+let legacyProfileMigrated = false;
+
+/** Переносит старую анкету в guest-scope, чтобы не подставлялась другим аккаунтам. */
+function migrateLegacyProfile(): void {
+  if (legacyProfileMigrated || typeof window === 'undefined') return;
+  legacyProfileMigrated = true;
+  try {
+    const legacy = localStorage.getItem(LEGACY_PROFILE_KEY);
+    if (!legacy) return;
+    const guestKey = profileStorageKey(GUEST_ADOPTER_SCOPE);
+    if (!localStorage.getItem(guestKey)) {
+      localStorage.setItem(guestKey, legacy);
+    }
+    localStorage.removeItem(LEGACY_PROFILE_KEY);
+  } catch {
+    /* ignore */
+  }
+}
 
 interface MatchLikedSnapshot {
   profileCompletedAt: string;
   petIds: string[];
 }
 
-export function readAdopterProfile(): AdopterProfile | null {
+export function readAdopterProfile(scope: string = GUEST_ADOPTER_SCOPE): AdopterProfile | null {
+  migrateLegacyProfile();
   try {
-    const raw = localStorage.getItem(PROFILE_KEY);
+    const raw = localStorage.getItem(profileStorageKey(scope));
     if (!raw) return null;
     const data = JSON.parse(raw) as Partial<AdopterProfile>;
     if (!data?.completedAt) return null;
@@ -68,17 +101,19 @@ export function normalizeAdopterProfile(raw: Partial<AdopterProfile>): AdopterPr
   };
 }
 
-export function saveAdopterProfile(profile: AdopterProfile): void {
+export function saveAdopterProfile(profile: AdopterProfile, scope: string = GUEST_ADOPTER_SCOPE): void {
+  migrateLegacyProfile();
   try {
-    localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+    localStorage.setItem(profileStorageKey(scope), JSON.stringify(profile));
   } catch {
     /* ignore quota */
   }
 }
 
-export function clearAdopterProfile(): void {
+export function clearAdopterProfile(scope: string = GUEST_ADOPTER_SCOPE): void {
+  migrateLegacyProfile();
   try {
-    localStorage.removeItem(PROFILE_KEY);
+    localStorage.removeItem(profileStorageKey(scope));
   } catch {
     /* ignore */
   }

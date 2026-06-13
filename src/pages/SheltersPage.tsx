@@ -3,12 +3,13 @@ import { Link, useNavigate, useSearchParams } from 'react-router';
 import { Header } from '@/widgets/layout/Header';
 import { Footer } from '@/widgets/layout/Footer';
 import { useI18n } from '@/app/providers/I18nContext';
+import { useAuth } from '@/app/providers/AuthContext';
 import { sheltersApi, type ShelterResponse } from '@/shared/api/client';
 import type { Pet } from '@/entities/pet/model/types';
 import { MapPin, Building2, ChevronRight, Search, Sparkles } from 'lucide-react';
 import { buildShelterPetUrl, loadCatalogShelterPets } from '@/shared/lib/shelter-pet-browse';
 import { getMatchPath } from '@/shared/lib/match-nav';
-import { readAdopterProfile } from '@/shared/lib/adopter-profile-storage';
+import { adopterProfileScope, readAdopterProfile } from '@/shared/lib/adopter-profile-storage';
 import { matchOrangeFabClass } from '@/shared/styles/match-styles';
 import { Button } from '@/shared/ui/button';
 import {
@@ -36,6 +37,8 @@ import { ShelterPetCard } from '../../components/shelter-pet-card';
 export default function SheltersPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { user } = useAuth();
+  const profileScope = adopterProfileScope(user?.id);
   const { t } = useI18n();
   const s = t.landing.shelters;
   const ALL_CITIES_VALUE = '__all__';
@@ -107,7 +110,7 @@ export default function SheltersPage() {
   }, [cityOptions, citySearch]);
 
   const activeTab = searchParams.get('tab') === 'pets' ? 'pets' : 'orgs';
-  const hasMatchProfile = Boolean(readAdopterProfile()?.completedAt);
+  const hasMatchProfile = Boolean(readAdopterProfile(profileScope)?.completedAt);
   const matchCta = t.match.cta;
 
   const list = useMemo(() => {
@@ -311,7 +314,7 @@ export default function SheltersPage() {
               </div>
             </div>
             <Button asChild className={`shrink-0 ${matchOrangeFabClass}`}>
-              <Link to={getMatchPath()}>{hasMatchProfile ? matchCta.continue : matchCta.start}</Link>
+              <Link to={getMatchPath(user?.id)}>{hasMatchProfile ? matchCta.continue : matchCta.start}</Link>
             </Button>
           </div>
           <div className="mb-8 rounded-2xl border border-border bg-muted/20 p-4 sm:p-5">
