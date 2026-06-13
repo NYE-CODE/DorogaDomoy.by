@@ -25,12 +25,18 @@ export const matchProgressBarClass =
 export const matchMobileCardWrapClass =
   'relative min-h-0 w-full min-w-0 flex-1 lg:max-w-none';
 
-/** Панель ❌/❤️ — в потоке на мобильном, статично на десктопе. */
-export const matchMobileActionsClass =
-  'shrink-0 border-t border-border/70 bg-background px-4 py-3 max-lg:shadow-[var(--shadow-md)] lg:static lg:mt-6 lg:border-0 lg:bg-transparent lg:px-0 lg:py-0 lg:shadow-none';
+/** Кнопки pass/like под карточкой (мобильный и десктоп). */
+export const matchActionsBarClass =
+  'shrink-0 border-t border-border/70 bg-background px-4 py-3 max-lg:shadow-[var(--shadow-md)] lg:mt-5 lg:border-0 lg:bg-transparent lg:px-0 lg:py-0 lg:shadow-none';
 
-export const matchMobileActionsInnerClass =
-  'mx-auto grid max-w-[22rem] grid-cols-[1fr_auto_1fr] items-center gap-4 sm:max-w-md lg:flex lg:max-w-none lg:justify-center lg:gap-10';
+export const matchActionsBarInnerClass =
+  'mx-auto grid max-w-[22rem] grid-cols-[1fr_auto_1fr] items-center gap-4 sm:max-w-md lg:max-w-lg lg:gap-12';
+
+/** @deprecated Используйте matchActionsBarClass */
+export const matchMobileActionsClass = matchActionsBarClass;
+
+/** @deprecated Используйте matchActionsBarInnerClass */
+export const matchMobileActionsInnerClass = matchActionsBarInnerClass;
 
 export const matchPassButtonClass =
   'mx-auto flex size-14 shrink-0 items-center justify-center rounded-full border-2 border-rose-200 bg-card text-rose-500 shadow-sm transition-transform duration-150 ease-in-out active:scale-95 disabled:opacity-50 dark:border-rose-500/35 lg:size-16';
@@ -77,33 +83,26 @@ export const matchSwipePassStampClass =
 export const matchSwipeStampLabelClass =
   'text-lg font-black uppercase leading-none tracking-[0.18em] sm:text-xl';
 
-/** Десктоп: колонка фото — главное изображение + полоска миниатюр. */
+/** Десктоп: колонка фото. */
 export const matchDesktopPhotoClass =
-  'relative flex min-h-0 flex-col overflow-hidden bg-muted/50 dark:bg-muted/30';
+  'relative flex min-h-0 flex-col overflow-hidden bg-muted/50 lg:h-full dark:bg-muted/30';
 
-/** Десктоп: главное фото (компактнее, чтобы кнопки справа без пустоты снизу). */
+/** Десктоп: область главного фото (миниатюры — оверлей у нижнего края). */
 export const matchDesktopPhotoMainClass =
-  'relative w-full shrink-0 overflow-hidden aspect-[5/6] max-h-[21rem] xl:max-h-[23rem]';
+  'relative flex min-h-0 w-full flex-1 overflow-hidden min-h-[18rem] lg:min-h-[22rem] xl:min-h-[24rem]';
 
 export const matchDesktopPhotoImgClass = 'size-full object-contain object-center bg-muted/40';
 
-/** Полоска миниатюр под главным фото. */
+/** Миниатюры у нижнего края фото. */
 export const matchDesktopThumbStripClass =
-  'shrink-0 border-t border-border/40 bg-background/90 px-3 py-2.5 backdrop-blur-sm';
-
-/** Десктоп: футер карточки с кнопками pass/like. */
-export const matchDesktopActionsFooterClass =
-  'shrink-0 border-t border-border/70 bg-muted/25 px-5 py-3 dark:bg-muted/10';
-
-export const matchDesktopActionsRowClass =
-  'flex items-center justify-center gap-5 sm:gap-8';
+  'pointer-events-auto absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/70 via-black/40 to-transparent px-3 pb-3 pt-10';
 
 export const matchScoreRingTrackClass = 'text-muted/80';
 
 export const matchScoreRingValueClass = 'stroke-primary';
 
 export const matchDesktopThumbClass =
-  'relative h-14 w-[4.25rem] shrink-0 overflow-hidden rounded-lg border-2 border-transparent bg-muted/50 opacity-70 transition-opacity duration-150 ease-in-out hover:opacity-100 dark:bg-muted/30';
+  'relative h-12 w-16 shrink-0 overflow-hidden rounded-md border-2 border-white/25 bg-black/20 opacity-75 transition-opacity duration-150 ease-in-out hover:opacity-100 sm:h-14 sm:w-[4.25rem] sm:rounded-lg';
 
 export const matchDesktopThumbActiveClass =
-  'border-primary opacity-100 ring-1 ring-primary/30';
+  'border-white opacity-100 ring-2 ring-primary/80';

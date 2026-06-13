@@ -27,7 +27,7 @@ import { loadCatalogShelterPets } from '@/shared/lib/shelter-pet-browse';
 import { applySeo, canonicalUrlFromPath, SEO_ROBOTS_PRIVATE } from '@/shared/lib/seo';
 import { cn } from '@/shared/ui/utils';
 import type { AdopterProfile } from '@/entities/adopter-profile/model/types';
-import { matchLikeButtonClass, matchMobileActionsClass, matchMobileActionsInnerClass, matchMobileCardWrapClass, matchMobileMainPadClass, matchPassButtonClass, matchProgressBarClass, matchDesktopStageClass } from '@/shared/styles/match-styles';
+import { matchActionsBarClass, matchActionsBarInnerClass, matchLikeButtonClass, matchMobileCardWrapClass, matchMobileMainPadClass, matchPassButtonClass, matchProgressBarClass, matchDesktopStageClass } from '@/shared/styles/match-styles';
 
 function MatchDesktopSidebar({
   profile,
@@ -375,8 +375,8 @@ export default function MatchSwipePage() {
                 </div>
 
                 {current && !loading && (
-                  <div className={cn(matchMobileActionsClass, 'lg:hidden')} role="group" aria-label={s.cardActions}>
-                    <div className={matchMobileActionsInnerClass}>
+                  <div className={matchActionsBarClass} role="group" aria-label={s.cardActions}>
+                    <div className={matchActionsBarInnerClass}>
                       <div className="text-center">
                         <button
                           type="button"
@@ -386,7 +386,7 @@ export default function MatchSwipePage() {
                         >
                           <X size={28} strokeWidth={2.5} />
                         </button>
-                        <span className="mt-1 hidden text-xs font-medium text-muted-foreground sm:block">
+                        <span className="mt-1.5 block text-xs font-medium text-muted-foreground">
                           {s.pass}
                         </span>
                       </div>
@@ -409,7 +409,7 @@ export default function MatchSwipePage() {
                         >
                           <Heart size={30} strokeWidth={2.5} className="fill-current" />
                         </button>
-                        <span className="mt-1 hidden text-xs font-medium text-muted-foreground sm:block">
+                        <span className="mt-1.5 block text-xs font-medium text-muted-foreground">
                           {s.like}
                         </span>
                       </div>

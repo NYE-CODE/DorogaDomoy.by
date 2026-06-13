@@ -1,6 +1,6 @@
 ﻿import { useRef, useState, useCallback, useLayoutEffect, useEffect, useMemo, useImperativeHandle, forwardRef, type PointerEvent, type RefObject } from 'react';
 import { Link } from 'react-router';
-import { ChevronLeft, ChevronRight, Heart, MapPin, Sparkles, X } from 'lucide-react';
+import { ChevronRight, Heart, MapPin, Sparkles, X } from 'lucide-react';
 import type { Pet } from '../../types/pet';
 import type { MatchResult } from '../../utils/pet-match';
 import { petEnergyHint } from '../../utils/pet-match';
@@ -15,16 +15,12 @@ import {
   matchCardPhotoClass,
   matchCardShellClass,
   matchCardShellDesktopClass,
-  matchDesktopActionsFooterClass,
-  matchDesktopActionsRowClass,
   matchDesktopPhotoClass,
   matchDesktopPhotoMainClass,
   matchDesktopPhotoImgClass,
   matchDesktopThumbStripClass,
   matchDesktopThumbActiveClass,
   matchDesktopThumbClass,
-  matchLikeButtonClass,
-  matchPassButtonClass,
   matchReasonChipClass,
   matchScoreBadgeClass,
   matchScoreRingTrackClass,
@@ -338,10 +334,6 @@ function MatchDesktopPhotoGallery({
   const safeIndex = photos.length > 0 ? Math.min(index, photos.length - 1) : 0;
   const currentPhoto = photos[safeIndex];
   const showThumbStrip = photos.length > 0;
-  const showThumbNav = photos.length > 1;
-
-  const showPrev = () => setIndex((i) => Math.max(0, i - 1));
-  const showNext = () => setIndex((i) => Math.min(photos.length - 1, i + 1));
 
   return (
     <div className={cn(matchDesktopPhotoClass, className)}>
@@ -363,28 +355,10 @@ function MatchDesktopPhotoGallery({
         ) : (
           <div className="flex size-full items-center justify-center text-muted-foreground">{noPhotoLabel}</div>
         )}
-      </div>
 
-      {showThumbStrip ? (
-        <div className={matchDesktopThumbStripClass}>
-          <div className="flex items-center gap-2">
-            {showThumbNav ? (
-              <button
-                type="button"
-                onClick={showPrev}
-                disabled={safeIndex === 0}
-                className="flex size-8 shrink-0 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-30"
-                aria-label={c.photoPrev}
-              >
-                <ChevronLeft size={18} aria-hidden />
-              </button>
-            ) : null}
-            <div
-              className={cn(
-                'flex min-w-0 flex-1 gap-2 overflow-x-auto pb-0.5',
-                !showThumbNav && 'justify-center',
-              )}
-            >
+        {showThumbStrip ? (
+          <div className={matchDesktopThumbStripClass}>
+            <div className="flex justify-center gap-2 overflow-x-auto pb-0.5">
               {photos.map((url, photoIndex) => (
                 <button
                   key={`${pet.id}-${photoIndex}`}
@@ -399,57 +373,14 @@ function MatchDesktopPhotoGallery({
                     .replace('{total}', String(photos.length))}
                   aria-current={photoIndex === safeIndex ? 'true' : undefined}
                 >
-                  <img src={url} alt="" className="size-full object-contain object-center" draggable={false} />
+                  <img src={url} alt="" className="size-full object-cover object-center" draggable={false} />
                 </button>
               ))}
             </div>
-            {showThumbNav ? (
-              <button
-                type="button"
-                onClick={showNext}
-                disabled={safeIndex >= photos.length - 1}
-                className="flex size-8 shrink-0 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-30"
-                aria-label={c.photoNext}
-              >
-                <ChevronRight size={18} aria-hidden />
-              </button>
-            ) : null}
           </div>
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-function MatchDesktopCardActions({
-  onPass,
-  onLike,
-  passLabel,
-  likeLabel,
-}: {
-  onPass: () => void;
-  onLike: () => void;
-  passLabel: string;
-  likeLabel: string;
-}) {
-  return (
-    <footer className={matchDesktopActionsFooterClass}>
-      <div className={matchDesktopActionsRowClass}>
-        <div className="text-center">
-          <button type="button" onClick={onPass} className={matchPassButtonClass} aria-label={passLabel}>
-            <X size={28} strokeWidth={2.5} />
-          </button>
-          <span className="mt-1.5 block text-xs font-medium text-muted-foreground">{passLabel}</span>
-        </div>
-
-        <div className="text-center">
-          <button type="button" onClick={onLike} className={matchLikeButtonClass} aria-label={likeLabel}>
-            <Heart size={30} strokeWidth={2.5} className="fill-current" />
-          </button>
-          <span className="mt-1.5 block text-xs font-medium text-muted-foreground">{likeLabel}</span>
-        </div>
+        ) : null}
       </div>
-    </footer>
+    </div>
   );
 }
 
@@ -806,7 +737,7 @@ const MatchSwipeCardDesktop = forwardRef<MatchSwipeCardHandle, MatchSwipeCardPro
           <MatchDesktopPhotoGallery
             pet={pet}
             noPhotoLabel={c.noPhoto}
-            className="lg:rounded-l-2xl"
+            className="lg:h-full lg:rounded-l-2xl"
             swipeHandlers={swipeHandlers}
             dragging={dragging}
             likeOpacity={likeOpacity}
@@ -841,13 +772,6 @@ const MatchSwipeCardDesktop = forwardRef<MatchSwipeCardHandle, MatchSwipeCardPro
             <div className="min-h-0 flex-1 px-4 py-4 sm:px-5">
               <MatchPetDetailsBody pet={pet} match={match} detailItems={detailItems} />
             </div>
-
-            <MatchDesktopCardActions
-              onPass={triggerPass}
-              onLike={triggerLike}
-              passLabel={s.pass}
-              likeLabel={s.like}
-            />
           </div>
         </div>
       </div>
