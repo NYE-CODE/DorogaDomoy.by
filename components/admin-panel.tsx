@@ -28,6 +28,7 @@ import {
   Wrench,
   Tags,
   HelpCircle,
+  Video,
   Instagram,
   Coins,
   Building2,
@@ -68,8 +69,10 @@ import { titleToBlogSlug } from '../utils/blog-slug';
 import { useI18n } from '../context/I18nContext';
 import { AdminInstagramPanel } from './admin-instagram-panel';
 import { AdminHelpSectionPanel } from './admin-help-section-panel';
+import { AdminGuidesPanel } from './admin-guides-panel';
 import { adm } from './admin-panel-chrome';
 import { AdminTablePagination } from './admin-table-pagination';
+import { AdminModalShell } from './admin/admin-modal-shell';
 import { PLACEHOLDER_PET_96 } from '../utils/placeholder-images';
 
 type AdminTab =
@@ -89,6 +92,7 @@ type AdminTab =
   | 'instagram'
   | 'telegramBlog'
   | 'faq'
+  | 'guides'
   | 'settings'
   | 'sheltersCatalog'
   | 'sheltersModeration';
@@ -101,6 +105,7 @@ const TAB_PRIMARY: Record<AdminTab, AdminPrimarySection> = {
   partners: 'landing',
   helpSection: 'landing',
   faq: 'landing',
+  guides: 'landing',
   users: 'petSearch',
   profilePets: 'petSearch',
   pets: 'petSearch',
@@ -119,7 +124,7 @@ const TAB_PRIMARY: Record<AdminTab, AdminPrimarySection> = {
 
 const TABS_BY_PRIMARY: Record<AdminPrimarySection, AdminTab[]> = {
   dashboard: ['dashboard'],
-  landing: ['media', 'partners', 'helpSection', 'faq'],
+  landing: ['media', 'partners', 'helpSection', 'faq', 'guides'],
   petSearch: ['users', 'profilePets', 'pets', 'moderation', 'reports', 'rewards'],
   shelter: ['sheltersCatalog', 'sheltersModeration'],
   blog: ['blog', 'blogCategories', 'telegramBlog'],
@@ -326,7 +331,7 @@ export function AdminPanel({
   const [editBlogMeta, setEditBlogMeta] = useState('');
   const [editBlogCategory, setEditBlogCategory] = useState('');
   const [editBlogStatus, setEditBlogStatus] = useState<'draft' | 'published'>('draft');
-  /** Пока false — slug пересчитывается из заголовка (только новая статья). */
+  /** Если false — slug автогенерируется из заголовка (только новая статья). */
   const [blogSlugUserTouched, setBlogSlugUserTouched] = useState(false);
 
   // Partner modal (create/edit)
@@ -638,6 +643,7 @@ export function AdminPanel({
         { id: 'partners' as const, label: ap.tabs.partners, icon: Handshake },
         { id: 'helpSection' as const, label: ap.tabs.helpSection, icon: Heart },
         { id: 'faq' as const, label: ap.tabs.faq, icon: HelpCircle },
+        { id: 'guides' as const, label: ap.tabs.guides, icon: Video },
         { id: 'users' as const, label: ap.tabs.users, icon: Users },
         { id: 'profilePets' as const, label: ap.tabs.pets, icon: PawPrint },
         { id: 'pets' as const, label: ap.tabs.ads, icon: FileText },
@@ -674,39 +680,39 @@ export function AdminPanel({
 
   const renderDashboard = () => {
     const d = ap.dashboard;
-    const dashSection = 'rounded-lg border border-gray-200 dark:border-gray-700 bg-card shadow-sm p-4';
+    const dashSection = 'rounded-lg border border-border bg-card shadow-sm p-4';
     const dashCard =
-      'rounded-lg border border-gray-200 dark:border-gray-700 bg-card shadow-sm p-3 flex flex-col min-h-[100px]';
+      'rounded-lg border border-border bg-card shadow-sm p-3 flex flex-col min-h-[100px]';
     const dashRow =
-      'flex items-center justify-between gap-2 p-2.5 bg-muted/30 dark:bg-muted/15 rounded-lg border border-transparent hover:border-gray-200 dark:hover:border-gray-600 transition-colors';
-    const sectionLabel = 'text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400';
+      'flex items-center justify-between gap-2 p-2.5 bg-muted/30 dark:bg-muted/15 rounded-lg border border-transparent hover:border-border dark:hover:border-border transition-colors';
+    const sectionLabel = 'text-xs font-semibold uppercase tracking-wider text-muted-foreground';
 
     const statsGrid = (
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
         <div className={dashCard}>
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <p className="text-xs text-gray-600 dark:text-gray-400 leading-snug">{d.statTotalAds}</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-0.5 tabular-nums">{stats.totalPets}</p>
+              <p className="text-xs text-muted-foreground leading-snug">{d.statTotalAds}</p>
+              <p className="typo-h1 mt-0.5 tabular-nums">{stats.totalPets}</p>
             </div>
             <div className="p-2 bg-muted/60 dark:bg-muted/30 rounded-md shrink-0">
               <FileText className="w-5 h-5 text-muted-foreground" />
             </div>
           </div>
-          <p className="mt-auto pt-2.5 text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-            {d.statActive}: <span className="font-medium text-gray-800 dark:text-gray-200">{stats.activePets}</span> ·{' '}
-            {d.statArchived}: <span className="font-medium text-gray-800 dark:text-gray-200">{stats.archivedPets}</span>
+          <p className="mt-auto pt-2.5 text-xs sm:text-xs text-muted-foreground leading-relaxed">
+            {d.statActive}: <span className="font-medium text-foreground">{stats.activePets}</span> ·{' '}
+            {d.statArchived}: <span className="font-medium text-foreground">{stats.archivedPets}</span>
             <br />
             <span className="text-amber-700 dark:text-amber-400">{d.statModerationPending}:</span>{' '}
-            <span className="font-medium text-gray-800 dark:text-gray-200">{stats.pendingModerationPets}</span>
+            <span className="font-medium text-foreground">{stats.pendingModerationPets}</span>
           </p>
         </div>
 
         <div className={dashCard}>
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <p className="text-xs text-gray-600 dark:text-gray-400 leading-snug">{d.statSearchingActive}</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-0.5 tabular-nums">
+              <p className="text-xs text-muted-foreground leading-snug">{d.statSearchingActive}</p>
+              <p className="typo-h1 mt-0.5 tabular-nums">
                 {stats.searchingActivePets}
               </p>
             </div>
@@ -714,8 +720,8 @@ export function AdminPanel({
               <Search className="w-5 h-5 text-muted-foreground" />
             </div>
           </div>
-          <p className="mt-auto pt-2.5 text-[11px] sm:text-xs text-gray-500 dark:text-gray-400">
-            {d.statSuccess}: <span className="font-semibold text-primary">{stats.successRate.toFixed(1)}%</span> —{' '}
+          <p className="mt-auto pt-2.5 text-xs sm:text-xs text-muted-foreground">
+            {d.statSuccess}: <span className="font-semibold text-primary">{stats.successRate.toFixed(1)}%</span> ·{' '}
             {d.statSuccessHint}
           </p>
         </div>
@@ -723,17 +729,17 @@ export function AdminPanel({
         <div className={dashCard}>
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <p className="text-xs text-gray-600 dark:text-gray-400 leading-snug">{d.statUsers}</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-0.5 tabular-nums">{stats.totalUsers}</p>
+              <p className="text-xs text-muted-foreground leading-snug">{d.statUsers}</p>
+              <p className="typo-h1 mt-0.5 tabular-nums">{stats.totalUsers}</p>
             </div>
             <div className="p-2 bg-muted/60 dark:bg-muted/30 rounded-md shrink-0">
               <Users className="w-5 h-5 text-muted-foreground" />
             </div>
           </div>
-          <p className="mt-auto pt-2.5 text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-            {d.statBlocked}: <span className="font-medium text-gray-800 dark:text-gray-200">{stats.blockedUsers}</span>
+          <p className="mt-auto pt-2.5 text-xs sm:text-xs text-muted-foreground leading-relaxed">
+            {d.statBlocked}: <span className="font-medium text-foreground">{stats.blockedUsers}</span>
             <br />
-            <span className="text-[10px] sm:text-[11px] text-gray-500 dark:text-gray-500">
+            <span className="text-xs sm:text-xs text-muted-foreground dark:text-muted-foreground">
               {d.statUsersRoles(stats.usersRegular, stats.usersVolunteers, stats.usersAdmins)}
             </span>
           </p>
@@ -742,15 +748,15 @@ export function AdminPanel({
         <div className={dashCard}>
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <p className="text-xs text-gray-600 dark:text-gray-400 leading-snug">{d.statReports}</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-0.5 tabular-nums">{stats.pendingReports}</p>
+              <p className="text-xs text-muted-foreground leading-snug">{d.statReports}</p>
+              <p className="typo-h1 mt-0.5 tabular-nums">{stats.pendingReports}</p>
             </div>
             <div className="p-2 bg-muted/60 dark:bg-muted/30 rounded-md shrink-0">
               <AlertTriangle className="w-5 h-5 text-muted-foreground" />
             </div>
           </div>
-          <p className="mt-auto pt-2.5 text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-            {d.statReportsTotal}: <span className="font-medium text-gray-800 dark:text-gray-200">{stats.reportsTotal}</span>
+          <p className="mt-auto pt-2.5 text-xs sm:text-xs text-muted-foreground leading-relaxed">
+            {d.statReportsTotal}: <span className="font-medium text-foreground">{stats.reportsTotal}</span>
             <br />
             {d.statReportsMeta(stats.resolvedReports, stats.reportsDismissed, stats.reportsReviewed)}
           </p>
@@ -759,8 +765,8 @@ export function AdminPanel({
         <div className={dashCard}>
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <p className="text-xs text-gray-600 dark:text-gray-400 leading-snug">{d.statProfilePets}</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-0.5 tabular-nums">
+              <p className="text-xs text-muted-foreground leading-snug">{d.statProfilePets}</p>
+              <p className="typo-h1 mt-0.5 tabular-nums">
                 {stats.profilePetsTotal}
               </p>
             </div>
@@ -768,7 +774,7 @@ export function AdminPanel({
               <PawPrint className="w-5 h-5 text-muted-foreground" />
             </div>
           </div>
-          <p className="mt-auto pt-2.5 text-[11px] sm:text-xs text-gray-500 dark:text-gray-400">
+          <p className="mt-auto pt-2.5 text-xs sm:text-xs text-muted-foreground">
             {d.statProfilePetsHint(stats.profilePetsLast30Days)}
           </p>
         </div>
@@ -776,25 +782,25 @@ export function AdminPanel({
         <div className={dashCard}>
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <p className="text-xs text-gray-600 dark:text-gray-400 leading-snug">{d.statBlog}</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-0.5 tabular-nums">{stats.blogPublished}</p>
+              <p className="text-xs text-muted-foreground leading-snug">{d.statBlog}</p>
+              <p className="typo-h1 mt-0.5 tabular-nums">{stats.blogPublished}</p>
             </div>
             <div className="p-2 bg-muted/60 dark:bg-muted/30 rounded-md shrink-0">
               <BookOpen className="w-5 h-5 text-muted-foreground" />
             </div>
           </div>
-          <p className="mt-auto pt-2.5 text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+          <p className="mt-auto pt-2.5 text-xs sm:text-xs text-muted-foreground leading-relaxed">
             {d.statBlogMeta(stats.blogPublished, stats.blogDrafts)}
             <br />
-            <span className="text-[10px]">{d.statBlogTotalLine(stats.blogTotal)}</span>
+            <span className="text-xs">{d.statBlogTotalLine(stats.blogTotal)}</span>
           </p>
         </div>
 
         <div className={dashCard}>
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <p className="text-xs text-gray-600 dark:text-gray-400 leading-snug">{d.statLanding}</p>
-              <p className="text-sm font-semibold text-gray-900 dark:text-white mt-1.5 leading-snug">
+              <p className="text-xs text-muted-foreground leading-snug">{d.statLanding}</p>
+              <p className="text-sm font-semibold text-foreground mt-1.5 leading-snug">
                 {d.statLandingMeta(stats.mediaCount, stats.partnersCount, stats.faqCount)}
               </p>
             </div>
@@ -802,13 +808,13 @@ export function AdminPanel({
               <LayoutTemplate className="w-5 h-5 text-muted-foreground" />
             </div>
           </div>
-          <p className="mt-auto pt-2.5 text-[11px] sm:text-xs">
-            <span className="text-gray-600 dark:text-gray-400">{d.statSheltersQueue}:</span>{' '}
+          <p className="mt-auto pt-2.5 text-xs sm:text-xs">
+            <span className="text-muted-foreground">{d.statSheltersQueue}:</span>{' '}
             <span
               className={
                 stats.sheltersPendingModeration > 0
                   ? 'font-semibold text-amber-700 dark:text-amber-400'
-                  : 'font-medium text-gray-800 dark:text-gray-200'
+                  : 'font-medium text-foreground'
               }
             >
               {stats.sheltersPendingModeration}
@@ -819,8 +825,8 @@ export function AdminPanel({
         <div className={dashCard}>
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <p className="text-xs text-gray-600 dark:text-gray-400 leading-snug">{d.statPointsTitle}</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-0.5 tabular-nums">
+              <p className="text-xs text-muted-foreground leading-snug">{d.statPointsTitle}</p>
+              <p className="typo-h1 mt-0.5 tabular-nums">
                 {stats.pointsPositiveSum}
               </p>
             </div>
@@ -828,7 +834,7 @@ export function AdminPanel({
               <Coins className="w-5 h-5 text-muted-foreground" />
             </div>
           </div>
-          <p className="mt-auto pt-2.5 text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+          <p className="mt-auto pt-2.5 text-xs sm:text-xs text-muted-foreground leading-relaxed">
             {d.statPointsMeta(stats.pointsTransactionsCount, stats.pointsPositiveSum)}
           </p>
         </div>
@@ -836,8 +842,8 @@ export function AdminPanel({
         <div className={dashCard}>
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <p className="text-xs text-gray-600 dark:text-gray-400 leading-snug">{d.statRewardsGranted}</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-0.5 tabular-nums">
+              <p className="text-xs text-muted-foreground leading-snug">{d.statRewardsGranted}</p>
+              <p className="typo-h1 mt-0.5 tabular-nums">
                 {stats.petsWithRewardGranted}
               </p>
             </div>
@@ -845,7 +851,7 @@ export function AdminPanel({
               <TrendingUp className="w-5 h-5 text-muted-foreground" />
             </div>
           </div>
-          <p className="mt-auto pt-2.5 text-[11px] sm:text-xs text-gray-500 dark:text-gray-400">
+          <p className="mt-auto pt-2.5 text-xs sm:text-xs text-muted-foreground">
             {d.statRewardsGrantedHint(stats.petsWithRewardGranted)}
           </p>
         </div>
@@ -864,21 +870,21 @@ export function AdminPanel({
 
           <section className={dashSection}>
             <div className="flex items-center gap-2 mb-3">
-              <Calendar className="w-4 h-4 text-gray-600 dark:text-gray-400 shrink-0" />
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{d.activity}</h3>
+              <Calendar className="w-4 h-4 text-muted-foreground shrink-0" />
+              <h3 className="text-sm font-semibold text-foreground">{d.activity}</h3>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="p-3 bg-muted/40 dark:bg-muted/20 rounded-lg border border-gray-200/80 dark:border-gray-700/80">
-                <p className="text-xs text-gray-600 dark:text-gray-400">{d.last7}</p>
-                <p className="text-xl font-bold text-foreground mt-0.5 tabular-nums">{stats.petsLast7Days}</p>
+              <div className="p-3 bg-muted/40 dark:bg-muted/20 rounded-lg border border-border/80 dark:border-border/80">
+                <p className="text-xs text-muted-foreground">{d.last7}</p>
+                <p className="typo-h1 mt-0.5 tabular-nums">{stats.petsLast7Days}</p>
               </div>
-              <div className="p-3 bg-muted/40 dark:bg-muted/20 rounded-lg border border-gray-200/80 dark:border-gray-700/80">
-                <p className="text-xs text-gray-600 dark:text-gray-400">{d.last30}</p>
-                <p className="text-xl font-bold text-foreground mt-0.5 tabular-nums">{stats.petsLast30Days}</p>
+              <div className="p-3 bg-muted/40 dark:bg-muted/20 rounded-lg border border-border/80 dark:border-border/80">
+                <p className="text-xs text-muted-foreground">{d.last30}</p>
+                <p className="typo-h1 mt-0.5 tabular-nums">{stats.petsLast30Days}</p>
               </div>
-              <div className="p-3 bg-muted/40 dark:bg-muted/20 rounded-lg border border-gray-200/80 dark:border-gray-700/80">
-                <p className="text-xs text-gray-600 dark:text-gray-400">{d.last30Profiles}</p>
-                <p className="text-xl font-bold text-foreground mt-0.5 tabular-nums">{stats.profilePetsLast30Days}</p>
+              <div className="p-3 bg-muted/40 dark:bg-muted/20 rounded-lg border border-border/80 dark:border-border/80">
+                <p className="text-xs text-muted-foreground">{d.last30Profiles}</p>
+                <p className="typo-h1 mt-0.5 tabular-nums">{stats.profilePetsLast30Days}</p>
               </div>
             </div>
           </section>
@@ -887,10 +893,10 @@ export function AdminPanel({
             <h3 className={sectionLabel}>{d.sectionLatest}</h3>
             <div className="mt-3 grid grid-cols-1 lg:grid-cols-3 gap-4">
               <div className="min-w-0 space-y-2">
-                <h4 className="text-sm font-medium text-gray-900 dark:text-white">{d.recentAds}</h4>
+                <h4 className="text-sm font-medium text-foreground">{d.recentAds}</h4>
                 <div className="space-y-2">
                   {recentPets.length === 0 ? (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 py-2">{d.emptyRecentList}</p>
+                    <p className="text-xs text-muted-foreground py-2">{d.emptyRecentList}</p>
                   ) : (
                     recentPets.map((pet) => (
                       <div key={pet.id} className={dashRow}>
@@ -901,15 +907,15 @@ export function AdminPanel({
                             className="w-10 h-10 object-cover rounded-md shrink-0"
                           />
                           <div className="min-w-0">
-                            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                            <p className="text-sm font-medium text-foreground truncate">
                               {pet.breed || ap.breedUnknown}
                             </p>
-                            <p className="text-[11px] text-gray-600 dark:text-gray-400 truncate">
+                            <p className="text-xs text-muted-foreground truncate">
                               {pet.city} · {pet.authorName}
                             </p>
                           </div>
                         </div>
-                        <div className="text-[11px] text-gray-500 dark:text-gray-400 shrink-0 tabular-nums">
+                        <div className="text-xs text-muted-foreground shrink-0 tabular-nums">
                           {formatDate(pet.publishedAt)}
                         </div>
                       </div>
@@ -919,10 +925,10 @@ export function AdminPanel({
               </div>
 
               <div className="min-w-0 space-y-2">
-                <h4 className="text-sm font-medium text-gray-900 dark:text-white">{d.recentProfilePets}</h4>
+                <h4 className="text-sm font-medium text-foreground">{d.recentProfilePets}</h4>
                 <div className="space-y-2">
                   {recentProfilePets.length === 0 ? (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 py-2">{d.emptyRecentList}</p>
+                    <p className="text-xs text-muted-foreground py-2">{d.emptyRecentList}</p>
                   ) : (
                     recentProfilePets.map((pp) => (
                       <div key={pp.id} className={dashRow}>
@@ -933,14 +939,14 @@ export function AdminPanel({
                             className="w-10 h-10 object-cover rounded-md shrink-0"
                           />
                           <div className="min-w-0">
-                            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{pp.name}</p>
-                            <p className="text-[11px] text-gray-600 dark:text-gray-400 truncate">
+                            <p className="text-sm font-medium text-foreground truncate">{pp.name}</p>
+                            <p className="text-xs text-muted-foreground truncate">
                               {pp.species}
                               {pp.owner_name ? ` · ${pp.owner_name}` : ''}
                             </p>
                           </div>
                         </div>
-                        <div className="text-[11px] text-gray-500 dark:text-gray-400 shrink-0 tabular-nums">
+                        <div className="text-xs text-muted-foreground shrink-0 tabular-nums">
                           {formatDate(new Date(pp.created_at))}
                         </div>
                       </div>
@@ -950,12 +956,12 @@ export function AdminPanel({
               </div>
 
               <div className="min-w-0 space-y-2">
-                <h4 className="text-sm font-medium text-gray-900 dark:text-white">{d.recentShelters}</h4>
+                <h4 className="text-sm font-medium text-foreground">{d.recentShelters}</h4>
                 <div className="space-y-2">
                   {shelterAllLoading && recentShelters.length === 0 ? (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 py-2">{d.sheltersListLoading}</p>
+                    <p className="text-xs text-muted-foreground py-2">{d.sheltersListLoading}</p>
                   ) : recentShelters.length === 0 ? (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 py-2">{d.emptyRecentList}</p>
+                    <p className="text-xs text-muted-foreground py-2">{d.emptyRecentList}</p>
                   ) : (
                     recentShelters.map((sh) => (
                       <div key={sh.id} className={dashRow}>
@@ -966,13 +972,13 @@ export function AdminPanel({
                             className="w-10 h-10 object-cover rounded-md shrink-0 bg-muted"
                           />
                           <div className="min-w-0">
-                            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{sh.name}</p>
-                            <p className="text-[11px] text-gray-600 dark:text-gray-400 truncate">
+                            <p className="text-sm font-medium text-foreground truncate">{sh.name}</p>
+                            <p className="text-xs text-muted-foreground truncate">
                               {sh.city} · {shelterCatalogStatusLabel(sh.moderation_status)}
                             </p>
                           </div>
                         </div>
-                        <div className="text-[11px] text-gray-500 dark:text-gray-400 shrink-0 tabular-nums text-right">
+                        <div className="text-xs text-muted-foreground shrink-0 tabular-nums text-right">
                           {formatDate(new Date(sh.created_at))}
                         </div>
                       </div>
@@ -1060,7 +1066,7 @@ export function AdminPanel({
     };
 
     const userSortThBtn =
-      'w-full px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400 inline-flex items-center gap-1 hover:bg-muted/50 dark:hover:bg-muted/30 transition-colors';
+      'w-full px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground inline-flex items-center gap-1 hover:bg-muted/50 dark:hover:bg-muted/30 transition-colors';
 
     const userSortIcon = (column: 'confirmed' | 'points') => {
       if (usersSortBy !== column) {
@@ -1094,7 +1100,7 @@ export function AdminPanel({
                   setUsersSearch(e.target.value);
                   setUsersPage(1);
                 }}
-                className="w-full px-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="w-full px-4 py-2.5 text-sm border border-border dark:bg-muted dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               />
             </div>
 
@@ -1127,7 +1133,7 @@ export function AdminPanel({
               </Select>
             </div>
 
-            <div className="text-sm text-gray-600 dark:text-gray-400 ml-auto">
+            <div className="text-sm text-muted-foreground ml-auto">
               {ap.users.found}: {sortedUsers.length} {ap.users.usersCount}
             </div>
           </div>
@@ -1195,11 +1201,11 @@ export function AdminPanel({
                         </a>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 truncate" title={user.email}>{user.email}</td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground truncate" title={user.email}>{user.email}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex px-2 py-1 text-xs rounded-full ${
                         user.role === 'admin' ? 'bg-primary/10 dark:bg-primary/20 text-primary' :
-                        'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                        'bg-muted text-foreground/90'
                       }`}>
                         {user.role === 'admin'
                           ? ap.users.roleAdmin
@@ -1208,21 +1214,21 @@ export function AdminPanel({
                             : ap.users.roleVolunteer}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-700 dark:text-gray-300 font-mono truncate" title={user.helperCode || '—'}>
+                    <td className="px-4 py-3 text-xs text-foreground/90 font-mono truncate" title={user.helperCode || '—'}>
                       {user.helperCode || '—'}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+                    <td className="px-4 py-3 text-sm text-foreground/90">
                       {user.helperConfirmedCount ?? 0}
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-700 dark:text-gray-300">
+                    <td className="px-4 py-3 text-xs text-foreground/90">
                       <div>
                         {ap.users.pointsBalance} {user.pointsBalance ?? 0}
                       </div>
-                      <div className="text-gray-500 dark:text-gray-400">
+                      <div className="text-muted-foreground">
                         {ap.users.pointsEarnedTotal} {user.pointsEarnedTotal ?? 0}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-600 dark:text-gray-400">
+                    <td className="px-4 py-3 text-xs text-muted-foreground">
                       <div
                         className="truncate"
                         title={
@@ -1293,24 +1299,28 @@ export function AdminPanel({
         </div>
 
         {/* Edit User Modal */}
-        {editingUser && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4" onClick={() => setEditingUser(null)}>
-            <div className="bg-card rounded-xl shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center justify-between px-6 py-4 border-b dark:border-gray-700">
-                <h3 className="font-semibold text-gray-900 dark:text-white">{ap.users.modalTitle}</h3>
-                <button onClick={() => setEditingUser(null)} className="p-1 hover:bg-accent dark:hover:bg-accent rounded"><X className="w-5 h-5 dark:text-gray-400" /></button>
-              </div>
-              <div className="px-6 py-4 space-y-4">
+        <AdminModalShell
+          open={!!editingUser}
+          onClose={() => setEditingUser(null)}
+          title={ap.users.modalTitle}
+          footer={
+            <>
+              <button onClick={() => setEditingUser(null)} className="px-4 py-3 text-sm text-foreground/90 border border-border rounded-lg hover:bg-accent dark:hover:bg-accent">{t.common.cancel}</button>
+              <button onClick={handleSaveEditUser} className="flex items-center gap-2 px-4 py-3 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"><Save className="w-4 h-4" /> {t.common.save}</button>
+            </>
+          }
+        >
+          <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{ap.users.name}</label>
-                  <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
+                  <label className="block text-sm font-medium text-foreground/90 mb-1">{ap.users.name}</label>
+                  <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{ap.users.email}</label>
-                  <input type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
+                  <label className="block text-sm font-medium text-foreground/90 mb-1">{ap.users.email}</label>
+                  <input type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{ap.users.roleField}</label>
+                  <label className="block text-sm font-medium text-foreground/90 mb-1">{ap.users.roleField}</label>
                   <Select value={editRole} onValueChange={(v) => setEditRole(v as User['role'])}>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder={ap.users.rolePlaceholder} />
@@ -1323,21 +1333,15 @@ export function AdminPanel({
                   </Select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{ap.users.phone}</label>
-                  <input type="tel" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} placeholder={BELARUS_MOBILE_PHONE_PLACEHOLDER} className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
+                  <label className="block text-sm font-medium text-foreground/90 mb-1">{ap.users.phone}</label>
+                  <input type="tel" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} placeholder={BELARUS_MOBILE_PHONE_PLACEHOLDER} className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{ap.users.viber}</label>
-                  <input type="text" value={editViber} onChange={(e) => setEditViber(e.target.value)} placeholder={ap.users.viberPlaceholder} className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
+                  <label className="block text-sm font-medium text-foreground/90 mb-1">{ap.users.viber}</label>
+                  <input type="text" value={editViber} onChange={(e) => setEditViber(e.target.value)} placeholder={ap.users.viberPlaceholder} className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
                 </div>
-              </div>
-              <div className="flex justify-end gap-3 px-6 py-4 border-t dark:border-gray-700">
-                <button onClick={() => setEditingUser(null)} className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-accent dark:hover:bg-accent">{t.common.cancel}</button>
-                <button onClick={handleSaveEditUser} className="flex items-center gap-2 px-4 py-3 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"><Save className="w-4 h-4" /> {t.common.save}</button>
-              </div>
-            </div>
           </div>
-        )}
+        </AdminModalShell>
 
         {totalPages > 1 && (
           <AdminTablePagination
@@ -1347,10 +1351,10 @@ export function AdminPanel({
             labels={ap.pagination}
             summary={
               <>
-                <span className="text-sm text-gray-600 dark:text-gray-400">
+                <span className="text-sm text-muted-foreground">
                   {ap.users.pageOf(usersPage, totalPages)}
                 </span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
+                <span className="text-xs text-muted-foreground">
                   {ap.users.totalShort(sortedUsers.length)}
                 </span>
               </>
@@ -1495,8 +1499,8 @@ export function AdminPanel({
                 <div key={row.id} className={`${adm.listCard} space-y-4`}>
                   <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
                     <div className="flex-1 min-w-0 space-y-1">
-                      <p className="text-lg font-semibold text-gray-900 dark:text-white">{row.name}</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                      <p className="text-lg font-semibold text-foreground">{row.name}</p>
+                      <p className="text-sm text-muted-foreground">
                         {row.city}
                         {row.address ? ` · ${row.address}` : ''}
                       </p>
@@ -1507,14 +1511,14 @@ export function AdminPanel({
                         <span className="px-2 py-0.5 rounded-full bg-muted text-foreground font-medium">
                           {shelterAnimalFocusAdminLabel(row.animal_focus)}
                         </span>
-                        <span className="text-gray-500 dark:text-gray-400">
+                        <span className="text-muted-foreground">
                           {sp.colUpdated}: {formatDate(new Date(row.updated_at))}
                         </span>
                       </div>
                       {row.description ? (
-                        <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap pt-2">{row.description}</p>
+                        <p className="text-sm text-foreground/90 whitespace-pre-wrap pt-2">{row.description}</p>
                       ) : null}
-                      <p className="text-sm text-gray-600 dark:text-gray-400 pt-1">
+                      <p className="text-sm text-muted-foreground pt-1">
                         {sp.colOwner}:{' '}
                         {owner ? (
                           <a
@@ -1543,13 +1547,13 @@ export function AdminPanel({
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">{sp.reasonLabel}</label>
+                    <label className="block text-xs font-medium text-foreground/90 mb-1">{sp.reasonLabel}</label>
                     <input
                       type="text"
                       value={shelterReasons[row.id] ?? ''}
                       onChange={(e) => setShelterReasons((prev) => ({ ...prev, [row.id]: e.target.value }))}
                       placeholder={sp.reasonPlaceholder}
-                      className="w-full max-w-xl px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
+                      className="w-full max-w-xl px-3 py-2 text-sm border border-border dark:bg-muted dark:text-white rounded-lg"
                     />
                   </div>
 
@@ -1576,7 +1580,7 @@ export function AdminPanel({
                       type="button"
                       onClick={() => handleShelterModerate(row.id, 'hide')}
                       title={sp.hide}
-                      className="inline-flex items-center justify-center p-2.5 rounded-lg border border-gray-400 dark:border-gray-500 text-gray-800 dark:text-gray-200 hover:bg-muted"
+                      className="inline-flex items-center justify-center p-2.5 rounded-lg border border-border dark:border-border text-foreground hover:bg-muted"
                     >
                       <EyeOff className="w-5 h-5" />
                       <span className="sr-only">{sp.hide}</span>
@@ -1636,7 +1640,7 @@ export function AdminPanel({
                     <span className="sr-only">
                       {sc.openMap}, {sc.openPublic}
                     </span>
-                    <span className="inline-flex justify-end gap-1 text-gray-500 dark:text-gray-400">
+                    <span className="inline-flex justify-end gap-1 text-muted-foreground">
                       <MapPin className="w-3.5 h-3.5" aria-hidden />
                       <ExternalLink className="w-3.5 h-3.5" aria-hidden />
                     </span>
@@ -1650,10 +1654,10 @@ export function AdminPanel({
                   const mapHref = `https://www.google.com/maps?q=${row.location_lat},${row.location_lng}`;
                   return (
                     <tr key={row.id} className={adm.tr}>
-                      <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{row.name}</td>
-                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{row.city}</td>
-                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{shelterKindLabel(row.kind)}</td>
-                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                      <td className="px-4 py-3 font-medium text-foreground">{row.name}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{row.city}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{shelterKindLabel(row.kind)}</td>
+                      <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
                         {shelterAnimalFocusAdminLabel(row.animal_focus)}
                       </td>
                       <td className="px-4 py-3">
@@ -1661,7 +1665,7 @@ export function AdminPanel({
                           {shelterCatalogStatusLabel(row.moderation_status)}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
+                      <td className="px-4 py-3 text-muted-foreground">
                         {owner ? (
                           <a
                             href={`/user/${owner.id}`}
@@ -1672,10 +1676,10 @@ export function AdminPanel({
                             {owner.name}
                           </a>
                         ) : (
-                          <span className="font-mono text-xs text-gray-600 dark:text-gray-400">{row.owner_user_id}</span>
+                          <span className="font-mono text-xs text-muted-foreground">{row.owner_user_id}</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                      <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
                         {formatDate(new Date(row.updated_at))}
                       </td>
                       <td className="px-4 py-3 text-right whitespace-nowrap">
@@ -1749,38 +1753,44 @@ export function AdminPanel({
           </div>
         )}
 
-        {shelterCatalogEdit ? (
-          <div
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4"
-            onClick={() => setShelterCatalogEdit(null)}
-          >
-            <div
-              className="bg-card rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between px-6 py-4 border-b dark:border-gray-700 shrink-0">
-                <h3 className="font-semibold text-gray-900 dark:text-white">{sc.modalEditTitle}</h3>
+        <AdminModalShell
+          open={!!shelterCatalogEdit}
+          onClose={() => setShelterCatalogEdit(null)}
+          title={sc.modalEditTitle}
+          maxWidthClass="max-w-lg"
+          footer={
+            <>
                 <button
                   type="button"
                   onClick={() => setShelterCatalogEdit(null)}
-                  className="p-1 hover:bg-accent dark:hover:bg-accent rounded"
+                  className="px-4 py-3 text-sm text-foreground/90 border border-border rounded-lg hover:bg-accent dark:hover:bg-accent"
                 >
-                  <X className="w-5 h-5 dark:text-gray-400" />
+                  {t.common.cancel}
                 </button>
-              </div>
-              <div className="px-6 py-4 space-y-4">
+                <button
+                  type="button"
+                  onClick={handleSaveShelterCatalogEdit}
+                  disabled={!editScName.trim() || !editScCity.trim()}
+                  className="flex items-center gap-2 px-4 py-3 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4" /> {t.common.save}
+                </button>
+            </>
+          }
+        >
+              <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{sc.fieldName}</label>
+                  <label className="block text-sm font-medium text-foreground/90 mb-1">{sc.fieldName}</label>
                   <input
                     type="text"
                     value={editScName}
                     onChange={(e) => setEditScName(e.target.value)}
-                    className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{sc.fieldKind}</label>
+                    <label className="block text-sm font-medium text-foreground/90 mb-1">{sc.fieldKind}</label>
                     <Select value={editScKind} onValueChange={(v) => setEditScKind(v as ShelterKind)}>
                       <SelectTrigger className="w-full">
                         <SelectValue />
@@ -1793,7 +1803,7 @@ export function AdminPanel({
                     </Select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{sc.fieldFocus}</label>
+                    <label className="block text-sm font-medium text-foreground/90 mb-1">{sc.fieldFocus}</label>
                     <Select value={editScFocus} onValueChange={(v) => setEditScFocus(v as ShelterAnimalFocus)}>
                       <SelectTrigger className="w-full">
                         <SelectValue />
@@ -1807,136 +1817,117 @@ export function AdminPanel({
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{sc.fieldDescription}</label>
+                  <label className="block text-sm font-medium text-foreground/90 mb-1">{sc.fieldDescription}</label>
                   <textarea
                     value={editScDescription}
                     onChange={(e) => setEditScDescription(e.target.value)}
                     rows={4}
-                    className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-y min-h-[96px]"
+                    className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-y min-h-[96px]"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{sc.fieldCity}</label>
+                  <label className="block text-sm font-medium text-foreground/90 mb-1">{sc.fieldCity}</label>
                   <input
                     type="text"
                     value={editScCity}
                     onChange={(e) => setEditScCity(e.target.value)}
-                    className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{sc.fieldAddress}</label>
+                  <label className="block text-sm font-medium text-foreground/90 mb-1">{sc.fieldAddress}</label>
                   <input
                     type="text"
                     value={editScAddress}
                     onChange={(e) => setEditScAddress(e.target.value)}
-                    className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{sc.fieldLat}</label>
+                    <label className="block text-sm font-medium text-foreground/90 mb-1">{sc.fieldLat}</label>
                     <input
                       type="text"
                       inputMode="decimal"
                       value={editScLat}
                       onChange={(e) => setEditScLat(e.target.value)}
-                      className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{sc.fieldLng}</label>
+                    <label className="block text-sm font-medium text-foreground/90 mb-1">{sc.fieldLng}</label>
                     <input
                       type="text"
                       inputMode="decimal"
                       value={editScLng}
                       onChange={(e) => setEditScLng(e.target.value)}
-                      className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{sc.fieldLogo}</label>
+                    <label className="block text-sm font-medium text-foreground/90 mb-1">{sc.fieldLogo}</label>
                     <input
                       type="text"
                       value={editScLogo}
                       onChange={(e) => setEditScLogo(e.target.value)}
                       placeholder="https://..."
-                      className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{sc.fieldCover}</label>
+                    <label className="block text-sm font-medium text-foreground/90 mb-1">{sc.fieldCover}</label>
                     <input
                       type="text"
                       value={editScCover}
                       onChange={(e) => setEditScCover(e.target.value)}
                       placeholder="https://..."
-                      className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
                   </div>
                 </div>
-                <p className="text-xs font-medium text-gray-600 dark:text-gray-400">{sc.contactsSection}</p>
+                <p className="text-xs font-medium text-muted-foreground">{sc.contactsSection}</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{sc.contactPhone}</label>
+                    <label className="block text-sm font-medium text-foreground/90 mb-1">{sc.contactPhone}</label>
                     <input
                       type="text"
                       value={editScPhone}
                       onChange={(e) => setEditScPhone(e.target.value)}
-                      className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{sc.contactTelegram}</label>
+                    <label className="block text-sm font-medium text-foreground/90 mb-1">{sc.contactTelegram}</label>
                     <input
                       type="text"
                       value={editScTelegram}
                       onChange={(e) => setEditScTelegram(e.target.value)}
-                      className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{sc.contactWebsite}</label>
+                    <label className="block text-sm font-medium text-foreground/90 mb-1">{sc.contactWebsite}</label>
                     <input
                       type="text"
                       value={editScWebsite}
                       onChange={(e) => setEditScWebsite(e.target.value)}
-                      className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{sc.contactEmail}</label>
+                    <label className="block text-sm font-medium text-foreground/90 mb-1">{sc.contactEmail}</label>
                     <input
                       type="email"
                       value={editScEmail}
                       onChange={(e) => setEditScEmail(e.target.value)}
-                      className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
                   </div>
                 </div>
               </div>
-              <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700">
-                <button
-                  type="button"
-                  onClick={() => setShelterCatalogEdit(null)}
-                  className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-accent dark:hover:bg-accent"
-                >
-                  {t.common.cancel}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSaveShelterCatalogEdit}
-                  disabled={!editScName.trim() || !editScCity.trim()}
-                  className="flex items-center gap-2 px-4 py-3 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"
-                >
-                  <Save className="w-4 h-4" /> {t.common.save}
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : null}
+        </AdminModalShell>
       </div>
     );
   };
@@ -2004,7 +1995,7 @@ export function AdminPanel({
               </select>
             </div>
 
-            <div className="text-sm text-gray-600 dark:text-gray-400 ml-auto">
+            <div className="text-sm text-muted-foreground ml-auto">
               {ap.reports.foundCount}: {filteredReports.length} {ap.reports.complaints}
             </div>
           </div>
@@ -2026,20 +2017,20 @@ export function AdminPanel({
                       <span className={`inline-flex px-2 py-1 text-xs rounded-full ${
                         report.status === 'pending' ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400' :
                         report.status === 'resolved' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' :
-                        report.status === 'dismissed' ? 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300' :
+                        report.status === 'dismissed' ? 'bg-muted text-foreground/90' :
                         'bg-muted text-muted-foreground'
                       }`}>
                         {report.status === 'pending' ? ap.reports.badgeNew : 
                          report.status === 'resolved' ? ap.reports.badgeResolved : 
                          report.status === 'dismissed' ? ap.reports.badgeDismissed : ap.reports.badgeReviewed}
                       </span>
-                      <span className="text-sm font-medium text-gray-900 dark:text-white">{ap.reports.reasons[report.reason]}</span>
+                      <span className="text-sm font-medium text-foreground">{ap.reports.reasons[report.reason]}</span>
                     </div>
                     
-                    <p className="font-medium text-gray-900 dark:text-white mb-1">
+                    <p className="font-medium text-foreground mb-1">
                       {ap.reports.from}: <a href={`/user/${report.reporterId}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/90 hover:underline">{report.reporterName}</a>
                     </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{report.description}</p>
+                    <p className="text-sm text-muted-foreground mb-3">{report.description}</p>
                     
                     {pet && (
                       <div className="space-y-2">
@@ -2051,12 +2042,12 @@ export function AdminPanel({
                         >
                           <img src={getAdminPetPreviewPhoto(pet)} alt="" className="w-12 h-12 object-cover rounded-lg" />
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400">{pet.breed || ap.breedUnknown}</p>
-                            <p className="text-xs text-gray-600 dark:text-gray-400">{pet.city} · {pet.authorName}</p>
+                            <p className="text-sm font-medium text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400">{pet.breed || ap.breedUnknown}</p>
+                            <p className="text-xs text-muted-foreground">{pet.city} · {pet.authorName}</p>
                           </div>
-                          <ExternalLink className="w-4 h-4 text-gray-400 dark:text-gray-500 group-hover:text-primary shrink-0" />
+                          <ExternalLink className="w-4 h-4 text-muted-foreground/80 group-hover:text-primary shrink-0" />
                         </a>
-                        <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-2 text-xs text-gray-600 dark:text-gray-300">
+                        <div className="rounded-lg border border-border p-2 text-xs text-muted-foreground dark:text-muted-foreground/50">
                           {ap.reports.petReward}{' '}
                           {pet.rewardMode === 'money'
                             ? `${pet.rewardAmountByn ?? 0} BYN`
@@ -2069,7 +2060,7 @@ export function AdminPanel({
                       </div>
                     )}
                     
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    <p className="text-xs text-muted-foreground mt-2">
                       {formatDate(report.createdAt)}
                     </p>
                   </div>
@@ -2086,7 +2077,7 @@ export function AdminPanel({
                         </button>
                         <button
                           onClick={() => onUpdateReport({ ...report, status: 'dismissed', reviewedAt: new Date() })}
-                          className="p-2 text-gray-600 dark:text-gray-400 hover:bg-accent dark:hover:bg-accent rounded-lg transition-colors"
+                          className="p-2 text-muted-foreground hover:bg-accent dark:hover:bg-accent rounded-lg transition-colors"
                           title={ap.reports.dismissTooltip}
                         >
                           <XCircle className="w-5 h-5" />
@@ -2120,10 +2111,10 @@ export function AdminPanel({
           labels={ap.pagination}
           summary={
             <>
-              <span className="text-sm text-gray-600 dark:text-gray-400">
+              <span className="text-sm text-muted-foreground">
                 {ap.reports.pageOf(reportsPage, totalPages)}
               </span>
-              <span className="text-xs text-gray-500 dark:text-gray-400">
+              <span className="text-xs text-muted-foreground">
                 {ap.users.totalShort(filteredReports.length)}
               </span>
             </>
@@ -2357,10 +2348,10 @@ export function AdminPanel({
                 const tg = blogTelegramUrl(p);
                 return (
                   <tr key={p.id} className={adm.tr}>
-                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white font-medium max-w-[200px]">
+                    <td className="px-4 py-3 text-sm text-foreground font-medium max-w-[200px]">
                       <span className="line-clamp-2">{p.title}</span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300 font-mono">{p.slug}</td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground dark:text-muted-foreground/50 font-mono">{p.slug}</td>
                     <td className="px-4 py-3 text-sm">
                       <span
                         className={
@@ -2395,7 +2386,7 @@ export function AdminPanel({
                           <span className="sr-only">{ap.blog.tgSend}</span>
                         </button>
                       ) : (
-                        <span className="text-gray-400">{ap.blog.tgDash}</span>
+                        <span className="text-muted-foreground/80">{ap.blog.tgDash}</span>
                       )}
                     </td>
                     <td className="px-4 py-3">
@@ -2439,26 +2430,33 @@ export function AdminPanel({
         </div>
       </div>
 
-      {editingBlog && (
-        <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4"
-          onClick={() => setEditingBlog(null)}
-        >
-          <div
-            className="bg-card rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between px-6 py-4 border-b dark:border-gray-700 sticky top-0 bg-card z-10">
-              <h3 className="font-semibold text-gray-900 dark:text-white">
-                {editingBlog === 'create' ? ap.blog.modalNewTitle : ap.blog.modalEditTitle}
-              </h3>
-              <button type="button" onClick={() => setEditingBlog(null)} className="p-1 hover:bg-accent rounded">
-                <X className="w-5 h-5 dark:text-gray-400" />
+      <AdminModalShell
+        open={!!editingBlog}
+        onClose={() => setEditingBlog(null)}
+        title={editingBlog === 'create' ? ap.blog.modalNewTitle : ap.blog.modalEditTitle}
+        maxWidthClass="max-w-3xl"
+        footer={
+          <>
+              <button
+                type="button"
+                onClick={() => setEditingBlog(null)}
+                className="px-4 py-3 text-sm text-foreground/90 border border-border rounded-lg hover:bg-accent"
+              >
+                {t.common.cancel}
               </button>
-            </div>
-            <div className="px-6 py-4 space-y-4">
+              <button
+                type="button"
+                onClick={handleSaveBlog}
+                className="flex items-center gap-2 px-4 py-3 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+              >
+                <Save className="w-4 h-4" /> {t.common.save}
+              </button>
+          </>
+        }
+      >
+            <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{ap.blog.fieldTitle}</label>
+                <label className="block text-sm font-medium text-foreground/90 mb-1">{ap.blog.fieldTitle}</label>
                 <input
                   type="text"
                   value={editBlogTitle}
@@ -2470,12 +2468,12 @@ export function AdminPanel({
                     }
                   }}
                   maxLength={200}
-                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
+                  className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg"
                 />
               </div>
               <div>
                 <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <label className="block text-sm font-medium text-foreground/90">
                     {ap.blog.fieldSlug}
                   </label>
                   <button
@@ -2497,53 +2495,53 @@ export function AdminPanel({
                     setEditBlogSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''));
                   }}
                   placeholder={ap.blog.slugPlaceholder}
-                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg font-mono text-sm"
+                  className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg font-mono text-sm"
                 />
                 {editingBlog === 'create' && !blogSlugUserTouched ? (
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     {ap.blog.slugHint}
                   </p>
                 ) : null}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{ap.blog.fieldExcerpt}</label>
+                <label className="block text-sm font-medium text-foreground/90 mb-1">{ap.blog.fieldExcerpt}</label>
                 <textarea
                   value={editBlogExcerpt}
                   onChange={(e) => setEditBlogExcerpt(e.target.value.slice(0, 2000))}
                   rows={3}
-                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg resize-y min-h-[80px]"
+                  className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg resize-y min-h-[80px]"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-foreground/90 mb-1">
                   {ap.blog.fieldBody}
                 </label>
                 <BlogMarkdownEditor value={editBlogBody} onChange={setEditBlogBody} rows={14} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{ap.blog.fieldCover}</label>
+                <label className="block text-sm font-medium text-foreground/90 mb-1">{ap.blog.fieldCover}</label>
                 <input
                   type="text"
                   value={editBlogCover}
                   onChange={(e) => setEditBlogCover(e.target.value)}
                   placeholder={ap.blog.coverPlaceholder}
-                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm"
+                  className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg text-sm"
                 />
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{ap.blog.coverHint}</p>
+                <p className="text-xs text-muted-foreground mt-1">{ap.blog.coverHint}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{ap.blog.fieldMeta}</label>
+                <label className="block text-sm font-medium text-foreground/90 mb-1">{ap.blog.fieldMeta}</label>
                 <input
                   type="text"
                   value={editBlogMeta}
                   onChange={(e) => setEditBlogMeta(e.target.value.slice(0, 320))}
                   maxLength={320}
-                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm"
+                  className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg text-sm"
                 />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{ap.blog.fieldCategory}</label>
+                  <label className="block text-sm font-medium text-foreground/90 mb-2">{ap.blog.fieldCategory}</label>
                   <Select
                     value={blogCategorySelectValue}
                     onValueChange={setEditBlogCategory}
@@ -2562,7 +2560,7 @@ export function AdminPanel({
                   </Select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{ap.blog.fieldStatus}</label>
+                  <label className="block text-sm font-medium text-foreground/90 mb-2">{ap.blog.fieldStatus}</label>
                   <Select
                     value={editBlogStatus}
                     onValueChange={(v) => setEditBlogStatus(v as 'draft' | 'published')}
@@ -2578,25 +2576,7 @@ export function AdminPanel({
                 </div>
               </div>
             </div>
-            <div className="flex justify-end gap-3 px-6 py-4 border-t dark:border-gray-700 sticky bottom-0 bg-card">
-              <button
-                type="button"
-                onClick={() => setEditingBlog(null)}
-                className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-accent"
-              >
-                {t.common.cancel}
-              </button>
-              <button
-                type="button"
-                onClick={handleSaveBlog}
-                className="flex items-center gap-2 px-4 py-3 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
-              >
-                <Save className="w-4 h-4" /> {t.common.save}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      </AdminModalShell>
     </div>
     );
   };
@@ -2644,9 +2624,9 @@ export function AdminPanel({
                 .sort((a, b) => a.sort_order - b.sort_order || a.slug.localeCompare(b.slug))
                 .map((c) => (
                   <tr key={c.id} className={adm.tr}>
-                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{c.sort_order}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white font-medium">{c.title}</td>
-                    <td className="px-4 py-3 text-sm font-mono text-gray-600 dark:text-gray-300">{c.slug}</td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground dark:text-muted-foreground/50">{c.sort_order}</td>
+                    <td className="px-4 py-3 text-sm text-foreground font-medium">{c.title}</td>
+                    <td className="px-4 py-3 text-sm font-mono text-muted-foreground dark:text-muted-foreground/50">{c.slug}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1">
                         <button
@@ -2686,44 +2666,46 @@ export function AdminPanel({
         </div>
       </div>
 
-      {editingBlogCategory ? (
-        <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4"
-          onClick={() => setEditingBlogCategory(null)}
-        >
-          <div
-            className="bg-card rounded-xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between px-6 py-4 border-b dark:border-gray-700 sticky top-0 bg-card z-10">
-              <h3 className="font-semibold text-gray-900 dark:text-white">
-                {editingBlogCategory === 'create' ? ap.categories.modalNew : ap.categories.modalEdit}
-              </h3>
+      <AdminModalShell
+        open={!!editingBlogCategory}
+        onClose={() => setEditingBlogCategory(null)}
+        title={editingBlogCategory === 'create' ? ap.categories.modalNew : ap.categories.modalEdit}
+        footer={
+          <>
               <button
                 type="button"
                 onClick={() => setEditingBlogCategory(null)}
-                className="p-1 hover:bg-accent rounded"
+                className="px-4 py-3 text-sm text-foreground/90 border border-border rounded-lg hover:bg-accent"
               >
-                <X className="w-5 h-5 dark:text-gray-400" />
+                {t.common.cancel}
               </button>
-            </div>
-            <div className="px-6 py-4 space-y-4">
+              <button
+                type="button"
+                onClick={handleSaveBlogCategory}
+                className="flex items-center gap-2 px-4 py-3 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+              >
+                <Save className="w-4 h-4" /> {t.common.save}
+              </button>
+          </>
+        }
+      >
+            <div className="space-y-4">
               {editingBlogCategory === 'create' ? (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label className="block text-sm font-medium text-foreground/90 mb-1">
                       {ap.categories.nameLabel}
                     </label>
                     <input
                       type="text"
                       value={editCatTitle}
                       onChange={(e) => setEditCatTitle(e.target.value.slice(0, 200))}
-                      className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
+                      className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg"
                     />
                   </div>
                   <div>
                     <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{ap.categories.slugLabel}</label>
+                      <label className="block text-sm font-medium text-foreground/90">{ap.categories.slugLabel}</label>
                       <button
                         type="button"
                         onClick={() => setEditCatSlug(titleToBlogSlug(editCatTitle))}
@@ -2739,66 +2721,48 @@ export function AdminPanel({
                         setEditCatSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))
                       }
                       placeholder={ap.categories.slugPlaceholder}
-                      className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg font-mono text-sm"
+                      className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg font-mono text-sm"
                     />
                   </div>
                 </>
               ) : (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label className="block text-sm font-medium text-foreground/90 mb-1">
                       {ap.categories.nameLabel}
                     </label>
                     <input
                       type="text"
                       value={editCatTitle}
                       onChange={(e) => setEditCatTitle(e.target.value.slice(0, 200))}
-                      className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
+                      className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{ap.blog.colSlug}</label>
+                    <label className="block text-sm font-medium text-foreground/90 mb-1">{ap.blog.colSlug}</label>
                     <input
                       type="text"
                       value={editCatSlug}
                       readOnly
-                      className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 rounded-lg font-mono text-sm cursor-not-allowed"
+                      className="w-full px-3 py-2.5 border border-border dark:bg-card dark:text-muted-foreground/80 rounded-lg font-mono text-sm cursor-not-allowed"
                     />
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{ap.categories.slugReadonlyHint}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{ap.categories.slugReadonlyHint}</p>
                   </div>
                 </>
               )}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-foreground/90 mb-1">
                   {ap.categories.sortLabel}
                 </label>
                 <input
                   type="number"
                   value={editCatSort}
                   onChange={(e) => setEditCatSort(parseInt(e.target.value, 10) || 0)}
-                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
+                  className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg"
                 />
               </div>
             </div>
-            <div className="flex justify-end gap-3 px-6 py-4 border-t dark:border-gray-700">
-              <button
-                type="button"
-                onClick={() => setEditingBlogCategory(null)}
-                className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-accent"
-              >
-                {t.common.cancel}
-              </button>
-              <button
-                type="button"
-                onClick={handleSaveBlogCategory}
-                className="flex items-center gap-2 px-4 py-3 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
-              >
-                <Save className="w-4 h-4" /> {t.common.save}
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      </AdminModalShell>
     </div>
   );
 
@@ -2839,18 +2803,18 @@ export function AdminPanel({
                     {m.logo_url ? (
                       <img src={m.logo_url.startsWith('http') || m.logo_url.startsWith('data:') ? m.logo_url : `${API_BASE}${m.logo_url}`} alt="" className="h-8 object-contain max-w-[80px]" />
                     ) : (
-                      <span className="text-gray-400 text-sm">—</span>
+                      <span className="text-muted-foreground/80 text-sm" aria-hidden>·</span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-white max-w-[200px] truncate">{m.title}</td>
-                  <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{m.published_at ? new Date(m.published_at).toLocaleDateString('ru-RU') : '—'}</td>
+                  <td className="px-4 py-3 text-sm text-foreground max-w-[200px] truncate">{m.title}</td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">{m.published_at ? new Date(m.published_at).toLocaleDateString('ru-RU') : '—'}</td>
                   <td className="px-4 py-3">
                     {m.link ? (
                       <a href={m.link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-sm truncate max-w-[150px] block">
                         {m.link}
                       </a>
                     ) : (
-                      <span className="text-gray-400 text-sm">—</span>
+                      <span className="text-muted-foreground/80 text-sm" aria-hidden>·</span>
                     )}
                   </td>
                   <td className="px-4 py-3">
@@ -2882,48 +2846,44 @@ export function AdminPanel({
       </div>
 
       {/* Media Create/Edit Modal */}
-      {editingMedia && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4" onClick={() => setEditingMedia(null)}>
-          <div className="bg-card rounded-xl shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-6 py-4 border-b dark:border-gray-700">
-              <h3 className="font-semibold text-gray-900 dark:text-white">
-                {editingMedia === 'create' ? ap.media.modalAdd : ap.media.modalEdit}
-              </h3>
-              <button onClick={() => setEditingMedia(null)} className="p-1 hover:bg-accent dark:hover:bg-accent rounded"><X className="w-5 h-5 dark:text-gray-400" /></button>
-            </div>
-            <div className="px-6 py-4 space-y-4">
+      <AdminModalShell
+        open={!!editingMedia}
+        onClose={() => setEditingMedia(null)}
+        title={editingMedia === 'create' ? ap.media.modalAdd : ap.media.modalEdit}
+        footer={
+          <>
+              <button onClick={() => setEditingMedia(null)} className="px-4 py-3 text-sm text-foreground/90 border border-border rounded-lg hover:bg-accent dark:hover:bg-accent">{t.common.cancel}</button>
+              <button onClick={handleSaveMedia} disabled={!editTitle.trim() || editTitle.length > 100} className="flex items-center gap-2 px-4 py-3 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"><Save className="w-4 h-4" /> {t.common.save}</button>
+          </>
+        }
+      >
+            <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{ap.media.logoUrl}</label>
-                <input type="text" value={editLogoUrl} onChange={(e) => setEditLogoUrl(e.target.value)} placeholder="https://..." className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
+                <label className="block text-sm font-medium text-foreground/90 mb-1">{ap.media.logoUrl}</label>
+                <input type="text" value={editLogoUrl} onChange={(e) => setEditLogoUrl(e.target.value)} placeholder="https://..." className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{ap.media.titleLabel}</label>
+                <label className="block text-sm font-medium text-foreground/90 mb-1">{ap.media.titleLabel}</label>
                 <input
                   type="text"
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value.slice(0, 100))}
                   maxLength={100}
                   placeholder={ap.media.titleHint}
-                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{editTitle.length}/100</p>
+                <p className="text-xs text-muted-foreground mt-1">{editTitle.length}/100</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{ap.media.dateLabel}</label>
-                <input type="date" value={editPublishedAt} onChange={(e) => setEditPublishedAt(e.target.value)} className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
+                <label className="block text-sm font-medium text-foreground/90 mb-1">{ap.media.dateLabel}</label>
+                <input type="date" value={editPublishedAt} onChange={(e) => setEditPublishedAt(e.target.value)} className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{ap.media.linkLabel}</label>
-                <input type="url" value={editLink} onChange={(e) => setEditLink(e.target.value)} placeholder="https://..." className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
+                <label className="block text-sm font-medium text-foreground/90 mb-1">{ap.media.linkLabel}</label>
+                <input type="url" value={editLink} onChange={(e) => setEditLink(e.target.value)} placeholder="https://..." className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
               </div>
             </div>
-            <div className="flex justify-end gap-3 px-6 py-4 border-t dark:border-gray-700">
-              <button onClick={() => setEditingMedia(null)} className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-accent dark:hover:bg-accent">{t.common.cancel}</button>
-              <button onClick={handleSaveMedia} disabled={!editTitle.trim() || editTitle.length > 100} className="flex items-center gap-2 px-4 py-3 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"><Save className="w-4 h-4" /> {t.common.save}</button>
-            </div>
-          </div>
-        </div>
-      )}
+      </AdminModalShell>
     </div>
   );
 
@@ -2999,17 +2959,17 @@ export function AdminPanel({
                     {p.logo_url ? (
                       <img src={p.logo_url.startsWith('http') || p.logo_url.startsWith('data:') ? p.logo_url : `${API_BASE}${p.logo_url}`} alt="" className="h-8 object-contain max-w-[80px]" />
                     ) : (
-                      <span className="text-gray-400 text-sm">—</span>
+                      <span className="text-muted-foreground/80 text-sm" aria-hidden>·</span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-white font-medium">{p.name}</td>
+                  <td className="px-4 py-3 text-sm text-foreground font-medium">{p.name}</td>
                   <td className="px-4 py-3">
                     {p.link ? (
                       <a href={p.link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-sm truncate max-w-[200px] block">
                         {p.link}
                       </a>
                     ) : (
-                      <span className="text-gray-400 text-sm">—</span>
+                      <span className="text-muted-foreground/80 text-sm" aria-hidden>·</span>
                     )}
                   </td>
                   <td className="px-4 py-3 text-sm">
@@ -3017,7 +2977,7 @@ export function AdminPanel({
                       className={`inline-flex px-2 py-1 text-xs rounded-full ${
                         p.is_medallion_partner
                           ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300'
-                          : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                          : 'bg-muted text-muted-foreground dark:text-muted-foreground/50'
                       }`}
                     >
                       {p.is_medallion_partner ? ap.partners.medallionYes : ap.partners.medallionNo}
@@ -3051,46 +3011,42 @@ export function AdminPanel({
         </div>
       </div>
 
-      {editingPartner && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4" onClick={() => setEditingPartner(null)}>
-          <div className="bg-card rounded-xl shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-6 py-4 border-b dark:border-gray-700">
-              <h3 className="font-semibold text-gray-900 dark:text-white">
-                {editingPartner === 'create' ? ap.partners.modalAdd : ap.partners.modalEdit}
-              </h3>
-              <button onClick={() => setEditingPartner(null)} className="p-1 hover:bg-accent dark:hover:bg-accent rounded"><X className="w-5 h-5 dark:text-gray-400" /></button>
-            </div>
-            <div className="px-6 py-4 space-y-4">
+      <AdminModalShell
+        open={!!editingPartner}
+        onClose={() => setEditingPartner(null)}
+        title={editingPartner === 'create' ? ap.partners.modalAdd : ap.partners.modalEdit}
+        footer={
+          <>
+              <button onClick={() => setEditingPartner(null)} className="px-4 py-3 text-sm text-foreground/90 border border-border rounded-lg hover:bg-accent dark:hover:bg-accent">{t.common.cancel}</button>
+              <button onClick={handleSavePartner} disabled={!editPartnerName.trim()} className="flex items-center gap-2 px-4 py-3 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"><Save className="w-4 h-4" /> {t.common.save}</button>
+          </>
+        }
+      >
+            <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{ap.partners.logoUrl}</label>
-                <input type="text" value={editPartnerLogoUrl} onChange={(e) => setEditPartnerLogoUrl(e.target.value)} placeholder="https://..." className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
+                <label className="block text-sm font-medium text-foreground/90 mb-1">{ap.partners.logoUrl}</label>
+                <input type="text" value={editPartnerLogoUrl} onChange={(e) => setEditPartnerLogoUrl(e.target.value)} placeholder="https://..." className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{ap.partners.nameLabel}</label>
-                <input type="text" value={editPartnerName} onChange={(e) => setEditPartnerName(e.target.value.slice(0, 100))} maxLength={100} placeholder={ap.partners.namePlaceholder} className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{editPartnerName.length}/100</p>
+                <label className="block text-sm font-medium text-foreground/90 mb-1">{ap.partners.nameLabel}</label>
+                <input type="text" value={editPartnerName} onChange={(e) => setEditPartnerName(e.target.value.slice(0, 100))} maxLength={100} placeholder={ap.partners.namePlaceholder} className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
+                <p className="text-xs text-muted-foreground mt-1">{editPartnerName.length}/100</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{ap.partners.linkLabel}</label>
-                <input type="url" value={editPartnerLink} onChange={(e) => setEditPartnerLink(e.target.value)} placeholder="https://..." className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
+                <label className="block text-sm font-medium text-foreground/90 mb-1">{ap.partners.linkLabel}</label>
+                <input type="url" value={editPartnerLink} onChange={(e) => setEditPartnerLink(e.target.value)} placeholder="https://..." className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
               </div>
-              <label className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
+              <label className="flex items-center gap-3 text-sm text-foreground/90">
                 <input
                   type="checkbox"
                   checked={editPartnerMedallion}
                   onChange={(e) => setEditPartnerMedallion(e.target.checked)}
-                  className="w-4 h-4 rounded border-gray-300 dark:border-gray-600"
+                  className="w-4 h-4 rounded border-border"
                 />
                 <span>{ap.partners.medallionCheckbox}</span>
               </label>
             </div>
-            <div className="flex justify-end gap-3 px-6 py-4 border-t dark:border-gray-700">
-              <button onClick={() => setEditingPartner(null)} className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-accent dark:hover:bg-accent">{t.common.cancel}</button>
-              <button onClick={handleSavePartner} disabled={!editPartnerName.trim()} className="flex items-center gap-2 px-4 py-3 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50"><Save className="w-4 h-4" /> {t.common.save}</button>
-            </div>
-          </div>
-        </div>
-      )}
+      </AdminModalShell>
     </div>
   );
 
@@ -3180,10 +3136,10 @@ export function AdminPanel({
             ) : (
               faqRowsSorted.map((row) => (
                 <tr key={row.id} className={adm.tr}>
-                  <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                  <td className="px-4 py-3 text-sm text-muted-foreground whitespace-nowrap">
                     {row.sort_order}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-white max-w-md truncate">
+                  <td className="px-4 py-3 text-sm text-foreground max-w-md truncate">
                     {row.question_ru || '—'}
                   </td>
                   <td className="px-4 py-3">
@@ -3216,111 +3172,17 @@ export function AdminPanel({
         </div>
       </div>
 
-      {editingFaq && (
-        <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4"
-          onClick={() => setEditingFaq(null)}
-        >
-          <div
-            className="bg-card rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between px-6 py-4 border-b dark:border-gray-700 sticky top-0 bg-card z-10">
-              <h3 className="font-semibold text-gray-900 dark:text-white">
-                {editingFaq === 'create' ? ap.faq.modalAdd : ap.faq.modalEdit}
-              </h3>
+      <AdminModalShell
+        open={!!editingFaq}
+        onClose={() => setEditingFaq(null)}
+        title={editingFaq === 'create' ? ap.faq.modalAdd : ap.faq.modalEdit}
+        maxWidthClass="max-w-2xl"
+        footer={
+          <>
               <button
                 type="button"
                 onClick={() => setEditingFaq(null)}
-                className="p-1 hover:bg-accent dark:hover:bg-accent rounded"
-              >
-                <X className="w-5 h-5 dark:text-gray-400" />
-              </button>
-            </div>
-            <div className="px-6 py-4 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  {ap.faq.sortLabel}
-                </label>
-                <input
-                  type="number"
-                  value={editFaqSort}
-                  onChange={(e) => setEditFaqSort(parseInt(e.target.value, 10) || 0)}
-                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  {ap.faq.questionRu}
-                </label>
-                <textarea
-                  value={editFaqQr}
-                  onChange={(e) => setEditFaqQr(e.target.value)}
-                  rows={2}
-                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg resize-y"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  {ap.faq.questionBe}
-                </label>
-                <textarea
-                  value={editFaqQb}
-                  onChange={(e) => setEditFaqQb(e.target.value)}
-                  rows={2}
-                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg resize-y"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  {ap.faq.questionEn}
-                </label>
-                <textarea
-                  value={editFaqQe}
-                  onChange={(e) => setEditFaqQe(e.target.value)}
-                  rows={2}
-                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg resize-y"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  {ap.faq.answerRu}
-                </label>
-                <textarea
-                  value={editFaqAr}
-                  onChange={(e) => setEditFaqAr(e.target.value)}
-                  rows={4}
-                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg resize-y"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  {ap.faq.answerBe}
-                </label>
-                <textarea
-                  value={editFaqAb}
-                  onChange={(e) => setEditFaqAb(e.target.value)}
-                  rows={4}
-                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg resize-y"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  {ap.faq.answerEn}
-                </label>
-                <textarea
-                  value={editFaqAe}
-                  onChange={(e) => setEditFaqAe(e.target.value)}
-                  rows={4}
-                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg resize-y"
-                />
-              </div>
-            </div>
-            <div className="flex justify-end gap-3 px-6 py-4 border-t dark:border-gray-700 sticky bottom-0 bg-card">
-              <button
-                type="button"
-                onClick={() => setEditingFaq(null)}
-                className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-accent dark:hover:bg-accent"
+                className="px-4 py-3 text-sm text-foreground/90 border border-border rounded-lg hover:bg-accent dark:hover:bg-accent"
               >
                 {t.common.cancel}
               </button>
@@ -3331,10 +3193,89 @@ export function AdminPanel({
               >
                 <Save className="w-4 h-4" /> {t.common.save}
               </button>
+          </>
+        }
+      >
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-foreground/90 mb-1">
+                  {ap.faq.sortLabel}
+                </label>
+                <input
+                  type="number"
+                  value={editFaqSort}
+                  onChange={(e) => setEditFaqSort(parseInt(e.target.value, 10) || 0)}
+                  className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground/90 mb-1">
+                  {ap.faq.questionRu}
+                </label>
+                <textarea
+                  value={editFaqQr}
+                  onChange={(e) => setEditFaqQr(e.target.value)}
+                  rows={2}
+                  className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg resize-y"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground/90 mb-1">
+                  {ap.faq.questionBe}
+                </label>
+                <textarea
+                  value={editFaqQb}
+                  onChange={(e) => setEditFaqQb(e.target.value)}
+                  rows={2}
+                  className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg resize-y"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground/90 mb-1">
+                  {ap.faq.questionEn}
+                </label>
+                <textarea
+                  value={editFaqQe}
+                  onChange={(e) => setEditFaqQe(e.target.value)}
+                  rows={2}
+                  className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg resize-y"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground/90 mb-1">
+                  {ap.faq.answerRu}
+                </label>
+                <textarea
+                  value={editFaqAr}
+                  onChange={(e) => setEditFaqAr(e.target.value)}
+                  rows={4}
+                  className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg resize-y"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground/90 mb-1">
+                  {ap.faq.answerBe}
+                </label>
+                <textarea
+                  value={editFaqAb}
+                  onChange={(e) => setEditFaqAb(e.target.value)}
+                  rows={4}
+                  className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg resize-y"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground/90 mb-1">
+                  {ap.faq.answerEn}
+                </label>
+                <textarea
+                  value={editFaqAe}
+                  onChange={(e) => setEditFaqAe(e.target.value)}
+                  rows={4}
+                  className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg resize-y"
+                />
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+      </AdminModalShell>
     </div>
   );
 
@@ -3354,7 +3295,7 @@ export function AdminPanel({
         </div>
         <div className={adm.filtersCard}>
           <div className="flex flex-wrap items-center gap-3">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 shrink-0">{rl.filterKind}</label>
+            <label className="text-sm font-medium text-foreground/90 shrink-0">{rl.filterKind}</label>
             <Select value={rewardsKindFilter} onValueChange={setRewardsKindFilter}>
               <SelectTrigger className="w-[min(100%,240px)]">
                 <SelectValue />
@@ -3405,7 +3346,7 @@ export function AdminPanel({
                   const rewardPet = tx.pet_id ? pets.find((p) => p.id === tx.pet_id) : undefined;
                   return (
                     <tr key={tx.id} className={adm.tr}>
-                      <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{formatDate(new Date(tx.created_at))}</td>
+                      <td className="px-4 py-3 text-sm text-foreground/90">{formatDate(new Date(tx.created_at))}</td>
                       <td className="px-4 py-3 text-sm">
                         <a href={`/user/${tx.user_id}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                           {rewardUser?.name || tx.user_id}
@@ -3417,12 +3358,12 @@ export function AdminPanel({
                             {rewardPet?.breed || tx.pet_id}
                           </a>
                         ) : (
-                          <span className="text-gray-400">—</span>
+                          <span className="text-muted-foreground/80">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{tx.amount}</td>
-                      <td className="px-4 py-3 text-xs text-gray-600 dark:text-gray-400 font-mono">{tx.kind}</td>
-                      <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{tx.note || '—'}</td>
+                      <td className="px-4 py-3 text-sm text-foreground/90">{tx.amount}</td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground font-mono">{tx.kind}</td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground">{tx.note || '—'}</td>
                     </tr>
                   );
                 })
@@ -3448,28 +3389,28 @@ export function AdminPanel({
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{ap.featureFlags.ffStats}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{ap.featureFlags.ffStatsDesc}</p>
+              <p className="text-sm font-medium text-foreground/90">{ap.featureFlags.ffStats}</p>
+              <p className="text-xs text-muted-foreground mt-1">{ap.featureFlags.ffStatsDesc}</p>
             </div>
             <Switch
               checked={featureFlags.ff_landing_show_stats}
               onCheckedChange={(v) => setFeatureFlags((f) => ({ ...f, ff_landing_show_stats: v }))}
             />
           </div>
-          <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+          <div className="flex items-center justify-between gap-4 pt-4 border-t border-border dark:border-border">
             <div>
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{ap.featureFlags.ffHelp}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{ap.featureFlags.ffHelpDesc}</p>
+              <p className="text-sm font-medium text-foreground/90">{ap.featureFlags.ffHelp}</p>
+              <p className="text-xs text-muted-foreground mt-1">{ap.featureFlags.ffHelpDesc}</p>
             </div>
             <Switch
               checked={featureFlags.ff_landing_show_help}
               onCheckedChange={(v) => setFeatureFlags((f) => ({ ...f, ff_landing_show_help: v }))}
             />
           </div>
-          <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+          <div className="flex items-center justify-between gap-4 pt-4 border-t border-border dark:border-border">
             <div>
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{ap.featureFlags.ffPets}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{ap.featureFlags.ffPetsDesc}</p>
+              <p className="text-sm font-medium text-foreground/90">{ap.featureFlags.ffPets}</p>
+              <p className="text-xs text-muted-foreground mt-1">{ap.featureFlags.ffPetsDesc}</p>
             </div>
             <Switch
               checked={featureFlags.ff_landing_show_pets_feature}
@@ -3478,10 +3419,10 @@ export function AdminPanel({
               }
             />
           </div>
-          <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+          <div className="flex items-center justify-between gap-4 pt-4 border-t border-border dark:border-border">
             <div>
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{ap.featureFlags.ffFaq}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{ap.featureFlags.ffFaqDesc}</p>
+              <p className="text-sm font-medium text-foreground/90">{ap.featureFlags.ffFaq}</p>
+              <p className="text-xs text-muted-foreground mt-1">{ap.featureFlags.ffFaqDesc}</p>
             </div>
             <Switch
               checked={featureFlags.ff_landing_show_faq}
@@ -3496,35 +3437,35 @@ export function AdminPanel({
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{ap.featureFlags.ffInstagramBoost}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{ap.featureFlags.ffInstagramBoostDesc}</p>
+              <p className="text-sm font-medium text-foreground/90">{ap.featureFlags.ffInstagramBoost}</p>
+              <p className="text-xs text-muted-foreground mt-1">{ap.featureFlags.ffInstagramBoostDesc}</p>
             </div>
             <Switch
               checked={featureFlags.ff_instagram_boost_stories}
               onCheckedChange={(v) => setFeatureFlags((f) => ({ ...f, ff_instagram_boost_stories: v }))}
             />
           </div>
-          <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+          <div className="flex items-center justify-between gap-4 pt-4 border-t border-border dark:border-border">
             <div>
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{ap.featureFlags.ffRewardEnabled}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{ap.featureFlags.ffRewardEnabledDesc}</p>
+              <p className="text-sm font-medium text-foreground/90">{ap.featureFlags.ffRewardEnabled}</p>
+              <p className="text-xs text-muted-foreground mt-1">{ap.featureFlags.ffRewardEnabledDesc}</p>
             </div>
             <Switch
               checked={featureFlags.ff_reward_enabled}
               onCheckedChange={(v) => setFeatureFlags((f) => ({ ...f, ff_reward_enabled: v }))}
             />
           </div>
-          <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+          <div className="flex items-center justify-between gap-4 pt-4 border-t border-border dark:border-border">
             <div>
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{ap.featureFlags.ffRewardMoneyEnabled}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{ap.featureFlags.ffRewardMoneyEnabledDesc}</p>
+              <p className="text-sm font-medium text-foreground/90">{ap.featureFlags.ffRewardMoneyEnabled}</p>
+              <p className="text-xs text-muted-foreground mt-1">{ap.featureFlags.ffRewardMoneyEnabledDesc}</p>
             </div>
             <Switch
               checked={featureFlags.ff_reward_money_enabled}
               onCheckedChange={(v) => setFeatureFlags((f) => ({ ...f, ff_reward_money_enabled: v }))}
             />
           </div>
-          <p className="text-sm text-gray-500 dark:text-gray-400 pt-2 border-t border-gray-200 dark:border-gray-600">
+          <p className="text-sm text-muted-foreground pt-2 border-t border-border dark:border-border">
             {ap.featureFlags.siteEmpty}
           </p>
         </div>
@@ -3550,7 +3491,7 @@ export function AdminPanel({
       <div className={`${adm.settingsCard} space-y-4 max-w-3xl`}>
         <div>
           <h3 className={adm.settingsCardTitle}>{ap.telegram.publishTargetTitle}</h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             {ap.telegram.envVarsIntro}{' '}
             <code className="text-xs bg-muted px-1 rounded">TELEGRAM_BLOG_CHAT_ID</code>{' '}
             {ap.telegram.envVarsConjunction}{' '}
@@ -3559,7 +3500,7 @@ export function AdminPanel({
           </p>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-sm font-medium text-foreground/90 mb-1">
             {ap.telegram.chatIdLabel}
           </label>
           <input
@@ -3567,11 +3508,11 @@ export function AdminPanel({
             value={blogTelegramChatId}
             onChange={(e) => setBlogTelegramChatId(e.target.value)}
             placeholder={ap.telegram.chatIdPlaceholder}
-            className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm font-mono"
+            className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg text-sm font-mono"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-sm font-medium text-foreground/90 mb-1">
             {ap.telegram.publicUsernameLabel}
           </label>
           <input
@@ -3579,9 +3520,9 @@ export function AdminPanel({
             value={blogTelegramPublicUsername}
             onChange={(e) => setBlogTelegramPublicUsername(e.target.value.replace(/^@/, ''))}
             placeholder={ap.telegram.usernamePlaceholder}
-            className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm font-mono"
+            className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg text-sm font-mono"
           />
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             {ap.telegram.usernameHint}
           </p>
         </div>
@@ -3604,7 +3545,7 @@ export function AdminPanel({
         <h3 className={adm.settingsCardTitle}>{ap.settings.general}</h3>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-foreground/90 mb-2">
               {ap.settings.moderationLabel}
             </label>
             <Select value={settings.requireModeration ? 'yes' : 'no'} onValueChange={(v) => setSettings(s => ({ ...s, requireModeration: v === 'yes' }))}>
@@ -3619,7 +3560,7 @@ export function AdminPanel({
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-foreground/90 mb-2">
               {ap.settings.archiveLabel}
             </label>
             <input 
@@ -3628,12 +3569,12 @@ export function AdminPanel({
               max={365}
               value={settings.autoArchiveDays}
               onChange={(e) => setSettings(s => ({ ...s, autoArchiveDays: Math.max(1, parseInt(e.target.value) || 90) }))}
-              className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
+              className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-foreground/90 mb-2">
               {ap.settings.maxPhotosLabel}
             </label>
             <input 
@@ -3642,7 +3583,7 @@ export function AdminPanel({
               max={20}
               value={settings.maxPhotos}
               onChange={(e) => setSettings(s => ({ ...s, maxPhotos: Math.max(1, Math.min(20, parseInt(e.target.value) || 5)) }))}
-              className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
+              className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg"
             />
           </div>
         </div>
@@ -3660,7 +3601,7 @@ export function AdminPanel({
                 max={10000}
                 value={settings.rewardDefaultPoints}
                 onChange={(e) => setSettings((s) => ({ ...s, rewardDefaultPoints: Math.max(1, parseInt(e.target.value, 10) || 50) }))}
-                className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
+                className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg"
               />
             </div>
           </div>
@@ -3683,31 +3624,31 @@ export function AdminPanel({
   );
 
   return (
-    <div className="min-h-screen bg-background dark:bg-gray-900">
+    <div className="min-h-screen bg-background dark:bg-background">
       {/* Header */}
-      <div className="bg-card border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div className="bg-card border-b border-border">
+        <div className="page-container py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button
                 onClick={onBack}
                 className="p-2 hover:bg-accent dark:hover:bg-accent rounded-lg transition-colors"
               >
-                <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                <ArrowLeft className="w-5 h-5 text-muted-foreground" />
               </button>
               <div>
-                <h1 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">{ap.header.title}</h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400 hidden sm:block">{ap.header.subtitle}</p>
+                <h1 className="text-lg sm:typo-h3">{ap.header.title}</h1>
+                <p className="text-sm text-muted-foreground hidden sm:block">{ap.header.subtitle}</p>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Разделы + подвкладки */}
-      <div className="bg-card border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex gap-2 py-2 overflow-x-auto scrollbar-hide border-b border-gray-200/80 dark:border-gray-600/80">
+      {/* Вкладки + навигация */}
+      <div className="bg-card border-b border-border">
+        <div className="page-container">
+          <div className="flex gap-2 py-2 overflow-x-auto scrollbar-hide border-b border-border/80 dark:border-border/80">
             {sectionMeta.map((sec) => {
               const SecIcon = sec.icon;
               const isActive = activePrimary === sec.id;
@@ -3719,7 +3660,7 @@ export function AdminPanel({
                   className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-lg text-sm font-medium shrink-0 transition-colors ${
                     isActive
                       ? 'bg-primary/15 text-primary ring-1 ring-primary/30'
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-muted dark:hover:bg-gray-800'
+                      : 'text-muted-foreground hover:bg-muted dark:hover:bg-muted'
                   }`}
                 >
                   <SecIcon className="w-4 h-4 shrink-0" />
@@ -3742,7 +3683,7 @@ export function AdminPanel({
                       className={`flex items-center gap-2 px-3 sm:px-4 py-3 border-b-2 transition-colors whitespace-nowrap text-sm ${
                         activeTab === tab.id
                           ? 'border-primary text-primary'
-                          : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                          : 'border-transparent text-muted-foreground hover:text-foreground dark:hover:text-white'
                       }`}
                     >
                       <Icon className="w-4 h-4 shrink-0" />
@@ -3772,7 +3713,7 @@ export function AdminPanel({
       </div>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="page-container py-6">
         {activeTab === 'dashboard' && renderDashboard()}
         {activeTab === 'moderation' && (
           <ModerationPanel
@@ -3810,6 +3751,7 @@ export function AdminPanel({
         {activeTab === 'blogCategories' && renderBlogCategories()}
         {activeTab === 'partners' && renderPartners()}
         {activeTab === 'faq' && renderFaq()}
+        {activeTab === 'guides' && <AdminGuidesPanel />}
         {activeTab === 'helpSection' && <AdminHelpSectionPanel />}
         {activeTab === 'featureFlags' && renderFeatureFlags()}
         {activeTab === 'telegramBlog' && renderTelegramBlogSettings()}

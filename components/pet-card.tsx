@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+﻿import { useState, useRef, useEffect } from 'react';
 import { MapPin, Phone, MessageCircle, Edit2, Trash2, Home, Heart, Building2, Clock, CheckCircle2, XCircle, Eye, MoreVertical } from 'lucide-react';
 import { Pet } from '../types/pet';
 import { petStatusPhotoPillClass, statusColors, formatDate, formatRelativeTime } from '../utils/pet-helpers';
@@ -7,6 +7,8 @@ import { useI18n } from '../context/I18nContext';
 import { RewardBadge, getRewardBadgeMeta } from './reward-badge';
 import { FavoriteHeartButton } from './favorite-heart-button';
 import { cn } from './ui/utils';
+import { typoH4 } from '@/shared/styles/typography-classes';
+import { activateOnKeyboard, interactiveCardClass } from '@/shared/styles/interaction-classes';
 
 interface PetCardProps {
   pet: Pet;
@@ -108,9 +110,9 @@ export function PetCard({
       borderColor = 'border-pink-200 dark:border-pink-800';
     } else if (pet.archiveReason.includes('приют')) {
       icon = <Building2 className="w-3.5 h-3.5" />;
-      bgColor = 'bg-gray-100 dark:bg-gray-700';
-      textColor = 'text-gray-700 dark:text-gray-300';
-      borderColor = 'border-gray-200 dark:border-gray-600';
+      bgColor = 'bg-muted';
+      textColor = 'text-foreground/90';
+      borderColor = 'border-border dark:border-border';
     }
     
     return { icon, bgColor, textColor, borderColor };
@@ -138,21 +140,17 @@ export function PetCard({
     const photoUrl = pet.photos[0] || 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&h=400&fit=crop';
     const colorStr = pet.colors.length ? pet.colors.map(c => t.pet.color[c as keyof typeof t.pet.color]).join(', ') : '—';
     const breedStr = pet.breed?.trim() || t.landing.announcements.breedDefault;
+    const photoAlt = `${t.pet.animalType[pet.animalType]}${pet.breed ? `, ${pet.breed}` : ''}, ${pet.city}`;
     return (
       <div
         role="button"
         tabIndex={0}
         onClick={onClick}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            onClick?.();
-          }
-        }}
+        onKeyDown={activateOnKeyboard(onClick)}
         className={cn(
-          'group flex cursor-pointer overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all duration-300',
-          'hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+          interactiveCardClass,
+          'group flex overflow-hidden rounded-2xl border border-border bg-card shadow-sm',
+          'hover:-translate-y-0.5 hover:border-primary/35',
         )}
       >
         <div
@@ -164,7 +162,7 @@ export function PetCard({
         >
           <img
             src={photoUrl}
-            alt=""
+            alt={photoAlt}
             loading="lazy"
             decoding="async"
             className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-[1.03]"
@@ -172,7 +170,7 @@ export function PetCard({
           <div className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-black/35 via-transparent to-transparent" />
           <span
             className={cn(
-              'absolute left-2 top-2 z-[2] inline-flex max-w-[calc(100%-1rem)] truncate rounded-full px-2 py-0.5 text-[10px] font-semibold sm:text-[11px]',
+              'absolute left-2 top-2 z-[2] inline-flex max-w-[calc(100%-1rem)] truncate rounded-full px-2 py-0.5 text-xs font-semibold sm:text-xs',
               petStatusPhotoPillClass[pet.status],
             )}
           >
@@ -186,7 +184,7 @@ export function PetCard({
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5 px-3 py-2.5 sm:px-4 sm:py-3">
-          <h3 className="line-clamp-1 text-[15px] font-semibold leading-tight text-foreground sm:text-base">
+          <h3 className={cn(typoH4, 'line-clamp-1 leading-tight')}>
             {t.pet.animalType[pet.animalType]} <span className="font-medium text-muted-foreground">·</span>{' '}
             <span className="font-medium">{breedStr}</span>
           </h3>
@@ -197,11 +195,11 @@ export function PetCard({
           ) : null}
           <p className="line-clamp-1 text-xs text-muted-foreground sm:text-sm">{colorStr}</p>
           <div className="mt-1 flex flex-col gap-1.5">
-            <span className="flex max-w-full items-center gap-1 self-start rounded-md bg-muted/80 px-2 py-0.5 text-[11px] text-muted-foreground">
+            <span className="flex max-w-full items-center gap-1 self-start rounded-md bg-muted/80 px-2 py-0.5 text-xs text-muted-foreground">
               <MapPin size={12} className="shrink-0 opacity-80" aria-hidden />
               <span className="min-w-0 truncate">{pet.city}</span>
             </span>
-            <span className="flex items-center gap-1 self-start rounded-md bg-muted/80 px-2 py-0.5 text-[11px] text-muted-foreground">
+            <span className="flex items-center gap-1 self-start rounded-md bg-muted/80 px-2 py-0.5 text-xs text-muted-foreground">
               <Clock size={12} className="shrink-0 opacity-80" aria-hidden />
               {formatRelativeTime(pet.publishedAt)}
             </span>
@@ -212,9 +210,15 @@ export function PetCard({
   }
 
   return (
-    <div 
-      className="bg-card border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
+      onKeyDown={activateOnKeyboard(onClick)}
+      className={cn(
+        interactiveCardClass,
+        'overflow-hidden rounded-lg border border-border bg-card shadow-sm',
+      )}
     >
       <div className="relative">
         <img 
@@ -238,17 +242,17 @@ export function PetCard({
           <div className="absolute top-3 right-3" ref={menuRef}>
             <button
               onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v); }}
-              className="p-1.5 bg-white/90 dark:bg-gray-800/90 hover:bg-card dark:hover:bg-card text-gray-700 dark:text-gray-300 rounded-lg shadow-sm transition-colors"
+              className="p-1.5 bg-white/90 dark:bg-card/90 hover:bg-card dark:hover:bg-card text-foreground/90 rounded-lg shadow-sm transition-colors"
               title={t.common.options}
             >
               <MoreVertical className="w-4 h-4" />
             </button>
             {menuOpen && (
-              <div className="absolute right-0 top-full mt-2 w-40 bg-card rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 py-1 z-50 animate-in fade-in zoom-in-95 duration-200">
+              <div className="absolute right-0 top-full mt-2 w-40 bg-card rounded-lg shadow-lg border border-border dark:border-border py-1 z-50 animate-in fade-in zoom-in-95 duration-200">
                 {onEdit && (
                   <button
                     onClick={(e) => { e.stopPropagation(); handleEdit(e); setMenuOpen(false); }}
-                    className="w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-accent dark:hover:bg-accent flex items-center gap-2"
+                    className="w-full text-left px-4 py-2.5 text-sm text-foreground/90 dark:text-foreground hover:bg-accent dark:hover:bg-accent flex items-center gap-2"
                   >
                     <Edit2 className="w-4 h-4" />
                     {t.common.edit}
@@ -272,7 +276,7 @@ export function PetCard({
       <div className="p-4">
         <div className="mb-3">
           <div className="flex items-start justify-between gap-2 mb-2">
-            <h3 className="font-semibold text-lg text-gray-900 dark:text-white">
+            <h3 className="font-semibold text-lg text-foreground">
               {t.pet.animalType[pet.animalType]} {pet.breed && `· ${pet.breed}`}
             </h3>
             <div className="flex items-center gap-2 shrink-0">
@@ -286,17 +290,17 @@ export function PetCard({
             </div>
           </div>
           
-          <div className="flex flex-wrap gap-2 text-sm text-gray-600 dark:text-gray-400 mb-2">
-            <span>Цвет: {pet.colors.map(c => t.pet.color[c as keyof typeof t.pet.color]).join(', ')}</span>
+          <div className="flex flex-wrap gap-2 text-sm text-muted-foreground mb-2">
+            <span>{t.pet.colorLabel}: {pet.colors.map(c => t.pet.color[c as keyof typeof t.pet.color]).join(', ')}</span>
             {pet.gender && <span>· {t.pet.gender[pet.gender]}</span>}
             {pet.approximateAge && <span>· {pet.approximateAge}</span>}
           </div>
 
-          <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2 mb-3">
+          <p className="text-sm text-foreground/90 line-clamp-2 mb-3">
             {pet.description}
           </p>
 
-          <div className="mb-3 space-y-1 text-sm text-gray-500 dark:text-gray-400">
+          <div className="mb-3 space-y-1 text-sm text-muted-foreground">
             <div className="flex min-w-0 items-center gap-1">
               <MapPin className="h-4 w-4 shrink-0" aria-hidden />
               <span className="min-w-0 truncate">{pet.city}</span>
@@ -331,8 +335,8 @@ export function PetCard({
           )}
         </div>
 
-        <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+        <div className="border-t border-border pt-3">
+          <p className="text-xs text-muted-foreground mb-2">
             {t.pet.contacts}:{' '}
             <a
               href={`/user/${pet.authorId}`}
@@ -346,8 +350,8 @@ export function PetCard({
           </p>
           
           {pet.isArchived ? (
-            <div className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg p-3 text-center">
-              <p className="text-sm text-gray-600 dark:text-gray-400">{t.petDetail.contactsHiddenArchived}</p>
+            <div className="bg-muted/30 dark:bg-muted border border-border rounded-lg p-3 text-center">
+              <p className="text-sm text-muted-foreground">{t.petDetail.contactsHiddenArchived}</p>
             </div>
           ) : (
             <div className="flex flex-wrap gap-2">

@@ -207,7 +207,7 @@ export default function ProfilePage() {
     e.preventDefault();
     const hasPassword = user?.passwordSet !== false;
     if (hasPassword && !currentPassword.trim()) {
-      toast.error((t.profile as { wrongPassword?: string }).wrongPassword ?? 'Введите текущий пароль');
+      toast.error(t.profile.currentPasswordPlaceholder);
       return;
     }
     if (newPassword !== confirmPassword) { toast.error(t.profile.passwordsNotMatch); return; }
@@ -222,7 +222,7 @@ export default function ProfilePage() {
       setCurrentPassword(''); setNewPassword(''); setConfirmPassword('');
       toast.success(t.profile.passwordChanged);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : (t.profile as { wrongPassword?: string }).wrongPassword ?? 'Неверный текущий пароль');
+      toast.error(err instanceof Error ? err.message : t.profile.wrongPassword);
     } finally {
       setIsSavingPassword(false);
     }
@@ -361,9 +361,9 @@ export default function ProfilePage() {
     setIsUploadingAvatar(true);
     try {
       await uploadAvatar(file);
-      toast.success((t.profile as { avatarUploaded?: string }).avatarUploaded ?? 'Фото загружено');
+      toast.success(t.profile.avatarUploaded);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Не удалось загрузить фото');
+      toast.error(err instanceof Error ? err.message : t.common.toasts.photoUploadError);
     } finally {
       setIsUploadingAvatar(false);
     }
@@ -444,60 +444,60 @@ export default function ProfilePage() {
   const hasAnyContact = phone || viber || isTelegramLinked || telegram;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-background flex flex-col">
+    <div className="min-h-screen bg-muted/30 dark:bg-background flex flex-col">
       <Header selectedCity={selectedCity} onCityClick={() => setShowCityModal(true)} />
 
       <main className="flex-1">
-        <div className="min-h-screen bg-gray-50 dark:bg-background py-8">
+        <div className="min-h-screen bg-muted/30 dark:bg-background py-8">
           <div className="max-w-5xl mx-auto px-4">
             <div className="mb-8">
-              <h1 className="text-3xl font-bold text-black dark:text-white mb-2">
-              {(t.profile as { settingsTitle?: string }).settingsTitle ?? 'Настройки профиля'}
+              <h1 className="typo-h1 text-foreground mb-2">
+              {t.profile.settingsTitle}
             </h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              {(t.profile as { settingsSubtitle?: string }).settingsSubtitle ?? 'Управляйте своими личными данными и настройками'}
+            <p className="text-muted-foreground">
+              {t.profile.settingsSubtitle}
             </p>
           </div>
 
-          <div className="bg-white dark:bg-card rounded-2xl shadow-lg overflow-hidden">
+          <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
             {/* Tabs */}
-            <div className="border-b border-gray-200 dark:border-gray-700">
+            <div className="border-b border-border">
               <div className="flex overflow-x-auto">
                 <button
                   type="button"
                   onClick={() => setActiveTab('personal')}
                   className={`flex-1 min-w-[150px] px-6 py-4 font-medium transition-colors flex items-center justify-center gap-2 ${
                     activeTab === 'personal'
-                      ? 'text-[#FF9800] border-b-2 border-[#FF9800] bg-orange-50 dark:bg-orange-950/20'
-                      : 'text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800'
+                      ? 'text-primary border-b-2 border-primary bg-primary/10'
+                      : 'text-muted-foreground hover:text-black dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800'
                   }`}
                 >
                   <User className="w-5 h-5" />
-                  <span>{(t.profile as { tabPersonal?: string }).tabPersonal ?? 'Личные данные'}</span>
+                  <span>{t.profile.tabPersonal}</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiveTab('security')}
                   className={`flex-1 min-w-[150px] px-6 py-4 font-medium transition-colors flex items-center justify-center gap-2 ${
                     activeTab === 'security'
-                      ? 'text-[#FF9800] border-b-2 border-[#FF9800] bg-orange-50 dark:bg-orange-950/20'
-                      : 'text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800'
+                      ? 'text-primary border-b-2 border-primary bg-primary/10'
+                      : 'text-muted-foreground hover:text-black dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800'
                   }`}
                 >
                   <Lock className="w-5 h-5" />
-                  <span>{(t.profile as { tabSecurity?: string }).tabSecurity ?? 'Безопасность'}</span>
+                  <span>{t.profile.tabSecurity}</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiveTab('notifications')}
                   className={`flex-1 min-w-[150px] px-6 py-4 font-medium transition-colors flex items-center justify-center gap-2 ${
                     activeTab === 'notifications'
-                      ? 'text-[#FF9800] border-b-2 border-[#FF9800] bg-orange-50 dark:bg-orange-950/20'
-                      : 'text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800'
+                      ? 'text-primary border-b-2 border-primary bg-primary/10'
+                      : 'text-muted-foreground hover:text-black dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800'
                   }`}
                 >
                   <Bell className="w-5 h-5" />
-                  <span>{(t.profile as { tabNotifications?: string }).tabNotifications ?? 'Уведомления'}</span>
+                  <span>{t.profile.tabNotifications}</span>
                 </button>
               </div>
             </div>
@@ -506,7 +506,7 @@ export default function ProfilePage() {
               {/* Tab: Личные данные */}
               {activeTab === 'personal' && (
                 <div className="space-y-6">
-                  <div className="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-gray-200 dark:border-gray-700">
+                  <div className="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-border">
                     <div className="relative">
                       <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-gray-200 dark:border-gray-600 flex items-center justify-center bg-gradient-to-br from-[#FF9800]/20 to-orange-100 dark:from-orange-950/30 dark:to-gray-800">
                         {user?.avatar ? (
@@ -522,14 +522,14 @@ export default function ProfilePage() {
                     </div>
                     <div className="text-center sm:text-left flex-1">
                       <h3 className="font-bold text-black dark:text-white mb-1">
-                        {(t.profile as { photoTitle?: string }).photoTitle ?? 'Фото профиля'}
+                        {t.profile.photoTitle}
                       </h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                        {(t.profile as { avatarHint?: string }).avatarHint ?? 'Рекомендуемый размер: 400x400px, формат: JPG или PNG'}
+                      <p className="text-sm text-muted-foreground mb-3">
+                        {t.profile.avatarHint}
                       </p>
                       <label htmlFor="avatar-upload-btn" className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium cursor-pointer dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600">
                         <Camera className="w-[18px] h-[18px]" />
-                        {(t.profile as { uploadPhoto?: string }).uploadPhoto ?? 'Загрузить фото'}
+                        {t.profile.uploadPhoto}
                         <input id="avatar-upload-btn" type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
                       </label>
                     </div>
@@ -539,11 +539,10 @@ export default function ProfilePage() {
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                       <div>
                         <div className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                          {(t.profile as { helperIdLabel?: string }).helperIdLabel ?? 'ID помощника'}
+                          {t.profile.helperIdLabel}
                         </div>
                         <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          {(t.profile as { helperIdHint?: string }).helperIdHint ??
-                            'Передайте этот ID владельцу объявления, чтобы он мог начислить вам очки за подтвержденную помощь.'}
+                          {t.profile.helperIdHint}
                         </div>
                       </div>
                       <button
@@ -558,11 +557,11 @@ export default function ProfilePage() {
                     </div>
                     <div className="grid grid-cols-2 gap-3 mt-4">
                       <div className="rounded-lg bg-white dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 p-3">
-                        <div className="text-xs text-gray-500 dark:text-gray-400">Подтверждено случаев помощи</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">{t.profile.helperConfirmedCountLabel}</div>
                         <div className="text-xl font-bold text-gray-900 dark:text-white">{user?.helperConfirmedCount ?? 0}</div>
                       </div>
                       <div className="rounded-lg bg-white dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 p-3">
-                        <div className="text-xs text-gray-500 dark:text-gray-400">Баланс очков</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">{t.profile.pointsBalanceLabel}</div>
                         <div className="text-xl font-bold text-gray-900 dark:text-white">{user?.pointsBalance ?? 0}</div>
                       </div>
                     </div>
@@ -572,11 +571,11 @@ export default function ProfilePage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          {t.profile.nameLabel?.replace(/\s*\*\s*$/, '').trim() || 'Имя'} <span className="text-red-500">*</span>
+                          {t.profile.nameLabel.replace(/\s*\*\s*$/, '').trim()} <span className="text-red-500">*</span>
                         </label>
                         <div className="relative">
                           <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
-                          <input type="text" required value={name} onChange={e => setName(e.target.value)} placeholder={t.profile.namePlaceholder} className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF9800] focus:border-[#FF9800] bg-white dark:bg-gray-800 text-gray-900 dark:text-white" />
+                          <input type="text" required value={name} onChange={e => setName(e.target.value)} placeholder={t.profile.namePlaceholder} className="w-full pl-10 pr-4 py-3 border border-border rounded-lg bg-background text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50" />
                         </div>
                       </div>
                       <div>
@@ -585,31 +584,31 @@ export default function ProfilePage() {
                         </label>
                         <div className="relative">
                           <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
-                          <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="your@email.com" className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF9800] focus:border-[#FF9800] bg-white dark:bg-gray-800 text-gray-900 dark:text-white" />
+                          <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="your@email.com" className="w-full pl-10 pr-4 py-3 border border-border rounded-lg bg-background text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50" />
                         </div>
                       </div>
 
                       {user?.role === 'admin' && (
                         <div className="md:col-span-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-800/40 p-4">
                           <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            {pr.roleFieldLabel ?? 'Роль'}
+                            {t.profile.roleFieldLabel}
                           </div>
-                          <div className="text-gray-900 dark:text-white font-medium">{pr.roles?.admin ?? 'Администратор'}</div>
+                          <div className="text-gray-900 dark:text-white font-medium">{t.profile.roles.admin}</div>
                         </div>
                       )}
 
                       {user?.role === 'user' && (
                         <div className="md:col-span-2">
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            {pr.roleFieldLabel ?? 'Роль'}
+                            {t.profile.roleFieldLabel}
                           </label>
                           <select
                             value={roleDraft}
                             onChange={(e) => setRoleDraft(e.target.value as 'user' | 'volunteer')}
                             className="w-full max-w-md rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-3 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#FF9800]"
                           >
-                            <option value="user">{pr.roles?.user ?? 'Пользователь'}</option>
-                            <option value="volunteer">{pr.roles?.volunteer ?? 'Волонтёр'}</option>
+                            <option value="user">{t.profile.roles.user}</option>
+                            <option value="volunteer">{t.profile.roles.volunteer}</option>
                           </select>
                           <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{pr.roleUpgradeHint}</p>
                         </div>
@@ -618,14 +617,14 @@ export default function ProfilePage() {
                       {user?.role === 'volunteer' && (
                         <div className="md:col-span-2">
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            {pr.roleFieldLabel ?? 'Роль'}
+                            {t.profile.roleFieldLabel}
                           </label>
                           <select
                             disabled
                             value="volunteer"
                             className="w-full max-w-md rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-900 px-3 py-3 text-gray-700 dark:text-gray-300 cursor-not-allowed opacity-90"
                           >
-                            <option value="volunteer">{pr.roles?.volunteer ?? 'Волонтёр'}</option>
+                            <option value="volunteer">{t.profile.roles.volunteer}</option>
                           </select>
                           <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                             {user.registeredAsVolunteer
@@ -641,14 +640,14 @@ export default function ProfilePage() {
                         </label>
                         <div className="relative">
                           <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
-                          <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder={BELARUS_MOBILE_PHONE_PLACEHOLDER} className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF9800] focus:border-[#FF9800] bg-white dark:bg-gray-800 text-gray-900 dark:text-white" />
+                          <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder={BELARUS_MOBILE_PHONE_PLACEHOLDER} className="w-full pl-10 pr-4 py-3 border border-border rounded-lg bg-background text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50" />
                         </div>
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t.profile.viber}</label>
                         <div className="relative">
                           <MessageCircle className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
-                          <input type="tel" value={viber} onChange={e => setViber(e.target.value)} placeholder={BELARUS_MOBILE_PHONE_PLACEHOLDER} className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF9800] focus:border-[#FF9800] bg-white dark:bg-gray-800 text-gray-900 dark:text-white" />
+                          <input type="tel" value={viber} onChange={e => setViber(e.target.value)} placeholder={BELARUS_MOBILE_PHONE_PLACEHOLDER} className="w-full pl-10 pr-4 py-3 border border-border rounded-lg bg-background text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50" />
                         </div>
                       </div>
                     </div>
@@ -661,59 +660,59 @@ export default function ProfilePage() {
                 </div>
               )}
 
-              {/* Tab: Безопасность — по эталону */}
+
               {activeTab === 'security' && (
                 <div className="space-y-6">
                   <div className="bg-orange-50 dark:bg-orange-950/20 border border-[#FF9800] rounded-lg p-4 mb-6">
                     <h3 className="font-bold text-black dark:text-white mb-2">
                       {user?.passwordSet === false
-                        ? ((t.profile as { setPasswordTitle?: string }).setPasswordTitle ?? 'Задать пароль')
+                        ? (t.profile.setPasswordTitle)
                         : t.profile.changePassword}
                     </h3>
                     <p className="text-sm text-gray-700 dark:text-gray-300">
                       {user?.passwordSet === false
-                        ? ((t.profile as { setPasswordHint?: string }).setPasswordHint ?? 'Вы вошли через Telegram. Задайте пароль, чтобы входить также по email.')
-                        : ((t.profile as { passwordHint?: string }).passwordHint ?? 'Пароль должен содержать минимум 8 символов, включая буквы и цифры')}
+                        ? (t.profile.setPasswordHint)
+                        : (t.profile.passwordHint)}
                     </p>
                   </div>
                   <form onSubmit={handleSavePassword} className="space-y-4">
                     <input type="hidden" autoComplete="username" value={user?.email || ''} readOnly />
                     {user?.passwordSet !== false && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t.profile.currentPassword?.replace(/\s*\*\s*$/, '').trim() || 'Текущий пароль'} <span className="text-red-500">*</span></label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t.profile.currentPassword?.replace(/\s*\*\s*$/, '').trim() || '?{t.profile.pointsBalanceLabel}?'} <span className="text-red-500">*</span></label>
                       <div className="relative">
                         <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                        <input type={showCurrentPw ? 'text' : 'password'} autoComplete="current-password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} placeholder={t.profile.currentPasswordPlaceholder ?? 'Введите текущий пароль'} className="w-full pl-10 pr-12 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF9800] focus:border-[#FF9800] bg-white dark:bg-gray-800 text-gray-900 dark:text-white" />
+                        <input type={showCurrentPw ? 'text' : 'password'} autoComplete="current-password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} placeholder={t.profile.currentPasswordPlaceholder} className="w-full pl-10 pr-12 py-3 border border-border rounded-lg bg-background text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50" />
                         <button type="button" onClick={() => setShowCurrentPw(!showCurrentPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" tabIndex={-1}>{showCurrentPw ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}</button>
                       </div>
                     </div>
                     )}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t.profile.newPassword?.replace(/\s*\*\s*$/, '').trim() || 'Новый пароль'} <span className="text-red-500">*</span></label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t.profile.newPassword.replace(/\s*\*\s*$/, '').trim()} <span className="text-red-500">*</span></label>
                       <div className="relative">
                         <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                        <input type={showNewPw ? 'text' : 'password'} autoComplete="new-password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder={t.profile.newPasswordPlaceholder ?? 'Введите новый пароль'} className="w-full pl-10 pr-12 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF9800] focus:border-[#FF9800] bg-white dark:bg-gray-800 text-gray-900 dark:text-white" />
+                        <input type={showNewPw ? 'text' : 'password'} autoComplete="new-password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder={t.profile.newPasswordPlaceholder} className="w-full pl-10 pr-12 py-3 border border-border rounded-lg bg-background text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50" />
                         <button type="button" onClick={() => setShowNewPw(!showNewPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" tabIndex={-1}>{showNewPw ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}</button>
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t.profile.confirmPassword?.replace(/\s*\*\s*$/, '').trim() || 'Подтвердите новый пароль'} <span className="text-red-500">*</span></label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t.profile.confirmPassword.replace(/\s*\*\s*$/, '').trim()} <span className="text-red-500">*</span></label>
                       <div className="relative">
                         <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                        <input type={showConfirmPw ? 'text' : 'password'} autoComplete="new-password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder={t.profile.confirmPasswordPlaceholder ?? 'Повторите новый пароль'} className="w-full pl-10 pr-12 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF9800] focus:border-[#FF9800] bg-white dark:bg-gray-800 text-gray-900 dark:text-white" />
+                        <input type={showConfirmPw ? 'text' : 'password'} autoComplete="new-password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder={t.profile.confirmPasswordPlaceholder} className="w-full pl-10 pr-12 py-3 border border-border rounded-lg bg-background text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50" />
                         <button type="button" onClick={() => setShowConfirmPw(!showConfirmPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" tabIndex={-1}>{showConfirmPw ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}</button>
                       </div>
                     </div>
                     <div className="flex justify-end pt-4">
                       <button type="submit" disabled={isSavingPassword || !newPassword || !confirmPassword || (user?.passwordSet !== false && !currentPassword)} className="flex items-center justify-center gap-2 h-12 px-8 bg-[#FF9800] text-white rounded-lg hover:bg-[#F57C00] transition-colors font-medium text-lg disabled:opacity-50 disabled:cursor-not-allowed">
-                        {isSavingPassword ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <><Lock className="w-5 h-5" /> {user?.passwordSet === false ? ((t.profile as { setPasswordTitle?: string }).setPasswordTitle ?? 'Задать пароль') : t.profile.changePassword}</>}
+                        {isSavingPassword ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <><Lock className="w-5 h-5" /> {user?.passwordSet === false ? (t.profile.setPasswordTitle) : t.profile.changePassword}</>}
                       </button>
                     </div>
                   </form>
                 </div>
               )}
 
-              {/* Tab: Уведомления — по эталону: карточка Telegram + карточка Настройки */}
+
               {activeTab === 'notifications' && (
                 <div className="space-y-6">
                   {/* Карточка Telegram */}
@@ -731,7 +730,7 @@ export default function ProfilePage() {
                             </div>
                             <div>
                               <div className="font-bold text-black dark:text-white">@{user?.telegramUsername}</div>
-                              <div className="text-sm text-gray-600 dark:text-gray-400">
+                              <div className="text-sm text-muted-foreground">
                                 {user?.telegramLinkedAt ? new Date(user.telegramLinkedAt).toLocaleDateString('ru-RU') : ''}
                               </div>
                             </div>
@@ -751,7 +750,7 @@ export default function ProfilePage() {
                           <button type="button" onClick={handleCopyCode} className="shrink-0 p-2.5 bg-card border border-primary/20 rounded-lg hover:bg-primary/10 transition-colors">{codeCopied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4 text-primary" />}</button>
                         </div>
                         <div className="flex items-center justify-between text-xs">
-                          <span className="text-gray-600 dark:text-gray-400"><span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-pulse inline-block mr-1" /> {t.profile.waiting}</span>
+                          <span className="text-muted-foreground"><span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-pulse inline-block mr-1" /> {t.profile.waiting}</span>
                           <span className="font-mono text-gray-500">{formatTime(timeLeft)}</span>
                         </div>
                         <div className="flex gap-2">
@@ -772,7 +771,7 @@ export default function ProfilePage() {
                       <Bell className="w-5 h-5 text-[#FF9800] mt-0.5 shrink-0" />
                       <div>
                         <h3 className="font-bold text-black dark:text-white mb-1">{t.notifications.title}</h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">{t.notifications.description}</p>
+                        <p className="text-sm text-muted-foreground">{t.notifications.description}</p>
                       </div>
                     </div>
 
@@ -782,7 +781,7 @@ export default function ProfilePage() {
                           <BellOff className="w-5 h-5 text-[#FF9800] shrink-0 mt-0.5" />
                           <div>
                             <h4 className="font-medium text-black dark:text-white mb-1">{t.notifications.telegramNotLinked}</h4>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">{t.notifications.telegramNotLinkedHint}</p>
+                            <p className="text-sm text-muted-foreground">{t.notifications.telegramNotLinkedHint}</p>
                           </div>
                         </div>
                       </div>
@@ -815,7 +814,7 @@ export default function ProfilePage() {
                             <span>5 {t.notifications.km}</span>
                             <span>10 {t.notifications.km}</span>
                           </div>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-3">{t.notifications.radiusHint}</p>
+                          <p className="text-sm text-muted-foreground mt-3">{t.notifications.radiusHint}</p>
                         </div>
                         <button type="button" onClick={handleSaveNotifSettings} disabled={notifSaving} className="w-full mt-6 flex items-center justify-center gap-2 h-12 bg-[#FF9800] text-white rounded-lg hover:bg-[#F57C00] transition-colors font-medium text-lg disabled:opacity-70">
                           {notifSaving ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <><Save className="w-5 h-5" /> {t.notifications.saveSettings}</>}
@@ -834,18 +833,17 @@ export default function ProfilePage() {
       <Dialog open={volunteerConfirmOpen} onOpenChange={setVolunteerConfirmOpen}>
         <DialogContent showCloseButton className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{pr.volunteerUpgradeTitle ?? 'Подтверждение'}</DialogTitle>
+            <DialogTitle>{t.profile.volunteerUpgradeTitle}</DialogTitle>
             <DialogDescription className="text-left">
-              {pr.volunteerUpgradeBody ??
-                'Вы переходите на роль волонтёра. Откатить это действие будет нельзя. Продолжить?'}
+              {t.profile.volunteerUpgradeBody}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-0">
             <Button type="button" variant="outline" onClick={() => setVolunteerConfirmOpen(false)}>
-              {pr.volunteerUpgradeCancel ?? 'Отмена'}
+              {t.profile.volunteerUpgradeCancel}
             </Button>
             <Button type="button" className="bg-[#FF9800] hover:bg-[#F57C00]" onClick={() => void handleConfirmVolunteerUpgrade()}>
-              {pr.volunteerUpgradeConfirm ?? 'Да, сохранить'}
+              {t.profile.volunteerUpgradeConfirm}
             </Button>
           </DialogFooter>
         </DialogContent>

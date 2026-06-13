@@ -2,6 +2,7 @@ import path from 'path'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import { tokens } from './src/shared/styles/tokens'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -17,8 +18,8 @@ export default defineConfig({
         short_name: 'DorogaDomoy',
         description:
           'DorogaDomoy.by — экосистема помощи животным: поиск пропавших питомцев, приюты, питомцы в поиске дома и поддержка сообщества.',
-        theme_color: '#FF9800',
-        background_color: '#ffffff',
+        theme_color: tokens.colors.primary,
+        background_color: tokens.colors.bgBase,
         display: 'standalone',
         orientation: 'portrait-primary',
         start_url: '/',
@@ -94,7 +95,7 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './'),
+      '@': path.resolve(__dirname, './src'),
     },
   },
   server: {

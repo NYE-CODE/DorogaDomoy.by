@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import {
   instagramApi,
@@ -306,7 +306,7 @@ export function AdminInstagramPanel() {
       case 'processing':
         return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300';
       case 'cancelled':
-        return 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300';
+        return 'bg-muted text-foreground/90 dark:bg-muted dark:text-muted-foreground/50';
       case 'pending':
       default:
         return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300';
@@ -339,18 +339,18 @@ export function AdminInstagramPanel() {
         <h3 className={adm.settingsCardTitle}>{ig.modeTitle}</h3>
         <div className="mt-4 space-y-4">
           <label className="flex items-center justify-between gap-4">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{ig.modeAutopublish}</span>
+            <span className="text-sm font-medium text-foreground/90">{ig.modeAutopublish}</span>
             <Switch
               checked={instagramAutopublishEnabled}
               onCheckedChange={setInstagramAutopublishEnabled}
             />
           </label>
-          <label className="flex items-center justify-between gap-4 pt-4 border-t border-gray-200 dark:border-gray-600">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{ig.modeStory}</span>
+          <label className="flex items-center justify-between gap-4 pt-4 border-t border-border dark:border-border">
+            <span className="text-sm font-medium text-foreground/90">{ig.modeStory}</span>
             <Switch checked={instagramStoryEnabled} onCheckedChange={setInstagramStoryEnabled} />
           </label>
-          <label className="flex items-center justify-between gap-4 pt-4 border-t border-gray-200 dark:border-gray-600">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{ig.modeManualWhenAutoOff}</span>
+          <label className="flex items-center justify-between gap-4 pt-4 border-t border-border dark:border-border">
+            <span className="text-sm font-medium text-foreground/90">{ig.modeManualWhenAutoOff}</span>
             <Switch
               checked={instagramManualWhenAutoOff}
               onCheckedChange={setInstagramManualWhenAutoOff}
@@ -370,9 +370,9 @@ export function AdminInstagramPanel() {
       <div className="grid gap-6 lg:grid-cols-2">
         <div className={adm.settingsCard}>
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{ig.accountsTitle}</h3>
+            <h3 className="text-lg font-semibold text-foreground">{ig.accountsTitle}</h3>
             <button
-              className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs dark:border-gray-700 dark:text-gray-200"
+              className="rounded-lg border border-border px-3 py-1.5 text-xs dark:border-border dark:text-foreground"
               onClick={resetAccountForm}
               disabled={busy}
             >
@@ -381,13 +381,13 @@ export function AdminInstagramPanel() {
           </div>
           <div className="mt-4 grid gap-3">
             <input
-              className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm"
+              className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg text-sm"
               placeholder={ig.accountNamePlaceholder}
               value={accountForm.name}
               onChange={(e) => setAccountForm((prev) => ({ ...prev, name: e.target.value }))}
             />
             <input
-              className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm"
+              className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg text-sm"
               placeholder={ig.accountBusinessIdPlaceholder}
               value={accountForm.instagramBusinessId}
               onChange={(e) =>
@@ -395,19 +395,19 @@ export function AdminInstagramPanel() {
               }
             />
             <input
-              className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm"
+              className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg text-sm"
               placeholder={ig.accountFacebookPageIdPlaceholder}
               value={accountForm.facebookPageId}
               onChange={(e) => setAccountForm((prev) => ({ ...prev, facebookPageId: e.target.value }))}
             />
             <input
-              className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm"
+              className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg text-sm"
               placeholder={editingAccountId ? ig.accountTokenUpdatePlaceholder : ig.accountTokenPlaceholder}
               value={accountForm.accessToken}
               onChange={(e) => setAccountForm((prev) => ({ ...prev, accessToken: e.target.value }))}
             />
-            <label className="flex items-center justify-between rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2.5">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{ig.accountActiveLabel}</span>
+            <label className="flex items-center justify-between rounded-lg border border-border px-3 py-2.5">
+              <span className="text-sm font-medium text-foreground/90">{ig.accountActiveLabel}</span>
               <Switch
                 checked={accountForm.isActive}
                 onCheckedChange={(value) => setAccountForm((prev) => ({ ...prev, isActive: value }))}
@@ -427,25 +427,25 @@ export function AdminInstagramPanel() {
 
           <div className={`mt-5 ${adm.tableShell}`}>
             {accounts.length === 0 ? (
-              <div className="px-4 py-6 text-sm text-gray-500 dark:text-gray-400">{ig.accountsEmpty}</div>
+              <div className="px-4 py-6 text-sm text-muted-foreground">{ig.accountsEmpty}</div>
             ) : (
-              <div className="divide-y divide-gray-200 dark:divide-gray-700">
+              <div className="divide-y divide-border">
                 {accounts.map((row) => (
                   <div key={row.id} className="px-4 py-3 text-sm">
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0">
-                        <div className="font-medium text-gray-900 dark:text-white truncate">{row.name}</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                        <div className="font-medium text-foreground truncate">{row.name}</div>
+                        <div className="text-xs text-muted-foreground truncate">
                           {ig.accountBusinessIdLabel}: {row.instagram_business_id}
                         </div>
-                        <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        <div className="mt-1 text-xs text-muted-foreground">
                           {ig.accountTokenLabel}: {row.has_access_token ? ig.accountTokenConfigured : ig.accountTokenMissing} | {row.is_active ? ig.accountStateActive : ig.accountStateInactive}
                         </div>
                       </div>
                       <button
                         type="button"
                         title={ig.editButton}
-                        className="inline-flex items-center justify-center p-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-accent dark:hover:bg-accent"
+                        className="inline-flex items-center justify-center p-2 rounded-lg border border-border hover:bg-accent dark:hover:bg-accent"
                         onClick={() => beginEditAccount(row)}
                         disabled={busy}
                       >
@@ -461,10 +461,10 @@ export function AdminInstagramPanel() {
         </div>
 
         <div className={adm.settingsCard}>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{ig.routesTitle}</h3>
+          <h3 className="text-lg font-semibold text-foreground">{ig.routesTitle}</h3>
           <div className="mt-4 grid gap-3">
             <input
-              className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm"
+              className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg text-sm"
               placeholder={ig.routeRegionPlaceholder}
               value={routeRegion}
               onChange={(e) => setRouteRegion(e.target.value)}
@@ -481,8 +481,8 @@ export function AdminInstagramPanel() {
                 ))}
               </SelectContent>
             </Select>
-            <label className="flex items-center justify-between rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2.5">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{ig.routeFallbackLabel}</span>
+            <label className="flex items-center justify-between rounded-lg border border-border px-3 py-2.5">
+              <span className="text-sm font-medium text-foreground/90">{ig.routeFallbackLabel}</span>
               <Switch checked={routeFallback} onCheckedChange={setRouteFallback} />
             </label>
             <button
@@ -499,18 +499,18 @@ export function AdminInstagramPanel() {
 
           <div className={`mt-5 ${adm.tableShell}`}>
             {routes.length === 0 ? (
-              <div className="px-4 py-6 text-sm text-gray-500 dark:text-gray-400">{ig.routesEmpty}</div>
+              <div className="px-4 py-6 text-sm text-muted-foreground">{ig.routesEmpty}</div>
             ) : (
-              <div className="divide-y divide-gray-200 dark:divide-gray-700">
+              <div className="divide-y divide-border">
                 {routes.map((row) => (
                   <div key={row.id} className="px-4 py-3 text-sm">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div className="min-w-0">
-                        <div className="font-medium text-gray-900 dark:text-white truncate">{row.region_key}</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{row.account_name}</div>
+                        <div className="font-medium text-foreground truncate">{row.region_key}</div>
+                        <div className="text-xs text-muted-foreground truncate">{row.account_name}</div>
                       </div>
                       <div className="flex items-center gap-3">
-                        <label className="inline-flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
+                        <label className="inline-flex items-center gap-2 text-xs text-muted-foreground dark:text-muted-foreground/50">
                           <span>{ig.routeFallbackShort}</span>
                           <Switch
                             checked={row.is_fallback}
@@ -543,7 +543,7 @@ export function AdminInstagramPanel() {
 
       <div className={adm.settingsCard}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{ig.queueTitle}</h3>
+          <h3 className="text-lg font-semibold text-foreground">{ig.queueTitle}</h3>
           <div className="flex items-center gap-2">
             <Select
               value={publicationFilter}
@@ -566,7 +566,7 @@ export function AdminInstagramPanel() {
               </SelectContent>
             </Select>
             <input
-              className="w-[180px] px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm"
+              className="w-[180px] px-3 py-2 border border-border dark:bg-muted dark:text-white rounded-lg text-sm"
               placeholder={ig.queuePetFilterPlaceholder}
               value={publicationPetFilter}
               onChange={(e) => {
@@ -580,7 +580,7 @@ export function AdminInstagramPanel() {
               }}
             />
             <button
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:bg-accent dark:hover:bg-accent"
+              className="px-3 py-2 border border-border rounded-lg text-sm hover:bg-accent dark:hover:bg-accent"
               onClick={() => {
                 const nextPage = 1;
                 setQueuePage(nextPage);
@@ -601,37 +601,37 @@ export function AdminInstagramPanel() {
         </div>
         <div className="mt-4 space-y-2">
           {queueLoading ? (
-            <div className="rounded-xl border border-dashed border-gray-300 p-4 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
+            <div className="rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground dark:border-border dark:text-muted-foreground/80">
               {ig.loadingQueue}
             </div>
           ) : null}
           {visiblePublications.map((row) => (
             <div
               key={row.id}
-              className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 text-sm"
+              className="rounded-lg border border-border p-3 text-sm"
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="font-medium text-gray-900 dark:text-white flex items-center flex-wrap gap-2">
+                <div className="font-medium text-foreground flex items-center flex-wrap gap-2">
                   <span>{row.pet_id}</span>
-                  <span className="text-gray-500 dark:text-gray-400">• {row.format}</span>
+                  <span className="text-muted-foreground">• {row.format}</span>
                   <span
                     className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${queueStatusBadgeClass(row.status)}`}
                   >
                     {queueStatusLabel(row.status)}
                   </span>
                 </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">{ig.attemptsLabel}: {row.attempts}</div>
+                <div className="text-xs text-muted-foreground">{ig.attemptsLabel}: {row.attempts}</div>
               </div>
-              <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              <div className="mt-1 text-xs text-muted-foreground">
                 {ig.accountLabel}: {row.account_name || ig.notAssigned} • {ig.regionLabel}: {row.region_key || '—'}
               </div>
-              <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              <div className="mt-1 text-xs text-muted-foreground">
                 {ig.createdAtLabel}: {formatQueueDate(row.created_at)} • {ig.updatedAtLabel}: {formatQueueDate(row.updated_at)}
                 {' • '}
                 {ig.publishedAtLabel}: {formatQueueDate(row.published_at)}
               </div>
               {row.external_media_id ? (
-                <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                <div className="mt-1 text-xs text-muted-foreground">
                   {ig.externalMediaIdLabel}: <span className="font-mono">{row.external_media_id}</span>
                 </div>
               ) : null}
@@ -642,7 +642,7 @@ export function AdminInstagramPanel() {
                 <button
                   type="button"
                   title={ig.publishNowButton}
-                  className="inline-flex items-center justify-center p-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-accent dark:hover:bg-accent disabled:opacity-50"
+                  className="inline-flex items-center justify-center p-2 rounded-lg border border-border hover:bg-accent dark:hover:bg-accent disabled:opacity-50"
                   onClick={() => {
                     void handleQueueAction(row.id, 'publishNow');
                   }}
@@ -679,7 +679,7 @@ export function AdminInstagramPanel() {
             </div>
           ))}
           {visiblePublications.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-gray-300 p-4 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
+            <div className="rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground dark:border-border dark:text-muted-foreground/80">
               {ig.queueEmpty}
             </div>
           ) : null}
@@ -693,7 +693,7 @@ export function AdminInstagramPanel() {
           }}
           labels={t.adminPanel.pagination}
           summary={
-            <span className="text-xs text-gray-500 dark:text-gray-400">
+            <span className="text-xs text-muted-foreground">
               {ig.queuePageSummary(queuePage, queuePageSize, publications.length, publicationsTotal)}
             </span>
           }
@@ -707,23 +707,23 @@ export function AdminInstagramPanel() {
           onClick={() => setIsManualModalOpen(false)}
         >
           <div
-            className="w-full max-w-lg bg-card border border-gray-200 dark:border-gray-700 rounded-xl p-6"
+            className="w-full max-w-lg bg-card border border-border rounded-xl p-6"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{ig.manualModalTitle}</h3>
+            <h3 className="text-lg font-semibold text-foreground">{ig.manualModalTitle}</h3>
             <div className="mt-4 space-y-3">
               <input
-                className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm"
+                className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg text-sm"
                 placeholder={ig.manualPetIdPlaceholder}
                 value={manualPetId}
                 onChange={(e) => setManualPetId(e.target.value)}
               />
-              <div className="text-sm text-gray-600 dark:text-gray-400">
-                {ig.manualFormatLabel}: <span className="font-medium text-gray-900 dark:text-white">{ig.manualFormatValue}</span>
+              <div className="text-sm text-muted-foreground">
+                {ig.manualFormatLabel}: <span className="font-medium text-foreground">{ig.manualFormatValue}</span>
               </div>
               <div className="flex items-center justify-end gap-2 pt-2">
                 <button
-                  className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:bg-accent dark:hover:bg-accent"
+                  className="px-3 py-2 border border-border rounded-lg text-sm hover:bg-accent dark:hover:bg-accent"
                   onClick={() => setIsManualModalOpen(false)}
                   disabled={busy}
                 >

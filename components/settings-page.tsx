@@ -1,7 +1,8 @@
-import { Globe, Palette, Check } from "lucide-react";
+﻿import { Globe, Palette, Check } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 import { useI18n } from "../context/I18nContext";
 import type { Locale } from "../i18n/translations";
+import { typoH1, typoLead } from "@/shared/styles/typography-classes";
 
 const languages: { code: Locale; nameKey: "langRu" | "langBe" | "langEn"; flag: string }[] = [
   { code: "ru", nameKey: "langRu", flag: "🇷🇺" },
@@ -29,12 +30,11 @@ export function SettingsContent() {
   const { locale, setLocale, t } = useI18n();
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-muted py-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">{t.settings.appTitle}</h1>
-          <p className="text-muted-foreground">{t.settings.appSubtitle}</p>
+    <div className="min-h-screen bg-muted/30 dark:bg-muted py-8">
+      <div className="page-container-narrow">
+        <div className="page-header-block">
+          <h1 className={`${typoH1} mb-2`}>{t.settings.appTitle}</h1>
+          <p className={typoLead}>{t.settings.appSubtitle}</p>
         </div>
 
         <div className="space-y-6">

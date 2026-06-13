@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { CheckCircle2, XCircle, X, Ban } from 'lucide-react';
 import { Pet } from '../types/pet';
 import { formatDate, statusLabels, animalTypeLabels, petStatusSoftPillClass } from '../utils/pet-helpers';
@@ -61,10 +61,10 @@ export function ModerationPanel({ pets, onApprovePet, onRejectPet }: ModerationP
       {pendingPets.length === 0 ? (
         <div className={adm.emptyBox}>
           <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+          <h3 className="text-lg font-medium text-foreground mb-2">
             {m.emptyTitle}
           </h3>
-          <p className="text-gray-500 dark:text-gray-400">
+          <p className="text-muted-foreground">
             {m.emptyHint}
           </p>
         </div>
@@ -74,7 +74,7 @@ export function ModerationPanel({ pets, onApprovePet, onRejectPet }: ModerationP
             {paginatedPets.map(pet => (
               <div
                 key={pet.id}
-                className={`${adm.listCard} hover:border-gray-300 dark:hover:border-gray-500`}
+                className={`${adm.listCard} hover:border-border dark:hover:border-border`}
               >
                 <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
                   {/* Pet Image */}
@@ -89,11 +89,11 @@ export function ModerationPanel({ pets, onApprovePet, onRejectPet }: ModerationP
                   {/* Pet Info */}
                   <div className="flex-1 min-w-0">
                     <div className="mb-3">
-                      <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-1">
+                      <h3 className="text-base sm:text-lg font-semibold text-foreground mb-1">
                         {animalTypeLabels[pet.animalType]}
                         {pet.breed && ` · ${pet.breed}`}
                       </h3>
-                      <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-sm text-gray-600 dark:text-gray-400">
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-sm text-muted-foreground">
                         <span>{pet.city}</span>
                         <span>·</span>
                         <span>{formatDate(pet.publishedAt)}</span>
@@ -105,25 +105,25 @@ export function ModerationPanel({ pets, onApprovePet, onRejectPet }: ModerationP
                       </div>
                     </div>
 
-                    <p className="text-sm text-gray-700 dark:text-gray-300 mb-4 line-clamp-3">
+                    <p className="text-sm text-foreground/90 mb-4 line-clamp-3">
                       {pet.description}
                     </p>
 
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-4">
                       <div className="text-sm">
-                        <span className="text-gray-600 dark:text-gray-400">{m.author} </span>
-                        <span className="font-medium text-gray-900 dark:text-white">{pet.authorName}</span>
+                        <span className="text-muted-foreground">{m.author} </span>
+                        <span className="font-medium text-foreground">{pet.authorName}</span>
                       </div>
                       {pet.contacts.phone && (
                         <div className="text-sm">
-                          <span className="text-gray-600 dark:text-gray-400">{m.phoneShort} </span>
-                          <span className="font-medium text-gray-900 dark:text-white">{pet.contacts.phone}</span>
+                          <span className="text-muted-foreground">{m.phoneShort} </span>
+                          <span className="font-medium text-foreground">{pet.contacts.phone}</span>
                         </div>
                       )}
                       {pet.contacts.telegram && (
                         <div className="text-sm">
-                          <span className="text-gray-600 dark:text-gray-400">{m.telegramShort} </span>
-                          <span className="font-medium text-gray-900 dark:text-white">{pet.contacts.telegram}</span>
+                          <span className="text-muted-foreground">{m.telegramShort} </span>
+                          <span className="font-medium text-foreground">{pet.contacts.telegram}</span>
                         </div>
                       )}
                     </div>
@@ -170,14 +170,14 @@ export function ModerationPanel({ pets, onApprovePet, onRejectPet }: ModerationP
           </div>
 
           {totalPages > 1 && (
-            <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <div className="mt-6 pt-6 border-t border-border">
               <AdminTablePagination
                 currentPage={page}
                 totalPages={totalPages}
                 onPageChange={setPage}
                 labels={{ prev: m.prevPage, next: m.nextPage, goToPage: pg.goToPage }}
                 summary={
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                  <span className="text-sm text-foreground/90">
                     {t.adminPanel.users.pageOf(page, totalPages)}
                   </span>
                 }
@@ -192,18 +192,18 @@ export function ModerationPanel({ pets, onApprovePet, onRejectPet }: ModerationP
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4">
           <div className="bg-card rounded-lg max-w-md w-full p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              <h3 className="text-lg font-semibold text-foreground">
                 {m.rejectModalTitle}
               </h3>
               <button
                 onClick={() => setRejectingPet(null)}
                 className="p-1 hover:bg-accent dark:hover:bg-accent rounded"
               >
-                <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                <X className="w-5 h-5 text-muted-foreground" />
               </button>
             </div>
 
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            <p className="text-sm text-muted-foreground mb-4">
               {m.rejectHint}
             </p>
 
@@ -211,7 +211,7 @@ export function ModerationPanel({ pets, onApprovePet, onRejectPet }: ModerationP
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
               placeholder={m.rejectPlaceholder}
-              className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg resize-none focus:ring-2 focus:ring-primary focus:border-transparent bg-card dark:bg-gray-700"
+              className="w-full px-3 py-2.5 border border-border rounded-lg resize-none focus:ring-2 focus:ring-primary focus:border-transparent bg-card dark:bg-muted"
               rows={4}
             />
 
@@ -220,7 +220,7 @@ export function ModerationPanel({ pets, onApprovePet, onRejectPet }: ModerationP
                 type="button"
                 title={m.rejectCancel}
                 onClick={() => setRejectingPet(null)}
-                className="inline-flex items-center justify-center p-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-accent dark:hover:bg-accent transition-colors"
+                className="inline-flex items-center justify-center p-3 border border-border text-foreground/90 rounded-lg hover:bg-accent dark:hover:bg-accent transition-colors"
               >
                 <X className="w-5 h-5" />
                 <span className="sr-only">{m.rejectCancel}</span>

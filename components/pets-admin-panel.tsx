@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import {
   Home,
   Heart,
@@ -27,14 +27,14 @@ interface PetsAdminPanelProps {
 }
 
 function getArchiveReasonStyle(reason: string | undefined) {
-  if (!reason) return { label: '—', className: 'text-gray-400 dark:text-gray-500' };
+  if (!reason) return { label: '—', className: 'text-muted-foreground/80' };
   if (reason.includes('вернулся домой') || reason.includes('найден хозяин'))
     return { label: reason, className: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400', icon: Home };
   if (reason.includes('пристроен'))
     return { label: reason, className: 'bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-400', icon: Heart };
   if (reason.includes('приют'))
     return { label: reason, className: 'bg-muted text-muted-foreground', icon: Building2 };
-  return { label: reason, className: 'bg-muted dark:bg-accent text-gray-700 dark:text-gray-300', icon: Archive };
+  return { label: reason, className: 'bg-muted dark:bg-accent text-foreground/90', icon: Archive };
 }
 
 function getRewardLabel(pet: Pet): string {
@@ -74,7 +74,7 @@ export function PetsAdminPanel({ pets, users = [], onDeletePet, onOpenPet }: Pet
   const petsPerPage = 15;
 
   const petsSortThBtn =
-    'w-full px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400 inline-flex items-center gap-1 hover:bg-muted/50 dark:hover:bg-muted/30 transition-colors';
+    'w-full px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground inline-flex items-center gap-1 hover:bg-muted/50 dark:hover:bg-muted/30 transition-colors';
 
   const filteredPets = pets.filter(pet => {
     if (petsFilter === 'active') return !pet.isArchived;
@@ -159,7 +159,7 @@ export function PetsAdminPanel({ pets, users = [], onDeletePet, onOpenPet }: Pet
                 className={`px-3 py-2 text-sm rounded-lg transition-colors whitespace-nowrap ${
                   petsFilter === 'all' 
                     ? 'bg-primary text-primary-foreground' 
-                    : 'bg-muted dark:bg-accent text-gray-700 dark:text-gray-300 hover:bg-accent dark:hover:bg-accent'
+                    : 'bg-muted dark:bg-accent text-foreground/90 hover:bg-accent dark:hover:bg-accent'
                 }`}
               >
                 Все ({pets.length})
@@ -172,7 +172,7 @@ export function PetsAdminPanel({ pets, users = [], onDeletePet, onOpenPet }: Pet
                 className={`px-3 py-2 text-sm rounded-lg transition-colors whitespace-nowrap ${
                   petsFilter === 'active' 
                     ? 'bg-primary text-primary-foreground' 
-                    : 'bg-muted dark:bg-accent text-gray-700 dark:text-gray-300 hover:bg-accent dark:hover:bg-accent'
+                    : 'bg-muted dark:bg-accent text-foreground/90 hover:bg-accent dark:hover:bg-accent'
                 }`}
               >
                 Активные ({pets.filter(p => !p.isArchived).length})
@@ -185,7 +185,7 @@ export function PetsAdminPanel({ pets, users = [], onDeletePet, onOpenPet }: Pet
                 className={`px-3 py-2 text-sm rounded-lg transition-colors whitespace-nowrap ${
                   petsFilter === 'archived' 
                     ? 'bg-primary text-primary-foreground' 
-                    : 'bg-muted dark:bg-accent text-gray-700 dark:text-gray-300 hover:bg-accent dark:hover:bg-accent'
+                    : 'bg-muted dark:bg-accent text-foreground/90 hover:bg-accent dark:hover:bg-accent'
                 }`}
               >
                 Архив ({pets.filter(p => p.isArchived).length})
@@ -251,7 +251,7 @@ export function PetsAdminPanel({ pets, users = [], onDeletePet, onOpenPet }: Pet
             </Select>
           </div>
 
-          <div className="text-sm text-gray-600 dark:text-gray-400 ml-auto">
+          <div className="text-sm text-muted-foreground ml-auto">
             Найдено: {sortedPets.length} объявлений
           </div>
         </div>
@@ -310,11 +310,11 @@ export function PetsAdminPanel({ pets, users = [], onDeletePet, onOpenPet }: Pet
                     <img src={pet.photos[0]} alt="" className="w-16 h-16 object-cover rounded-lg" />
                   </td>
                   <td className="px-4 py-3">
-                    <p className="font-medium text-gray-900 dark:text-white">{pet.breed || 'Без породы'}</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">{pet.city}</p>
+                    <p className="font-medium text-foreground">{pet.breed || 'Без породы'}</p>
+                    <p className="text-sm text-muted-foreground">{pet.city}</p>
                   </td>
                   <td className="px-4 py-3">
-                    <p className="text-sm text-gray-900 dark:text-white">{pet.authorName}</p>
+                    <p className="text-sm text-foreground">{pet.authorName}</p>
                   </td>
                   <td className="px-4 py-3">
                     <span
@@ -336,22 +336,22 @@ export function PetsAdminPanel({ pets, users = [], onDeletePet, onOpenPet }: Pet
                         : 'На модерации'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                  <td className="px-6 py-4 text-sm text-foreground/90 whitespace-nowrap">
                     {pet.status === 'searching' ? (
                       <span className="inline-flex px-2 py-1 text-xs rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300">
                         {getRewardLabel(pet)}
                       </span>
                     ) : (
-                      <span className="text-xs text-gray-400 dark:text-gray-500">—</span>
+                      <span className="text-xs text-muted-foreground/80">—</span>
                     )}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                  <td className="px-6 py-4 text-sm text-foreground/90 whitespace-nowrap">
                     {pet.rewardPointsAwardedAt ? (
                       <span className="inline-flex px-2 py-1 text-xs rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
                         {formatDate(pet.rewardPointsAwardedAt)}
                       </span>
                     ) : (
-                      <span className="text-xs text-gray-400 dark:text-gray-500">Нет</span>
+                      <span className="text-xs text-muted-foreground/80">Нет</span>
                     )}
                   </td>
                   {petsFilter === 'archived' && (() => {
@@ -365,12 +365,12 @@ export function PetsAdminPanel({ pets, users = [], onDeletePet, onOpenPet }: Pet
                             {style.label}
                           </span>
                         ) : (
-                          <span className="text-xs text-gray-400 dark:text-gray-500">—</span>
+                          <span className="text-xs text-muted-foreground/80">—</span>
                         )}
                       </td>
                     );
                   })()}
-                  <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                  <td className="px-4 py-3 text-sm text-muted-foreground">
                     {formatDate(pet.publishedAt)}
                   </td>
                   <td className="px-4 py-3">
@@ -412,41 +412,41 @@ export function PetsAdminPanel({ pets, users = [], onDeletePet, onOpenPet }: Pet
       {selectedPet && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4" onClick={() => setSelectedPet(null)}>
           <div className="bg-card rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-6 py-4 border-b dark:border-gray-700 sticky top-0 bg-card z-10">
-              <h3 className="font-semibold text-gray-900 dark:text-white">Карточка объявления</h3>
+            <div className="flex items-center justify-between px-6 py-4 border-b dark:border-border sticky top-0 bg-card z-10">
+              <h3 className="font-semibold text-foreground">Карточка объявления</h3>
               <button type="button" onClick={() => setSelectedPet(null)} className="p-1 hover:bg-accent rounded">
-                <X className="w-5 h-5 dark:text-gray-400" />
+                <X className="w-5 h-5 dark:text-muted-foreground/80" />
               </button>
             </div>
             <div className="px-6 py-4 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Питомец</p>
-                  <p className="font-medium text-gray-900 dark:text-white">{selectedPet.breed || 'Без породы'} ({selectedPet.city})</p>
+                  <p className="text-xs text-muted-foreground">Питомец</p>
+                  <p className="font-medium text-foreground">{selectedPet.breed || 'Без породы'} ({selectedPet.city})</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Автор</p>
-                  <p className="font-medium text-gray-900 dark:text-white">{selectedPet.authorName}</p>
+                  <p className="text-xs text-muted-foreground">Автор</p>
+                  <p className="font-medium text-foreground">{selectedPet.authorName}</p>
                 </div>
               </div>
 
-              <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-                <h4 className="font-semibold text-gray-900 dark:text-white mb-3">Информация о награде</h4>
+              <div className="rounded-lg border border-border p-4">
+                <h4 className="font-semibold text-foreground mb-3">Информация о награде</h4>
                 <div className="space-y-2 text-sm">
-                  <p className="text-gray-700 dark:text-gray-300">
-                    <span className="text-gray-500 dark:text-gray-400">Режим: </span>
+                  <p className="text-foreground/90">
+                    <span className="text-muted-foreground">Режим: </span>
                     {selectedPet.rewardMode === 'money' ? 'Деньги' : 'Очки'}
                   </p>
-                  <p className="text-gray-700 dark:text-gray-300">
-                    <span className="text-gray-500 dark:text-gray-400">Сумма/очки: </span>
+                  <p className="text-foreground/90">
+                    <span className="text-muted-foreground">Сумма/очки: </span>
                     {getRewardLabel(selectedPet)}
                   </p>
-                  <p className="text-gray-700 dark:text-gray-300">
-                    <span className="text-gray-500 dark:text-gray-400">Начисление: </span>
+                  <p className="text-foreground/90">
+                    <span className="text-muted-foreground">Начисление: </span>
                     {selectedPet.rewardPointsAwardedAt ? formatDate(selectedPet.rewardPointsAwardedAt) : 'Пока не начислено'}
                   </p>
-                  <p className="text-gray-700 dark:text-gray-300">
-                    <span className="text-gray-500 dark:text-gray-400">Получатель: </span>
+                  <p className="text-foreground/90">
+                    <span className="text-muted-foreground">Получатель: </span>
                     {selectedPet.rewardRecipientUserId ? (
                       (() => {
                         const recipient = users.find((u) => u.id === selectedPet.rewardRecipientUserId);
@@ -466,7 +466,7 @@ export function PetsAdminPanel({ pets, users = [], onDeletePet, onOpenPet }: Pet
                 </div>
               </div>
             </div>
-            <div className="flex justify-end gap-3 px-6 py-4 border-t dark:border-gray-700">
+            <div className="flex justify-end gap-3 px-6 py-4 border-t dark:border-border">
               <button
                 type="button"
                 title="Открыть объявление на сайте"
@@ -490,10 +490,10 @@ export function PetsAdminPanel({ pets, users = [], onDeletePet, onOpenPet }: Pet
           labels={pg}
           summary={
             <>
-              <span className="text-sm text-gray-600 dark:text-gray-400">
+              <span className="text-sm text-muted-foreground">
                 {ap.users.pageOf(petsPage, totalPages)}
               </span>
-              <span className="text-xs text-gray-500 dark:text-gray-400">
+              <span className="text-xs text-muted-foreground">
                 {ap.users.totalShort(sortedPets.length)}
               </span>
             </>

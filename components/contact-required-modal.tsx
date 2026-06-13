@@ -12,14 +12,19 @@ import { Button } from './ui/button';
 interface ContactRequiredModalProps {
   open: boolean;
   onGoToProfile: () => void;
+  onClose?: () => void;
 }
 
-export function ContactRequiredModal({ open, onGoToProfile }: ContactRequiredModalProps) {
+export function ContactRequiredModal({ open, onGoToProfile, onClose }: ContactRequiredModalProps) {
   const { t } = useI18n();
 
+  const handleOpenChange = (next: boolean) => {
+    if (!next) onClose?.();
+  };
+
   return (
-    <Dialog open={open}>
-      <DialogContent className="max-w-md overflow-hidden rounded-2xl p-0" showCloseButton={false}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="max-w-md overflow-hidden rounded-2xl p-0" showCloseButton={Boolean(onClose)}>
         <div className="flex flex-col">
           <div className="flex justify-center bg-primary/10 px-6 py-8">
             <div className="flex size-16 items-center justify-center rounded-full bg-background border border-primary/20">
@@ -38,6 +43,11 @@ export function ContactRequiredModal({ open, onGoToProfile }: ContactRequiredMod
                 <User className="size-4" />
                 {t.contactRequired.goToProfile}
               </Button>
+              {onClose ? (
+                <Button type="button" variant="outline" onClick={onClose} className="h-11 w-full">
+                  {t.contactRequired.later}
+                </Button>
+              ) : null}
             </div>
           </div>
         </div>

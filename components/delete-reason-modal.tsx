@@ -1,4 +1,4 @@
-import { Search, X } from 'lucide-react';
+﻿import { Search, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { API_BASE, usersApi } from '../api/client';
 import { useI18n } from '../context/I18nContext';
@@ -146,7 +146,7 @@ export function DeleteReasonModal({
                   onChange={(e) => setSelectedReason(e.target.value)}
                   className="mt-0.5 w-4 h-4 text-primary focus:ring-primary"
                 />
-                <span className="text-sm text-gray-900 dark:text-white">{reason.label}</span>
+                <span className="text-sm text-foreground">{reason.label}</span>
               </label>
             ))}
           </div>
@@ -164,8 +164,8 @@ export function DeleteReasonModal({
           )}
 
           {canShowRewardToggle && (
-            <div className="mt-4 border border-gray-200 dark:border-gray-700 rounded-lg p-3 space-y-3">
-              <label className="flex items-center gap-2 text-sm text-gray-900 dark:text-white cursor-pointer">
+            <div className="mt-4 border border-border rounded-lg p-3 space-y-3">
+              <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
                 <input
                   type="checkbox"
                   checked={awardPoints}
@@ -203,7 +203,7 @@ export function DeleteReasonModal({
                       className="h-11 px-3"
                     >
                       {lookupLoading
-                        ? <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                        ? <div className="w-4 h-4 border-2 border-border border-t-transparent rounded-full animate-spin" />
                         : <Search className="w-4 h-4" />}
                     </Button>
                   </div>
@@ -217,8 +217,8 @@ export function DeleteReasonModal({
                           ) : null}
                         </div>
                         <div>
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">{candidate.name}</div>
-                          <div className="text-xs text-gray-600 dark:text-gray-400">{candidate.helper_code}</div>
+                          <div className="text-sm font-medium text-foreground">{candidate.name}</div>
+                          <div className="text-xs text-muted-foreground">{candidate.helper_code}</div>
                         </div>
                       </div>
                     </div>

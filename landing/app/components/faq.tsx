@@ -98,10 +98,10 @@ export function FAQ() {
                 value={`item-${index}`}
                 className="rounded-xl border border-border/90 bg-card px-1 shadow-sm transition-shadow data-[state=open]:border-primary/25 data-[state=open]:shadow-md overflow-hidden border-b-0"
               >
-                <AccordionTrigger className="text-left text-[15px] md:text-base font-semibold text-foreground hover:no-underline py-4 px-4 md:px-5 [&[data-state=open]]:pb-2">
+                <AccordionTrigger className="text-left text-base font-semibold text-foreground hover:no-underline py-4 px-4 md:px-5 [&[data-state=open]]:pb-2">
                   <span className="pr-2 leading-snug">{faq.q}</span>
                 </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground text-sm md:text-[15px] leading-relaxed px-4 md:px-5 pb-5 pt-0 whitespace-pre-wrap">
+                <AccordionContent className="text-muted-foreground text-sm md:text-base leading-relaxed px-4 md:px-5 pb-5 pt-0 whitespace-pre-wrap">
                   {faq.a}
                 </AccordionContent>
               </AccordionItem>

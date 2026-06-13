@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { X, MapPin } from 'lucide-react';
+﻿import { useState, useEffect, useRef } from 'react';
+import { MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -7,9 +7,18 @@ import { Pet } from '../types/pet';
 import { getPetPhotoCircleDivIcon, SIGHTING_MARKER_BORDER_COLOR } from '../utils/leaflet-pet-photo-icon';
 import { sightingsApi } from '../api/client';
 import { useI18n } from '../context/I18nContext';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from './ui/dialog';
+import { Button } from './ui/button';
 
 interface SightingFormProps {
   pet: Pet;
+  open: boolean;
   onClose: () => void;
   onSuccess: () => void;
 }
@@ -27,7 +36,7 @@ function sightingPickIcon(pet: Pet) {
   });
 }
 
-export function SightingForm({ pet, onClose, onSuccess }: SightingFormProps) {
+export function SightingForm({ pet, open, onClose, onSuccess }: SightingFormProps) {
   const { t } = useI18n();
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [seenAt, setSeenAt] = useState(() => {
@@ -43,10 +52,20 @@ export function SightingForm({ pet, onClose, onSuccess }: SightingFormProps) {
   const markerRef = useRef<L.Marker | null>(null);
 
   useEffect(() => {
-    if (!mapContainerRef.current) return;
+    if (!open) return;
+    setLocation(null);
+    setComment('');
+    setContact('');
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    setSeenAt(now.toISOString().slice(0, 16));
+  }, [open, pet.id]);
+
+  useEffect(() => {
+    if (!open || !mapContainerRef.current) return;
     const map = L.map(mapContainerRef.current).setView([pet.location.lat, pet.location.lng], 14);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap'
+      attribution: '&copy; OpenStreetMap',
     }).addTo(map);
 
     const petIcon = getPetPhotoCircleDivIcon({
@@ -67,12 +86,15 @@ export function SightingForm({ pet, onClose, onSuccess }: SightingFormProps) {
     });
 
     mapRef.current = map;
+    const invalidateTimer = window.setTimeout(() => map.invalidateSize(), 150);
+
     return () => {
+      window.clearTimeout(invalidateTimer);
       map.remove();
       mapRef.current = null;
       markerRef.current = null;
     };
-  }, [pet]);
+  }, [open, pet]);
 
   const handleUseMyLocation = () => {
     if (!navigator.geolocation) return;
@@ -116,27 +138,20 @@ export function SightingForm({ pet, onClose, onSuccess }: SightingFormProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[70]" onClick={onClose}>
-      <div
-        className="bg-card rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] flex flex-col"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="shrink-0 sticky top-0 z-10 bg-card rounded-t-xl px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-            <MapPin className="w-5 h-5 text-amber-500" />
+    <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
+      <DialogContent className="flex max-h-[90vh] max-w-lg flex-col gap-0 overflow-hidden p-0">
+        <DialogHeader className="border-b border-border px-6 py-4 text-left">
+          <DialogTitle className="flex items-center gap-2 text-lg">
+            <MapPin className="size-5 text-amber-500" aria-hidden />
             {t.sightings.title}
-          </h3>
-          <button onClick={onClose} className="p-2 hover:bg-accent dark:hover:bg-accent rounded-lg transition-colors">
-            <X className="w-5 h-5 text-gray-500" />
-          </button>
-        </div>
+          </DialogTitle>
+          <DialogDescription className="sr-only">{t.sightings.mapHint}</DialogDescription>
+        </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 flex-1 min-h-0 overflow-y-auto">
+        <form onSubmit={(e) => void handleSubmit(e)} className="min-h-0 flex-1 space-y-4 overflow-y-auto p-6">
           <div>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-              {t.sightings.mapHint}
-            </p>
-            <div ref={mapContainerRef} className="h-48 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700" />
+            <p className="mb-2 text-sm text-muted-foreground">{t.sightings.mapHint}</p>
+            <div ref={mapContainerRef} className="h-48 overflow-hidden rounded-lg border border-border" />
             <button
               type="button"
               onClick={handleUseMyLocation}
@@ -150,67 +165,70 @@ export function SightingForm({ pet, onClose, onSuccess }: SightingFormProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t.sightings.whenSeen}</label>
+            <label htmlFor="sighting-seen-at" className="mb-1 block text-sm font-medium text-foreground/90">
+              {t.sightings.whenSeen}
+            </label>
             <input
+              id="sighting-seen-at"
               type="datetime-local"
               value={seenAt}
               onChange={(e) => setSeenAt(e.target.value)}
-              className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/30"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {t.sightings.comment} <span className="text-gray-400">{t.sightings.optional}</span>
+            <label htmlFor="sighting-comment" className="mb-1 block text-sm font-medium text-foreground/90">
+              {t.sightings.comment}{' '}
+              <span className="text-muted-foreground/80">{t.sightings.optional}</span>
             </label>
             <textarea
+              id="sighting-comment"
               value={comment}
               onChange={(e) => setComment(e.target.value.slice(0, COMMENT_MAX))}
               placeholder={t.sightings.commentPlaceholder}
               rows={2}
               maxLength={COMMENT_MAX}
-              className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400"
+              className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-foreground placeholder:text-muted-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/30"
             />
-            <p className={`mt-1 text-xs tabular-nums ${comment.length >= COMMENT_MAX ? 'text-amber-600 dark:text-amber-400' : 'text-gray-500 dark:text-gray-400'}`}>
+            <p
+              className={`mt-1 text-xs tabular-nums ${comment.length >= COMMENT_MAX ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'}`}
+            >
               {comment.length} / {COMMENT_MAX} {t.common.characters}
             </p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {t.sightings.contact} <span className="text-gray-400">{t.sightings.optional}</span>
+            <label htmlFor="sighting-contact" className="mb-1 block text-sm font-medium text-foreground/90">
+              {t.sightings.contact}{' '}
+              <span className="text-muted-foreground/80">{t.sightings.optional}</span>
             </label>
             <input
+              id="sighting-contact"
               type="text"
               value={contact}
               onChange={(e) => setContact(e.target.value.slice(0, CONTACT_MAX))}
               placeholder={t.sightings.contactPlaceholder}
               maxLength={CONTACT_MAX}
-              className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400"
+              className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-foreground placeholder:text-muted-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/30"
             />
-            <p className={`mt-1 text-xs tabular-nums ${contact.length >= CONTACT_MAX ? 'text-amber-600 dark:text-amber-400' : 'text-gray-500 dark:text-gray-400'}`}>
+            <p
+              className={`mt-1 text-xs tabular-nums ${contact.length >= CONTACT_MAX ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'}`}
+            >
               {contact.length} / {CONTACT_MAX} {t.common.characters}
             </p>
           </div>
 
           <div className="flex gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-accent dark:hover:bg-accent transition-colors"
-            >
+            <Button type="button" variant="outline" className="flex-1" onClick={onClose}>
               {t.common.cancel}
-            </button>
-            <button
-              type="submit"
-              disabled={!location || submitting}
-              className="flex-1 px-4 py-3 bg-amber-500 text-white rounded-lg hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
+            </Button>
+            <Button type="submit" disabled={!location || submitting} className="flex-1 bg-amber-500 hover:bg-amber-600">
               {submitting ? t.sightings.submitting : t.sightings.submit}
-            </button>
+            </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

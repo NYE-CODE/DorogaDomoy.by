@@ -1,0 +1,138 @@
+﻿/**
+ * Геокодирование через Nominatim (OpenStreetMap).
+ * Бесплатно, без API-ключа.
+ */
+
+const NOMINATIM_URL = 'https://nominatim.openstreetmap.org';
+const HEADERS: HeadersInit = {
+  'Accept-Language': 'ru-BY,ru',
+  'User-Agent': 'DorogaDomoy.by/1.0',
+};
+
+/** Областные центры Беларуси — не показываем область */
+const BY_OBLAST_CENTERS = new Set(['минск', 'гомель', 'могилев', 'могилёв', 'витебск', 'гродно', 'брест']);
+
+/** Районные центры — не показываем район; + областные центры (у них район = городской) */
+const BY_DISTRICT_CITIES = new Set([
+  ...BY_OBLAST_CENTERS,
+  'лида', 'новогрудок', 'слоним', 'волковыск', 'сморгонь', 'береза', 'кобрин', 'пинск',
+  'барановичи', 'лунинец', 'малорита', 'орша', 'полоцк', 'новополоцк', 'глубокое',
+  'поставы', 'лепель', 'бобруйск', 'мозырь', 'светлогорск', 'речица', 'молодечно',
+  'вилейка', 'солигорск', 'слуцк', 'несвиж', 'клецк', 'крупки'
+]);
+
+interface NominatimAddress {
+  house_number?: string;
+  road?: string;
+  street?: string;
+  suburb?: string;
+  neighbourhood?: string;
+  village?: string;
+  town?: string;
+  city?: string;
+  municipality?: string;
+  county?: string;
+  state_district?: string;
+  state?: string;
+  postcode?: string;
+  country?: string;
+}
+
+function getLocalityName(addr: NominatimAddress): string {
+  return (
+    addr.city ||
+    addr.town ||
+    addr.village ||
+    addr.municipality ||
+    addr.suburb ||
+    ''
+  ).trim();
+}
+
+function formatShortAddress(addr: NominatimAddress): string {
+  const get = (k: keyof NominatimAddress) => (addr[k] || '').trim();
+  const locality = getLocalityName(addr);
+  const district = get('state_district') || get('county') || get('municipality');
+  const oblast = get('state');
+  const road = get('road') || get('street');
+  const house = get('house_number');
+
+  const parts: string[] = [];
+  const locLower = locality.toLowerCase().replace(/\s+/g, ' ').trim();
+
+  if (oblast && !BY_OBLAST_CENTERS.has(locLower)) {
+    parts.push(oblast);
+  }
+  if (district && locality && !BY_DISTRICT_CITIES.has(locLower) && district !== locality) {
+    parts.push(district);
+  }
+  if (locality) parts.push(locality);
+  if (road) {
+    const street = /^(улица|ул\.?)\s/i.test(road) ? road : `ул. ${road}`;
+    parts.push(house ? `${street}, ${house}` : street);
+  } else if (house) {
+    parts.push(house);
+  }
+
+  return parts.filter(Boolean).join(', ');
+}
+
+export async function geocode(address: string): Promise<{ lat: number; lng: number; displayName: string } | null> {
+  if (!address.trim()) return null;
+  try {
+    const res = await fetch(
+      `${NOMINATIM_URL}/search?q=${encodeURIComponent(address)}&format=json&limit=1&countrycodes=BY`,
+      { headers: HEADERS }
+    );
+    const data = await res.json();
+    if (!Array.isArray(data) || data.length === 0) return null;
+    const [first] = data;
+    return {
+      lat: parseFloat(first.lat),
+      lng: parseFloat(first.lon),
+      displayName: first.display_name || address,
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function fetchReverseData(lat: number, lng: number): Promise<{ addr: NominatimAddress; displayName: string } | null> {
+  try {
+    const res = await fetch(
+      `${NOMINATIM_URL}/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1`,
+      { headers: HEADERS }
+    );
+    const data = await res.json();
+    const addr = data?.address as NominatimAddress | undefined;
+    if (!addr) return null;
+    return { addr, displayName: data?.display_name ?? '' };
+  } catch {
+    return null;
+  }
+}
+
+/** Один запрос reverse: строка для адреса + населённый пункт для поля «город». */
+export type ReverseGeocodePlace = {
+  formattedAddress: string;
+  locality: string | null;
+};
+
+export async function reverseGeocodeStructured(lat: number, lng: number): Promise<ReverseGeocodePlace | null> {
+  const result = await fetchReverseData(lat, lng);
+  if (!result) return null;
+  const formattedAddress = formatShortAddress(result.addr) || result.displayName || null;
+  if (!formattedAddress) return null;
+  const locality = getLocalityName(result.addr) || null;
+  return { formattedAddress, locality };
+}
+
+export async function reverseGeocode(lat: number, lng: number): Promise<string | null> {
+  const s = await reverseGeocodeStructured(lat, lng);
+  return s?.formattedAddress ?? null;
+}
+
+export async function reverseGeocodeLocality(lat: number, lng: number): Promise<string | null> {
+  const s = await reverseGeocodeStructured(lat, lng);
+  return s?.locality ?? null;
+}

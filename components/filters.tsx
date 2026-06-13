@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Search, SlidersHorizontal, ChevronDown, ChevronUp, RotateCcw, Plus, X } from 'lucide-react';
 import { AnimalType, PetStatus, PetColor } from '../types/pet';
 import { activeStatuses, colorLabels, petStatusFilterSelectedClass } from '../utils/pet-helpers';
@@ -256,13 +256,13 @@ export function Filters({ filters, onFiltersChange, onCreateClick, embedded, onC
       {/* Search + Create — one row */}
       <div className="flex gap-2">
         <div className="relative flex-1 min-w-0">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500 pointer-events-none" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground/80 pointer-events-none" />
           <input
             type="text"
             value={filters.searchQuery}
             onChange={(e) => onFiltersChange({ ...filters, searchQuery: e.target.value })}
             placeholder={t.filters.searchPlaceholder}
-            className="w-full pl-11 pr-4 py-2.5 bg-card border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-shadow shadow-sm"
+            className="w-full pl-11 pr-4 py-2.5 bg-card border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-shadow shadow-sm"
           />
         </div>
         {onCreateClick && (
@@ -279,13 +279,13 @@ export function Filters({ filters, onFiltersChange, onCreateClick, embedded, onC
       </div>
 
       {/* Collapsible filters */}
-      <div className="bg-card border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm">
+      <div className="bg-card border border-border rounded-xl shadow-sm">
         <button
           type="button"
           className="w-full px-4 py-2.5 flex items-center justify-between"
           onClick={() => setIsOpen(!isOpen)}
         >
-          <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+          <div className="flex items-center gap-2 text-sm font-medium text-foreground/90">
             <SlidersHorizontal className="w-4 h-4" />
             <span>{t.filters.filters}</span>
             {activeFilterCount > 0 && (
@@ -299,21 +299,21 @@ export function Filters({ filters, onFiltersChange, onCreateClick, embedded, onC
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); handleReset(); }}
-                className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-primary transition-colors px-2 py-1 rounded-lg hover:bg-accent dark:hover:bg-accent"
+                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors px-2 py-1 rounded-lg hover:bg-accent dark:hover:bg-accent"
               >
                 <RotateCcw className="w-3 h-3" />
                 {t.filters.reset}
               </button>
             )}
             {isOpen
-              ? <ChevronUp className="w-4 h-4 text-gray-400 dark:text-gray-500" />
-              : <ChevronDown className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+              ? <ChevronUp className="w-4 h-4 text-muted-foreground/80" />
+              : <ChevronDown className="w-4 h-4 text-muted-foreground/80" />
             }
           </div>
         </button>
 
         {isOpen && (
-          <div className="px-4 pb-4 space-y-4 border-t border-gray-100 dark:border-gray-700 pt-3">
+          <div className="px-4 pb-4 space-y-4 border-t border-border/60 dark:border-border pt-3">
             {filterPanelBody}
           </div>
         )}

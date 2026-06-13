@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { ExternalLink, Heart, Plus, Save, Trash2, X } from 'lucide-react';
 import { helpApi, type HelpDonationTier } from '../api/client';
@@ -129,16 +129,16 @@ export function AdminHelpSectionPanel() {
         <p className={adm.subtitle}>{h.hint}</p>
       </div>
 
-      <section className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 p-5 space-y-4">
-        <h3 className="text-base font-semibold text-gray-900 dark:text-white">{h.volunteerTitle}</h3>
-        <p className="text-sm text-gray-600 dark:text-gray-400">{h.volunteerHint}</p>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{h.volunteerUrlLabel}</label>
+      <section className="rounded-xl border border-border bg-white dark:bg-card/50 p-5 space-y-4">
+        <h3 className="text-base font-semibold text-foreground">{h.volunteerTitle}</h3>
+        <p className="text-sm text-muted-foreground">{h.volunteerHint}</p>
+        <label className="block text-sm font-medium text-foreground/90">{h.volunteerUrlLabel}</label>
         <input
           type="url"
           value={volunteerUrl}
           onChange={(e) => setVolunteerUrl(e.target.value.slice(0, 2000))}
           placeholder={h.volunteerUrlPlaceholder}
-          className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+          className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
         />
         <button
           type="button"
@@ -154,11 +154,11 @@ export function AdminHelpSectionPanel() {
       <section className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h3 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+            <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
               <Heart className="w-4 h-4 text-rose-500" />
               {h.donationsTitle}
             </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{h.donationsHint}</p>
+            <p className="text-sm text-muted-foreground mt-1">{h.donationsHint}</p>
           </div>
           <button
             type="button"
@@ -170,9 +170,9 @@ export function AdminHelpSectionPanel() {
           </button>
         </div>
 
-        <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
+        <div className="overflow-x-auto rounded-xl border border-border">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 dark:bg-gray-800/80">
+            <thead className="bg-muted/50 dark:bg-muted/80">
               <tr>
                 <th className={adm.th}>{h.colOrder}</th>
                 <th className={adm.th}>{h.colLabel}</th>
@@ -183,15 +183,15 @@ export function AdminHelpSectionPanel() {
             <tbody>
               {tiersSorted.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                  <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
                     {h.tiersEmpty}
                   </td>
                 </tr>
               ) : (
                 tiersSorted.map((row) => (
-                  <tr key={row.id} className="border-t border-gray-100 dark:border-gray-700">
-                    <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{row.sort_order}</td>
-                    <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{row.label}</td>
+                  <tr key={row.id} className="border-t border-border/60 dark:border-border">
+                    <td className="px-4 py-3 text-foreground/90">{row.sort_order}</td>
+                    <td className="px-4 py-3 font-medium text-foreground">{row.label}</td>
                     <td className="px-4 py-3 max-w-xs truncate">
                       <a
                         href={row.payment_url}
@@ -232,45 +232,45 @@ export function AdminHelpSectionPanel() {
 
       {tierEdit && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-lg rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xl p-6">
+          <div className="w-full max-w-lg rounded-xl bg-white dark:bg-card border border-border shadow-xl p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              <h3 className="text-lg font-semibold text-foreground">
                 {tierEdit.mode === 'create' ? h.tierModalAdd : h.tierModalEdit}
               </h3>
-              <button type="button" onClick={closeTierModal} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
+              <button type="button" onClick={closeTierModal} className="p-1 rounded hover:bg-muted dark:hover:bg-muted">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{h.tierLabel}</label>
+                <label className="block text-sm font-medium text-foreground/90 mb-1">{h.tierLabel}</label>
                 <input
                   type="text"
                   value={tierLabel}
                   onChange={(e) => setTierLabel(e.target.value.slice(0, 80))}
                   placeholder={h.tierLabelPlaceholder}
-                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
+                  className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{h.tierPaymentUrl}</label>
+                <label className="block text-sm font-medium text-foreground/90 mb-1">{h.tierPaymentUrl}</label>
                 <input
                   type="url"
                   value={tierPaymentUrl}
                   onChange={(e) => setTierPaymentUrl(e.target.value.slice(0, 2000))}
                   placeholder="https://"
-                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
+                  className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{h.tierSortLabel}</label>
+                <label className="block text-sm font-medium text-foreground/90 mb-1">{h.tierSortLabel}</label>
                 <input
                   type="number"
                   min={0}
                   max={10000}
                   value={tierSortOrder}
                   onChange={(e) => setTierSortOrder(Number(e.target.value) || 0)}
-                  className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg"
+                  className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg"
                 />
               </div>
             </div>
@@ -278,7 +278,7 @@ export function AdminHelpSectionPanel() {
               <button
                 type="button"
                 onClick={closeTierModal}
-                className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm"
+                className="px-4 py-2 rounded-lg border border-border text-sm"
               >
                 {h.cancel}
               </button>

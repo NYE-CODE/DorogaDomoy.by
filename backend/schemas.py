@@ -1047,6 +1047,110 @@ class BlogPostAdminResponse(BlogPostPublicResponse):
     telegram_channel_username: Optional[str] = None
 
 
+# --- Video guides ---
+class GuideCategoryResponse(BaseModel):
+    id: str
+    slug: str
+    title: str
+    sort_order: int = 0
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class GuideCategoryCreate(BaseModel):
+    slug: str
+    title: str = Field(..., min_length=1, max_length=200)
+    sort_order: int = Field(default=0, ge=-10_000, le=10_000)
+
+    @field_validator("slug", mode="before")
+    @classmethod
+    def slug_fmt(cls, v):
+        return validate_slug(str(v))
+
+
+class GuideCategoryUpdate(BaseModel):
+    title: Optional[str] = Field(None, min_length=1, max_length=200)
+    sort_order: Optional[int] = Field(None, ge=-10_000, le=10_000)
+
+
+class GuideVideoCreate(BaseModel):
+    category: str = Field(..., min_length=1, max_length=40)
+    title: str = Field(..., min_length=1, max_length=200)
+    description: Optional[str] = Field(None, max_length=4000)
+    youtube_url: str = Field(..., min_length=8, max_length=500)
+    sort_order: int = Field(default=0, ge=-10_000, le=10_000)
+    status: str = Field(default="draft")
+
+    @field_validator("youtube_url")
+    @classmethod
+    def youtube_ok(cls, v: str) -> str:
+        from youtube_utils import parse_youtube_video_id
+
+        parse_youtube_video_id(v)
+        return v.strip()
+
+    @field_validator("status")
+    @classmethod
+    def status_ok(cls, v):
+        if v not in ("draft", "published"):
+            raise ValueError("status: draft или published")
+        return v
+
+
+class GuideVideoUpdate(BaseModel):
+    category: Optional[str] = Field(None, min_length=1, max_length=40)
+    title: Optional[str] = Field(None, min_length=1, max_length=200)
+    description: Optional[str] = Field(None, max_length=4000)
+    youtube_url: Optional[str] = Field(None, min_length=8, max_length=500)
+    sort_order: Optional[int] = Field(None, ge=-10_000, le=10_000)
+    status: Optional[str] = None
+
+    @field_validator("youtube_url")
+    @classmethod
+    def youtube_ok(cls, v: Optional[str]) -> Optional[str]:
+        if v is None or not str(v).strip():
+            return None
+        from youtube_utils import parse_youtube_video_id
+
+        parse_youtube_video_id(v)
+        return v.strip()
+
+    @field_validator("status")
+    @classmethod
+    def status_ok(cls, v):
+        if v is None:
+            return None
+        if v not in ("draft", "published"):
+            raise ValueError("status: draft или published")
+        return v
+
+
+class GuideVideoPublicResponse(BaseModel):
+    id: str
+    category: str
+    category_title: str
+    title: str
+    description: Optional[str] = None
+    youtube_url: str
+    video_id: str
+    embed_url: str
+    thumbnail_url: str
+    sort_order: int
+    published_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class GuideVideoAdminResponse(GuideVideoPublicResponse):
+    status: str
+    created_at: datetime
+    updated_at: datetime
+
+
 # --- Instagram Publications ---
 class InstagramAccountCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=120)

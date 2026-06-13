@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+﻿import { Link } from "react-router";
 import { Button } from "./ui/button";
 import { useI18n } from "../../../context/I18nContext";
 import type { HomeMode } from "../App";
@@ -9,6 +9,7 @@ import {
   landingOutlineHeroCtaClass,
   landingPrimaryCtaClass,
 } from "./landing-section-styles";
+import { tokens } from "@/shared/styles/tokens";
 
 function trackHeroCtaClick(mode: HomeMode, cta: "primary" | "secondary") {
   trackYmGoal("hero_cta_click", { mode, cta });
@@ -43,7 +44,7 @@ export function Hero({ mode = "search" }: { mode?: HomeMode }) {
                 <span className="relative inline-block whitespace-nowrap">
                   {sheltersTitle2}
                   <svg className={underlineSvgClass} viewBox="0 0 200 10" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M0 5 Q50 0, 100 5 T200 5" stroke="#FDB913" strokeWidth={underlineStroke} fill="none"/>
+                    <path d="M0 5 Q50 0, 100 5 T200 5" stroke={tokens.colors.primaryLight} strokeWidth={underlineStroke} fill="none"/>
                   </svg>
                 </span>{" "}
                 {sheltersTitle3}
@@ -54,7 +55,7 @@ export function Hero({ mode = "search" }: { mode?: HomeMode }) {
                 <span className="relative inline-block whitespace-nowrap">
                   {searchTitle2}
                   <svg className={underlineSvgClass} viewBox="0 0 200 10" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M0 5 Q50 0, 100 5 T200 5" stroke="#FDB913" strokeWidth={underlineStroke} fill="none"/>
+                    <path d="M0 5 Q50 0, 100 5 T200 5" stroke={tokens.colors.primaryLight} strokeWidth={underlineStroke} fill="none"/>
                   </svg>
                 </span> {searchTitle3}
               </h1>
@@ -65,7 +66,7 @@ export function Hero({ mode = "search" }: { mode?: HomeMode }) {
             <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
               <Button asChild>
                 <Link
-                  to={isSheltersMode ? "/shelters" : "/create"}
+                  to={isSheltersMode ? "/shelters" : "/create?mode=quick"}
                   className={landingPrimaryCtaClass}
                   onClick={() => trackHeroCtaClick(mode, "primary")}
                 >
@@ -86,7 +87,7 @@ export function Hero({ mode = "search" }: { mode?: HomeMode }) {
           <div className="relative hidden md:block">
             <div
               className={`absolute -top-10 -right-10 h-64 w-64 rounded-full blur-3xl ${
-                isSheltersMode ? "bg-emerald-300/40" : "bg-[#FDB913] opacity-20"
+                isSheltersMode ? "bg-emerald-300/40" : "bg-primary-light opacity-20"
               }`}
             />
             <div className="relative z-10 aspect-[4/3] w-full overflow-hidden rounded-2xl shadow-xl">

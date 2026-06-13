@@ -22,7 +22,7 @@ function TraitBar({ label, value, levelLabel }: { label: string; value: number; 
             key={n}
             className={cn(
               'h-1.5 flex-1 rounded-full transition-colors',
-              n <= value ? 'bg-[#FF9800]' : 'bg-muted',
+              n <= value ? 'bg-primary' : 'bg-muted',
             )}
           />
         ))}

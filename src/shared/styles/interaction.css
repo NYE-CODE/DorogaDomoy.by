@@ -1,0 +1,78 @@
+/**
+ * Focus, motion и интерактивные паттерны (WCAG 2.2).
+ * Подключено через globals.css.
+ */
+
+@layer components {
+  /** Единое кольцо фокуса — 3px, ring token. */
+  .focus-ring {
+    outline: none;
+  }
+
+  .focus-ring:focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 2px var(--background),
+      0 0 0 5px color-mix(in srgb, var(--ring) 55%, transparent);
+  }
+
+  /** Карточка-кнопка: hover + focus без transition-all. */
+  .interactive-card {
+    cursor: pointer;
+    transition:
+      box-shadow var(--transition-interactive),
+      transform var(--transition-interactive),
+      border-color var(--transition-interactive);
+  }
+
+  .interactive-card:hover {
+    box-shadow: var(--shadow-md);
+  }
+
+  /** Стандартный transition для кликабельных элементов. */
+  .transition-interactive {
+    transition:
+      background-color var(--transition-interactive),
+      border-color var(--transition-interactive),
+      color var(--transition-interactive),
+      box-shadow var(--transition-interactive),
+      opacity var(--transition-interactive);
+  }
+
+  /** Skip link — виден только при фокусе (клавиатура). */
+  .skip-link {
+    position: fixed;
+    top: var(--space-4);
+    left: var(--space-4);
+    z-index: 9999;
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-lg);
+    background: var(--primary);
+    color: var(--primary-foreground);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    text-decoration: none;
+    box-shadow: var(--shadow-md);
+    transform: translateY(-200%);
+    transition: transform var(--transition-interactive);
+  }
+
+  .skip-link:focus {
+    transform: translateY(0);
+    outline: none;
+    box-shadow:
+      var(--shadow-md),
+      0 0 0 3px color-mix(in srgb, var(--ring) 55%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

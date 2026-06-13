@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { partnersApi } from "../../../api/client";
 import { useI18n } from "../../../context/I18nContext";
 import type { Partner } from "../../../api/client";
@@ -103,7 +103,7 @@ export function Partners() {
         ) : null}
 
         <div className="text-center">
-          <div className="relative mx-auto max-w-2xl overflow-hidden rounded-2xl border border-white/20 bg-gradient-to-br from-[#FDB913] via-[#f5a623] to-[#FF9800] p-8 md:p-10 shadow-lg">
+          <div className="relative mx-auto max-w-2xl overflow-hidden rounded-2xl border border-white/20 bg-gradient-to-br from-primary-light via-brand-light to-primary p-8 md:p-10 shadow-lg">
             <div
               className="pointer-events-none absolute -right-16 -top-16 size-48 rounded-full bg-white/15 blur-2xl"
               aria-hidden
@@ -121,7 +121,7 @@ export function Partners() {
               </p>
               <a
                 href="mailto:contact@dorogadomoy.by"
-                className="inline-flex items-center justify-center rounded-lg bg-white px-7 py-3 text-base font-semibold text-[#c2410c] shadow-md transition-colors hover:bg-white/95 dark:bg-card dark:text-primary dark:hover:bg-card/95"
+                className="inline-flex items-center justify-center rounded-lg bg-white px-7 py-3 text-base font-semibold text-primary-emphasis shadow-md transition-colors hover:bg-white/95 dark:bg-card dark:text-primary dark:hover:bg-card/95"
               >
                 {t.landing.partners.ctaButton}
               </a>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router';
 import { X, Search, ChevronLeft, Upload } from 'lucide-react';
 import { AnimalType, PetStatus, PetColor, Gender, Pet } from '../types/pet';
@@ -20,6 +20,11 @@ import {
   formatBelarusPhoneStorage,
   isValidBelarusMobilePhoneOptional,
 } from '../utils/belarus-phone';
+import {
+  clearPetFormDraft,
+  loadPetFormDraft,
+  savePetFormDraft,
+} from '@/shared/lib/pet-form-draft';
 
 const MAX_DESCRIPTION = 500;
 
@@ -214,6 +219,29 @@ export function PetForm({
   const [step, setStep] = useState(1);
   const [tried, setTried] = useState(false);
   const [maxPhotos, setMaxPhotos] = useState(10);
+  const [draftPhotoCount, setDraftPhotoCount] = useState(0);
+  const [draftRestored, setDraftRestored] = useState(false);
+  const draftLoadedRef = useRef(false);
+
+  useEffect(() => {
+    if (isEditing || initialData || draftLoadedRef.current || !user?.id) return;
+    if (prefillPartial && Object.keys(prefillPartial).length > 0) return;
+    const draft = loadPetFormDraft(user.id);
+    if (!draft) return;
+    draftLoadedRef.current = true;
+    setFormData({ ...draft.formData, photos: [] });
+    setStep(Math.min(Math.max(draft.step, 1), totalSteps));
+    setDraftPhotoCount(draft.savedPhotoCount);
+    setDraftRestored(true);
+  }, [isEditing, initialData, user?.id, prefillPartial, totalSteps]);
+
+  useEffect(() => {
+    if (isEditing || !user?.id) return;
+    const timer = window.setTimeout(() => {
+      savePetFormDraft(user.id, { formData, step });
+    }, 400);
+    return () => window.clearTimeout(timer);
+  }, [formData, step, isEditing, user?.id]);
 
   useEffect(() => {
     setStep(1);
@@ -278,13 +306,13 @@ export function PetForm({
         const compressed = await compressImageFileToDataUrl(file);
         setFormData(prev => {
           if (prev.photos.length >= maxPhotos) {
-            toast.warning(`Максимум ${maxPhotos} фото`);
+            toast.warning(t.common.toasts.maxPhotos.replace('{n}', String(maxPhotos)));
             return prev;
           }
           return { ...prev, photos: [...prev.photos, compressed] };
         });
       } catch {
-        toast.error('Не удалось обработать изображение');
+        toast.error(t.common.toasts.imageProcessError);
       }
     }
     e.target.value = '';
@@ -395,6 +423,7 @@ export function PetForm({
     }
     try {
       await Promise.resolve(onSubmit(dataToSubmit));
+      if (!isEditing && user?.id) clearPetFormDraft(user.id);
       onClose();
     } catch {
       // Ошибка — остаёмся на форме, родитель показал toast
@@ -438,14 +467,14 @@ export function PetForm({
     <>
       {/* Header — при renderStepHeaderExternally рисуется снаружи (PostPage) */}
       {!(variant === 'page' && renderStepHeaderExternally) && (
-      <div className={`sticky top-0 z-10 ${variant === 'page' ? 'pb-6 border-b border-gray-200 dark:border-gray-700' : 'bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-b border-gray-100 dark:border-gray-700 rounded-t-2xl'}`}>
+      <div className={`sticky top-0 z-10 ${variant === 'page' ? 'pb-6 border-b border-border' : 'bg-white/95 dark:bg-card/95 backdrop-blur-sm border-b border-border/60 dark:border-border rounded-t-2xl'}`}>
         {variant === 'page' ? (
           <div>
             <div className="flex items-center justify-between mb-4">
               <button
                 type="button"
                 onClick={() => (step > 1 ? setStep(step - 1) : onClose())}
-                className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white text-sm font-medium"
+                className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground dark:hover:text-white text-sm font-medium"
               >
                 <ChevronLeft className="w-5 h-5" />
                 {t.common.back}
@@ -453,25 +482,25 @@ export function PetForm({
               <button
                 type="button"
                 onClick={onClose}
-                className="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                className="text-sm font-medium text-muted-foreground hover:text-foreground dark:hover:text-white"
               >
                 {t.petForm.close}
               </button>
             </div>
-            <h1 className="text-2xl font-bold text-black dark:text-white mb-3">
+            <h1 className="typo-h2 mb-3">
               {getPageTitle()}
             </h1>
-            <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden mb-3">
+            <div className="w-full bg-muted rounded-full h-2 overflow-hidden mb-3">
               <div
-                className="bg-gradient-to-r from-[#FDB913] to-[#FF9800] h-2 rounded-full transition-all duration-300"
+                className="bg-gradient-to-r from-primary-light to-primary h-2 rounded-full transition-all duration-300"
                 style={{ width: `${(step / totalSteps) * 100}%` }}
               />
             </div>
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <p className="text-sm font-medium text-foreground/90">
               {t.petForm.step} {step} {t.petForm.of} {totalSteps}: {currentStepTitle}
             </p>
             {currentStepDesc && (
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 {currentStepDesc}
               </p>
             )}
@@ -479,7 +508,7 @@ export function PetForm({
         ) : (
           <div className="px-6 py-4 flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              <h2 className="text-lg font-semibold text-foreground">
                 {isEditing ? t.petForm.editTitle : formData.status === 'searching' ? t.petForm.formTitleLost : t.petForm.formTitleFound}
               </h2>
               <div className="flex items-center gap-2 mt-1.5">
@@ -487,15 +516,15 @@ export function PetForm({
                   {Array.from({ length: totalSteps }).map((_, i) => (
                     <div
                       key={i}
-                      className={`h-1 w-8 rounded-full transition-colors ${step >= i + 1 ? 'bg-primary' : 'bg-gray-200 dark:bg-gray-600'}`}
+                      className={`h-1 w-8 rounded-full transition-colors ${step >= i + 1 ? 'bg-primary' : 'bg-muted dark:bg-muted/80'}`}
                     />
                   ))}
                 </div>
-                <span className="text-xs text-gray-400 dark:text-gray-500">{t.petForm.step} {step} {t.petForm.of} {totalSteps}</span>
+                <span className="text-xs text-muted-foreground/80">{t.petForm.step} {step} {t.petForm.of} {totalSteps}</span>
               </div>
             </div>
             <button type="button" onClick={onClose} className="p-2 hover:bg-accent dark:hover:bg-accent rounded-lg transition-colors" aria-label={t.common.back}>
-              <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              <X className="w-5 h-5 text-muted-foreground" />
             </button>
           </div>
         )}
@@ -503,9 +532,22 @@ export function PetForm({
       )}
 
         <form onSubmit={handleSubmit} className={variant === 'page' ? 'pt-8' : 'p-6'}>
+          {draftRestored && !isEditing ? (
+            <div
+              role="status"
+              className="mb-6 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-foreground"
+            >
+              <p className="font-medium">{t.petForm.draftRestored}</p>
+              {draftPhotoCount > 0 ? (
+                <p className="mt-1 text-muted-foreground">
+                  {t.petForm.draftPhotosHint.replace('{n}', String(draftPhotoCount))}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
           {/* stepDesc для шагов 2–5 — сверху формы, как в эталоне */}
           {variant === 'page' && step >= 2 && currentStepDesc && (
-            <p className="text-gray-600 dark:text-muted-foreground mb-6">{currentStepDesc}</p>
+            <p className="text-muted-foreground mb-6">{currentStepDesc}</p>
           )}
           {/* Step 1: Тип питомца, пол, цвет, возраст */}
           {step === 1 && (
@@ -513,8 +555,8 @@ export function PetForm({
               {/* Announcement type - только при создании */}
               {!isEditing && (
                 <>
-                  <div className="mb-8 pb-6 border-b border-gray-200 dark:border-gray-700">
-                    <label className="block text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-3">
+                  <div className="mb-8 pb-6 border-b border-border">
+                    <label className="block text-sm font-semibold text-muted-foreground uppercase mb-3">
                       Тип объявления
                     </label>
                     <div className="flex gap-3">
@@ -524,7 +566,7 @@ export function PetForm({
                         className={`flex-1 rounded-lg px-6 py-3 font-medium transition-colors ${
                           formData.status === 'searching'
                             ? 'bg-rose-600 text-white shadow-sm hover:bg-rose-600/90'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-secondary dark:text-secondary-foreground dark:hover:bg-secondary/80'
+                            : 'bg-muted text-muted-foreground hover:bg-muted dark:bg-secondary dark:text-secondary-foreground dark:hover:bg-secondary/80'
                         }`}
                       >
                         Пропала
@@ -535,20 +577,20 @@ export function PetForm({
                         className={`flex-1 rounded-lg px-6 py-3 font-medium transition-colors ${
                           formData.status === 'found'
                             ? 'bg-sky-600 text-white shadow-sm hover:bg-sky-600/90'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-secondary dark:text-secondary-foreground dark:hover:bg-secondary/80'
+                            : 'bg-muted text-muted-foreground hover:bg-muted dark:bg-secondary dark:text-secondary-foreground dark:hover:bg-secondary/80'
                         }`}
                       >
                         Найдена
                       </button>
                     </div>
                   </div>
-                  <p className="text-gray-600 dark:text-muted-foreground mb-6">{t.petForm.step1Desc}</p>
+                  <p className="text-muted-foreground mb-6">{t.petForm.step1Desc}</p>
                 </>
               )}
               {/* Animal type + Breed */}
               <div className="flex flex-col sm:flex-row sm:items-end gap-3">
                 <div className="shrink-0">
-                  <label className="block text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-3">{t.petForm.whoIsThis}</label>
+                  <label className="block text-sm font-semibold text-muted-foreground uppercase mb-3">{t.petForm.whoIsThis}</label>
                   <div className={`flex gap-3 ${variant === 'page' ? '' : 'bg-muted rounded-lg p-0.5'}`}>
                     {animalTypeOptions.map((opt) => (
                       <button
@@ -558,8 +600,8 @@ export function PetForm({
                         className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors ${
                           variant === 'page'
                             ? formData.animalType === opt.value
-                              ? 'bg-gray-800 text-white'
-                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-secondary dark:text-secondary-foreground dark:hover:bg-secondary/80'
+                              ? 'bg-foreground text-background'
+                              : 'bg-muted text-muted-foreground hover:bg-muted dark:bg-secondary dark:text-secondary-foreground dark:hover:bg-secondary/80'
                             : formData.animalType === opt.value
                               ? 'bg-card text-foreground shadow-sm'
                               : 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -575,7 +617,7 @@ export function PetForm({
                   {errors.animalType && <p className="text-xs text-red-500 mt-1">{errors.animalType}</p>}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">{t.petForm.breedLabel}</span>
+                  <span className="text-xs font-medium text-muted-foreground/80 uppercase tracking-wide">{t.petForm.breedLabel}</span>
                   <div className="mt-1.5">
                     {formData.animalType === 'other' ? (
                       <input
@@ -584,7 +626,7 @@ export function PetForm({
                         onChange={(e) => setFormData({ ...formData, breed: e.target.value.slice(0, 80) })}
                         placeholder="Введите породу (необязательно)"
                         maxLength={80}
-                        className={variant === 'page' ? 'w-full px-4 py-3 border border-black/10 dark:border-border rounded-lg bg-[#f3f3f5] dark:bg-input-background text-foreground focus:outline-none focus:ring-2 focus:ring-[#FF9800] focus:border-transparent' : 'w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent'}
+                        className={variant === 'page' ? 'w-full px-4 py-3 border border-black/10 dark:border-border rounded-lg bg-input-background dark:bg-input-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent' : 'w-full px-4 py-3 border border-border dark:border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent'}
                       />
                     ) : (
                       <BreedCombobox
@@ -592,7 +634,7 @@ export function PetForm({
                         value={formData.breed}
                         onChange={(breed) => setFormData({ ...formData, breed })}
                         placeholder="Выберите или введите породу"
-                        className={variant === 'page' ? 'bg-[#f3f3f5] dark:bg-input-background border-black/10 dark:border-border' : undefined}
+                        className={variant === 'page' ? 'bg-input-background dark:bg-input-background border-black/10 dark:border-border' : undefined}
                       />
                     )}
                   </div>
@@ -601,7 +643,7 @@ export function PetForm({
 
               {/* Colors */}
               <div>
-                <label className="block text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-3">{t.petForm.colorLabel}</label>
+                <label className="block text-sm font-semibold text-muted-foreground uppercase mb-3">{t.petForm.colorLabel}</label>
                 <div className={`flex flex-wrap gap-2 mt-1.5 ${errors.colors ? 'ring-2 ring-red-300 bg-red-50/50 dark:bg-red-900/20 p-2 rounded-xl' : ''}`}>
                   {(Object.keys(t.pet.color) as PetColor[]).map((color) => (
                     <button
@@ -611,8 +653,8 @@ export function PetForm({
                       className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                         variant === 'page'
                           ? formData.colors.includes(color)
-                            ? 'bg-gray-800 text-white'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-secondary dark:text-secondary-foreground dark:hover:bg-secondary/80'
+                            ? 'bg-foreground text-background'
+                            : 'bg-muted text-muted-foreground hover:bg-muted dark:bg-secondary dark:text-secondary-foreground dark:hover:bg-secondary/80'
                           : formData.colors.includes(color)
                             ? 'bg-muted text-muted-foreground border border-border'
                             : 'bg-card text-foreground border border-border hover:bg-muted hover:border-border'
@@ -628,7 +670,7 @@ export function PetForm({
               {/* Gender + Age */}
               <div className="flex flex-col gap-6">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-3">{t.petForm.genderLabel}</label>
+                  <label className="block text-sm font-semibold text-muted-foreground uppercase mb-3">{t.petForm.genderLabel}</label>
                   <div className={`flex gap-3 ${variant === 'page' ? '' : 'bg-muted rounded-lg p-0.5 w-fit'}`}>
                     {genderOptions.map((opt) => (
                       <button
@@ -638,8 +680,8 @@ export function PetForm({
                         className={`px-6 py-3 rounded-lg font-medium transition-colors ${
                           variant === 'page'
                             ? formData.gender === opt.value
-                              ? 'bg-gray-800 text-white'
-                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-secondary dark:text-secondary-foreground dark:hover:bg-secondary/80'
+                              ? 'bg-foreground text-background'
+                              : 'bg-muted text-muted-foreground hover:bg-muted dark:bg-secondary dark:text-secondary-foreground dark:hover:bg-secondary/80'
                             : formData.gender === opt.value
                               ? 'bg-card text-foreground shadow-sm px-3 py-1.5'
                               : 'text-muted-foreground hover:bg-muted hover:text-foreground px-3 py-1.5'
@@ -653,7 +695,7 @@ export function PetForm({
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-3">{t.petForm.ageLabel}</label>
+                  <label className="block text-sm font-semibold text-muted-foreground uppercase mb-3">{t.petForm.ageLabel}</label>
                   {variant === 'page' ? (
                     <div className="flex gap-3">
                       {agePresetValues.map((value) => (
@@ -663,8 +705,8 @@ export function PetForm({
                           onClick={() => setFormData({ ...formData, approximateAge: value })}
                           className={`px-6 py-3 rounded-lg font-medium transition-colors ${
                             (formData.approximateAge === value || (value === '' && !formData.approximateAge))
-                              ? 'bg-gray-800 text-white'
-                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-secondary dark:text-secondary-foreground dark:hover:bg-secondary/80'
+                              ? 'bg-foreground text-background'
+                              : 'bg-muted text-muted-foreground hover:bg-muted dark:bg-secondary dark:text-secondary-foreground dark:hover:bg-secondary/80'
                           }`}
                         >
                           {getAgeLabel(value, isMobile)}
@@ -677,7 +719,7 @@ export function PetForm({
                       value={formData.approximateAge}
                       onChange={(e) => setFormData({ ...formData, approximateAge: e.target.value })}
                       placeholder="Напр.: 2 года"
-                      className="block mt-1.5 w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF9800] focus:border-transparent"
+                      className="block mt-1.5 w-full px-4 py-3 border border-border dark:border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
                   )}
                 </div>
@@ -688,7 +730,7 @@ export function PetForm({
           {/* Step 2: Фото — точно по эталону */}
           {step === 2 && (
             <div>
-              <div className="text-right text-sm text-gray-500 dark:text-muted-foreground mb-4">
+              <div className="text-right text-sm text-muted-foreground mb-4">
                 {formData.photos.length} из {maxPhotos}
               </div>
               <div className="grid grid-cols-3 gap-4 mb-4">
@@ -705,7 +747,7 @@ export function PetForm({
                   </div>
                 ))}
                 {formData.photos.length < maxPhotos && formData.photos.length > 0 && (
-                  <label className="aspect-square rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-[#FF9800] hover:bg-gray-50 dark:hover:bg-muted/50 flex flex-col items-center justify-center transition-colors text-gray-400 dark:text-muted-foreground hover:text-[#FF9800]">
+                  <label className="aspect-square rounded-lg border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary hover:bg-muted/50/50 flex flex-col items-center justify-center transition-colors text-muted-foreground hover:text-primary">
                     <Upload className="w-6 h-6 mb-2" />
                     <input
                       type="file"
@@ -718,10 +760,10 @@ export function PetForm({
                 )}
               </div>
               {formData.photos.length === 0 && (
-                <label className={`flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-[#FF9800] hover:bg-gray-50 dark:hover:bg-muted/50 transition-colors ${errors.photos ? '!border-red-300 bg-red-50/50 dark:bg-red-950/20' : ''}`}>
-                  <Upload size={48} className="text-gray-400 dark:text-muted-foreground mb-4" />
-                  <span className="text-gray-600 dark:text-foreground font-medium">{(t.petForm as { uploadPhotoHint?: string }).uploadPhotoHint || 'Нажмите для загрузки фото'}</span>
-                  <span className="text-sm text-gray-500 dark:text-muted-foreground mt-2">{(t.petForm as { uploadPhotoDrag?: string }).uploadPhotoDrag || 'или перетащите файлы сюда'}</span>
+                <label className={`flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary hover:bg-muted/50/50 transition-colors ${errors.photos ? '!border-destructive bg-red-50/50 dark:bg-red-950/20' : ''}`}>
+                  <Upload size={48} className="text-muted-foreground mb-4" />
+                  <span className="text-muted-foreground dark:text-foreground font-medium">{(t.petForm as { uploadPhotoHint?: string }).uploadPhotoHint || 'Нажмите для загрузки фото'}</span>
+                  <span className="text-sm text-muted-foreground mt-2">{(t.petForm as { uploadPhotoDrag?: string }).uploadPhotoDrag || 'или перетащите файлы сюда'}</span>
                   <input
                     type="file"
                     accept="image/*"
@@ -732,7 +774,7 @@ export function PetForm({
                 </label>
               )}
               {formData.photos.length >= maxPhotos && (
-                <p className="text-sm text-gray-500 text-center py-1">Загружено максимальное количество фото</p>
+                <p className="text-sm text-muted-foreground text-center py-1">Загружено максимальное количество фото</p>
               )}
               {errors.photos && <p className="text-xs text-red-500 mt-1">{errors.photos}</p>}
             </div>
@@ -742,14 +784,14 @@ export function PetForm({
           {step === 3 && (
             <div className="space-y-5">
               <div>
-                <span className="text-sm font-semibold text-gray-500 dark:text-gray-500 uppercase mb-3 block">{t.petForm.addressLabel}</span>
+                <span className="text-sm font-semibold text-muted-foreground dark:text-muted-foreground uppercase mb-3 block">{t.petForm.addressLabel}</span>
                 <div className="flex gap-2 mt-2">
                   <input
                     type="text"
                     value={formData.city}
                     onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                     placeholder="Минск, ул. Примерная, 1"
-                    className={variant === 'page' ? `flex-1 w-full px-4 py-3 border rounded-lg bg-[#f3f3f5] dark:bg-input-background text-foreground focus:outline-none focus:ring-2 focus:ring-[#FF9800] focus:border-transparent ${errors.city ? 'border-red-300' : 'border-black/10 dark:border-border'}` : `flex-1 w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${errors.city ? 'border-red-300' : 'border-gray-200 dark:border-gray-600'}`}
+                    className={variant === 'page' ? `flex-1 w-full px-4 py-3 border rounded-lg bg-input-background dark:bg-input-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${errors.city ? 'border-destructive' : 'border-black/10 dark:border-border'}` : `flex-1 w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${errors.city ? 'border-destructive' : 'border-border dark:border-border'}`}
                     required
                   />
                   <button
@@ -765,10 +807,10 @@ export function PetForm({
                           location: { lat: result.lat, lng: result.lng },
                         });
                       } else {
-                        toast.error('Адрес не найден. Проверьте ввод или выберите точку на карте.');
+                        toast.error(t.common.toasts.addressNotFound);
                       }
                     }}
-                    className="px-6 h-12 bg-[#FF9800] text-white text-sm font-medium rounded-lg hover:bg-[#F57C00] transition-colors flex items-center gap-1.5 shrink-0"
+                    className="px-6 h-12 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-hover transition-colors flex items-center gap-1.5 shrink-0"
                     title="Показать на карте"
                   >
                     <Search className="w-4 h-4" />
@@ -777,12 +819,12 @@ export function PetForm({
                 </div>
                 {errors.city
                   ? <p className="text-xs text-red-500 mt-1">{errors.city}</p>
-                  : <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Введите адрес и нажмите «На карте» или выберите точку на карте</p>
+                  : <p className="text-xs text-muted-foreground/80 mt-1">Введите адрес и нажмите «На карте» или выберите точку на карте</p>
                 }
               </div>
               <div>
-                <span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">Точка на карте *</span>
-                <div className={`mt-2 rounded-xl overflow-hidden border ${variant === 'page' ? 'border-black/10 dark:border-border' : 'border-gray-300 dark:border-gray-600'}`}>
+                <span className="text-xs font-medium text-muted-foreground/80 uppercase tracking-wide">Точка на карте *</span>
+                <div className={`mt-2 rounded-xl overflow-hidden border ${variant === 'page' ? 'border-black/10 dark:border-border' : 'border-border'}`}>
                   <LocationPicker
                     initialLocation={formData.location}
                     onLocationSelect={(newLocation) => setFormData((prev) => ({ ...prev, location: newLocation }))}
@@ -800,8 +842,8 @@ export function PetForm({
           {step === 4 && (
             <div>
               <div className="flex justify-between items-center mb-3">
-                <label className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase">{t.petForm.descriptionLabel}</label>
-                <span className={`text-sm ${formData.description.length > MAX_DESCRIPTION ? 'text-red-500 font-medium' : 'text-gray-500 dark:text-gray-500'}`}>
+                <label className="text-sm font-semibold text-muted-foreground uppercase">{t.petForm.descriptionLabel}</label>
+                <span className={`text-sm ${formData.description.length > MAX_DESCRIPTION ? 'text-red-500 font-medium' : 'text-muted-foreground dark:text-muted-foreground'}`}>
                   {formData.description.length} / {MAX_DESCRIPTION}
                 </span>
               </div>
@@ -815,19 +857,19 @@ export function PetForm({
                 placeholder={t.petForm.descriptionPlaceholder}
                 rows={8}
                 maxLength={MAX_DESCRIPTION}
-                className={variant === 'page' ? `w-full px-4 py-3 border rounded-lg bg-[#f3f3f5] dark:bg-input-background text-foreground focus:outline-none focus:ring-2 focus:ring-[#FF9800] focus:border-transparent resize-none ${errors.description ? 'border-red-300' : 'border-gray-300 dark:border-gray-600'}` : `w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none ${errors.description ? 'border-red-300' : 'border-gray-200 dark:border-gray-600'}`}
+                className={variant === 'page' ? `w-full px-4 py-3 border rounded-lg bg-input-background dark:bg-input-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none ${errors.description ? 'border-destructive' : 'border-border'}` : `w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none ${errors.description ? 'border-destructive' : 'border-border dark:border-border'}`}
                 required
               />
               {errors.description && <p className="text-xs text-red-500 mt-1">{errors.description}</p>}
 
-              <div className="mt-8 border-t border-gray-200 dark:border-gray-700 pt-6">
-                <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">
+              <div className="mt-8 border-t border-border pt-6">
+                <p className="text-sm font-semibold text-muted-foreground uppercase mb-1">
                   {t.petForm.registrationSectionTitle}
                 </p>
                 <p className="text-xs text-muted-foreground mb-4">{t.petForm.registrationHint}</p>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-foreground/90 mb-2">
                       {t.petForm.registrationAuthorityLabel}
                     </label>
                     <input
@@ -839,15 +881,15 @@ export function PetForm({
                       placeholder={t.petForm.registrationAuthorityPlaceholder}
                       maxLength={300}
                       className={variant === 'page'
-                        ? `w-full px-4 py-3 border rounded-lg bg-[#f3f3f5] dark:bg-input-background text-foreground focus:outline-none focus:ring-2 focus:ring-[#FF9800] focus:border-transparent ${errors.registrationAuthority ? 'border-red-300' : 'border-gray-300 dark:border-gray-600'}`
-                        : `w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${errors.registrationAuthority ? 'border-red-300' : 'border-gray-200 dark:border-gray-600'}`}
+                        ? `w-full px-4 py-3 border rounded-lg bg-input-background dark:bg-input-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${errors.registrationAuthority ? 'border-destructive' : 'border-border'}`
+                        : `w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${errors.registrationAuthority ? 'border-destructive' : 'border-border dark:border-border'}`}
                     />
                     {errors.registrationAuthority && (
                       <p className="text-xs text-red-500 mt-1">{errors.registrationAuthority}</p>
                     )}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-foreground/90 mb-2">
                       {t.petForm.registrationTokenLabel}
                     </label>
                     <input
@@ -859,8 +901,8 @@ export function PetForm({
                       placeholder={t.petForm.registrationTokenPlaceholder}
                       maxLength={80}
                       className={variant === 'page'
-                        ? `w-full px-4 py-3 border rounded-lg bg-[#f3f3f5] dark:bg-input-background text-foreground focus:outline-none focus:ring-2 focus:ring-[#FF9800] focus:border-transparent ${errors.registrationTokenNumber ? 'border-red-300' : 'border-gray-300 dark:border-gray-600'}`
-                        : `w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${errors.registrationTokenNumber ? 'border-red-300' : 'border-gray-200 dark:border-gray-600'}`}
+                        ? `w-full px-4 py-3 border rounded-lg bg-input-background dark:bg-input-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${errors.registrationTokenNumber ? 'border-destructive' : 'border-border'}`
+                        : `w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${errors.registrationTokenNumber ? 'border-destructive' : 'border-border dark:border-border'}`}
                     />
                     {errors.registrationTokenNumber && (
                       <p className="text-xs text-red-500 mt-1">{errors.registrationTokenNumber}</p>
@@ -870,12 +912,12 @@ export function PetForm({
               </div>
 
               {formData.status === 'searching' && (
-              <div className="mt-8 border-t border-gray-200 dark:border-gray-700 pt-6">
-                <div className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-3">
+              <div className="mt-8 border-t border-border pt-6">
+                <div className="text-sm font-semibold text-muted-foreground uppercase mb-3">
                   {(t.petForm as { rewardTitle?: string }).rewardTitle ?? 'Награда за помощь'}
                 </div>
                 <div className="space-y-3">
-                  <label className="flex items-center gap-3 p-4 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-50/10 transition-colors">
+                  <label className="flex items-center gap-3 p-4 border border-border rounded-lg cursor-pointer hover:bg-muted/50 dark:hover:bg-muted/10 transition-colors">
                     <input
                       type="radio"
                       name="rewardMode"
@@ -887,14 +929,14 @@ export function PetForm({
                           rewardAmountByn: undefined,
                         })
                       }
-                      className="w-4 h-4 text-[#FF9800]"
+                      className="w-4 h-4 text-primary"
                     />
-                    <span className="text-gray-700 dark:text-gray-300">
+                    <span className="text-foreground/90">
                       {(t.petForm as { rewardPointsMode?: string }).rewardPointsMode ??
                         'Награда платформы: очки'}
                     </span>
                   </label>
-                  <label className="flex items-center gap-3 p-4 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-50/10 transition-colors">
+                  <label className="flex items-center gap-3 p-4 border border-border rounded-lg cursor-pointer hover:bg-muted/50 dark:hover:bg-muted/10 transition-colors">
                     <input
                       type="radio"
                       name="rewardMode"
@@ -906,9 +948,9 @@ export function PetForm({
                           rewardAmountByn: formData.rewardAmountByn ?? 50,
                         })
                       }
-                      className="w-4 h-4 text-[#FF9800]"
+                      className="w-4 h-4 text-primary"
                     />
-                    <span className="text-gray-700 dark:text-gray-300">
+                    <span className="text-foreground/90">
                       {(t.petForm as { rewardMoneyMode?: string }).rewardMoneyMode ??
                         'Денежное вознаграждение (передача напрямую)'}
                     </span>
@@ -917,7 +959,7 @@ export function PetForm({
 
                 {formData.rewardMode === 'money' ? (
                   <div className="mt-4">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-foreground/90 mb-2">
                       {(t.petForm as { rewardAmountLabel?: string }).rewardAmountLabel ??
                         'Сумма вознаграждения, BYN'}
                     </label>
@@ -934,17 +976,17 @@ export function PetForm({
                       }
                       placeholder="100"
                       className={variant === 'page'
-                        ? `w-full px-4 py-3 border rounded-lg bg-[#f3f3f5] dark:bg-input-background text-foreground focus:outline-none focus:ring-2 focus:ring-[#FF9800] focus:border-transparent ${errors.rewardAmountByn ? 'border-red-300' : 'border-gray-300 dark:border-gray-600'}`
-                        : `w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${errors.rewardAmountByn ? 'border-red-300' : 'border-gray-200 dark:border-gray-600'}`}
+                        ? `w-full px-4 py-3 border rounded-lg bg-input-background dark:bg-input-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${errors.rewardAmountByn ? 'border-destructive' : 'border-border'}`
+                        : `w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${errors.rewardAmountByn ? 'border-destructive' : 'border-border dark:border-border'}`}
                     />
                     {errors.rewardAmountByn && <p className="text-xs text-red-500 mt-1">{errors.rewardAmountByn}</p>}
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    <p className="text-xs text-muted-foreground mt-2">
                       {(t.petForm as { rewardMoneyHint?: string }).rewardMoneyHint ??
                         'Платформа не участвует в передаче средств: владелец передаёт вознаграждение лично.'}
                     </p>
                   </div>
                 ) : (
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
+                  <p className="text-xs text-muted-foreground mt-3">
                     {(t.petForm as { rewardPointsHint?: string }).rewardPointsHint ??
                       'Если владелец подтвердит помощника по ID после закрытия объявления, система начислит очки.'}
                   </p>
@@ -958,27 +1000,27 @@ export function PetForm({
           {step === 5 && (
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-3">{t.petForm.contactsForLink}</label>
+                <label className="block text-sm font-semibold text-muted-foreground uppercase mb-3">{t.petForm.contactsForLink}</label>
                 <div className="space-y-3">
-                  <label className="flex items-center gap-3 p-4 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-50/10 transition-colors">
+                  <label className="flex items-center gap-3 p-4 border border-border rounded-lg cursor-pointer hover:bg-muted/50 dark:hover:bg-muted/10 transition-colors">
                     <input
                       type="radio"
                       name="contactSource"
                       checked={formData.useProfileContacts === true}
                       onChange={() => setFormData({ ...formData, useProfileContacts: true })}
-                      className="w-4 h-4 text-[#FF9800]"
+                      className="w-4 h-4 text-primary"
                     />
-                    <span className="text-gray-700 dark:text-gray-300">{t.petForm.useMyContacts}</span>
+                    <span className="text-foreground/90">{t.petForm.useMyContacts}</span>
                   </label>
-                  <label className="flex items-center gap-3 p-4 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-50/10 transition-colors">
+                  <label className="flex items-center gap-3 p-4 border border-border rounded-lg cursor-pointer hover:bg-muted/50 dark:hover:bg-muted/10 transition-colors">
                     <input
                       type="radio"
                       name="contactSource"
                       checked={formData.useProfileContacts === false}
                       onChange={() => setFormData({ ...formData, useProfileContacts: false })}
-                      className="w-4 h-4 text-[#FF9800]"
+                      className="w-4 h-4 text-primary"
                     />
-                    <span className="text-gray-700 dark:text-gray-300">{t.petForm.newContacts}</span>
+                    <span className="text-foreground/90">{t.petForm.newContacts}</span>
                   </label>
                 </div>
                 {errors.profileContacts && (
@@ -988,24 +1030,24 @@ export function PetForm({
               {!formData.useProfileContacts && (
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{t.petForm.contactNameLabel} *</label>
+                    <label className="block text-sm font-semibold text-foreground/90 mb-2">{t.petForm.contactNameLabel} *</label>
                     <input
                       type="text"
                       value={formData.contactName ?? ''}
                       onChange={(e) => setFormData({ ...formData, contactName: e.target.value })}
                       placeholder="Ваше имя"
-                      className={variant === 'page' ? `w-full px-4 py-3 border rounded-lg bg-[#f3f3f5] dark:bg-input-background text-foreground focus:outline-none focus:ring-2 focus:ring-[#FF9800] focus:border-transparent ${errors.contactName ? 'border-red-300' : 'border-gray-300 dark:border-gray-600'}` : `w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${errors.contactName ? 'border-red-300' : 'border-gray-200 dark:border-gray-600'}`}
+                      className={variant === 'page' ? `w-full px-4 py-3 border rounded-lg bg-input-background dark:bg-input-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${errors.contactName ? 'border-destructive' : 'border-border'}` : `w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${errors.contactName ? 'border-destructive' : 'border-border dark:border-border'}`}
                     />
                     {errors.contactName && <p className="text-xs text-red-500 mt-1">{errors.contactName}</p>}
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{t.petForm.contactPhoneLabel} *</label>
+                    <label className="block text-sm font-semibold text-foreground/90 mb-2">{t.petForm.contactPhoneLabel} *</label>
                     <input
                       type="tel"
                       value={formData.contactPhone ?? ''}
                       onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
                       placeholder={BELARUS_MOBILE_PHONE_PLACEHOLDER}
-                      className={variant === 'page' ? `w-full px-4 py-3 border rounded-lg bg-[#f3f3f5] dark:bg-input-background text-foreground focus:outline-none focus:ring-2 focus:ring-[#FF9800] focus:border-transparent ${errors.contactPhone ? 'border-red-300' : 'border-gray-300 dark:border-gray-600'}` : `w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${errors.contactPhone ? 'border-red-300' : 'border-gray-200 dark:border-gray-600'}`}
+                      className={variant === 'page' ? `w-full px-4 py-3 border rounded-lg bg-input-background dark:bg-input-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${errors.contactPhone ? 'border-destructive' : 'border-border'}` : `w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${errors.contactPhone ? 'border-destructive' : 'border-border dark:border-border'}`}
                     />
                     {errors.contactPhone && <p className="text-xs text-red-500 mt-1">{errors.contactPhone}</p>}
                   </div>
@@ -1017,12 +1059,12 @@ export function PetForm({
                     type="checkbox"
                     checked={!!formData.agreeToPrivacy}
                     onChange={(e) => setFormData({ ...formData, agreeToPrivacy: e.target.checked })}
-                    className="mt-1 w-4 h-4 text-[#FF9800] rounded border-gray-300 dark:border-gray-600"
+                    className="mt-1 w-4 h-4 text-primary rounded border-border"
                   />
-                  <span className="text-sm text-gray-600 dark:text-gray-400">
-                    Я согласен с{' '}
-                    <Link to="/terms" className="text-[#FF9800] hover:underline">
-                      политикой конфиденциальности
+                  <span className="text-sm text-muted-foreground">
+                    {t.petForm.agreePrivacy}{' '}
+                    <Link to="/privacy" className="text-primary hover:underline">
+                      {t.petForm.privacyPolicyLink}
                     </Link>
                   </span>
                 </label>
@@ -1032,14 +1074,14 @@ export function PetForm({
           )}
 
           {/* Navigation */}
-          <div className="flex items-center justify-between mt-8 pt-5 border-t border-gray-100 dark:border-gray-700">
+          <div className="flex items-center justify-between mt-8 pt-5 border-t border-border/60 dark:border-border">
             {variant === 'page' ? (
               <div />
             ) : step > 1 ? (
               <button
                 type="button"
                 onClick={() => setStep(step - 1)}
-                className="flex items-center gap-1.5 px-4 py-3 text-sm text-gray-600 dark:text-gray-400 hover:bg-accent dark:hover:bg-accent rounded-lg transition-colors"
+                className="flex items-center gap-1.5 px-4 py-3 text-sm text-muted-foreground hover:bg-accent dark:hover:bg-accent rounded-lg transition-colors"
               >
                 <ChevronLeft className="w-4 h-4" />
                 {t.common.back}
@@ -1057,7 +1099,7 @@ export function PetForm({
                   setTried(true);
                   if (canProceed()) { setTried(false); setStep(step + 1); }
                 }}
-                className={`flex items-center justify-center gap-1.5 px-6 py-3 text-white font-medium rounded-lg transition-colors ${variant === 'page' ? 'w-full h-12 bg-[#FF9800] hover:bg-[#F57C00] text-lg' : 'bg-primary hover:bg-primary/90 text-sm'}`}
+                className={`flex items-center justify-center gap-1.5 px-6 py-3 text-white font-medium rounded-lg transition-colors ${variant === 'page' ? 'w-full h-12 bg-primary hover:bg-primary-hover text-lg' : 'bg-primary hover:bg-primary/90 text-sm'}`}
               >
                 {variant === 'page' ? (t.petForm as { nextStep?: string }).nextStep || 'Следующий шаг' : t.common.next}
               </button>
@@ -1065,7 +1107,7 @@ export function PetForm({
               <button
                 type="submit"
                 disabled={!isEditing && !formData.agreeToPrivacy}
-                className="w-full h-12 bg-[#FF9800] hover:bg-[#F57C00] text-white text-lg font-medium rounded-lg disabled:bg-gray-300 dark:disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors"
+                className="w-full h-12 bg-primary hover:bg-primary-hover text-white text-lg font-medium rounded-lg disabled:bg-muted dark:disabled:bg-muted/80 disabled:cursor-not-allowed transition-colors"
               >
                 {isEditing ? t.common.save : t.petForm.createAd}
               </button>

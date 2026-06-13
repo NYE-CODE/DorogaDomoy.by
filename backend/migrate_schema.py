@@ -254,6 +254,31 @@ NEW_TABLES = {
             telegram_channel_username VARCHAR
         )
     """,
+    "guide_categories": """
+        CREATE TABLE guide_categories (
+            id VARCHAR PRIMARY KEY,
+            slug VARCHAR UNIQUE NOT NULL,
+            title VARCHAR NOT NULL,
+            sort_order INTEGER DEFAULT 0,
+            created_at DATETIME,
+            updated_at DATETIME
+        )
+    """,
+    "guide_videos": """
+        CREATE TABLE guide_videos (
+            id VARCHAR PRIMARY KEY,
+            category VARCHAR NOT NULL,
+            title VARCHAR NOT NULL,
+            description TEXT,
+            youtube_url VARCHAR NOT NULL,
+            video_id VARCHAR NOT NULL,
+            sort_order INTEGER NOT NULL DEFAULT 0,
+            status VARCHAR NOT NULL DEFAULT 'draft',
+            published_at DATETIME,
+            created_at DATETIME,
+            updated_at DATETIME
+        )
+    """,
     "profile_pet_scan_signals": """
         CREATE TABLE profile_pet_scan_signals (
             id VARCHAR PRIMARY KEY,
@@ -478,6 +503,8 @@ PERFORMANCE_INDEXES = [
     ),
     "CREATE INDEX IF NOT EXISTS ix_pets_animal_type ON pets (animal_type)",
     "CREATE INDEX IF NOT EXISTS ix_blog_posts_status_published ON blog_posts (status, published_at DESC)",
+    "CREATE INDEX IF NOT EXISTS ix_guide_videos_category ON guide_videos (category)",
+    "CREATE INDEX IF NOT EXISTS ix_guide_videos_status ON guide_videos (status, sort_order)",
     "CREATE INDEX IF NOT EXISTS ix_reports_status ON reports (status)",
     "CREATE INDEX IF NOT EXISTS ix_reports_created_at ON reports (created_at DESC)",
     "CREATE INDEX IF NOT EXISTS ix_reports_pet_id ON reports (pet_id)",

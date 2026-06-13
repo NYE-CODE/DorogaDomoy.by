@@ -30,9 +30,9 @@ export function BlogRelatedSlider({ posts, sectionTitle, ariaPrev, ariaNext }: B
   };
 
   return (
-    <section className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 border-t border-border" aria-labelledby="blog-related-heading">
+    <section className="w-full page-container py-10 border-t border-border" aria-labelledby="blog-related-heading">
       <div className="flex items-center justify-between gap-4 mb-4">
-        <h2 id="blog-related-heading" className="text-lg sm:text-xl font-semibold text-foreground">
+        <h2 id="blog-related-heading" className="text-lg sm:typo-h3">
           {sectionTitle}
         </h2>
         <div className="flex items-center gap-1 shrink-0">

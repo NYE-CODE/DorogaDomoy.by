@@ -458,6 +458,37 @@ class BlogPost(Base):
     author = relationship("User", foreign_keys=[author_id])
 
 
+class GuideCategory(Base):
+    """Категория видеогайдов (slug хранится в guide_videos.category)."""
+
+    __tablename__ = "guide_categories"
+
+    id = Column(String, primary_key=True, index=True)
+    slug = Column(String, unique=True, nullable=False, index=True)
+    title = Column(String, nullable=False)
+    sort_order = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class GuideVideo(Base):
+    """Видеогайд с YouTube для публичной страницы /guides."""
+
+    __tablename__ = "guide_videos"
+
+    id = Column(String, primary_key=True, index=True)
+    category = Column(String, nullable=False, index=True)
+    title = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    youtube_url = Column(String, nullable=False)
+    video_id = Column(String, nullable=False, index=True)
+    sort_order = Column(Integer, default=0, nullable=False)
+    status = Column(String, default="draft", nullable=False)  # draft, published
+    published_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class Shelter(Base):
     """Карточка организации в каталоге — владелец: пользователь-волонтёр."""
 

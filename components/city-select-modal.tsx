@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+﻿import { useState, useMemo, useEffect } from "react";
 import { Search, MapPin, SearchX } from "lucide-react";
 import { oblasts, City, searchCities, REGIONAL_CENTERS } from "../utils/cities";
 import { useI18n } from "../context/I18nContext";
@@ -154,14 +154,14 @@ export function CitySelectModal({ open, onClose, onSelect, currentCity }: CitySe
                           : "border-transparent bg-muted/25 hover:bg-muted/50",
                       )}
                     >
-                      <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                         {oblast.name}
                       </span>
                       <span className="text-sm font-semibold text-foreground">{oblast.cities[0].name}</span>
                     </button>
                   ) : (
                     <>
-                      <p className="mb-2.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      <p className="mb-2.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                         {oblast.name}
                       </p>
                       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">

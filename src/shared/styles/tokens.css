@@ -1,0 +1,569 @@
+/**
+
+ * Design tokens — единый источник истины для визуальных значений.
+
+ * Используйте CSS-переменные или Tailwind semantic classes из @theme (globals.css).
+
+ */
+
+
+
+:root,
+
+.landing-theme {
+
+  /* ── Brand ── */
+
+  --color-brand: #ff9800;
+
+  --color-brand-light: #fdb913;
+
+  --color-brand-dark: #f57c00;
+
+  --color-primary: var(--color-brand);
+
+  --color-primary-hover: var(--color-brand-dark);
+
+  --color-primary-light: var(--color-brand-light);
+
+  --color-primary-soft: #ffb74d;
+
+  --color-primary-soft-hover: #ffcc80;
+
+  --color-primary-emphasis: #c2410c;
+
+  --color-primary-surface: #fff4e5;
+
+
+
+  /* ── Text ── */
+
+  --color-text-primary: #111827;
+
+  --color-text-secondary: #374151;
+
+  --color-text-muted: #5c5c6b;
+
+  --color-text-disabled: #9ca3af;
+
+  --color-text-base: var(--color-text-primary);
+
+  --color-text-on-brand: #ffffff;
+
+
+
+  /* ── Surfaces ── */
+
+  --color-bg-base: #ffffff;
+
+  --color-bg-surface: #ffffff;
+
+  --color-bg-elevated: #ffffff;
+
+  --color-bg-subtle: #f3f4f6;
+
+  --color-bg-muted: #ececf0;
+
+  --color-bg-input: #f3f3f5;
+
+  --color-bg-landing-dark: #15120f;
+
+  --color-bg-contact: #fafafa;
+
+
+
+  /* ── Borders ── */
+
+  --color-border-default: rgba(0, 0, 0, 0.1);
+
+  --color-border-strong: #e5e7eb;
+
+  --color-border-focus: var(--color-primary);
+
+  --color-slider-track: #e5e7eb;
+
+
+
+  /* ── Semantic ── */
+
+  --color-success: #16a34a;
+
+  --color-warning: #f59e0b;
+
+  --color-danger: #d4183d;
+
+  --color-info: #0284c7;
+
+  --color-secondary-brand: #030213;
+
+
+
+  /* Map markers */
+
+  --color-map-searching: #e11d48;
+
+  --color-map-found: var(--color-info);
+
+  --color-map-spotted: #f97316;
+
+  --color-map-fostering: #a855f7;
+
+  --color-map-shelter: #6366f1;
+
+  --color-map-returned: #10b981;
+
+  --color-map-adopted: #059669;
+
+  --color-map-transferred: #14b8a6;
+
+  --color-map-fallback: #6b7280;
+
+  --color-map-sighting: var(--color-warning);
+
+
+
+  /* Flyer / print */
+
+  --color-flyer-found: #166534;
+
+  --color-flyer-found-soft: #ecfdf5;
+
+  --color-flyer-found-border: #86efac;
+
+  --color-flyer-lost-soft: #fff8f0;
+
+  --color-flyer-lost-border: #ffcc80;
+
+
+
+  /* Placeholders (SVG) */
+
+  --color-placeholder-bg: var(--color-bg-subtle);
+
+  --color-placeholder-shape: #d1d5db;
+
+
+
+  /* Messengers */
+
+  --color-telegram: #0088cc;
+
+  --color-telegram-hover: #006699;
+
+  --color-telegram-bright: #229ed9;
+
+  --color-telegram-bright-hover: #1e8bc3;
+
+  --color-viber: #7360f2;
+
+  --color-viber-hover: #5a4dd4;
+
+  --color-viber-alt: #625ba1;
+
+  --color-viber-alt-hover: #514da1;
+
+
+
+  /* ── Typography ── */
+
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+  --font-family-base: var(--font-sans);
+
+
+
+  --text-xs: 12px;
+
+  --text-sm: 14px;
+
+  --text-md: 16px;
+
+  --text-lg: 18px;
+
+  --text-xl: 20px;
+
+  --text-2xl: 24px;
+
+  --text-3xl: 30px;
+
+  --text-4xl: 36px;
+
+
+
+  --font-size-xs: var(--text-xs);
+
+  --font-size-sm: var(--text-sm);
+
+  --font-size-md: var(--text-md);
+
+  --font-size-lg: var(--text-xl);
+
+  --font-size-xl: var(--text-2xl);
+
+
+
+  --leading-tight: 1.25;
+
+  --leading-normal: 1.5;
+
+  --leading-relaxed: 1.75;
+
+  --line-height-base: var(--leading-relaxed);
+
+  --line-height-tight: var(--leading-normal);
+
+
+
+  --weight-regular: 400;
+
+  --weight-medium: 500;
+
+  --weight-semibold: 600;
+
+  --font-weight-regular: var(--weight-regular);
+
+  --font-weight-medium: var(--weight-medium);
+
+  --font-weight-bold: var(--weight-semibold);
+
+  --font-weight-normal: var(--weight-regular);
+
+
+
+  --tracking-heading: -0.01em;
+
+
+
+  /* ── Spacing (кратно 4px) ── */
+
+  --space-1: 4px;
+
+  --space-2: 8px;
+
+  --space-3: 12px;
+
+  --space-4: 16px;
+
+  --space-5: 20px;
+
+  --space-6: 24px;
+
+  --space-8: 32px;
+
+  --space-10: 40px;
+
+  --space-12: 48px;
+
+  --space-16: 64px;
+
+  --space-20: 80px;
+
+  --space-24: 96px;
+
+
+
+  --spacing-1: var(--space-1);
+
+  --spacing-2: var(--space-2);
+
+  --spacing-3: var(--space-3);
+
+  --spacing-4: var(--space-4);
+
+  --spacing-6: var(--space-6);
+
+  --spacing-8: var(--space-8);
+
+
+
+  /* ── Layout ── */
+
+  --content-max-width: 1200px;
+
+  --content-max-width-medium: 1024px;
+
+  --content-max-width-narrow: 896px;
+
+  --content-max-width-readable: 768px;
+
+  --page-padding-x: var(--space-4);
+
+  --page-padding-x-sm: var(--space-6);
+
+  --page-padding-x-lg: var(--space-8);
+
+  --section-gap: var(--space-6);
+
+  --section-y: var(--space-10);
+
+  --section-y-lg: var(--space-12);
+
+
+
+  /* ── Radius ── */
+
+  --radius-sm: 4px;
+
+  --radius-md: 8px;
+
+  --radius-lg: 12px;
+
+  --radius-xl: 16px;
+
+  --radius-2xl: 24px;
+
+  --radius-full: 9999px;
+
+
+
+  /* ── Shadows ── */
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+
+  --shadow-lg: 0 12px 24px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.04);
+
+  --shadow-print-sheet: 0 8px 40px rgba(0, 0, 0, 0.08);
+
+  --shadow-map-cluster: 0 2px 10px rgba(0, 0, 0, 0.28);
+
+
+
+  /* ── Motion ── */
+
+  --duration-fast: 100ms;
+
+  --duration-base: 150ms;
+
+  --duration-slow: 250ms;
+
+  --ease-default: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --transition-interactive: var(--duration-base) var(--ease-default);
+
+
+
+  /* ── Component sizes ── */
+
+  --input-height-sm: 2rem;
+
+  --input-height-md: 2.5rem;
+
+  --input-height-lg: 2.75rem;
+
+  --button-height-sm: 2.25rem;
+
+  --button-height-md: 2.5rem;
+
+  --button-height-lg: 2.75rem;
+
+  --input-height: var(--input-height-lg);
+
+  --button-height: var(--button-height-lg);
+
+
+
+  /* ── shadcn / app semantic aliases ── */
+
+  --font-size: var(--font-size-md);
+
+  --background: var(--color-bg-base);
+
+  --foreground: var(--color-text-primary);
+
+  --card: var(--color-bg-surface);
+
+  --card-foreground: var(--color-text-primary);
+
+  --popover: var(--color-bg-elevated);
+
+  --popover-foreground: var(--color-text-primary);
+
+  --primary: var(--color-primary);
+
+  --primary-foreground: var(--color-text-on-brand);
+
+  --secondary: var(--color-bg-muted);
+
+  --secondary-foreground: var(--color-secondary-brand);
+
+  --muted: var(--color-bg-muted);
+
+  --muted-foreground: var(--color-text-muted);
+
+  --accent: #e9ebef;
+
+  --accent-foreground: var(--color-secondary-brand);
+
+  --destructive: var(--color-danger);
+
+  --destructive-foreground: var(--color-text-on-brand);
+
+  --border: var(--color-border-default);
+
+  --input: transparent;
+
+  --input-background: var(--color-bg-input);
+
+  --switch-background: #cbced4;
+
+  --ring: var(--color-border-focus);
+
+  --radius: var(--radius-md);
+
+
+
+  --chart-1: oklch(0.646 0.222 41.116);
+
+  --chart-2: oklch(0.6 0.118 184.704);
+
+  --chart-3: oklch(0.398 0.07 227.392);
+
+  --chart-4: oklch(0.828 0.189 84.429);
+
+  --chart-5: oklch(0.769 0.188 70.08);
+
+
+
+  --elevation-100: var(--shadow-sm);
+
+  --elevation-200: var(--shadow-md);
+
+  --elevation-300: var(--shadow-lg);
+
+
+
+  --sidebar: #fafafa;
+
+  --sidebar-foreground: var(--color-text-primary);
+
+  --sidebar-primary: var(--color-primary);
+
+  --sidebar-primary-foreground: var(--color-text-on-brand);
+
+  --sidebar-accent: #f4f4f5;
+
+  --sidebar-accent-foreground: var(--color-text-secondary);
+
+  --sidebar-border: var(--color-border-strong);
+
+  --sidebar-ring: var(--color-text-disabled);
+
+
+
+  /* Primary tints */
+
+  --color-primary-subtle: color-mix(in srgb, var(--color-primary) 10%, transparent);
+
+  --color-primary-subtle-strong: color-mix(in srgb, var(--color-primary) 18%, transparent);
+
+  --color-primary-ring: color-mix(in srgb, var(--color-primary) 45%, transparent);
+
+  --color-primary-light-subtle: color-mix(in srgb, var(--color-primary-light) 8%, transparent);
+
+  --color-primary-light-glow: color-mix(in srgb, var(--color-primary-light) 25%, transparent);
+
+}
+
+
+
+.dark,
+
+.landing-theme.dark,
+
+.dark .landing-theme {
+
+  --color-text-primary: #f9fafb;
+
+  --color-text-secondary: #e5e7eb;
+
+  --color-text-muted: #9ca3af;
+
+  --color-text-disabled: #6b7280;
+
+  --color-bg-base: #111827;
+
+  --color-bg-surface: #1f2937;
+
+  --color-bg-elevated: #1f2937;
+
+  --color-bg-subtle: #374151;
+
+  --color-bg-muted: #374151;
+
+  --color-bg-input: var(--color-bg-surface);
+
+  --color-bg-contact: var(--color-bg-subtle);
+
+  --color-border-default: #374151;
+
+  --color-border-strong: #374151;
+
+  --color-slider-track: #374151;
+
+
+
+  --background: var(--color-bg-base);
+
+  --foreground: var(--color-text-primary);
+
+  --card: var(--color-bg-surface);
+
+  --card-foreground: var(--color-text-primary);
+
+  --popover: var(--color-bg-elevated);
+
+  --popover-foreground: var(--color-text-primary);
+
+  --primary-foreground: var(--color-text-on-brand);
+
+  --secondary: var(--color-bg-muted);
+
+  --secondary-foreground: var(--color-text-primary);
+
+  --muted: var(--color-bg-muted);
+
+  --muted-foreground: var(--color-text-muted);
+
+  --accent: var(--color-bg-muted);
+
+  --accent-foreground: var(--color-text-primary);
+
+  --destructive: #dc2626;
+
+  --destructive-foreground: var(--color-text-on-brand);
+
+  --border: var(--color-border-default);
+
+  --input: var(--color-bg-surface);
+
+  --input-background: var(--color-bg-input);
+
+  --ring: var(--color-primary-soft);
+
+
+
+  --sidebar: var(--color-bg-base);
+
+  --sidebar-foreground: var(--color-text-primary);
+
+  --sidebar-accent: var(--color-bg-muted);
+
+  --sidebar-accent-foreground: var(--color-text-primary);
+
+  --sidebar-border: var(--color-border-default);
+
+  --sidebar-ring: var(--color-text-disabled);
+
+
+
+  --color-primary-subtle: color-mix(in srgb, var(--color-primary) 18%, transparent);
+
+  --color-primary-subtle-strong: color-mix(in srgb, var(--color-primary) 12%, transparent);
+
+}
+
+

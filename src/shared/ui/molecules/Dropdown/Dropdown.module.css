@@ -1,0 +1,7 @@
+.trigger {
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.content {
+  box-shadow: var(--elevation-200);
+}
