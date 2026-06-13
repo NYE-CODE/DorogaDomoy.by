@@ -46,7 +46,7 @@ export const matchDesktopStageClass = 'relative min-h-0 flex-1';
 
 /** Десктоп: одна карточка, без двойной обводки. */
 export const matchCardShellDesktopClass =
-  'relative h-full w-full overflow-hidden rounded-2xl border border-border/80 bg-card shadow-md';
+  'relative h-full w-full overflow-hidden rounded-2xl border border-border/80 bg-card shadow-md lg:h-auto lg:overflow-visible';
 
 /** Фото занимает только область над шторкой (bottom задаётся inline). */
 export const matchCardPhotoClass =
@@ -95,7 +95,7 @@ export const matchScoreRingTrackClass = 'text-muted/80';
 export const matchScoreRingValueClass = 'stroke-primary';
 
 export const matchDesktopThumbClass =
-  'relative size-14 shrink-0 overflow-hidden rounded-lg border-2 border-transparent opacity-70 transition-opacity duration-150 ease-in-out hover:opacity-100';
+  'relative h-14 w-[4.25rem] shrink-0 overflow-hidden rounded-lg border-2 border-transparent bg-muted/50 opacity-70 transition-opacity duration-150 ease-in-out hover:opacity-100 dark:bg-muted/30';
 
 export const matchDesktopThumbActiveClass =
   'border-primary opacity-100 ring-1 ring-primary/30';

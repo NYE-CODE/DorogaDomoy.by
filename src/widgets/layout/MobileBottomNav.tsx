@@ -139,7 +139,7 @@ export function MobileBottomNav() {
   };
 
   const handleMatchPet = () => {
-    navigate(getMatchPath());
+    navigate(getMatchPath(user?.id));
   };
 
   const setModeAndNavigate = (mode: HomeMode) => {

@@ -9,9 +9,11 @@ import { PageLoader } from '@/shared/ui/page-loader';
 import { MatchSwipeCard, type MatchSwipeCardHandle } from '../../components/match/MatchSwipeCard';
 import { MatchCompleteView, MatchNoResultsView } from '../../components/match/MatchCompleteView';
 import { useFavorites } from '@/app/providers/FavoritesContext';
+import { useAuth } from '@/app/providers/AuthContext';
 import {
   addPassedPetId,
   addMatchLikedPetId,
+  adopterProfileScope,
   clearMatchLikedPetIds,
   clearPassedPetIds,
   readAdopterProfile,
@@ -24,9 +26,11 @@ import { adopterHealthSummary, agePrefLabel, genderPrefLabel } from '@/shared/li
 import { loadCatalogShelterPets } from '@/shared/lib/shelter-pet-browse';
 import { applySeo, canonicalUrlFromPath, SEO_ROBOTS_PRIVATE } from '@/shared/lib/seo';
 import { cn } from '@/shared/ui/utils';
+import type { AdopterProfile } from '@/entities/adopter-profile/model/types';
 import { matchLikeButtonClass, matchMobileActionsClass, matchMobileActionsInnerClass, matchMobileCardWrapClass, matchMobileMainPadClass, matchPassButtonClass, matchProgressBarClass, matchDesktopStageClass } from '@/shared/styles/match-styles';
 
 function MatchDesktopSidebar({
+  profile,
   onEditQuiz,
   onResetPassed,
   labels,
@@ -35,6 +39,7 @@ function MatchDesktopSidebar({
   remainingLabel,
   sticky = false,
 }: {
+  profile: AdopterProfile;
   onEditQuiz: () => void;
   onResetPassed: () => void;
   labels: ReturnType<typeof useI18n>['t']['match'];
@@ -43,9 +48,6 @@ function MatchDesktopSidebar({
   remainingLabel: string | null;
   sticky?: boolean;
 }) {
-  const profile = readAdopterProfile();
-  if (!profile) return null;
-
   const s = labels.swipe;
   const p = labels.profile;
   const animal =
@@ -124,24 +126,26 @@ function MatchDesktopSidebar({
 
 export default function MatchSwipePage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const profileScope = adopterProfileScope(user?.id);
   const { t, locale } = useI18n();
   const m = t.match;
   const s = m.swipe;
   const location = useLocation();
-  const [profile, setProfile] = useState(() => readAdopterProfile());
+  const [profile, setProfile] = useState(() => readAdopterProfile(profileScope));
   const { toggleFavorite, isFavorite } = useFavorites();
   const [loading, setLoading] = useState(true);
   const [ranked, setRanked] = useState<RankedPet[]>([]);
   const [passedIds, setPassedIds] = useState<Set<string>>(() => readPassedPetIds());
   const [seenCount, setSeenCount] = useState(0);
   const [likedIds, setLikedIds] = useState<Set<string>>(() =>
-    readMatchLikedPetIds(readAdopterProfile()?.completedAt ?? ''),
+    readMatchLikedPetIds(readAdopterProfile(profileScope)?.completedAt ?? ''),
   );
   const cardRef = useRef<MatchSwipeCardHandle>(null);
 
   useEffect(() => {
-    setProfile(readAdopterProfile());
-  }, [location.key]);
+    setProfile(readAdopterProfile(profileScope));
+  }, [location.key, profileScope]);
 
   useEffect(() => {
     if (!profile) return;
@@ -340,7 +344,7 @@ export default function MatchSwipePage() {
                     matchMobileCardWrapClass,
                     'w-full',
                     (showSwipeStage || showComplete) && 'flex-1 min-h-0 max-lg:flex max-lg:flex-col',
-                    showSwipeStage && 'relative lg:min-h-[36rem]',
+                    showSwipeStage && 'relative lg:min-h-[36rem] lg:h-auto',
                     showComplete && 'max-lg:overflow-hidden',
                   )}
                 >
@@ -354,7 +358,7 @@ export default function MatchSwipePage() {
                       match={current.match}
                       onSwipeLeft={handlePass}
                       onSwipeRight={() => void handleLike()}
-                      className="absolute inset-0"
+                      className="absolute inset-0 lg:static lg:min-h-[36rem]"
                     />
                   ) : ranked.length === 0 ? (
                     <MatchNoResultsView
@@ -416,6 +420,7 @@ export default function MatchSwipePage() {
             </div>
 
             <MatchDesktopSidebar
+              profile={profile}
               onEditQuiz={() => navigate('/match/quiz')}
               onResetPassed={handleResetPassed}
               labels={m}
