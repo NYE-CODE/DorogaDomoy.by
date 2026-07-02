@@ -56,3 +56,6 @@ export type { ContactGroupProps, ContactGroupItem } from './ContactGroup';
 
 export { AdCardHeader } from './AdCardHeader';
 export type { AdCardHeaderProps } from './AdCardHeader';
+
+export { RouteProgress } from './RouteProgress';
+export type { RouteProgressProps } from './RouteProgress';

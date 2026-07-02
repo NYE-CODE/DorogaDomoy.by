@@ -28,3 +28,10 @@ export type {
 
 export { SearchInput } from './SearchInput';
 export type { SearchInputProps } from './SearchInput';
+
+export { PetMedallion } from './PetMedallion';
+export type {
+  PetMedallionProps,
+  PetMedallionRegister,
+  PetMedallionSize,
+} from './PetMedallion';
