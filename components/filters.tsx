@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Search, SlidersHorizontal, ChevronDown, ChevronUp, RotateCcw, Plus, X } from 'lucide-react';
+import { Search, SlidersHorizontal, ChevronDown, ChevronUp, RotateCcw, Plus, X, PawPrint, Cat, Dog, Bird } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { AnimalType, PetStatus, PetColor } from '../types/pet';
 import { activeStatuses, colorLabels, petStatusFilterSelectedClass } from '../utils/pet-helpers';
 import { useIsMobile } from './ui/use-mobile';
@@ -66,11 +67,11 @@ export function Filters({
   const [isOpen, setIsOpen] = useState(!isMobile);
   const [advancedOpen, setAdvancedOpen] = useState(false);
 
-  const animalTypeOptions: { value: AnimalType | 'all'; label: string; icon: string }[] = [
-    { value: 'all', label: t.common.all, icon: '??' },
-    { value: 'cat', label: t.pet.animalType.cat, icon: '??' },
-    { value: 'dog', label: t.pet.animalType.dog, icon: '??' },
-    { value: 'other', label: t.pet.animalType.other, icon: '??' },
+  const animalTypeOptions: { value: AnimalType | 'all'; label: string; icon: LucideIcon }[] = [
+    { value: 'all', label: t.common.all, icon: PawPrint },
+    { value: 'cat', label: t.pet.animalType.cat, icon: Cat },
+    { value: 'dog', label: t.pet.animalType.dog, icon: Dog },
+    { value: 'other', label: t.pet.animalType.other, icon: Bird },
   ];
 
   const animalTypeTooltips: Record<AnimalType | 'all', string> = {
@@ -148,9 +149,7 @@ export function Filters({
                     : 'text-muted-foreground hover:bg-background/80 hover:text-foreground'
                 }`}
               >
-                <span className="text-base leading-none" aria-hidden>
-                  {opt.icon}
-                </span>
+                <opt.icon size={15} className="shrink-0 opacity-80" aria-hidden />
                 <span className="truncate">{opt.label}</span>
               </button>
             </TooltipTrigger>
@@ -399,9 +398,7 @@ export function Filters({
                             : 'text-muted-foreground hover:bg-background/80 hover:text-foreground'
                         }`}
                       >
-                        <span className="text-base leading-none" aria-hidden>
-                          {opt.icon}
-                        </span>
+                        <opt.icon size={15} className="shrink-0 opacity-80" aria-hidden />
                         <span className="hidden truncate sm:inline">{opt.label}</span>
                       </button>
                     </TooltipTrigger>

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+﻿import { useState, useRef, useEffect } from 'react';
 import { MapPin, Phone, MessageCircle, Edit2, Trash2, Home, Heart, Building2, Clock, CheckCircle2, XCircle, Eye, MoreVertical } from 'lucide-react';
 import { Pet } from '../types/pet';
 import { petStatusPhotoPillClass, formatDate, formatRelativeTime } from '../utils/pet-helpers';
@@ -16,11 +16,11 @@ interface PetCardProps {
   compact?: boolean;
   onEdit?: (pet: Pet) => void;
   onDelete?: (pet: Pet) => void;
-  /** ?????????? ??????? (???????????? ?????? ??? status=searching) */
+  /** Количество «видели питомца» (показывается только для status=searching) */
   sightingCount?: number;
-  /** ?????? ?????? (???/??????) ? ????? ????????? ? ???????? ? ???? ??????????? ?? ????????? */
+  /** Скрыть статус (ищут/найден) и бейдж модерации — например в «Мои объявления» со вкладками */
   hideStatusBadge?: boolean;
-  /** ?????? ?? ????????? ?? ?????? (????????? ?? ????????? ???????) */
+  /** Кнопка «в избранное» на превью (отключить на служебных списках) */
   showFavoriteToggle?: boolean;
 }
 
@@ -48,7 +48,7 @@ export function PetCard({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-  
+
   // Check if current user is the author
   // We use 'current-user' check for mock data compatibility
   const isOwner = user && (pet.authorId === user.id || (user.id === 'user-demo' && pet.authorId === 'current-user'));
@@ -58,7 +58,7 @@ export function PetCard({
   // Get moderation status badge
   const getModerationBadge = () => {
     if (!isOwner) return null;
-    
+
     switch (pet.moderationStatus) {
       case 'pending':
         return {
@@ -92,29 +92,29 @@ export function PetCard({
   // Get archive reason badge
   const getArchiveReasonBadge = () => {
     if (!pet.isArchived || !pet.archiveReason) return null;
-    
+
     let icon = null;
     let bgColor = 'bg-green-50 dark:bg-green-900/20';
     let textColor = 'text-green-700 dark:text-green-400';
     let borderColor = 'border-green-200 dark:border-green-800';
-    
-    if (pet.archiveReason.includes('???????? ?????') || pet.archiveReason.includes('?????? ??????')) {
+
+    if (pet.archiveReason.includes('вернулся домой') || pet.archiveReason.includes('найден хозяин')) {
       icon = <Home className="w-3.5 h-3.5" />;
       bgColor = 'bg-green-50 dark:bg-green-900/20';
       textColor = 'text-green-700 dark:text-green-400';
       borderColor = 'border-green-200 dark:border-green-800';
-    } else if (pet.archiveReason.includes('?????????')) {
+    } else if (pet.archiveReason.includes('пристроен')) {
       icon = <Heart className="w-3.5 h-3.5" />;
       bgColor = 'bg-pink-50 dark:bg-pink-900/20';
       textColor = 'text-pink-700 dark:text-pink-400';
       borderColor = 'border-pink-200 dark:border-pink-800';
-    } else if (pet.archiveReason.includes('?????')) {
+    } else if (pet.archiveReason.includes('приют')) {
       icon = <Building2 className="w-3.5 h-3.5" />;
       bgColor = 'bg-muted';
       textColor = 'text-foreground/90';
       borderColor = 'border-border dark:border-border';
     }
-    
+
     return { icon, bgColor, textColor, borderColor };
   };
 
@@ -138,7 +138,7 @@ export function PetCard({
 
   if (compact) {
     const photoUrl = pet.photos[0] || 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&h=400&fit=crop';
-    const colorStr = pet.colors.length ? pet.colors.map(c => t.pet.color[c as keyof typeof t.pet.color]).join(', ') : '?';
+    const colorStr = pet.colors.length ? pet.colors.map(c => t.pet.color[c as keyof typeof t.pet.color]).join(', ') : '—';
     const breedStr = pet.breed?.trim() || t.landing.announcements.breedDefault;
     const photoAlt = `${t.pet.animalType[pet.animalType]}${pet.breed ? `, ${pet.breed}` : ''}, ${pet.city}`;
     return (
@@ -179,7 +179,7 @@ export function PetCard({
 
         <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5 pr-8">
           <h3 className={cn(typoH4, 'line-clamp-1 leading-tight')}>
-            {t.pet.animalType[pet.animalType]} <span className="font-medium text-muted-foreground">?</span>{' '}
+            {t.pet.animalType[pet.animalType]} <span className="font-medium text-muted-foreground">·</span>{' '}
             <span className="font-medium">{breedStr}</span>
           </h3>
           {getRewardBadgeMeta(pet) ? (
@@ -222,8 +222,8 @@ export function PetCard({
       )}
     >
       <div className="relative">
-        <img 
-          src={pet.photos[0]} 
+        <img
+          src={pet.photos[0]}
           alt={t.pet.animalType[pet.animalType]}
           className="w-full h-48 object-cover"
         />
@@ -242,8 +242,8 @@ export function PetCard({
             <FavoriteHeartButton petId={pet.id} />
           </div>
         )}
-        
-        {/* Owner or Admin Actions ? three-dots menu on the right */}
+
+        {/* Меню владельца/админа — три точки справа */}
         {canEditDelete && (onEdit || onDelete) && (
           <div className="absolute top-3 right-3" ref={menuRef}>
             <button
@@ -283,7 +283,7 @@ export function PetCard({
         <div className="mb-3">
           <div className="flex items-start justify-between gap-2 mb-2">
             <h3 className="font-semibold text-lg text-foreground">
-              {t.pet.animalType[pet.animalType]} {pet.breed && `? ${pet.breed}`}
+              {t.pet.animalType[pet.animalType]} {pet.breed && `· ${pet.breed}`}
             </h3>
             <div className="flex items-center gap-2 shrink-0">
               <RewardBadge pet={pet} />
@@ -295,11 +295,11 @@ export function PetCard({
               )}
             </div>
           </div>
-          
+
           <div className="flex flex-wrap gap-2 text-sm text-muted-foreground mb-2">
             <span>{t.pet.colorLabel}: {pet.colors.map(c => t.pet.color[c as keyof typeof t.pet.color]).join(', ')}</span>
-            {pet.gender && <span>? {t.pet.gender[pet.gender]}</span>}
-            {pet.approximateAge && <span>? {pet.approximateAge}</span>}
+            {pet.gender && <span>· {t.pet.gender[pet.gender]}</span>}
+            {pet.approximateAge && <span>· {pet.approximateAge}</span>}
           </div>
 
           <p className="text-sm text-foreground/90 line-clamp-2 mb-3">
@@ -313,7 +313,7 @@ export function PetCard({
             </div>
             <div className="flex items-center gap-1">
               <Clock className="h-4 w-4 shrink-0" aria-hidden />
-              {/* ????? ????????: ????? ? ??????? ?????????, ? ?? ???? ?????????? */}
+              {/* Голос «пропал»: время — счётчик срочности, а не дата публикации */}
               {pet.status === 'searching' && !pet.isArchived ? (
                 <span className="font-semibold text-lost-foreground">
                   {formatRelativeTime(pet.publishedAt)}
@@ -323,7 +323,7 @@ export function PetCard({
               )}
             </div>
           </div>
-          
+
           {/* Moderation Status Badge (shown to owner, hidden when hideStatusBadge e.g. in My Ads) */}
           {!hideStatusBadge && moderationBadge && (
             <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm ${moderationBadge.bgColor} ${moderationBadge.textColor} ${moderationBadge.borderColor} mb-2`}>
@@ -331,14 +331,14 @@ export function PetCard({
               <span>{moderationBadge.text}</span>
             </div>
           )}
-          
+
           {/* Rejection Reason */}
           {isOwner && pet.moderationStatus === 'rejected' && pet.moderationReason && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-2 text-xs text-red-700 mb-2">
               <strong>{t.moderation.reason}:</strong> {pet.moderationReason}
             </div>
           )}
-          
+
           {/* Archive Reason Badge */}
           {archiveBadge && (
             <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm ${archiveBadge.bgColor} ${archiveBadge.textColor} ${archiveBadge.borderColor}`}>
@@ -361,7 +361,7 @@ export function PetCard({
               {pet.authorName}
             </a>
           </p>
-          
+
           {pet.isArchived ? (
             <div className="bg-muted/30 dark:bg-muted border border-border rounded-lg p-3 text-center">
               <p className="text-sm text-muted-foreground">{t.petDetail.contactsHiddenArchived}</p>
@@ -373,7 +373,7 @@ export function PetCard({
                   onClick={(e) => handleContactClick(e, `tel:${pet.contacts.phone}`)}
                   className={cn(
                     'flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors text-sm',
-                    // ????? ????????: ?????? ? ??????? ????????, ????????? ?????? ????????
+                    // Голос «пропал»: звонок — главное действие, остальные каналы вторичны
                     pet.status === 'searching'
                       ? 'bg-primary text-primary-foreground font-semibold hover:bg-primary-hover'
                       : 'bg-muted text-muted-foreground hover:bg-accent',

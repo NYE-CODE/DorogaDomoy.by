@@ -26,7 +26,8 @@ export function RevealPhoneButton({ phone, className }: RevealPhoneButtonProps) 
       <Button className={cn(appPrimaryCtaClass, 'w-full', className)} asChild>
         <a href={normalizeTelHref(trimmed)}>
           <Phone className="size-5" aria-hidden />
-          {trimmed}
+          {/* Номер набирают со второго телефона или диктуют — крупно, с табличными цифрами */}
+          <span className="text-lg font-semibold tracking-wide tabular-nums">{trimmed}</span>
         </a>
       </Button>
     );

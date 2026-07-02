@@ -307,7 +307,7 @@ function ImageCarousel({
 
           src={photos[current]}
 
-          alt={photos.length > 1 ? `${alt} Ч фото ${current + 1}` : alt}
+          alt={photos.length > 1 ? `${alt} ? ???? ${current + 1}` : alt}
 
           className="w-full h-full object-contain"
 
@@ -421,7 +421,7 @@ function ImageCarousel({
 
             >
 
-              <img src={src} alt={`${alt} Ч миниатюра ${i + 1}`} className="size-full object-cover" />
+              <img src={src} alt={`${alt} ? ????????? ${i + 1}`} className="size-full object-cover" />
 
             </button>
 
@@ -551,11 +551,11 @@ export default function PetDetailPage() {
 
       applySeo({
 
-        title: 'ќбъ€вление не найдено | DorogaDomoy.by',
+        title: '?????????? ?? ??????? | DorogaDomoy.by',
 
         description:
 
-          'ќбъ€вление удалено или ссылка устарела. DorogaDomoy.by Ч платформа поиска пропавших и найденных питомцев в Ѕеларуси.',
+          '?????????? ??????? ??? ?????? ????????. DorogaDomoy.by ? ????????? ?????? ????????? ? ????????? ???????? ? ????????.',
 
         canonicalUrl: canonicalUrlFromPath(`/pet/${id}`),
 
@@ -579,7 +579,7 @@ export default function PetDetailPage() {
 
     const breedPart = pet.breed ? `, ${pet.breed}` : '';
 
-    const title = `${headline} Ч ${animal}${breedPart}, ${pet.city} | DorogaDomoy.by`;
+    const title = `${headline} ? ${animal}${breedPart}, ${pet.city} | DorogaDomoy.by`;
 
     const description = truncateMetaDescription(`${headline}. ${animal}, ${pet.city}. ${pet.description}`);
 
@@ -973,7 +973,7 @@ export default function PetDetailPage() {
 
   const flyerTitle = escapeHtml(flyerIsLost ? t.petDetail.lostPet : t.petDetail.foundPet);
 
-  const flyerSubtitle = escapeHtml(`${pet.city} Ј ${t.pet.animalType[pet.animalType]}`);
+  const flyerSubtitle = escapeHtml(`${pet.city} ? ${t.pet.animalType[pet.animalType]}`);
 
   const flyerBreed = escapeHtml(pet.breed || t.pet.notSpecified);
 
@@ -991,7 +991,7 @@ export default function PetDetailPage() {
 
   const callAnytimeLabel = escapeHtml(t.petDetail.callAnytime);
 
-  const flyerDocTitle = escapeHtml(`DorogaDomoy.by Ј ${pet.city}`);
+  const flyerDocTitle = escapeHtml(`DorogaDomoy.by ? ${pet.city}`);
 
   const flyerLang = escapeHtml(locale);
 
@@ -1050,9 +1050,9 @@ export default function PetDetailPage() {
 
   const openFlyer = (html: string) => {
 
-    // Ќе передаЄм noopener в windowFeatures: иначе window.open возвращает null,
+    // ?? ??????? noopener ? windowFeatures: ????? window.open ?????????? null,
 
-    // а document.write не срабатывает Ч нужен другой способ / QR.
+    // ? document.write ?? ??????????? ? ????? ?????? ?????? / QR.
 
     const w = window.open('', '_blank');
 
@@ -1521,7 +1521,7 @@ export default function PetDetailPage() {
 
           <div className="space-y-6">
 
-            {/* —татус и награда */}
+            {/* ?????? ? ??????? */}
 
             <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
 
@@ -1555,7 +1555,7 @@ export default function PetDetailPage() {
 
                   <div>
 
-                    <div className="mb-1 text-sm text-muted-foreground">¬ознаграждение</div>
+                    <div className="mb-1 text-sm text-muted-foreground">??????????????</div>
 
                     <RewardBadge pet={pet} />
 
@@ -1647,7 +1647,7 @@ export default function PetDetailPage() {
 
                       {formatCalendarDate(pet.publishedAt)}
 
-                      <span className="mx-1.5 text-border">Ј</span>
+                      <span className="mx-1.5 text-border">?</span>
 
                       {formatRelativeTime(pet.publishedAt)}
 
@@ -1661,7 +1661,7 @@ export default function PetDetailPage() {
 
             </div>
 
-            {/* »нформаци€ об авторе */}
+            {/* ?????????? ?? ?????? */}
 
             {!pet.isArchived && (
 
@@ -1815,7 +1815,7 @@ export default function PetDetailPage() {
 
             )}
 
-            {/*  онтакты */}
+            {/* ???????? */}
 
             <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
 

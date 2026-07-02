@@ -513,7 +513,7 @@ export default function SearchPage() {
           : `${t.app.found} ${listDisplayPets.length}`}
       </h3>
       <p className="mt-1 text-xs text-muted-foreground">
-        {t.stats.searching}: {statistics.searching} ? {t.stats.found}: {statistics.found} ?{' '}
+        {t.stats.searching}: {statistics.searching} · {t.stats.found}: {statistics.found} ·{' '}
         {t.stats.fostering}: {statistics.fostering}
       </p>
       {selectedCity.trim() && listDisplayPets.length === 0 && mapDisplayPets.length > 0 && (
