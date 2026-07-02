@@ -1,4 +1,4 @@
-import { useParams, Link } from 'react-router';
+﻿import { useParams, Link } from 'react-router';
 
 import { useState, useEffect, useRef, type ReactNode } from 'react';
 
@@ -307,7 +307,7 @@ function ImageCarousel({
 
           src={photos[current]}
 
-          alt={photos.length > 1 ? `${alt} ? ???? ${current + 1}` : alt}
+          alt={photos.length > 1 ? `${alt} — фото ${current + 1}` : alt}
 
           className="w-full h-full object-contain"
 
@@ -421,7 +421,7 @@ function ImageCarousel({
 
             >
 
-              <img src={src} alt={`${alt} ? ????????? ${i + 1}`} className="size-full object-cover" />
+              <img src={src} alt={`${alt} — миниатюра ${i + 1}`} className="size-full object-cover" />
 
             </button>
 
@@ -551,11 +551,11 @@ export default function PetDetailPage() {
 
       applySeo({
 
-        title: '?????????? ?? ??????? | DorogaDomoy.by',
+        title: 'Объявление не найдено | DorogaDomoy.by',
 
         description:
 
-          '?????????? ??????? ??? ?????? ????????. DorogaDomoy.by ? ????????? ?????? ????????? ? ????????? ???????? ? ????????.',
+          'Объявление удалено или больше недоступно. DorogaDomoy.by — платформа поиска пропавших и найденных животных в Беларуси.',
 
         canonicalUrl: canonicalUrlFromPath(`/pet/${id}`),
 
@@ -1555,7 +1555,7 @@ export default function PetDetailPage() {
 
                   <div>
 
-                    <div className="mb-1 text-sm text-muted-foreground">??????????????</div>
+                    <div className="mb-1 text-sm text-muted-foreground">Вознаграждение</div>
 
                     <RewardBadge pet={pet} />
 

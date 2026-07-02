@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+﻿import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useParams, useNavigate } from 'react-router';
 import QRCode from 'react-qr-code';
 import {
@@ -491,7 +491,7 @@ export default function MyPetProfilePage() {
                   <CardDescription className="text-sm leading-relaxed">{op.qrDescription}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* QR-?????: ???????? ???????? ? ????? — ?????????? ???????? ? «?????» */}
+                  {/* QR-жетон: латунный медальон с ушком — физический адресник в «цифре» */}
                   <div className="flex flex-col items-center gap-3 rounded-lg bg-medallion-soft/70 px-4 pb-4 pt-8 dark:bg-background/80">
                     <div className="relative">
                       <span

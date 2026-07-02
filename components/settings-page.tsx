@@ -5,9 +5,9 @@ import type { Locale } from "../i18n/translations";
 import { typoH1, typoLead } from "@/shared/styles/typography-classes";
 
 const languages: { code: Locale; nameKey: "langRu" | "langBe" | "langEn"; flag: string }[] = [
-  { code: "ru", nameKey: "langRu", flag: "????" },
-  { code: "be", nameKey: "langBe", flag: "????" },
-  { code: "en", nameKey: "langEn", flag: "????" },
+  { code: "ru", nameKey: "langRu", flag: "RU" },
+  { code: "be", nameKey: "langBe", flag: "BY" },
+  { code: "en", nameKey: "langEn", flag: "EN" },
 ];
 
 const themes = [
@@ -62,7 +62,9 @@ export function SettingsContent() {
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-3xl">{language.flag}</span>
+                    <span className="typo-engraved flex h-9 w-11 shrink-0 items-center justify-center rounded-md border border-medallion-border bg-medallion-soft text-medallion-foreground">
+                      {language.flag}
+                    </span>
                     <span
                       className={`font-medium text-lg ${
                         locale === language.code ? "text-primary" : "text-foreground"

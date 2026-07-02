@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { Mail, Lock, User as UserIcon, ArrowRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -225,7 +225,7 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="pl-10"
-                    placeholder="��������"
+                    placeholder={t.auth.password}
                     aria-describedby="auth-password-hint"
                   />
                 </div>
