@@ -103,15 +103,7 @@ export function Partners() {
         ) : null}
 
         <div className="text-center">
-          <div className="relative mx-auto max-w-2xl overflow-hidden rounded-lg border border-white/20 bg-gradient-to-br from-primary-light via-brand-light to-primary p-8 md:p-10 shadow-lg">
-            <div
-              className="pointer-events-none absolute -right-16 -top-16 size-48 rounded-full bg-white/15 blur-2xl"
-              aria-hidden
-            />
-            <div
-              className="pointer-events-none absolute -bottom-12 -left-12 size-40 rounded-full bg-black/10 blur-2xl"
-              aria-hidden
-            />
+          <div className="relative mx-auto max-w-2xl overflow-hidden rounded-lg border border-white/20 bg-primary p-8 md:p-10 shadow-lg">
             <div className="relative z-10">
               <h3 className="text-xl md:text-2xl font-bold text-white mb-2">
                 {t.landing.partners.ctaTitle}

@@ -11,6 +11,7 @@ import { petsApi } from '@/shared/api/client';
 import { Pet } from '@/entities/pet/model/types';
 import { toast } from 'sonner';
 import { getHomePath } from '@/shared/lib/home-route';
+import { RouteProgress } from '@/shared/ui/molecules';
 
 export default function EditAdPage() {
   const { id } = useParams<{ id: string }>();
@@ -106,7 +107,7 @@ export default function EditAdPage() {
     <div className="landing-theme min-h-screen bg-muted/30 dark:bg-background flex flex-col">
       <Header />
 
-      {/* Ñåêöèÿ øàãà — êàê â CreateAdPage */}
+      {/* ˜˜˜˜˜˜ ˜˜˜˜ ˜ ˜˜˜ ˜ CreateAdPage */}
       {stepInfo && (
         <section className="bg-white dark:bg-card border-b border-border px-4 sm:px-6 lg:px-8">
           <div className="max-w-[736px] mx-auto py-4">
@@ -136,12 +137,12 @@ export default function EditAdPage() {
                 {t.petForm.close}
               </button>
             </div>
-            <div className="w-full bg-muted rounded-full h-2">
-              <div
-                className="bg-gradient-to-r from-primary-light to-primary h-2 rounded-full transition-all duration-300"
-                style={{ width: `${(stepInfo.step / stepInfo.totalSteps) * 100}%` }}
-              />
-            </div>
+            <RouteProgress
+              totalSteps={stepInfo.totalSteps}
+              currentStep={stepInfo.step}
+              label={`${t.petForm.step} ${stepInfo.step} ${t.petForm.of} ${stepInfo.totalSteps}`}
+              className="max-w-sm"
+            />
           </div>
         </section>
       )}

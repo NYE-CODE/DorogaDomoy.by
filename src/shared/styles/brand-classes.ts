@@ -13,9 +13,6 @@ export const brandPrimarySubtleBgClass = 'bg-primary/10 dark:bg-primary/18';
 export const brandPrimaryChipClass =
   'inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary-emphasis dark:bg-primary/18 dark:text-primary-soft';
 
-export const brandPrimaryGradientClass =
-  'bg-gradient-to-r from-primary-light to-primary';
-
 export const brandSpinnerClass =
   'border-4 border-primary/30 border-t-primary rounded-full animate-spin';
 

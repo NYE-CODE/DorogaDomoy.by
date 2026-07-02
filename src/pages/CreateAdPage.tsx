@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { buildPrefillFromProfilePet } from '@/shared/lib/profile-pet-prefill';
 import { getHomePath } from '@/shared/lib/home-route';
 import { Button } from '@/shared/ui/button';
+import { RouteProgress } from '@/shared/ui/molecules';
 import { profilePetToListCard, type ProfilePetListCard } from '../../utils/profile-pet-display';
 import { PageLoader } from '@/shared/ui/page-loader';
 
@@ -288,12 +289,12 @@ export default function CreateAdPage() {
                 {t.petForm.close}
               </button>
             </div>
-            <div className="w-full bg-muted rounded-full h-2">
-              <div
-                className="bg-gradient-to-r from-primary-light to-primary h-2 rounded-full transition-all duration-300"
-                style={{ width: `${(stepInfo.step / stepInfo.totalSteps) * 100}%` }}
-              />
-            </div>
+            <RouteProgress
+              totalSteps={stepInfo.totalSteps}
+              currentStep={stepInfo.step}
+              label={`${t.petForm.step} ${stepInfo.step} ${t.petForm.of} ${stepInfo.totalSteps}`}
+              className="max-w-sm"
+            />
           </div>
         </section>
       )}
