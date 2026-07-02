@@ -53,7 +53,7 @@ export function Header(props: HeaderProps = {}) {
     else setIsRegionOpen(true);
   };
   const profileRef = useRef<HTMLDivElement>(null);
-  const ecosystemTagline = "���������� ������ ��������";
+  const ecosystemTagline = t.header.tagline;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent | TouchEvent) => {
@@ -84,7 +84,9 @@ export function Header(props: HeaderProps = {}) {
             <Link to={logoHref} onClick={handleLogoClick} className="flex items-center gap-3 min-w-0">
               <img src="/logo.png" alt="DorogaDomoy.by" className="w-10 h-10 shrink-0 object-contain" />
               <div className="flex flex-col min-w-0">
-                <span className="typo-h1 leading-tight">DorogaDomoy.by</span>
+                <span className="font-display text-xl font-semibold leading-tight tracking-tight text-foreground truncate sm:text-2xl md:text-3xl">
+                  DorogaDomoy.by
+                </span>
                 <span className="text-sm text-muted-foreground leading-tight hidden md:block">{ecosystemTagline}</span>
               </div>
             </Link>
