@@ -43,7 +43,7 @@ interface MyAdsPageProps {
   onEditPet: (pet: Pet) => void;
   onDeletePet: (pet: Pet) => void;
   onBoostPet: (pet: Pet) => void;
-  /** –ó–∞–≤–∏—Å–∏—Ç –æ—Ç ff_instagram_boost_stories –≤ –ø—Ä–æ—Ñ–∏–ª–µ */
+  /** «‡‚ËÒËÚ ÓÚ ff_instagram_boost_stories ‚ ÔÓÙËÎÂ */
   instagramBoostEnabled?: boolean;
 }
 
@@ -181,7 +181,7 @@ export function MyAdsPage({
 
       <main className="flex-1 py-6 sm:py-10">
         <div className="page-container">
-          <div className="mb-6 flex flex-col gap-4 rounded-2xl border border-border bg-muted/25 p-6 sm:mb-8 sm:flex-row sm:items-end sm:justify-between sm:p-8">
+          <div className="mb-6 flex flex-col gap-4 rounded-lg border border-border bg-muted/25 p-6 sm:mb-8 sm:flex-row sm:items-end sm:justify-between sm:p-8">
             <div className="min-w-0">
               <button
                 type="button"
@@ -216,7 +216,7 @@ export function MyAdsPage({
             />
           ) : (
             <>
-              <div className="overflow-visible rounded-2xl border border-border bg-card shadow-sm">
+              <div className="overflow-visible rounded-lg border border-border bg-card shadow-sm">
                 <div className="flex flex-wrap gap-1.5 border-b border-border bg-muted/40 p-2 sm:flex-nowrap sm:gap-1">
                   {STATUS_TABS.map((tab) => {
                     const Icon = tab.icon;
@@ -234,7 +234,7 @@ export function MyAdsPage({
                         type="button"
                         onClick={() => setStatusTab(tab.value)}
                         className={cn(
-                          'flex min-w-[calc(33.333%-0.25rem)] flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition-all sm:min-w-0',
+                          'flex min-w-[calc(33.333%-0.25rem)] flex-1 items-center justify-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium transition-all sm:min-w-0',
                           isActive
                             ? 'bg-card text-primary shadow-sm ring-1 ring-primary/20'
                             : 'text-muted-foreground hover:bg-background/80 hover:text-foreground',
@@ -314,7 +314,7 @@ export function MyAdsPage({
                         return (
                           <div
                             key={pet.id}
-                            className="group/card relative rounded-2xl border border-border bg-card p-3 transition-all hover:border-primary/30 hover:shadow-md sm:p-4"
+                            className="group/card relative rounded-lg border border-border bg-card p-3 transition-all hover:border-primary/30 hover:shadow-md sm:p-4"
                           >
                             <div
                               className="absolute right-2 top-2 z-30 sm:right-3 sm:top-3"
@@ -326,14 +326,14 @@ export function MyAdsPage({
                                   e.stopPropagation();
                                   setOpenMenuId(openMenuId === pet.id ? null : pet.id);
                                 }}
-                                className="rounded-xl p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                                className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                                 aria-label={t.common.options}
                               >
                                 <MoreVertical className="size-[1.125rem] sm:size-5" />
                               </button>
 
                               {openMenuId === pet.id && (
-                                <div className="absolute right-0 z-40 mt-1 w-52 overflow-hidden rounded-xl border border-border bg-popover py-1 text-popover-foreground shadow-lg sm:w-56">
+                                <div className="absolute right-0 z-40 mt-1 w-52 overflow-hidden rounded-md border border-border bg-popover py-1 text-popover-foreground shadow-lg sm:w-56">
                                   {pet.moderationStatus === 'rejected' && (
                                     <button
                                       type="button"
@@ -385,7 +385,7 @@ export function MyAdsPage({
                               className="flex cursor-pointer items-start gap-3 no-underline text-inherit sm:gap-4"
                               onClick={() => setOpenMenuId(null)}
                             >
-                              <div className="relative size-24 shrink-0 overflow-hidden rounded-xl bg-muted ring-1 ring-border sm:size-28">
+                              <div className="relative size-24 shrink-0 overflow-hidden rounded-md bg-muted ring-1 ring-border sm:size-28">
                                 <img
                                   src={photoUrl}
                                   alt={getStatusTitle(pet)}
@@ -407,7 +407,7 @@ export function MyAdsPage({
                                   <h3 className="text-sm font-semibold text-foreground sm:text-base">
                                     {getStatusTitle(pet)}
                                   </h3>
-                                  <span className="hidden text-muted-foreground sm:inline">¬∑</span>
+                                  <span className="hidden text-muted-foreground sm:inline">∑</span>
                                   <span className="hidden text-xs text-muted-foreground sm:inline sm:text-sm">
                                     {getPetTypeLabel(pet)}
                                   </span>
@@ -415,7 +415,7 @@ export function MyAdsPage({
                                     pet.status === 'searching' &&
                                     sightingCount > 0 && (
                                       <>
-                                        <span className="hidden text-muted-foreground sm:inline">¬∑</span>
+                                        <span className="hidden text-muted-foreground sm:inline">∑</span>
                                         <span className="flex items-center gap-1 text-xs text-muted-foreground sm:text-sm">
                                           <Eye className="size-3.5 sm:size-4" aria-hidden />
                                           {sightingCount}
@@ -452,7 +452,7 @@ export function MyAdsPage({
                                       </span>
 
                                       {showRejectionTooltip && (
-                                        <div className="pointer-events-none absolute bottom-full left-0 z-20 mb-2 w-56 rounded-xl bg-foreground p-3 text-xs text-background shadow-lg sm:left-1/2 sm:w-64 sm:-translate-x-1/2">
+                                        <div className="pointer-events-none absolute bottom-full left-0 z-20 mb-2 w-56 rounded-md bg-foreground p-3 text-xs text-background shadow-lg sm:left-1/2 sm:w-64 sm:-translate-x-1/2">
                                           <div className="mb-1 font-medium">{t.myAds.rejectionReasonTitle}</div>
                                           <div className="text-background/90">{pet.moderationReason}</div>
                                           <div className="absolute left-4 top-full -mt-px sm:left-1/2 sm:-translate-x-1/2">
@@ -466,7 +466,7 @@ export function MyAdsPage({
 
                                 <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground sm:gap-2 sm:text-sm">
                                   <span className="truncate">{pet.city}</span>
-                                  <span className="shrink-0" aria-hidden>¬∑</span>
+                                  <span className="shrink-0" aria-hidden>∑</span>
                                   <span className="shrink-0">{formatDate(pet.publishedAt)}</span>
                                 </div>
                               </div>

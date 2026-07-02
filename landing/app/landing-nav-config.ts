@@ -6,7 +6,7 @@ export type LandingNavHash =
   | "how-it-works"
   | "pets-feature"
   | "announcements"
-  | "why-us"
+  | "shelter-pets"
   | "media"
   | "partners"
   | "help"
@@ -35,7 +35,7 @@ export const LANDING_NAV_ITEMS: readonly LandingNavItemDef[] = [
   { hash: "how-it-works" },
   { hash: "pets-feature", requiredFlag: "ff_landing_show_pets_feature" },
   { hash: "announcements" },
-  { hash: "why-us" },
+  { hash: "shelter-pets" },
   { hash: "media" },
   { hash: "partners" },
   { hash: "help", requiredFlag: "ff_landing_show_help" },

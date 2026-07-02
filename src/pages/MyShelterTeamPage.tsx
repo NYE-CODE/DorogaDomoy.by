@@ -67,9 +67,9 @@ export default function MyShelterTeamPage() {
       setMembers(list);
     } catch (e) {
       const msg = e instanceof Error ? e.message : '';
-      if (/\(403\)|\b403\b|Ð´Ð¾ÑÑ‚ÑƒÐ¿|forbidden|Access|not.*permit/i.test(msg)) {
+      if (/\(403\)|\b403\b|äîñòóï|forbidden|Access|not.*permit/i.test(msg)) {
         setForbidden(true);
-      } else if (/\(404\)|\b404\b|Ð½Ðµ Ð½Ð°Ð¹Ð´ÐµÐ½|not found/i.test(msg)) {
+      } else if (/\(404\)|\b404\b|íå íàéäåí|not found/i.test(msg)) {
         setNotFound(true);
       } else {
         toast.error(tm.loadError);
@@ -87,7 +87,7 @@ export default function MyShelterTeamPage() {
 
   useEffect(() => {
     applySeo({
-      title: `${tm.title} â€” DorogaDomoy.by`,
+      title: `${tm.title} — DorogaDomoy.by`,
       description: tm.subtitle,
       canonicalUrl: canonicalUrlFromPath(shelterId ? `/my-shelters/${shelterId}/team` : '/my-shelters'),
       robots: SEO_ROBOTS_PRIVATE,
@@ -232,14 +232,14 @@ export default function MyShelterTeamPage() {
             <BackQuickMenu />
           </div>
 
-          <div className="mb-6 rounded-2xl border border-border bg-card p-4 sm:mb-8 sm:p-6">
+          <div className="mb-6 rounded-lg border border-border bg-card p-4 sm:mb-8 sm:p-6">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
                 <h1 className="typo-h1 flex flex-wrap items-center gap-2">
                   <Users className="size-6 shrink-0 text-primary" aria-hidden />
-                  {shelter?.name ?? 'â€”'}
+                  {shelter?.name ?? '—'}
                   <span className="text-base font-semibold text-muted-foreground sm:ml-1">
-                    Â· {tm.title}
+                    · {tm.title}
                   </span>
                 </h1>
                 <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{tm.subtitle}</p>
@@ -248,7 +248,7 @@ export default function MyShelterTeamPage() {
           </div>
 
           {canManage ? (
-            <div className="mb-6 rounded-2xl border border-border bg-card p-4 sm:mb-8 sm:p-6">
+            <div className="mb-6 rounded-lg border border-border bg-card p-4 sm:mb-8 sm:p-6">
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-lg font-semibold">{tm.inviteTitle}</h2>
               </div>
@@ -270,7 +270,7 @@ export default function MyShelterTeamPage() {
                     value={inviteUserId}
                     onChange={(e) => setInviteUserId(e.target.value)}
                     className="rounded-lg border border-border bg-background px-3 py-2 font-mono text-xs"
-                    placeholder="uuidâ€¦"
+                    placeholder="uuid…"
                     autoComplete="off"
                   />
                 </label>
@@ -288,7 +288,7 @@ export default function MyShelterTeamPage() {
             </div>
           ) : null}
 
-          <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+          <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
             <div className="hidden grid-cols-[1fr_auto_auto_auto] gap-4 border-b border-border bg-muted/40 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:grid">
               <span>{tm.colMember}</span>
               <span>{tm.colRole}</span>
@@ -304,7 +304,7 @@ export default function MyShelterTeamPage() {
                   const label =
                     m.user_name ||
                     m.user_email ||
-                    (m.user_id ? `${m.user_id.slice(0, 8)}â€¦` : 'â€”');
+                    (m.user_id ? `${m.user_id.slice(0, 8)}…` : '—');
                   const showAccept = isSelf && m.status === 'invited';
                   const showManage =
                     canManage && m.role !== 'owner' && (m.status === 'active' || m.status === 'invited');

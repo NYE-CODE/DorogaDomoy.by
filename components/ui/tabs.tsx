@@ -1,2 +1,2 @@
-п»ї/** @deprecated РСЃРїРѕР»СЊР·СѓР№С‚Рµ `@/shared/ui/tabs`. */
+/** @deprecated Используйте `@/shared/ui/tabs`. */
 export * from '../../src/shared/ui/tabs.tsx';

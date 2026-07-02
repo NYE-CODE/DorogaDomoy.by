@@ -1,4 +1,4 @@
-п»їimport { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router";
 import { ChevronLeft, Upload, X } from "lucide-react";
 import { toast } from "sonner";
@@ -52,7 +52,7 @@ const emptyForm = (): ProfilePetFormData => ({
 const MAX_PHOTOS = 5;
 const MAX_PROFILE_UPLOAD_BYTES = 750 * 1024;
 
-/** РџРѕСЃС‚ СЃ СЃРѕРІРµС‚Р°РјРё РїРѕ С„РѕС‚Рѕ РґР»СЏ РїСЂРѕС„РёР»СЏ РїРёС‚РѕРјС†Р° (С€Р°Рі В«Р¤РѕС‚РѕРіСЂР°С„РёРёВ»). */
+/** Пост с советами по фото для профиля питомца (шаг «Фотографии»). */
 const PROFILE_PET_PHOTO_GUIDE_INSTAGRAM_URL =
   "https://www.instagram.com/p/DXpRblXiJwT/?img_index=1";
 
@@ -67,10 +67,10 @@ async function prepareProfilePhotoForUpload(file: File): Promise<File> {
     maxSizeBytes: MAX_PROFILE_UPLOAD_BYTES,
   });
   if (!compressed) {
-    throw new Error("РќРµ СѓРґР°Р»РѕСЃСЊ РѕР±СЂР°Р±РѕС‚Р°С‚СЊ РёР·РѕР±СЂР°Р¶РµРЅРёРµ");
+    throw new Error("Не удалось обработать изображение");
   }
   if (compressed.size > MAX_PROFILE_UPLOAD_BYTES) {
-    throw new Error("Р¤РѕС‚Рѕ СЃР»РёС€РєРѕРј Р±РѕР»СЊС€РѕРµ. Р’С‹Р±РµСЂРёС‚Рµ РґСЂСѓРіРѕРµ РёР»Рё СѓРјРµРЅСЊС€РёС‚Рµ РµРіРѕ.");
+    throw new Error("Фото слишком большое. Выберите другое или уменьшите его.");
   }
   return new File([compressed], buildCompressedPhotoName(file), {
     type: "image/jpeg",
@@ -334,7 +334,7 @@ export function AddEditPetContent() {
   if (isEditMode && loadError) {
     return (
       <div className="min-h-screen bg-muted/30 dark:bg-background flex items-center justify-center px-4 py-12">
-        <div className="max-w-md w-full bg-white dark:bg-card rounded-2xl border border-border shadow-sm p-6 text-center">
+        <div className="max-w-md w-full bg-white dark:bg-card rounded-lg border border-border shadow-sm p-6 text-center">
           <h1 className="typo-h2 mb-3">{mp.loadErrorTitle}</h1>
           <p className="text-muted-foreground mb-3">{mp.loadErrorDesc}</p>
           <p className="text-sm text-muted-foreground mb-6">{loadError}</p>
@@ -388,7 +388,7 @@ export function AddEditPetContent() {
       </div>
 
       <div className="max-w-3xl mx-auto px-4 py-8">
-        <div className="bg-white dark:bg-card rounded-2xl shadow-sm border border-border p-8">
+        <div className="bg-white dark:bg-card rounded-lg shadow-sm border border-border p-8">
           <div className="mb-6 space-y-2">
             <p className="text-muted-foreground">{currentMeta.subtitle}</p>
             {currentStep === 2 ? (
@@ -872,7 +872,7 @@ export function AddEditPetContent() {
                     : "bg-green-600 hover:bg-green-700"
                 }`}
               >
-                {isSubmitting ? "РЎРѕС…СЂР°РЅРµРЅРёРµ..." : (isEditMode ? f.submitSave : f.submitAdd)}
+                {isSubmitting ? "Сохранение..." : (isEditMode ? f.submitSave : f.submitAdd)}
               </button>
             )}
           </div>

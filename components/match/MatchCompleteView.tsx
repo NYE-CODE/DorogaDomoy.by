@@ -1,4 +1,4 @@
-п»їimport { Link } from 'react-router';
+import { Link } from 'react-router';
 import { ChevronRight, Heart, MapPin, PawPrint } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useI18n } from '../../context/I18nContext';
@@ -20,7 +20,7 @@ function StatTile({ label, value, accent }: { label: string; value: number; acce
   return (
     <div
       className={cn(
-        'flex flex-1 flex-col items-center rounded-xl border px-3 py-3 text-center lg:min-w-[5.5rem] lg:flex-none',
+        'flex flex-1 flex-col items-center rounded-md border px-3 py-3 text-center lg:min-w-[5.5rem] lg:flex-none',
         accent
           ? 'border-primary/35 bg-primary/8 dark:bg-primary/12'
           : 'border-border/70 bg-muted/25 dark:bg-muted/10',
@@ -38,19 +38,19 @@ function useLikedPetDisplay(item: RankedPet) {
   const { t } = useI18n();
   const c = t.match.card;
   const name = item.pet.name?.trim() || item.pet.breed || c.defaultName;
-  const meta = [item.pet.breed, item.pet.approximateAge?.trim()].filter(Boolean).join(' В· ');
+  const meta = [item.pet.breed, item.pet.approximateAge?.trim()].filter(Boolean).join(' · ');
   const href = buildShelterPetUrl(item.pet.id, { source: 'match' });
   return { c, name, meta, href };
 }
 
-/** РљРѕРјРїР°РєС‚РЅР°СЏ СЃС‚СЂРѕРєР° вЂ” РјРѕР±РёР»СЊРЅС‹Р№ СЃРїРёСЃРѕРє. */
+/** Компактная строка — мобильный список. */
 function LikedPetRow({ item }: { item: RankedPet }) {
   const { c, name, meta, href } = useLikedPetDisplay(item);
 
   return (
     <Link
       to={href}
-      className="group flex items-center gap-3 rounded-xl border border-border/80 bg-card p-3 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md dark:hover:shadow-black/20"
+      className="group flex items-center gap-3 rounded-md border border-border/80 bg-card p-3 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md dark:hover:shadow-black/20"
     >
       <div className="relative size-[4.5rem] shrink-0 overflow-hidden rounded-lg border border-border bg-muted">
         {item.pet.photos?.[0] ? (
@@ -79,14 +79,14 @@ function LikedPetRow({ item }: { item: RankedPet }) {
   );
 }
 
-/** РљР°СЂС‚РѕС‡РєР° РІ СЃРµС‚РєРµ вЂ” РґРµСЃРєС‚РѕРї (РєРѕРјРїР°РєС‚РЅР°СЏ). */
+/** Карточка в сетке — десктоп (компактная). */
 function LikedPetGridCard({ item }: { item: RankedPet }) {
   const { c, name, meta, href } = useLikedPetDisplay(item);
 
   return (
     <Link
       to={href}
-      className="group flex h-full flex-col overflow-hidden rounded-xl border border-border/80 bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md dark:hover:shadow-black/20"
+      className="group flex h-full flex-col overflow-hidden rounded-md border border-border/80 bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md dark:hover:shadow-black/20"
     >
       <div className="relative h-[7.5rem] shrink-0 bg-muted sm:h-[8rem]">
         {item.pet.photos?.[0] ? (
@@ -140,7 +140,7 @@ export function MatchCompleteView({
   return (
     <div
       className={cn(
-        'flex w-full flex-col rounded-2xl border border-border/80 bg-card shadow-sm max-lg:min-h-0 max-lg:flex-1 max-lg:overflow-hidden max-lg:rounded-none max-lg:border-x-0 lg:shadow-md',
+        'flex w-full flex-col rounded-lg border border-border/80 bg-card shadow-sm max-lg:min-h-0 max-lg:flex-1 max-lg:overflow-hidden max-lg:rounded-none max-lg:border-x-0 lg:shadow-md',
         className,
       )}
     >
@@ -207,7 +207,7 @@ export function MatchCompleteView({
             </div>
           </div>
         ) : (
-          <div className="rounded-xl border border-dashed border-border/80 bg-muted/20 px-4 py-8 text-center dark:bg-muted/10 lg:py-12">
+          <div className="rounded-md border border-dashed border-border/80 bg-muted/20 px-4 py-8 text-center dark:bg-muted/10 lg:py-12">
             <Heart className="mx-auto size-9 text-muted-foreground/35" aria-hidden />
             <p className="mt-3 text-sm font-medium text-foreground">{c.emptySwipeHint}</p>
             <p className="mt-1 text-xs text-muted-foreground">{c.emptySwipeDesc}</p>
@@ -238,7 +238,7 @@ export function MatchNoResultsView({ onEditQuiz, className }: MatchNoResultsView
   return (
     <div
       className={cn(
-        'flex h-full flex-col items-center justify-center rounded-2xl border border-border/80 bg-card p-8 text-center shadow-sm max-lg:rounded-none max-lg:border-x-0',
+        'flex h-full flex-col items-center justify-center rounded-lg border border-border/80 bg-card p-8 text-center shadow-sm max-lg:rounded-none max-lg:border-x-0',
         className,
       )}
     >

@@ -1,4 +1,4 @@
-﻿import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { translations, type Locale } from '@/shared/i18n/translations';
 
 const STORAGE_KEY = 'dorogadomoy-locale';

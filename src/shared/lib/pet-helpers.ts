@@ -1,4 +1,12 @@
-﻿import { PetStatus, AnimalType, PetColor, Gender } from '@/entities/pet/model/types';
+import { PetStatus, AnimalType, PetColor, Gender } from '@/entities/pet/model/types';
+import {
+  petScenarioBorderedBadgeClass,
+  petScenarioFilterSelectedClass,
+  petScenarioFromStatus,
+  petScenarioPhotoPillClass,
+  petScenarioSoftPillClass,
+  PET_SCENARIO_MARKER_HEX,
+} from '@/shared/lib/pet-scenario-colors';
 
 export const statusLabels: Record<PetStatus, string> = {
   searching: 'Ищут',
@@ -6,48 +14,44 @@ export const statusLabels: Record<PetStatus, string> = {
 };
 
 /**
- * Единая палитра статусов: «ищут» — rose; «найден» — sky (без зелёного «успех/дома»).
- * Используйте эти константы вместо разрозненных primary/secondary/green.
+ * Статусы lost/found — классы из {@link pet-scenario-colors}.
+ * Приют: `petScenarioSoftPillClass.shelter` и др.
  */
 
 /** Бейдж с рамкой (карточка объявления, превью на карте) */
 export const petStatusBorderedBadgeClass: Record<PetStatus, string> = {
-  searching:
-    'border-rose-200/90 bg-rose-50 text-rose-900 dark:border-rose-800/80 dark:bg-rose-950/40 dark:text-rose-100',
-  found:
-    'border-sky-200/90 bg-sky-50 text-sky-950 dark:border-sky-800/80 dark:bg-sky-950/45 dark:text-sky-100',
+  searching: petScenarioBorderedBadgeClass.lost,
+  found: petScenarioBorderedBadgeClass.found,
 };
 
-/** Плашка на фото (компактная карточка, лендинг) — хороший контраст на снимке */
+/** Плашка на фото (компактная карточка, лендинг) */
 export const petStatusPhotoPillClass: Record<PetStatus, string> = {
-  searching: 'bg-rose-600/95 text-white shadow-sm backdrop-blur-sm dark:bg-rose-600 dark:text-white',
-  found: 'bg-sky-600/95 text-white shadow-sm backdrop-blur-sm dark:bg-sky-600 dark:text-white',
+  searching: petScenarioPhotoPillClass.lost,
+  found: petScenarioPhotoPillClass.found,
 };
 
 /** Мягкий pill в списках и в блоке «Информация» на странице объявления */
 export const petStatusSoftPillClass: Record<PetStatus, string> = {
-  searching: 'bg-rose-100 text-rose-900 dark:bg-rose-950/45 dark:text-rose-100',
-  found: 'bg-sky-100 text-sky-950 dark:bg-sky-950/45 dark:text-sky-100',
+  searching: petScenarioSoftPillClass.lost,
+  found: petScenarioSoftPillClass.found,
 };
 
 /** Фильтр поиска: выбранный чип статуса */
 export const petStatusFilterSelectedClass: Record<PetStatus, string> = {
-  searching:
-    'border-rose-400/55 bg-rose-500/12 text-rose-950 shadow-sm dark:border-rose-600 dark:bg-rose-950/50 dark:text-rose-100',
-  found:
-    'border-sky-500/45 bg-sky-500/12 text-sky-950 shadow-sm dark:border-sky-600 dark:bg-sky-950/50 dark:text-sky-100',
+  searching: petScenarioFilterSelectedClass.lost,
+  found: petScenarioFilterSelectedClass.found,
 };
 
-import { tokens } from '@/shared/styles/tokens';
-
-/** Обводка круглого маркера на карте (Leaflet) — из design tokens */
+/** Обводка круглого маркера на карте (Leaflet) */
 export const PET_STATUS_MARKER_BORDER_HEX: Record<PetStatus, string> = {
-  searching: tokens.map.searching,
-  found: tokens.map.found,
+  searching: PET_SCENARIO_MARKER_HEX.lost,
+  found: PET_SCENARIO_MARKER_HEX.found,
 };
 
-/** @deprecated Используйте petStatusBorderedBadgeClass; оставлен для совместимости импортов */
+/** @deprecated Используйте petStatusBorderedBadgeClass */
 export const statusColors: Record<PetStatus, string> = petStatusBorderedBadgeClass;
+
+export { petScenarioFromStatus };
 
 export const animalTypeLabels: Record<AnimalType, string> = {
   cat: 'Кот',
@@ -75,3 +79,20 @@ export const genderLabels: Record<Gender, string> = {
 export const activeStatuses: PetStatus[] = ['searching', 'found'];
 
 export { formatDate, formatCalendarDate, formatRelativeTime } from './formatDate';
+
+export {
+  petScenarioAccentClass,
+  petScenarioBorderedBadgeClass,
+  petScenarioPhotoPillClass,
+  petScenarioSoftPillClass,
+  petScenarioFilterSelectedClass,
+  petScenarioFormToggleActiveClass,
+  petScenarioDetailBannerClass,
+  petScenarioFlyerColors,
+  petScenarioStatsIconClass,
+  PET_SCENARIO_MARKER_HEX,
+  petScenarioFromPetScope,
+  petScenarioFromPet,
+  type PetScenario,
+  type LostFoundScenario,
+} from '@/shared/lib/pet-scenario-colors';

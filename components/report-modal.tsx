@@ -41,7 +41,7 @@ export function ReportModal({ onClose, onSubmit }: ReportModalProps) {
 
   return (
     <Dialog open onOpenChange={(next) => !next && onClose()}>
-      <DialogContent className="max-w-2xl rounded-2xl">
+      <DialogContent className="max-w-2xl rounded-lg">
         <DialogHeader>
           <DialogTitle className="text-2xl">{t.report.title}</DialogTitle>
           <DialogDescription className="text-base">

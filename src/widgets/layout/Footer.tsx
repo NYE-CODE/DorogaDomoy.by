@@ -1,6 +1,6 @@
-п»ї/**
- * Р•РґРёРЅС‹Р№ С„СѓС‚РµСЂ Р»РµРЅРґРёРЅРіР° вЂ” РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РЅР° РІСЃРµС… СЃС‚СЂР°РЅРёС†Р°С….
- * РРјРїРѕСЂС‚ РёР· landing/app/components/footer.
+/**
+ * Единый футер лендинга — используется на всех страницах.
+ * Импорт из landing/app/components/footer.
  */
 import { Footer as LandingFooter } from '../../../landing/app/components/footer';
 

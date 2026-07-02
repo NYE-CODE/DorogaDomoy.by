@@ -1,4 +1,4 @@
-﻿import { useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 
 import { TermsPage as TermsPageContent } from "../../components/terms-page";
 import { getHomePath } from "@/shared/lib/home-route";

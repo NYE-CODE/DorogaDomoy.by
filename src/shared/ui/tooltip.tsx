@@ -1,1 +1,1 @@
-﻿export * from './_primitives/tooltip.tsx';
+export * from './_primitives/tooltip.tsx';

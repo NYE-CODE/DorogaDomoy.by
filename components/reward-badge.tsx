@@ -1,4 +1,4 @@
-﻿import { Coins, Target } from 'lucide-react';
+import { Coins, Target } from 'lucide-react';
 import { Pet } from '../types/pet';
 import { Badge } from './ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
@@ -47,6 +47,11 @@ export function RewardBadge({
 
   const Icon = badge.icon;
 
+  const solidSurfaceClass =
+    badge.variant === 'warning'
+      ? 'border-transparent bg-amber-600/95 text-white shadow-sm backdrop-blur-sm dark:bg-amber-600'
+      : 'border-transparent bg-sky-600/95 text-white shadow-sm backdrop-blur-sm dark:bg-sky-600';
+
   const sizeClass = compact && compactWrap
     ? 'max-w-full min-w-0 self-start rounded-full px-2 py-0.5 text-xs leading-snug whitespace-normal break-words'
     : compact
@@ -58,7 +63,7 @@ export function RewardBadge({
       <TooltipTrigger asChild>
         <Badge
           variant={badge.variant}
-          className={cn('gap-1 font-semibold', sizeClass, className)}
+          className={cn('gap-1 font-semibold', solidSurfaceClass, sizeClass, className)}
         >
           <Icon className="size-3.5 shrink-0" aria-hidden />
           {badge.label}

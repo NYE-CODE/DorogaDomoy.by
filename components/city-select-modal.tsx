@@ -1,4 +1,4 @@
-﻿import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Search, MapPin, SearchX } from "lucide-react";
 import { oblasts, City, searchCities, REGIONAL_CENTERS } from "../utils/cities";
 import { useI18n } from "../context/I18nContext";
@@ -66,7 +66,7 @@ export function CitySelectModal({ open, onClose, onSelect, currentCity }: CitySe
     <Dialog open={open} onOpenChange={(next) => !next && handleClose()}>
       <DialogContent
         showCloseButton
-        className="flex max-h-[min(85vh,800px)] w-full max-w-2xl flex-col gap-0 overflow-hidden rounded-2xl border border-border p-0 shadow-xl sm:max-w-2xl"
+        className="flex max-h-[min(85vh,800px)] w-full max-w-2xl flex-col gap-0 overflow-hidden rounded-lg border border-border p-0 shadow-xl sm:max-w-2xl"
       >
         <DialogHeader className="space-y-1 border-b border-border px-5 py-4 pr-14 text-left">
           <DialogTitle className="text-xl font-semibold tracking-tight">{t.citySelect.title}</DialogTitle>
@@ -86,7 +86,7 @@ export function CitySelectModal({ open, onClose, onSelect, currentCity }: CitySe
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t.citySelect.searchPlaceholder}
-              className="h-11 rounded-xl border-border bg-muted/30 pl-10 pr-3 text-base shadow-none transition-colors focus-visible:bg-background"
+              className="h-11 rounded-md border-border bg-muted/30 pl-10 pr-3 text-base shadow-none transition-colors focus-visible:bg-background"
               autoComplete="off"
               autoCorrect="off"
               spellCheck={false}
@@ -126,7 +126,7 @@ export function CitySelectModal({ open, onClose, onSelect, currentCity }: CitySe
               type="button"
               onClick={handleSelectAll}
               className={cn(
-                "mb-5 flex w-full items-center gap-3 rounded-xl border px-4 py-3.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                "mb-5 flex w-full items-center gap-3 rounded-md border px-4 py-3.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                 !currentCity?.trim()
                   ? "border-primary bg-primary/10 text-primary shadow-sm"
                   : "border-border bg-card hover:bg-accent",
@@ -148,7 +148,7 @@ export function CitySelectModal({ open, onClose, onSelect, currentCity }: CitySe
                       type="button"
                       onClick={() => handleSelect(oblast.cities[0])}
                       className={cn(
-                        "flex w-full flex-col gap-0.5 rounded-xl border px-4 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:flex-row sm:items-baseline sm:gap-2",
+                        "flex w-full flex-col gap-0.5 rounded-md border px-4 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:flex-row sm:items-baseline sm:gap-2",
                         (currentCity?.trim() || "") === oblast.cities[0].name.trim()
                           ? "border-primary/40 bg-primary/10 text-primary"
                           : "border-transparent bg-muted/25 hover:bg-muted/50",
@@ -210,7 +210,7 @@ export function CitySelectModal({ open, onClose, onSelect, currentCity }: CitySe
                 ))}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/20 px-4 py-10 text-center">
+              <div className="flex flex-col items-center justify-center rounded-md border border-dashed border-border bg-muted/20 px-4 py-10 text-center">
                 <SearchX className="mb-3 h-10 w-10 text-muted-foreground/80" aria-hidden />
                 <p className="font-medium text-foreground">{t.citySelect.notFound}</p>
                 <p className="mt-1 max-w-xs text-sm text-muted-foreground">{t.citySelect.tryAnother}</p>
@@ -238,7 +238,7 @@ function CityButton({
       type="button"
       onClick={onClick}
       className={cn(
-        "rounded-xl border px-3 py-2.5 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        "rounded-md border px-3 py-2.5 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         isActive
           ? "border-primary/40 bg-primary/10 font-semibold text-primary shadow-sm"
           : "border-border bg-card font-normal text-foreground hover:border-primary/25 hover:bg-accent",

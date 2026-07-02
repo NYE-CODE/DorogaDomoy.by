@@ -46,6 +46,18 @@
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-success: var(--color-success);
+  --color-lost: var(--color-lost);
+  --color-lost-soft: var(--color-lost-soft);
+  --color-lost-border: var(--color-lost-border);
+  --color-lost-foreground: var(--color-lost-foreground);
+  --color-found: var(--color-found);
+  --color-found-soft: var(--color-found-soft);
+  --color-found-border: var(--color-found-border);
+  --color-found-foreground: var(--color-found-foreground);
+  --color-shelter: var(--color-shelter);
+  --color-shelter-soft: var(--color-shelter-soft);
+  --color-shelter-border: var(--color-shelter-border);
+  --color-shelter-foreground: var(--color-shelter-foreground);
   --color-telegram: var(--color-telegram);
   --color-telegram-hover: var(--color-telegram-hover);
   --color-viber: var(--color-viber);
@@ -65,6 +77,7 @@
   --radius-lg: var(--radius-lg);
   --radius-xl: var(--radius-xl);
   --radius-2xl: var(--radius-2xl);
+  --radius-3xl: var(--radius-3xl);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);

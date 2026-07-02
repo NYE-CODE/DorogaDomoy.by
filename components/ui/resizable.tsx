@@ -1,2 +1,2 @@
-п»ї/** @deprecated РСЃРїРѕР»СЊР·СѓР№С‚Рµ `@/shared/ui/resizable`. */
+/** @deprecated Используйте `@/shared/ui/resizable`. */
 export * from '../../src/shared/ui/resizable.tsx';

@@ -1,2 +1,2 @@
-п»ї/** @deprecated РСЃРїРѕР»СЊР·СѓР№С‚Рµ `@/pages/CompleteProfilePage.tsx`. */
+/** @deprecated Используйте `@/pages/CompleteProfilePage.tsx`. */
 export { default } from '../src/pages/CompleteProfilePage.tsx';

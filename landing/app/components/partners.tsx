@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { partnersApi } from "../../../api/client";
 import { useI18n } from "../../../context/I18nContext";
 import type { Partner } from "../../../api/client";
@@ -24,7 +24,7 @@ function PartnerTile({ partner }: { partner: Partner }) {
   const [logoFailed, setLogoFailed] = useState(false);
 
   const cardInner = (
-    <div className="flex min-h-[7rem] flex-col items-center justify-center rounded-xl bg-transparent p-4 transition-all duration-300 hover:-translate-y-0.5">
+    <div className="flex min-h-[7rem] flex-col items-center justify-center rounded-md bg-transparent p-4 transition-all duration-300 hover:-translate-y-0.5">
       {logoUrl && !logoFailed ? (
         <>
           <img
@@ -51,13 +51,13 @@ function PartnerTile({ partner }: { partner: Partner }) {
         href={partner.link}
         target="_blank"
         rel="noopener noreferrer"
-        className="group block rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        className="group block rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
         {cardInner}
       </a>
     );
   }
-  return <div className="group block rounded-xl">{cardInner}</div>;
+  return <div className="group block rounded-md">{cardInner}</div>;
 }
 
 export function Partners() {
@@ -87,7 +87,7 @@ export function Partners() {
             {Array.from({ length: 8 }).map((_, i) => (
               <div
                 key={i}
-                className="flex h-28 flex-col items-center justify-center rounded-xl bg-muted/30 p-4"
+                className="flex h-28 flex-col items-center justify-center rounded-md bg-muted/30 p-4"
               >
                 <Skeleton className="h-10 w-24 rounded-md" />
                 <Skeleton className="mt-3 h-3 w-16 rounded-md" />
@@ -103,7 +103,7 @@ export function Partners() {
         ) : null}
 
         <div className="text-center">
-          <div className="relative mx-auto max-w-2xl overflow-hidden rounded-2xl border border-white/20 bg-gradient-to-br from-primary-light via-brand-light to-primary p-8 md:p-10 shadow-lg">
+          <div className="relative mx-auto max-w-2xl overflow-hidden rounded-lg border border-white/20 bg-gradient-to-br from-primary-light via-brand-light to-primary p-8 md:p-10 shadow-lg">
             <div
               className="pointer-events-none absolute -right-16 -top-16 size-48 rounded-full bg-white/15 blur-2xl"
               aria-hidden

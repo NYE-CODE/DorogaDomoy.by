@@ -203,18 +203,18 @@ export default function MyPetProfilePage() {
   const photos = pet.photos?.length ? pet.photos : [];
   const mainPhoto = photos[photoIndex] ?? photos[0];
   const ageDisplay = formatPetAgeDisplay(pet.age, locale, pp);
-  const colorsLine = (pet.colors ?? []).filter(Boolean).join(', ') || 'вЂ”';
+  const colorsLine = (pet.colors ?? []).filter(Boolean).join(', ') || '—';
   const resolvedSpecies = resolveProfilePetSpecies(pet.species, pet.breed);
-  const speciesLine = `${speciesPlainLabel(resolvedSpecies, f)}${pet.breed ? ` В· ${pet.breed}` : ''}`;
+  const speciesLine = `${speciesPlainLabel(resolvedSpecies, f)}${pet.breed ? ` · ${pet.breed}` : ''}`;
   const addedAt = pet.created_at
     ? new Date(pet.created_at).toLocaleDateString(dateLocaleForUi(locale), {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',
       })
-    : 'вЂ”';
+    : '—';
 
-  const fieldClass = 'rounded-xl border border-border/70 bg-muted/25 p-4 transition-colors hover:bg-muted/40';
+  const fieldClass = 'rounded-md border border-border/70 bg-muted/25 p-4 transition-colors hover:bg-muted/40';
   const sectionTitleClass = typoH3;
 
   return (
@@ -251,7 +251,7 @@ export default function MyPetProfilePage() {
                 </Card>
               )}
 
-              {/* РћР±Р»РѕР¶РєР° + С€Р°РїРєР° РїСЂРѕС„РёР»СЏ; РјРёРЅРёР°С‚СЋСЂС‹ СЃСЂР°Р·Сѓ РїРѕРґ С„РѕС‚Рѕ вЂ” Р±РµР· СЃРєСЂРѕР»Р»Р° Рє РіР°Р»РµСЂРµРµ */}
+              {/* Обложка + шапка профиля; миниатюры сразу под фото — без скролла к галерее */}
               <Card className="gap-0 overflow-hidden border-border/80 shadow-md ring-1 ring-border/50">
                 <div className="relative bg-muted">
                   {photos.length > 1 && (
@@ -306,7 +306,7 @@ export default function MyPetProfilePage() {
                           }}
                           onClick={() => setPhotoIndex(i)}
                           className={cn(
-                            'relative size-[4.5rem] shrink-0 snap-start overflow-hidden rounded-xl border-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:size-20',
+                            'relative size-[4.5rem] shrink-0 snap-start overflow-hidden rounded-md border-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:size-20',
                             i === photoIndex
                               ? 'border-primary ring-2 ring-primary/30'
                               : 'border-border/80 opacity-90 hover:border-primary/50 hover:opacity-100',
@@ -493,11 +493,11 @@ export default function MyPetProfilePage() {
                 <CardContent className="space-y-4">
                   <div
                     ref={qrWrapRef}
-                    className="flex items-center justify-center rounded-2xl border-2 border-dashed border-primary/25 bg-muted/30 p-6 dark:bg-background/80"
+                    className="flex items-center justify-center rounded-lg border-2 border-dashed border-primary/25 bg-muted/30 p-6 dark:bg-background/80"
                   >
                     <QRCode value={publicPetQrUrl || publicPetUrl} size={220} level="M" />
                   </div>
-                  <div className="rounded-xl border border-border/80 bg-muted/25 p-4">
+                  <div className="rounded-md border border-border/80 bg-muted/25 p-4">
                     <p className="text-sm font-semibold text-foreground">{op.freeOptionTitle}</p>
                     <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{op.freeOptionHint}</p>
                   </div>
@@ -516,7 +516,7 @@ export default function MyPetProfilePage() {
                       <span>{op.shareLink}</span>
                     </Button>
                   </div>
-                  <div className="rounded-xl border border-border/80 bg-muted/25 p-4">
+                  <div className="rounded-md border border-border/80 bg-muted/25 p-4">
                     <p className="text-sm font-semibold text-foreground">{op.partnerOptionTitle}</p>
                     <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{op.partnerOptionHint}</p>
                   </div>
@@ -529,7 +529,7 @@ export default function MyPetProfilePage() {
                     <ExternalLink size={18} />
                     {op.orderFromPartners}
                   </Button>
-                  <div className="rounded-xl border border-amber-200/70 bg-amber-50/80 p-4 dark:border-amber-800/50 dark:bg-amber-950/30">
+                  <div className="rounded-md border border-amber-200/70 bg-amber-50/80 p-4 dark:border-amber-800/50 dark:bg-amber-950/30">
                     <p className="text-sm leading-relaxed text-amber-950 dark:text-amber-100">
                       <strong>{op.qrTipBold}</strong> {op.qrTip}
                     </p>
@@ -563,7 +563,7 @@ export default function MyPetProfilePage() {
               medallionPartners.map((partner) => (
                 <div
                   key={partner.id}
-                  className="flex flex-col gap-3 rounded-xl border border-border/80 bg-muted/20 p-4 sm:flex-row sm:items-center"
+                  className="flex flex-col gap-3 rounded-md border border-border/80 bg-muted/20 p-4 sm:flex-row sm:items-center"
                 >
                   {partner.logo_url ? (
                     <img

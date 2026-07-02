@@ -1,12 +1,11 @@
-п»їimport { useId } from 'react';
-import { CircleHelp, Heart, MapPin, Mars, PawPrint, Venus, Zap } from 'lucide-react';
+import { useId } from 'react';
+import { CircleHelp, Heart, MapPin, Mars, PawPrint, Venus } from 'lucide-react';
 import { useI18n } from '../context/I18nContext';
 import type { Pet } from '../types/pet';
 import { cn } from './ui/utils';
 import { typoH4 } from '@/shared/styles/typography-classes';
 import { activateOnKeyboard, interactiveCardClass } from '@/shared/styles/interaction-classes';
 import { FavoriteHeartButton } from './favorite-heart-button';
-import { buildTraitScales, compatBadgeText, getCompatBadges, traitLevelLabel } from '../utils/pet-traits';
 
 interface ShelterPetCardProps {
   pet: Pet;
@@ -16,11 +15,10 @@ interface ShelterPetCardProps {
 
 export function ShelterPetCard({ pet, onClick, compact = false }: ShelterPetCardProps) {
   const { t } = useI18n();
-  const traitScales = buildTraitScales(t.petTraits);
   const treatmentClipId = useId();
 
-  const gender = pet.gender ? t.pet.gender[pet.gender] : 'вЂ”';
-  const age = pet.approximateAge?.trim() || 'вЂ”';
+  const gender = pet.gender ? t.pet.gender[pet.gender] : '—';
+  const age = pet.approximateAge?.trim() || '—';
   const sp = t.shelterPet;
   const healthLabel: Record<string, string> = {
     disabled: sp.healthDisabled,
@@ -33,7 +31,7 @@ export function ShelterPetCard({ pet, onClick, compact = false }: ShelterPetCard
     semi: sp.coatSemi,
     fluffy: sp.coatFluffy,
   };
-  const health = pet.healthStatus ? (healthLabel[pet.healthStatus] ?? pet.healthStatus) : 'вЂ”';
+  const health = pet.healthStatus ? (healthLabel[pet.healthStatus] ?? pet.healthStatus) : '—';
   const name = pet.name?.trim() || pet.breed || t.pet.animalType[pet.animalType];
   const GenderIcon = pet.gender === 'male' ? Mars : pet.gender === 'female' ? Venus : CircleHelp;
   const genderClass =
@@ -89,7 +87,7 @@ export function ShelterPetCard({ pet, onClick, compact = false }: ShelterPetCard
         onKeyDown={activateOnKeyboard(onClick)}
         className={cn(
           interactiveCardClass,
-          'group relative flex items-start gap-3 overflow-hidden rounded-xl border border-border bg-card p-3 shadow-sm',
+          'group relative flex items-start gap-3 overflow-hidden rounded-md border border-border bg-card p-3 shadow-sm',
           'hover:-translate-y-0.5',
         )}
       >
@@ -106,12 +104,12 @@ export function ShelterPetCard({ pet, onClick, compact = false }: ShelterPetCard
         <div className="min-w-0 flex-1 pr-8">
           <h3 className={cn(typoH4, 'line-clamp-1')}>{name}</h3>
           <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">
-            РџРѕСЂРѕРґР°: {pet.breed?.trim() || 'РЅРµ СѓРєР°Р·Р°РЅР°'} В· Р’РѕР·СЂР°СЃС‚: {age}
+            Порода: {pet.breed?.trim() || 'не указана'} · Возраст: {age}
           </p>
           <div className="mt-1.5 flex items-center gap-2 text-xs text-muted-foreground">
             <GenderIcon className={cn('size-4', genderClass)} aria-hidden />
             <span>{gender}</span>
-            <span className="text-border">В·</span>
+            <span className="text-border">·</span>
             <span>{health}</span>
           </div>
         </div>
@@ -127,11 +125,11 @@ export function ShelterPetCard({ pet, onClick, compact = false }: ShelterPetCard
       onKeyDown={activateOnKeyboard(onClick)}
       className={cn(
         interactiveCardClass,
-        'group flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card p-4 shadow-sm',
+        'group flex h-full flex-col overflow-hidden rounded-md border border-border bg-card p-4 shadow-sm',
         'hover:-translate-y-0.5',
       )}
     >
-      <div className="relative mb-3 flex aspect-square w-full items-center justify-center overflow-hidden rounded-xl border border-border bg-muted">
+      <div className="relative mb-3 flex aspect-square w-full items-center justify-center overflow-hidden rounded-md border border-border bg-muted">
         <div className="absolute right-2 top-2 z-10">
           <FavoriteHeartButton petId={pet.id} size="sm" className="!p-1.5" />
         </div>
@@ -150,51 +148,27 @@ export function ShelterPetCard({ pet, onClick, compact = false }: ShelterPetCard
           <div className="inline-flex shrink-0 items-center gap-2">
             <span
               className="inline-flex items-center"
-              title={`РџРѕР»: ${gender}`}
-              aria-label={`РџРѕР»: ${gender}`}
+              title={`Пол: ${gender}`}
+              aria-label={`Пол: ${gender}`}
             >
               <GenderIcon className={cn('size-5', genderClass)} aria-hidden />
             </span>
             <span
               className="inline-flex items-center text-rose-500"
-              title={`Р—РґРѕСЂРѕРІСЊРµ: ${health}`}
-              aria-label={`Р—РґРѕСЂРѕРІСЊРµ: ${health}`}
+              title={`Здоровье: ${health}`}
+              aria-label={`Здоровье: ${health}`}
             >
               {renderHealthIcon()}
             </span>
           </div>
         </div>
         <p className="line-clamp-1 text-sm text-muted-foreground">
-          РџРѕСЂРѕРґР°: {pet.breed?.trim() || 'РЅРµ СѓРєР°Р·Р°РЅР°'} В· Р’РѕР·СЂР°СЃС‚: {age}
+          Порода: {pet.breed?.trim() || 'не указана'} · Возраст: {age}
         </p>
-        {(() => {
-          const energyDef = traitScales[0];
-          const energy = traitLevelLabel(energyDef, pet.energyLevel);
-          const compat = getCompatBadges(pet).filter((b) => b.value === 'yes');
-          if (!energy && compat.length === 0) return null;
-          return (
-            <div className="flex flex-wrap gap-1.5">
-              {energy && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
-                  <Zap size={11} className="shrink-0" aria-hidden />
-                  {energy}
-                </span>
-              )}
-              {compat.map((b) => (
-                <span
-                  key={b.key}
-                  className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
-                >
-                  {compatBadgeText(b, t.petTraits)}
-                </span>
-              ))}
-            </div>
-          );
-        })()}
         <div className="mt-1 flex flex-col gap-1.5">
           <span className="flex max-w-full items-center gap-1 self-start rounded-md bg-muted/80 px-[10px] py-[4px] text-xs text-muted-foreground">
             <MapPin size={12} className="shrink-0 opacity-80" aria-hidden />
-            <span className="min-w-0 truncate">{pet.city || 'вЂ”'}</span>
+            <span className="min-w-0 truncate">{pet.city || '—'}</span>
           </span>
         </div>
         <div className="mt-auto" />

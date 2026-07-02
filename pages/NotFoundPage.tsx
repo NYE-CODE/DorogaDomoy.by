@@ -1,2 +1,2 @@
-п»ї/** @deprecated РСЃРїРѕР»СЊР·СѓР№С‚Рµ `@/pages/NotFoundPage.tsx`. */
+/** @deprecated Используйте `@/pages/NotFoundPage.tsx`. */
 export { default } from '../src/pages/NotFoundPage.tsx';

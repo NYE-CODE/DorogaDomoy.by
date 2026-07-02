@@ -1,4 +1,4 @@
-ï»¿import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { MapPin, Navigation } from 'lucide-react';
@@ -12,12 +12,12 @@ interface LocationPickerProps {
   onLocationSelect: (location: { lat: number; lng: number }) => void;
   onAddressChange?: (address: string) => void;
   onLocationWithAddress?: (location: { lat: number; lng: number }, address: string) => void;
-  /** ÐžÐ´Ð¸Ð½ reverse-Ð·Ð°Ð¿Ñ€Ð¾Ñ: Ð¿Ð¾Ð´ÑÑ‚Ð°Ð²Ð¸Ñ‚ÑŒ Ð¸ Ð°Ð´Ñ€ÐµÑÐ½ÑƒÑŽ ÑÑ‚Ñ€Ð¾ÐºÑƒ, Ð¸ Ð½Ð°ÑÐµÐ»Ñ‘Ð½Ð½Ñ‹Ð¹ Ð¿ÑƒÐ½ÐºÑ‚ (Ð½Ð°Ð¿Ñ€. Ð³Ð¾Ñ€Ð¾Ð´). */
+  /** Îäèí reverse-çàïðîñ: ïîäñòàâèòü è àäðåñíóþ ñòðîêó, è íàñåë¸ííûé ïóíêò (íàïð. ãîðîä). */
   onLocationPlaceSync?: (
     location: { lat: number; lng: number },
     place: { formattedAddress: string; locality: string | null },
   ) => void;
-  /** Ð’Ñ‹ÑÐ¾Ñ‚Ð° ÐºÐ°Ñ€Ñ‚Ñ‹ (Ð¿Ð¾ ÑƒÐ¼Ð¾Ð»Ñ‡Ð°Ð½Ð¸ÑŽ h-48) */
+  /** Âûñîòà êàðòû (ïî óìîë÷àíèþ h-48) */
   mapHeight?: string;
 }
 
@@ -180,7 +180,7 @@ export function LocationPicker({
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
 
-    // ÑÑ‚Ñ€Ð°Ñ…Ð¾Ð²ÐºÐ°: ÐµÑÐ»Ð¸ Ð±Ñ€Ð°ÑƒÐ·ÐµÑ€ Ð·Ð°Ð²Ð¸Ñ Ð¸ Ð½Ðµ Ð²Ñ‹Ð·Ð²Ð°Ð» callback â€” ÑÐ½Ð¸Ð¼Ð°ÐµÐ¼ Ð·Ð°Ð³Ñ€ÑƒÐ·ÐºÑƒ Ñ‡ÐµÑ€ÐµÐ· 12 ÑÐµÐº
+    // ñòðàõîâêà: åñëè áðàóçåð çàâèñ è íå âûçâàë callback — ñíèìàåì çàãðóçêó ÷åðåç 12 ñåê
     if (geoFallbackTimerRef.current) clearTimeout(geoFallbackTimerRef.current);
     geoFallbackTimerRef.current = setTimeout(() => {
       geoFallbackTimerRef.current = null;

@@ -1,1 +1,1 @@
-﻿export * from './_primitives/switch.tsx';
+export * from './_primitives/switch.tsx';

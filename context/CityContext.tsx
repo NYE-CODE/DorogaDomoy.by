@@ -1,2 +1,2 @@
-п»ї/** @deprecated РСЃРїРѕР»СЊР·СѓР№С‚Рµ `@/app/providers/CityContext`. */
+/** @deprecated Используйте `@/app/providers/CityContext`. */
 export * from '../src/app/providers/CityContext.tsx';

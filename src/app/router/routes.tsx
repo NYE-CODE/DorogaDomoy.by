@@ -35,6 +35,7 @@ const MyShelterPetFormPage = lazy(() => import('@/pages/MyShelterPetFormPage'));
 const MyShelterPetCampaignPage = lazy(() => import('@/pages/MyShelterPetCampaignPage'));
 const MyShelterTeamPage = lazy(() => import('@/pages/MyShelterTeamPage'));
 const CompleteProfilePage = lazy(() => import('@/pages/CompleteProfilePage'));
+const WelcomePetProfilePage = lazy(() => import('@/pages/WelcomePetProfilePage'));
 const ForgotPasswordPage = lazy(() => import('@/pages/ForgotPasswordPage'));
 const ResetPasswordPage = lazy(() => import('@/pages/ResetPasswordPage'));
 
@@ -68,6 +69,14 @@ export function AppRoutes() {
         element={
           <RequireAuth allowIncompleteProfile>
             <CompleteProfilePage />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/welcome/pet-profile"
+        element={
+          <RequireAuth>
+            <WelcomePetProfilePage />
           </RequireAuth>
         }
       />

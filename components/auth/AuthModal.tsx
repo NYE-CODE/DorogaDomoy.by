@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { Mail, Lock, User as UserIcon, ArrowRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -11,6 +11,7 @@ import { TelegramLoginButton } from './TelegramLoginButton';
 import { authApi, type TelegramAuthPayload } from '../../api/client';
 import type { User } from '@/entities/user/model/types';
 import { getSafeReturnPath } from '@/shared/lib/auth-return-path';
+import { shouldShowPetProfileOnboarding } from '@/shared/lib/pet-profile-onboarding';
 
 interface AuthModalProps {
   onNavigateToTerms?: () => void;
@@ -49,9 +50,19 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
 
   if (!isAuthModalOpen) return null;
 
-  const navigateAfterAuth = (user: User) => {
+  const navigateAfterAuth = (user: User, isNewSignup = false) => {
     if (user.profileCompleted === false) {
       navigate('/complete-profile', {
+        replace: true,
+        state: {
+          ...(returnPath ? { fromProtected: returnPath } : {}),
+          suggestPetProfile: true,
+        },
+      });
+      return;
+    }
+    if (isNewSignup && shouldShowPetProfileOnboarding(user.id)) {
+      navigate('/welcome/pet-profile', {
         replace: true,
         state: returnPath ? { fromProtected: returnPath } : undefined,
       });
@@ -70,7 +81,10 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
       if (!u.profileCompleted) {
         navigate('/complete-profile', {
           replace: true,
-          state: returnPath ? { fromProtected: returnPath } : undefined,
+          state: {
+            ...(returnPath ? { fromProtected: returnPath } : {}),
+            suggestPetProfile: true,
+          },
         });
         return;
       }
@@ -108,11 +122,11 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
       if (mode === 'login') {
         const u = await login(email, password);
         toast.success(t.auth.welcomeBack);
-        navigateAfterAuth(u);
+        navigateAfterAuth(u, false);
       } else {
         const u = await register(email, name, password, {}, signupRole);
         toast.success(t.auth.registerSuccess);
-        navigateAfterAuth(u);
+        navigateAfterAuth(u, true);
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t.auth.genericError);
@@ -124,7 +138,7 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
   return (
     <div className="contents">
       <Dialog open={isAuthModalOpen} onOpenChange={(next) => !next && closeAuthModal()}>
-        <DialogContent className="w-full max-w-md overflow-hidden rounded-2xl p-0" showCloseButton={false}>
+        <DialogContent className="w-full max-w-md overflow-hidden rounded-lg p-0" showCloseButton={false}>
           <div className="relative flex h-32 items-center justify-center bg-gradient-to-r from-primary to-primary/80">
             <div className="text-center text-white">
               <DialogTitle className="mb-1 text-2xl font-bold text-white">
@@ -211,7 +225,7 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="pl-10"
-                    placeholder="••••••••"
+                    placeholder="��������"
                     aria-describedby="auth-password-hint"
                   />
                 </div>
@@ -223,7 +237,7 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
               {mode === 'register' && (
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-foreground">
-                    {(t.auth as { registerRoleLabel?: string }).registerRoleLabel ?? 'Роль'}
+                    {(t.auth as { registerRoleLabel?: string }).registerRoleLabel ?? '����'}
                   </label>
                   <div className="flex flex-col gap-2 sm:flex-row sm:gap-4">
                     <label className="flex cursor-pointer items-center gap-2 text-sm text-foreground">
@@ -234,7 +248,7 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
                         onChange={() => setSignupRole('user')}
                         className="size-4 accent-primary"
                       />
-                      {(t.auth as { registerAsUser?: string }).registerAsUser ?? 'Пользователь'}
+                      {(t.auth as { registerAsUser?: string }).registerAsUser ?? '������������'}
                     </label>
                     <label className="flex cursor-pointer items-center gap-2 text-sm text-foreground">
                       <input
@@ -244,7 +258,7 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
                         onChange={() => setSignupRole('volunteer')}
                         className="size-4 accent-primary"
                       />
-                      {(t.auth as { registerAsVolunteer?: string }).registerAsVolunteer ?? 'Волонтёр'}
+                      {(t.auth as { registerAsVolunteer?: string }).registerAsVolunteer ?? '�������'}
                     </label>
                   </div>
                 </div>

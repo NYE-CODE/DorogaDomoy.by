@@ -1,1 +1,1 @@
-﻿export * from './_primitives/aspect-ratio.tsx';
+export * from './_primitives/aspect-ratio.tsx';

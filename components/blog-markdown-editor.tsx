@@ -1,4 +1,4 @@
-﻿import { useCallback, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import { useI18n } from '../context/I18nContext';
 import {
   Bold,

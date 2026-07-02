@@ -1,1 +1,1 @@
-﻿export * from './_primitives/page-loader.tsx';
+export * from './_primitives/page-loader.tsx';

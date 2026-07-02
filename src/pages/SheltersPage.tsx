@@ -31,7 +31,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/ui/select';
-import { markAppEntered } from '@/shared/lib/home-route';
 import { ShelterPetCard } from '../../components/shelter-pet-card';
 
 export default function SheltersPage() {
@@ -60,10 +59,6 @@ export default function SheltersPage() {
     const animal = searchParams.get('petAnimal');
     return animal === 'cat' || animal === 'dog' || animal === 'other' ? animal : 'all';
   });
-
-  useEffect(() => {
-    markAppEntered();
-  }, []);
 
   useEffect(() => {
     const desc = truncateMetaDescription(`${s.pageSubtitle} DorogaDomoy.by.`);
@@ -215,7 +210,7 @@ export default function SheltersPage() {
 
         {activeTab === 'orgs' ? (
         <>
-        <div className="mb-8 rounded-2xl border border-border bg-muted/20 p-4 sm:p-5">
+        <div className="mb-8 rounded-lg border border-border bg-muted/20 p-4 sm:p-5">
           <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
           <div className="w-full">
             <label htmlFor="shelter-city" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -303,9 +298,9 @@ export default function SheltersPage() {
         </>
         ) : (
           <>
-          <div className="mb-6 flex flex-col gap-4 rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/8 via-card to-card p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+          <div className="mb-6 flex flex-col gap-4 rounded-lg border border-primary/25 bg-gradient-to-br from-primary/8 via-card to-card p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
             <div className="flex min-w-0 items-start gap-3">
-              <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary-emphasis dark:text-primary-soft">
+              <div className="flex size-11 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary-emphasis dark:text-primary-soft">
                 <Sparkles size={22} aria-hidden />
               </div>
               <div className="min-w-0">
@@ -317,7 +312,7 @@ export default function SheltersPage() {
               <Link to={getMatchPath(user?.id)}>{hasMatchProfile ? matchCta.continue : matchCta.start}</Link>
             </Button>
           </div>
-          <div className="mb-8 rounded-2xl border border-border bg-muted/20 p-4 sm:p-5">
+          <div className="mb-8 rounded-lg border border-border bg-muted/20 p-4 sm:p-5">
             <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
               <div className="w-full">
                 <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -364,7 +359,7 @@ export default function SheltersPage() {
           ) : error ? (
             <p className="text-destructive">{s.loadError}</p>
           ) : list.length === 0 ? (
-            <div className="rounded-xl border border-border bg-muted/30 p-6 space-y-2">
+            <div className="rounded-md border border-border bg-muted/30 p-6 space-y-2">
               <p className="text-foreground font-medium">{s.empty}</p>
               <p className="text-sm text-muted-foreground">{s.emptyHint}</p>
             </div>
@@ -378,9 +373,9 @@ export default function SheltersPage() {
                     <li key={row.id} className="h-full">
                       <Link
                         to={`/shelters/${row.id}`}
-                        className="group flex h-full flex-col gap-3 rounded-xl border border-border bg-card p-3 shadow-sm transition-shadow hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                        className="group flex h-full flex-col gap-3 rounded-md border border-border bg-card p-3 shadow-sm transition-shadow hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                       >
-                        <div className="relative flex aspect-[4/3] w-full shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-muted">
+                        <div className="relative flex aspect-[4/3] w-full shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-muted">
                           {logo ? (
                             <img src={logo} alt="" className="size-full object-cover object-center" />
                           ) : (
@@ -406,7 +401,7 @@ export default function SheltersPage() {
                 })}
               </ul>
 
-              <div className="hidden overflow-x-auto rounded-xl border border-border bg-card shadow-sm sm:block">
+              <div className="hidden overflow-x-auto rounded-md border border-border bg-card shadow-sm sm:block">
                 <table className="min-w-full text-sm">
                   <thead className="bg-muted/40">
                     <tr className="text-left text-xs uppercase tracking-wide text-muted-foreground">
@@ -459,7 +454,7 @@ export default function SheltersPage() {
         ) : petsError ? (
           <p className="text-destructive">{s.loadError}</p>
         ) : filteredPets.length === 0 ? (
-          <div className="rounded-xl border border-border bg-muted/30 p-6 space-y-3">
+          <div className="rounded-md border border-border bg-muted/30 p-6 space-y-3">
             <p className="text-sm text-muted-foreground">
               {shelterPets.length > 0 ? s.petsFilterEmpty : s.emptyPets}
             </p>

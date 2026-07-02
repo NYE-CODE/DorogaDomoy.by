@@ -1,2 +1,2 @@
-п»ї/** @deprecated РСЃРїРѕР»СЊР·СѓР№С‚Рµ `@/app/providers/ShelterPetBrowseContext`. */
+/** @deprecated Используйте `@/app/providers/ShelterPetBrowseContext`. */
 export * from '../src/app/providers/ShelterPetBrowseContext.tsx';

@@ -1,1 +1,1 @@
-﻿export * from './_primitives/checkbox.tsx';
+export * from './_primitives/checkbox.tsx';

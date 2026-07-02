@@ -23,8 +23,8 @@ function landingNavLabel(hash: LandingNavHash, t: (typeof translations)["ru"]): 
       return f.sectionPets;
     case "announcements":
       return f.ads;
-    case "why-us":
-      return f.whyUs;
+    case "shelter-pets":
+      return f.sectionShelterPets;
     case "media":
       return t.landing.media.title;
     case "partners":

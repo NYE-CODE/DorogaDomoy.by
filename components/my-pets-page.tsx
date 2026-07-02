@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router";
 import { Plus, QrCode, Edit, PawPrint, MoreVertical, AlertCircle, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
@@ -177,7 +177,7 @@ function PetCard({
   };
 }) {
   return (
-    <div className="bg-white dark:bg-card rounded-2xl shadow-sm hover:shadow-md transition-all border border-border overflow-hidden group relative">
+    <div className="bg-white dark:bg-card rounded-lg shadow-sm hover:shadow-md transition-all border border-border overflow-hidden group relative">
       <div className="absolute top-3 right-3 z-10 pet-card-menu">
         <button
           type="button"

@@ -1,4 +1,4 @@
-п»їimport { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useLocation } from 'react-router';
 import {
   applySeo,
@@ -22,8 +22,8 @@ import {
 let publisherEnsured = false;
 
 /**
- * РЎРёРЅС…СЂРѕРЅРёР·РёСЂСѓРµС‚ canonical, robots Рё Р±Р°Р·РѕРІС‹Рµ title/description РїРѕ РјР°СЂС€СЂСѓС‚Сѓ.
- * РЎС‚СЂР°РЅРёС†С‹ СЃ РґР°РЅРЅС‹РјРё (/pet/:id, /blog/:slug, вЂ¦) РґРѕРїРѕР»РЅСЏСЋС‚ РјРµС‚Сѓ С‡РµСЂРµР· applySeo.
+ * Синхронизирует canonical, robots и базовые title/description по маршруту.
+ * Страницы с данными (/pet/:id, /blog/:slug, …) дополняют мету через applySeo.
  */
 export function SeoRouteSync() {
   const { pathname } = useLocation();
@@ -102,7 +102,7 @@ export function SeoRouteSync() {
     }
 
     applySeo({
-      title: 'DorogaDomoy.by вЂ” СЌРєРѕСЃРёСЃС‚РµРјР° РїРѕРјРѕС‰Рё Р¶РёРІРѕС‚РЅС‹Рј',
+      title: 'DorogaDomoy.by — экосистема помощи животным',
       description: SEO_HOME_DESCRIPTION,
       canonicalUrl: canonical,
       robots,

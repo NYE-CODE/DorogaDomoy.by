@@ -1,4 +1,4 @@
-п»їimport React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authApi, type TelegramAuthPayload } from '@/shared/api/client';
 import type { User } from '@/entities/user/model/types';
 
@@ -100,7 +100,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await authApi.logout();
     } catch {
-      /* authApi.logout СѓР¶Рµ РѕС‡РёС‰Р°РµС‚ legacy-С‚РѕРєРµРЅ; Р·РґРµСЃСЊ вЂ” С‚РѕР»СЊРєРѕ СЃР±СЂРѕСЃ UI. */
+      /* authApi.logout уже очищает legacy-токен; здесь — только сброс UI. */
     } finally {
       setUser(null);
       setIsAuthModalOpen(false);

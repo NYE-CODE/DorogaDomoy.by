@@ -135,7 +135,7 @@ export function Media() {
                     href={article.link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block rounded-2xl border border-border bg-card p-6 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md md:p-7"
+                    className="block rounded-lg border border-border bg-card p-6 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md md:p-7"
                   >
                     {content}
                   </a>
@@ -145,7 +145,7 @@ export function Media() {
               return (
                 <div
                   key={article.id}
-                  className="rounded-2xl border border-border bg-card p-6 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md md:p-7"
+                  className="rounded-lg border border-border bg-card p-6 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md md:p-7"
                 >
                   {content}
                 </div>

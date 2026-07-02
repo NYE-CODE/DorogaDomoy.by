@@ -1,13 +1,13 @@
-﻿import { Globe, Palette, Check } from "lucide-react";
+import { Globe, Palette, Check } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 import { useI18n } from "../context/I18nContext";
 import type { Locale } from "../i18n/translations";
 import { typoH1, typoLead } from "@/shared/styles/typography-classes";
 
 const languages: { code: Locale; nameKey: "langRu" | "langBe" | "langEn"; flag: string }[] = [
-  { code: "ru", nameKey: "langRu", flag: "🇷🇺" },
-  { code: "be", nameKey: "langBe", flag: "🇧🇾" },
-  { code: "en", nameKey: "langEn", flag: "🇬🇧" },
+  { code: "ru", nameKey: "langRu", flag: "????" },
+  { code: "be", nameKey: "langBe", flag: "????" },
+  { code: "en", nameKey: "langEn", flag: "????" },
 ];
 
 const themes = [
@@ -39,7 +39,7 @@ export function SettingsContent() {
 
         <div className="space-y-6">
           {/* Language Settings */}
-          <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
+          <div className="bg-card rounded-lg shadow-sm border border-border p-6">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
                 <Globe size={20} className="text-primary-foreground" />
@@ -55,7 +55,7 @@ export function SettingsContent() {
                 <button
                   key={language.code}
                   onClick={() => setLocale(language.code)}
-                  className={`w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all ${
+                  className={`w-full flex items-center justify-between p-4 rounded-md border-2 transition-all ${
                     locale === language.code
                       ? "border-primary bg-primary/10"
                       : "border-border hover:border-primary/50 bg-card"
@@ -82,7 +82,7 @@ export function SettingsContent() {
           </div>
 
           {/* Theme Settings */}
-          <div className="bg-card rounded-2xl shadow-sm border border-border p-6">
+          <div className="bg-card rounded-lg shadow-sm border border-border p-6">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 bg-[#FDB913] rounded-lg flex items-center justify-center">
                 <Palette size={20} className="text-foreground" />
@@ -98,7 +98,7 @@ export function SettingsContent() {
                 <button
                   key={themeOption.value}
                   onClick={() => setTheme(themeOption.value)}
-                  className={`relative p-6 rounded-xl border-2 transition-all text-left ${
+                  className={`relative p-6 rounded-md border-2 transition-all text-left ${
                     theme === themeOption.value
                       ? "border-primary bg-primary/10"
                       : "border-border hover:border-primary/50 bg-card"

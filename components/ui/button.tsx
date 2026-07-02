@@ -1,2 +1,2 @@
-п»ї/** @deprecated РСЃРїРѕР»СЊР·СѓР№С‚Рµ `@/shared/ui/button`. */
+/** @deprecated Используйте `@/shared/ui/button`. */
 export * from '../../src/shared/ui/button.tsx';

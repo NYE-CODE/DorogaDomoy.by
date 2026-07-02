@@ -46,10 +46,10 @@ export default function BlogListPage() {
 
   useEffect(() => {
     const desc = truncateMetaDescription(
-      `${b.pageSubtitle}. DorogaDomoy.by вЂ” СЌРєРѕСЃРёСЃС‚РµРјР° РїРѕРјРѕС‰Рё Р¶РёРІРѕС‚РЅС‹Рј: РїРѕРёСЃРє, РїСЂРёСЋС‚С‹ Рё РїРѕРґРґРµСЂР¶РєР° РІ Р‘РµР»Р°СЂСѓСЃРё.`,
+      `${b.pageSubtitle}. DorogaDomoy.by — экосистема помощи животным: поиск, приюты и поддержка в Беларуси.`,
     );
     applySeo({
-      title: `${b.pageTitle} вЂ” DorogaDomoy.by`,
+      title: `${b.pageTitle} — DorogaDomoy.by`,
       description: desc,
       canonicalUrl: canonicalUrlFromPath('/blog'),
       robots: SEO_ROBOTS_PUBLIC,
@@ -107,7 +107,7 @@ export default function BlogListPage() {
               );
               return (
                 <li key={post.id}>
-                  <article className="rounded-xl border border-border bg-card overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                  <article className="rounded-md border border-border bg-card overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                     <Link to={`/blog/${post.slug}`} className="flex flex-col sm:flex-row sm:min-h-[200px] group">
                       {img ? (
                         <div className="sm:w-72 shrink-0 aspect-[16/10] sm:aspect-auto sm:min-h-[200px] bg-muted">

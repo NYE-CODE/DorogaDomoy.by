@@ -1,0 +1,6 @@
+/* Скрывает нативный крестик WebKit — очистка управляется извне, единый вид во всех браузерах. */
+.input::-webkit-search-cancel-button,
+.input::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}

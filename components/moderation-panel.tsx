@@ -1,4 +1,4 @@
-ï»¿import { useState } from 'react';
+import { useState } from 'react';
 import { CheckCircle2, XCircle, X, Ban } from 'lucide-react';
 import { Pet } from '../types/pet';
 import { formatDate, statusLabels, animalTypeLabels, petStatusSoftPillClass } from '../utils/pet-helpers';
@@ -91,11 +91,11 @@ export function ModerationPanel({ pets, onApprovePet, onRejectPet }: ModerationP
                     <div className="mb-3">
                       <h3 className="text-base sm:text-lg font-semibold text-foreground mb-1">
                         {animalTypeLabels[pet.animalType]}
-                        {pet.breed && ` Â· ${pet.breed}`}
+                        {pet.breed && ` · ${pet.breed}`}
                       </h3>
                       <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-sm text-muted-foreground">
                         <span>{pet.city}</span>
-                        <span>Â·</span>
+                        <span>·</span>
                         <span>{formatDate(pet.publishedAt)}</span>
                         <span
                           className={`inline-flex rounded px-2 py-0.5 text-xs font-medium ${petStatusSoftPillClass[pet.status]}`}

@@ -1,4 +1,4 @@
-ï»¿import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { CheckIcon, ChevronsUpDownIcon } from 'lucide-react';
 import { Command, CommandGroup, CommandInput, CommandItem, CommandList } from './ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
@@ -21,8 +21,8 @@ function matchSearch(text: string, search: string): boolean {
 }
 
 /**
- * Combobox Ð´Ð»Ñ Ð²Ñ‹Ð±Ð¾Ñ€Ð° Ð¿Ð¾Ñ€Ð¾Ð´Ñ‹: Ð´Ñ€Ð¾Ð¿Ð´Ð°ÑƒÐ½ Ñ Ð¿Ð¾Ð¸ÑÐºÐ¾Ð¼ Ð¸ Ð²Ð¾Ð·Ð¼Ð¾Ð¶Ð½Ð¾ÑÑ‚ÑŒÑŽ Ð²Ð²ÐµÑÑ‚Ð¸ ÑÐ²Ð¾Ñ‘ Ð·Ð½Ð°Ñ‡ÐµÐ½Ð¸Ðµ.
- * Ð’Ð°Ñ€Ð¸Ð°Ð½Ñ‚Ñ‹: Ð¿ÑƒÑÑ‚Ð¾Ð¹, ÑÐ¿Ð¸ÑÐ¾Ðº Ð¿Ð¾Ñ€Ð¾Ð´, Â«Ð”Ñ€ÑƒÐ³Ð¾ÐµÂ», Ð¿Ð»ÑŽÑ Ð»ÑŽÐ±Ð¾Ðµ Ð²Ð²ÐµÐ´Ñ‘Ð½Ð½Ð¾Ðµ Ð¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÐµÐ»ÐµÐ¼ Ð·Ð½Ð°Ñ‡ÐµÐ½Ð¸Ðµ.
+ * Combobox äëÿ âûáîðà ïîðîäû: äðîïäàóí ñ ïîèñêîì è âîçìîæíîñòüþ ââåñòè ñâî¸ çíà÷åíèå.
+ * Âàðèàíòû: ïóñòîé, ñïèñîê ïîðîä, «Äðóãîå», ïëþñ ëþáîå ââåä¸ííîå ïîëüçîâàòåëåì çíà÷åíèå.
  */
 export function BreedCombobox({
   breeds,
@@ -121,7 +121,7 @@ export function BreedCombobox({
                     setOpen(false);
                   }}
                 >
-                  {t.petForm.use} Â«{trimmedInput}Â»
+                  {t.petForm.use} «{trimmedInput}»
                 </CommandItem>
               )}
               <CommandItem

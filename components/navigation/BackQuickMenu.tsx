@@ -90,14 +90,14 @@ export function BackQuickMenu() {
       </button>
 
       {open && (
-        <div className="absolute left-0 top-11 z-[110] min-w-[15rem] rounded-2xl border border-border bg-card p-2 shadow-xl">
+        <div className="absolute left-0 top-11 z-[110] min-w-[15rem] rounded-lg border border-border bg-card p-2 shadow-xl">
           <button
             type="button"
             onClick={() => {
               setOpen(false);
               navigate(getHomePath());
             }}
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-foreground transition-colors hover:bg-muted"
+            className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-foreground transition-colors hover:bg-muted"
           >
             <Home size={17} />
             <span>{t.common.home}</span>
@@ -108,7 +108,7 @@ export function BackQuickMenu() {
               setOpen(false);
               navigate('/search');
             }}
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-foreground transition-colors hover:bg-muted"
+            className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-foreground transition-colors hover:bg-muted"
           >
             <Search size={17} />
             <span>{t.common.search}</span>
@@ -119,7 +119,7 @@ export function BackQuickMenu() {
               setOpen(false);
               navigate('/shelters');
             }}
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-foreground transition-colors hover:bg-muted"
+            className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-foreground transition-colors hover:bg-muted"
           >
             <Building2 size={17} />
             <span>{t.header.shelters}</span>
@@ -133,7 +133,7 @@ export function BackQuickMenu() {
                   setOpen(false);
                   navigate(previousPath);
                 }}
-                className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-foreground transition-colors hover:bg-muted"
+                className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-foreground transition-colors hover:bg-muted"
               >
                 <History size={17} />
                 <span>{routeLabel(previousPath.split('?')[0] || previousPath, routeLabels)}</span>

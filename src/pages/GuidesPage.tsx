@@ -24,10 +24,10 @@ export default function GuidesPage() {
 
   useEffect(() => {
     const desc = truncateMetaDescription(
-      `${g.pageSubtitle}. DorogaDomoy.by вЂ” РёРЅСЃС‚СЂСѓРєС†РёРё Рё РІРёРґРµРѕРіР°Р№РґС‹ РїРѕ СЃРµСЂРІРёСЃСѓ.`,
+      `${g.pageSubtitle}. DorogaDomoy.by — инструкции и видеогайды по сервису.`,
     );
     applySeo({
-      title: `${g.pageTitle} вЂ” DorogaDomoy.by`,
+      title: `${g.pageTitle} — DorogaDomoy.by`,
       description: desc,
       canonicalUrl: canonicalUrlFromPath('/guides'),
       robots: SEO_ROBOTS_PUBLIC,
@@ -115,7 +115,7 @@ export default function GuidesPage() {
               <ul className="grid gap-8 sm:grid-cols-2">
                 {filteredVideos.map((video) => (
                   <li key={video.id}>
-                    <article className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+                    <article className="overflow-hidden rounded-md border border-border bg-card shadow-sm">
                       <div className="aspect-video w-full bg-muted">
                         <iframe
                           src={video.embed_url}

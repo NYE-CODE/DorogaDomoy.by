@@ -1,4 +1,4 @@
-ï»¿import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router';
 import {
   X,
@@ -85,7 +85,7 @@ export function MobileMenuDrawer({ open, onClose }: MobileMenuDrawerProps) {
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 h-16 border-b border-border shrink-0">
-          <span className="text-lg font-bold text-foreground">{t.header.menu ?? 'ĞœĞµĞ½Ñ'}</span>
+          <span className="text-lg font-bold text-foreground">{t.header.menu ?? 'Ìåíş'}</span>
           <button
             type="button"
             onClick={onClose}
@@ -115,7 +115,7 @@ export function MobileMenuDrawer({ open, onClose }: MobileMenuDrawerProps) {
         <nav className="flex-1 overflow-y-auto py-2">
           <button type="button" onClick={() => go('/')} className={linkCls('/')}>
             <Home size={20} />
-            <span>{t.header.home ?? 'Ğ“Ğ»Ğ°Ğ²Ğ½Ğ°Ñ'}</span>
+            <span>{t.header.home ?? 'Ãëàâíàÿ'}</span>
           </button>
           <button type="button" onClick={() => go('/search')} className={linkCls('/search')}>
             <Search size={20} />

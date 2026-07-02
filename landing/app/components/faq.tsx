@@ -81,7 +81,7 @@ export function FAQ() {
             {[0, 1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="rounded-xl border border-border bg-card p-5 shadow-sm"
+                className="rounded-md border border-border bg-card p-5 shadow-sm"
               >
                 <Skeleton className="mb-3 h-5 w-[88%] max-w-md rounded-md" />
                 <Skeleton className="h-4 w-full rounded-md" />
@@ -96,7 +96,7 @@ export function FAQ() {
               <AccordionItem
                 key={`faq-${index}`}
                 value={`item-${index}`}
-                className="rounded-xl border border-border/90 bg-card px-1 shadow-sm transition-shadow data-[state=open]:border-primary/25 data-[state=open]:shadow-md overflow-hidden border-b-0"
+                className="rounded-md border border-border/90 bg-card px-1 shadow-sm transition-shadow data-[state=open]:border-primary/25 data-[state=open]:shadow-md overflow-hidden border-b-0"
               >
                 <AccordionTrigger className="text-left text-base font-semibold text-foreground hover:no-underline py-4 px-4 md:px-5 [&[data-state=open]]:pb-2">
                   <span className="pr-2 leading-snug">{faq.q}</span>

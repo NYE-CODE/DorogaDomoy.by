@@ -1,2 +1,2 @@
-п»ї/** @deprecated РСЃРїРѕР»СЊР·СѓР№С‚Рµ `@/shared/ui/breadcrumb`. */
+/** @deprecated Используйте `@/shared/ui/breadcrumb`. */
 export * from '../../src/shared/ui/breadcrumb.tsx';

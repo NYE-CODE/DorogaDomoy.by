@@ -6,13 +6,13 @@ export const focusRingClass =
 export const interactiveTransitionClass =
   'transition-[color,background-color,border-color,box-shadow,opacity] duration-150 ease-in-out';
 
-export const iconButtonClass = `${interactiveTransitionClass} ${focusRingClass} rounded-lg`;
+export const iconButtonClass = `${interactiveTransitionClass} ${focusRingClass} rounded-md`;
 
 export const ghostSurfaceHoverClass = 'hover:bg-muted/60 dark:hover:bg-muted/40';
 
 export const pageSurfaceClass = 'bg-muted/30 dark:bg-background';
 
 export const cardSurfaceClass =
-  'bg-card border border-border rounded-xl shadow-sm';
+  'bg-card border border-border rounded-md shadow-sm';
 
-export const mutedPanelClass = 'bg-muted/50 dark:bg-muted/30 border border-border/60 rounded-xl';
+export const mutedPanelClass = 'bg-muted/50 dark:bg-muted/30 border border-border/60 rounded-md';

@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Heart, Share2, Users } from "lucide-react";
 import { Button } from "./ui/button";
 import {
@@ -136,10 +136,10 @@ export function Help() {
             return (
               <div
                 key={index}
-                className="group relative flex flex-col rounded-2xl border border-border bg-card p-5 md:p-6 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
+                className="group relative flex flex-col rounded-lg border border-border bg-card p-5 md:p-6 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
               >
                 <div className="flex items-start justify-between gap-4 mb-5">
-                  <div className={`inline-flex h-12 w-12 items-center justify-center rounded-xl ${card.tone}`}>
+                  <div className={`inline-flex h-12 w-12 items-center justify-center rounded-md ${card.tone}`}>
                     <Icon size={22} />
                   </div>
                   <span className="text-xs font-semibold text-muted-foreground">

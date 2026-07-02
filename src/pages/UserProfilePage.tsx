@@ -40,9 +40,9 @@ import {
 } from '@/shared/lib/seo';
 
 const ARCHIVE_SUCCESS_REASONS = [
-  'РџРёС‚РѕРјРµС† РІРµСЂРЅСѓР»СЃСЏ РґРѕРјРѕР№ / РЅР°Р№РґРµРЅ С…РѕР·СЏРёРЅ',
-  'РџРёС‚РѕРјРµС† РїСЂРёСЃС‚СЂРѕРµРЅ РІ РЅРѕРІСѓСЋ СЃРµРјСЊСЋ',
-  'РџРёС‚РѕРјРµС† РїРµСЂРµРґР°РЅ РІ РїСЂРёСЋС‚',
+  'Питомец вернулся домой / найден хозяин',
+  'Питомец пристроен в новую семью',
+  'Питомец передан в приют',
 ];
 
 const getRoleName = (role: User['role'], t: any): string => {
@@ -115,20 +115,20 @@ export default function UserProfilePage() {
   const location = useMemo(() => {
     if (activePets.length === 0) return null;
     const cities = activePets.map((p) => p.city).filter(Boolean);
-    if (cities.length === 0) return 'Р‘РµР»Р°СЂСѓСЃСЊ';
+    if (cities.length === 0) return 'Беларусь';
     const counts: Record<string, number> = {};
     cities.forEach((c) => { counts[c] = (counts[c] || 0) + 1; });
     const best = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
-    return best ? `${best[0]}, Р‘РµР»Р°СЂСѓСЃСЊ` : 'Р‘РµР»Р°СЂСѓСЃСЊ';
+    return best ? `${best[0]}, Беларусь` : 'Беларусь';
   }, [activePets]);
 
   useEffect(() => {
     if (loading || !id) return;
     if (error || !user) {
       applySeo({
-        title: 'РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ РЅРµ РЅР°Р№РґРµРЅ | DorogaDomoy.by',
+        title: 'Пользователь не найден | DorogaDomoy.by',
         description:
-          'РџСЂРѕС„РёР»СЊ РЅРµ СЃСѓС‰РµСЃС‚РІСѓРµС‚ РёР»Рё РЅРµРґРѕСЃС‚СѓРїРµРЅ. DorogaDomoy.by вЂ” СЌРєРѕСЃРёСЃС‚РµРјР° РїРѕРјРѕС‰Рё Р¶РёРІРѕС‚РЅС‹Рј РІ Р‘РµР»Р°СЂСѓСЃРё.',
+          'Профиль не существует или недоступен. DorogaDomoy.by — экосистема помощи животным в Беларуси.',
         canonicalUrl: canonicalUrlFromPath(`/user/${id}`),
         robots: SEO_ROBOTS_PRIVATE,
         keywords: SEO_KEYWORDS,
@@ -138,9 +138,9 @@ export default function UserProfilePage() {
     const role = getRoleName(user.role, t);
     const geo = location ?? '';
     applySeo({
-      title: `${user.name} вЂ” ${role} | DorogaDomoy.by`,
+      title: `${user.name} — ${role} | DorogaDomoy.by`,
       description: truncateMetaDescription(
-        `РџСЂРѕС„РёР»СЊ ${user.name} (${role}) РЅР° DorogaDomoy.by. Р­РєРѕСЃРёСЃС‚РµРјР° РїРѕРјРѕС‰Рё Р¶РёРІРѕС‚РЅС‹Рј: РїРѕРёСЃРє, РїСЂРёСЋС‚С‹, РїРѕРґРґРµСЂР¶РєР°.${geo ? ` ${geo}.` : ''}`,
+        `Профиль ${user.name} (${role}) на DorogaDomoy.by. Экосистема помощи животным: поиск, приюты, поддержка.${geo ? ` ${geo}.` : ''}`,
       ),
       canonicalUrl: canonicalUrlFromPath(`/user/${user.id}`),
       robots: SEO_ROBOTS_PUBLIC,
@@ -225,14 +225,14 @@ export default function UserProfilePage() {
         <main className="flex-1 flex items-center justify-center py-12">
           <div className="text-center">
             <h1 className="typo-h1 mb-2">
-              {(t.userProfile as { notFound?: string }).notFound ?? 'РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ РЅРµ РЅР°Р№РґРµРЅ'}
+              {(t.userProfile as { notFound?: string }).notFound ?? 'Пользователь не найден'}
             </h1>
             <p className="text-muted-foreground mb-6">
-              Рљ СЃРѕР¶Р°Р»РµРЅРёСЋ, РїСЂРѕС„РёР»СЊ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ РЅРµ СЃСѓС‰РµСЃС‚РІСѓРµС‚.
+              К сожалению, профиль пользователя не существует.
             </p>
             <Button className={appPrimaryCtaClass} asChild>
               <Link to={getHomePath()}>
-                {(t.userProfile as { toMain?: string }).toMain ?? 'РќР° РіР»Р°РІРЅСѓСЋ'}
+                {(t.userProfile as { toMain?: string }).toMain ?? 'На главную'}
               </Link>
             </Button>
           </div>
@@ -404,13 +404,13 @@ export default function UserProfilePage() {
               <div className="text-center md:border-l border-border">
                 <div className="text-2xl sm:text-3xl font-bold text-success mb-1">{user.helperConfirmedCount ?? 0}</div>
                 <div className="text-xs sm:text-sm text-muted-foreground">
-                  {(t.userProfile as { statHelper?: string }).statHelper ?? 'РџРѕРјРѕРі РІРµСЂРЅСѓС‚СЊ РґРѕРјРѕР№'}
+                  {(t.userProfile as { statHelper?: string }).statHelper ?? 'Помог вернуть домой'}
                 </div>
               </div>
             </div>
           </div>
 
-          {/* РџРёС‚РѕРјС†С‹ РїСЂРѕС„РёР»СЏ (РєР°СЂС‚РѕС‡РєРё В«РјРѕРё РїРёС‚РѕРјС†С‹В», РЅРµ РѕР±СЉСЏРІР»РµРЅРёСЏ) */}
+          {/* Питомцы профиля (карточки «мои питомцы», не объявления) */}
           <div className={cn(surfacePanelClass, 'mb-6')}>
             <div className="border-b border-border px-6 py-4">
               <h2 className={typoH3}>{t.userProfile.userPetsTitle}</h2>
@@ -423,7 +423,7 @@ export default function UserProfilePage() {
                   {profilePets.map((pet) => (
                     <div
                       key={pet.id}
-                      className="bg-white dark:bg-card rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 group border border-border"
+                      className="bg-white dark:bg-card rounded-md overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 group border border-border"
                     >
                       <div className="relative overflow-hidden">
                         <img
@@ -461,7 +461,7 @@ export default function UserProfilePage() {
                 <div className="text-center py-12">
                   <p className="text-muted-foreground">
                     {(t.userProfile as { noActiveAds?: string }).noActiveAds ??
-                      'РЈ СЌС‚РѕРіРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ РїРѕРєР° РЅРµС‚ РѕР±СЉСЏРІР»РµРЅРёР№'}
+                      'У этого пользователя пока нет объявлений'}
                   </p>
                 </div>
               ) : (
@@ -478,7 +478,7 @@ export default function UserProfilePage() {
                       <Link
                         key={pet.id}
                         to={`/pet/${pet.id}`}
-                        className="bg-white dark:bg-transparent rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 group block"
+                        className="bg-white dark:bg-transparent rounded-lg overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 group block"
                       >
                         <div className="relative overflow-hidden">
                           <img

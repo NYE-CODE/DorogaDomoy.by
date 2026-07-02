@@ -1,2 +1,2 @@
-п»ї/** @deprecated РСЃРїРѕР»СЊР·СѓР№С‚Рµ `@/app/providers/ThemeContext`. */
+/** @deprecated Используйте `@/app/providers/ThemeContext`. */
 export * from '../src/app/providers/ThemeContext.tsx';

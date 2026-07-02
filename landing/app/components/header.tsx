@@ -1,6 +1,6 @@
-﻿import { MapPin, User, Settings, FileText, Shield, LogOut, ChevronDown, PawPrint, Menu, Heart, Building2, Search, CirclePlay } from "lucide-react";
+import { MapPin, User, Settings, FileText, Shield, LogOut, ChevronDown, PawPrint, Menu, Heart, Building2, CirclePlay } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
-import { Link, useLocation, useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { Button } from "./ui/button";
 import { CitySelectModal } from "../../../components/city-select-modal";
 import { MobileMenuDrawer } from "../../../components/layout/MobileMenuDrawer";
@@ -8,26 +8,17 @@ import { useAuth } from "../../../context/AuthContext";
 import { useI18n } from "../../../context/I18nContext";
 import { useCityOptional } from "../../../context/CityContext";
 import { landingContainerWide, landingHeaderPrimaryCtaClass } from "./landing-section-styles";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
-import type { HomeMode } from "../App";
+import { getLogoHref } from "@/shared/lib/home-route";
 import { trackYmGoal } from "../../../utils/ym";
-import {
-  getLogoHref,
-  persistHomeMode,
-  resolveHomeModeForLanding,
-} from "@/shared/lib/home-route";
 
-function trackHeaderNavClick(target: string, mode?: HomeMode) {
-  trackYmGoal("header_nav_click", { target, mode: mode ?? "unknown" });
+function trackHeaderNavClick(target: string) {
+  trackYmGoal("header_nav_click", { target });
 }
 
 interface HeaderProps {
   selectedCity?: string;
   onCityClick?: () => void;
   showCitySelector?: boolean;
-  showHomeModeToggle?: boolean;
-  homeMode?: HomeMode;
-  onHomeModeChange?: (mode: HomeMode) => void;
 }
 
 export function Header(props: HeaderProps = {}) {
@@ -35,24 +26,15 @@ export function Header(props: HeaderProps = {}) {
     selectedCity: propSelectedCity,
     onCityClick,
     showCitySelector = true,
-    showHomeModeToggle = false,
-    homeMode = "search",
-    onHomeModeChange,
   } = props || {};
   const cityContext = useCityOptional();
   const selectedCityFromContext = cityContext?.selectedCity ?? '';
   const { t } = useI18n();
   const { user, isAuthenticated, openAuthModal, logout } = useAuth();
   const navigate = useNavigate();
-  const { pathname } = useLocation();
   const logoHref = getLogoHref();
   const handleLogoClick = () => {
-    const mode = resolveHomeModeForLanding(
-      pathname,
-      showHomeModeToggle ? homeMode : undefined,
-    );
-    persistHomeMode(mode);
-    trackHeaderNavClick("logo", mode);
+    trackHeaderNavClick("logo");
   };
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isRegionOpen, setIsRegionOpen] = useState(false);
@@ -71,10 +53,7 @@ export function Header(props: HeaderProps = {}) {
     else setIsRegionOpen(true);
   };
   const profileRef = useRef<HTMLDivElement>(null);
-  const modeSearchLabel = t.common.search;
-  const modeSheltersLabel = t.header.shelters;
-  const isSheltersMode = showHomeModeToggle && homeMode === "shelters";
-  const ecosystemTagline = "Экосистема помощи животным";
+  const ecosystemTagline = "���������� ������ ��������";
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent | TouchEvent) => {
@@ -113,72 +92,16 @@ export function Header(props: HeaderProps = {}) {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex gap-4 items-center">
-            {showHomeModeToggle && (
-              <div
-                className="inline-flex h-12 items-center gap-1 rounded-full border border-border bg-card px-1.5"
-                role="group"
-                aria-label="Переключатель режима"
+            <Button asChild>
+              <Link
+                to="/create"
+                className={`${landingHeaderPrimaryCtaClass} shrink-0`}
+                onClick={() => trackHeaderNavClick("create_ad")}
               >
-                <button
-                  type="button"
-                  onClick={() => onHomeModeChange?.("search")}
-                  className={`inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors ${
-                    homeMode === "search"
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "text-muted-foreground hover:bg-muted"
-                  }`}
-                  aria-label={modeSearchLabel}
-                >
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="inline-flex h-full w-full items-center justify-center">
-                        <Search size={18} />
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom" sideOffset={8}>{`Режим: ${modeSearchLabel}`}</TooltipContent>
-                  </Tooltip>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onHomeModeChange?.("shelters")}
-                  className={`inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors ${
-                    homeMode === "shelters"
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "text-muted-foreground hover:bg-muted"
-                  }`}
-                  aria-label={modeSheltersLabel}
-                >
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="inline-flex h-full w-full items-center justify-center">
-                        <Building2 size={18} />
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom" sideOffset={8}>{`Режим: ${modeSheltersLabel}`}</TooltipContent>
-                  </Tooltip>
-                </button>
-              </div>
-            )}
-            {showHomeModeToggle ? (
-              <>
-                <Button asChild>
-                  <Link
-                    to={isSheltersMode ? "/shelters" : "/create?mode=quick"}
-                    className={`${landingHeaderPrimaryCtaClass} shrink-0`}
-                    onClick={() => trackHeaderNavClick(isSheltersMode ? "view_shelters" : "create_ad", homeMode)}
-                  >
-                    {isSheltersMode ? (
-                      <span>Смотреть приюты</span>
-                    ) : (
-                      <>
-                        <span className="text-xl leading-none">+</span>
-                        <span>{t.landing.header.createAd}</span>
-                      </>
-                    )}
-                  </Link>
-                </Button>
-              </>
-            ) : null}
+                <span className="text-xl leading-none">+</span>
+                <span>{t.landing.header.createAd}</span>
+              </Link>
+            </Button>
             
             {showCitySelector && (
               <button
@@ -208,7 +131,7 @@ export function Header(props: HeaderProps = {}) {
 
                   {/* Profile Dropdown */}
                   {isProfileOpen && (
-                    <div className="absolute right-0 z-[100] mt-2 w-64 rounded-xl border border-border bg-card py-2 shadow-lg">
+                    <div className="absolute right-0 z-[100] mt-2 w-64 rounded-md border border-border bg-card py-2 shadow-lg">
                       <div className="px-4 py-3 border-b border-border">
                         <p className="font-bold text-foreground">{user.name}</p>
                         <p className="text-sm text-muted-foreground truncate">{user.email}</p>
@@ -240,11 +163,11 @@ export function Header(props: HeaderProps = {}) {
                           <Settings size={18} className="text-muted-foreground" />
                           <span className="text-foreground">{t.landing.header.settings}</span>
                         </button>
-                        <button type="button" onClick={() => { navigate("/blog"); setIsProfileOpen(false); trackHeaderNavClick("blog_profile_menu", homeMode); }} className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-muted">
+                        <button type="button" onClick={() => { navigate("/blog"); setIsProfileOpen(false); trackHeaderNavClick("blog_profile_menu"); }} className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-muted">
                           <FileText size={18} className="text-muted-foreground" />
                           <span className="text-foreground">{t.landing.header.blog}</span>
                         </button>
-                        <button type="button" onClick={() => { navigate("/guides"); setIsProfileOpen(false); trackHeaderNavClick("guides_profile_menu", homeMode); }} className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-muted">
+                        <button type="button" onClick={() => { navigate("/guides"); setIsProfileOpen(false); trackHeaderNavClick("guides_profile_menu"); }} className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-muted">
                           <CirclePlay size={18} className="text-muted-foreground" />
                           <span className="text-foreground">{t.header.guides}</span>
                         </button>
@@ -279,7 +202,7 @@ export function Header(props: HeaderProps = {}) {
             </div>
           </nav>
 
-          {/* Mobile Navigation — burger only, rest moved to MobileBottomNav */}
+          {/* Mobile Navigation � burger only, rest moved to MobileBottomNav */}
           <nav className="md:hidden flex items-center">
             <button
               type="button"
@@ -308,7 +231,7 @@ export function Header(props: HeaderProps = {}) {
         )}
       </div>
 
-      {/* City Select Modal — когда город не управляется родителем (страницы без onCityClick) */}
+      {/* City Select Modal � ����� ����� �� ����������� ��������� (�������� ��� onCityClick) */}
       {!hasCityControl && cityContext && showCitySelector && (
         <CitySelectModal
           open={isRegionOpen}
@@ -327,7 +250,7 @@ export function Header(props: HeaderProps = {}) {
       )}
     </header>
 
-    {/* Вне шапки: иначе fixed+z-index заперты в контексте z-40 и меню оказывается под контентом */}
+    {/* ��� �����: ����� fixed+z-index ������� � ��������� z-40 � ���� ����������� ��� ��������� */}
     <MobileMenuDrawer open={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
     </>
   );

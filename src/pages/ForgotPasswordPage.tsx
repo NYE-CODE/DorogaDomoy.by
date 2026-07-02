@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { Mail, ArrowRight } from 'lucide-react';
@@ -36,9 +36,9 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="landing-theme min-h-screen flex flex-col bg-muted/30 dark:bg-background">
-      <Header showCitySelector showHomeModeToggle={false} />
+      <Header showCitySelector />
       <main className="flex-1 px-4 py-10">
-        <div className="mx-auto max-w-md rounded-2xl border border-border bg-card p-8 shadow-sm">
+        <div className="mx-auto max-w-md rounded-lg border border-border bg-card p-8 shadow-sm">
           <h1 className="typo-h1">{fp.title}</h1>
           <p className="mt-2 text-sm text-muted-foreground">{fp.subtitle}</p>
 

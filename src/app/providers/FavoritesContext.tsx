@@ -1,4 +1,4 @@
-п»їimport React, {
+import React, {
   createContext,
   useCallback,
   useContext,
@@ -14,7 +14,7 @@ import { useI18n } from './I18nContext';
 const STORAGE_KEY = 'dd_favorite_pet_ids_v1';
 const MAX_GUEST_FAVORITES = 200;
 
-/** РџРѕСЂСЏРґРѕРє id РІ Р»РѕРєР°Р»СЊРЅРѕРј РёР·Р±СЂР°РЅРЅРѕРј (РґР»СЏ РіРѕСЃС‚РµРІРѕР№ СЃС‚СЂР°РЅРёС†С‹ В«РР·Р±СЂР°РЅРЅРѕРµВ»). */
+/** Порядок id в локальном избранном (для гостевой страницы «Избранное»). */
 export function readGuestFavoriteIdsFromStorage(): string[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -77,7 +77,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
           await favoritesApi.importBatch(local);
           if (!cancelled) writeLocalIds([]);
         } catch {
-          /* РѕСЃС‚Р°РІР»СЏРµРј local вЂ” РїРѕРІС‚РѕСЂ РїСЂРё СЃР»РµРґСѓСЋС‰РµРј Р·Р°С…РѕРґРµ */
+          /* оставляем local — повтор при следующем заходе */
         }
       }
       if (cancelled) return;

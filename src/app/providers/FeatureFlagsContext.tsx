@@ -1,4 +1,4 @@
-﻿import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { featureFlagsApi } from "@/shared/api/client";
 
 export interface FeatureFlagsState {

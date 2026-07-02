@@ -1,2 +1,2 @@
-п»ї/** @deprecated РСЃРїРѕР»СЊР·СѓР№С‚Рµ `@/pages/ProfilePage.tsx`. */
+/** @deprecated Используйте `@/pages/ProfilePage.tsx`. */
 export { default } from '../src/pages/ProfilePage.tsx';

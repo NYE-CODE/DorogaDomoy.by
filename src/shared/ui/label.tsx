@@ -1,1 +1,1 @@
-﻿export * from './_primitives/label';
+export * from './_primitives/label';

@@ -1,4 +1,4 @@
-п»їimport { Search, X } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { API_BASE, usersApi } from '../api/client';
 import { useI18n } from '../context/I18nContext';
@@ -73,7 +73,7 @@ export function DeleteReasonModal({
       const found = await usersApi.findByHelperCode(normalizedCode);
       setCandidate(found);
     } catch (e) {
-      setLookupError(e instanceof Error ? e.message : 'РќРµ СѓРґР°Р»РѕСЃСЊ РЅР°Р№С‚Рё РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ');
+      setLookupError(e instanceof Error ? e.message : 'Не удалось найти пользователя');
     } finally {
       setLookupLoading(false);
     }
@@ -99,7 +99,7 @@ export function DeleteReasonModal({
 
   return (
     <Dialog open onOpenChange={(next) => !next && onClose()}>
-      <DialogContent className="max-w-md rounded-2xl p-0" showCloseButton={false}>
+      <DialogContent className="max-w-md rounded-lg p-0" showCloseButton={false}>
         <DialogHeader className="border-b border-border p-4">
           <div className="flex items-start justify-between gap-4">
           <div>
@@ -178,7 +178,7 @@ export function DeleteReasonModal({
                   }}
                   className="w-4 h-4 text-primary focus:ring-primary"
                 />
-                РќР°С‡РёСЃР»РёС‚СЊ РѕС‡РєРё Р·Р° РїРѕРјРѕС‰СЊ (+{rewardPoints})
+                Начислить очки за помощь (+{rewardPoints})
               </label>
 
               {awardPoints && (
@@ -192,7 +192,7 @@ export function DeleteReasonModal({
                         setLookupError(null);
                         setCandidate(null);
                       }}
-                      placeholder="ID РїРѕР»СѓС‡Р°С‚РµР»СЏ РѕС‡РєРѕРІ (DD-XXXXXXXX)"
+                      placeholder="ID получателя очков (DD-XXXXXXXX)"
                       className="flex-1"
                     />
                     <Button

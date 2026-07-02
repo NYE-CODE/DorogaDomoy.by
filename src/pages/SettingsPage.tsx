@@ -1,4 +1,4 @@
-﻿import { Header } from '@/widgets/layout/Header';
+import { Header } from '@/widgets/layout/Header';
 import { Footer } from '@/widgets/layout/Footer';
 import { SettingsContent } from '../../components/settings-page';
 

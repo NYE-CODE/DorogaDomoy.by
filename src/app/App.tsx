@@ -10,7 +10,6 @@ import { SeoRouteSync } from '@/widgets/seo/SeoRouteSync';
 import { ScrollToTopOnRouteChange } from '@/widgets/seo/ScrollToTopOnRouteChange';
 import { MobileBottomNav } from '@/widgets/layout/MobileBottomNav';
 import { SkipToContent } from '@/widgets/layout/SkipToContent';
-import { ModeOnboardingTip } from '../../components/mode-onboarding-tip';
 import { CookieConsentBanner } from '../../components/cookie-consent-banner';
 import { MainContentLandmark } from '@/widgets/layout/MainContentLandmark';
 import { MetrikaTracker } from '@/app/router/MetrikaTracker';
@@ -45,7 +44,6 @@ export function App() {
                     </ErrorBoundary>
                   </Suspense>
                   <MobileBottomNav />
-                  <ModeOnboardingTip />
                   <CookieConsentBanner />
                 </ShelterPetBrowseProvider>
               </CityProvider>

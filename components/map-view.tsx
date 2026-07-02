@@ -1,14 +1,16 @@
-﻿import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
+import { createRoot, type Root } from 'react-dom/client';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet.markercluster';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import { Pet } from '../types/pet';
-import { statusLabels, animalTypeLabels, statusColors, formatDate } from '../utils/pet-helpers';
-import { getPetPhotoCircleDivIcon, getSafePetPhotoSrc } from '../utils/leaflet-pet-photo-icon';
+import { getPetPhotoCircleDivIcon } from '../utils/leaflet-pet-photo-icon';
+import { useI18n } from '@/app/providers/I18nContext';
+import { PetMapPopup } from '@/entities/pet/ui/PetMapPopup';
 import { tokens } from '@/shared/styles/tokens';
 
-const { textSecondary, textDisabled, primary, textOnBrand, bgBase } = tokens.colors;
+const { primary, textOnBrand, bgBase } = tokens.colors;
 const mapClusterShadow = tokens.shadow.mapCluster;
 
 interface MapViewProps {
@@ -21,63 +23,6 @@ interface MapViewProps {
 
 const isTouchDevice = typeof window !== 'undefined' &&
   ('ontouchstart' in window || navigator.maxTouchPoints > 0);
-
-function createPreviewContent(pet: Pet): HTMLDivElement {
-  const container = document.createElement('div');
-  container.style.width = '12rem';
-
-  const image = document.createElement('img');
-  image.src = getSafePetPhotoSrc(pet.photos?.[0]);
-  image.alt = animalTypeLabels[pet.animalType];
-  image.loading = 'lazy';
-  image.style.width = '100%';
-  image.style.height = '128px';
-  image.style.objectFit = 'cover';
-  image.style.borderRadius = '8px';
-  image.style.marginBottom = '8px';
-  container.appendChild(image);
-
-  const info = document.createElement('div');
-  info.style.display = 'flex';
-  info.style.flexDirection = 'column';
-  info.style.gap = '4px';
-
-  const title = document.createElement('h4');
-  title.style.fontWeight = '600';
-  title.style.fontSize = '14px';
-  title.style.margin = '0';
-  title.textContent = pet.breed
-    ? `${animalTypeLabels[pet.animalType]} · ${pet.breed}`
-    : animalTypeLabels[pet.animalType];
-  info.appendChild(title);
-
-  const status = document.createElement('div');
-  status.className = statusColors[pet.status];
-  status.style.display = 'inline-flex';
-  status.style.padding = '2px 6px';
-  status.style.borderRadius = '4px';
-  status.style.fontSize = '12px';
-  status.style.width = 'fit-content';
-  status.textContent = statusLabels[pet.status];
-  info.appendChild(status);
-
-  const city = document.createElement('p');
-  city.style.fontSize = '12px';
-  city.style.color = textSecondary;
-  city.style.margin = '0';
-  city.textContent = pet.city;
-  info.appendChild(city);
-
-  const publishedAt = document.createElement('p');
-  publishedAt.style.fontSize = '12px';
-  publishedAt.style.color = textDisabled;
-  publishedAt.style.margin = '0';
-  publishedAt.textContent = formatDate(pet.publishedAt);
-  info.appendChild(publishedAt);
-
-  container.appendChild(info);
-  return container;
-}
 
 function createClusterGroup(): L.MarkerClusterGroup {
   return L.markerClusterGroup({
@@ -101,9 +46,29 @@ function createClusterGroup(): L.MarkerClusterGroup {
 }
 
 export default function MapView({ pets, onPetClick, onBoundsChange, center = [53.9006, 27.5590], zoom = 11 }: MapViewProps) {
+  const { t } = useI18n();
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersLayerRef = useRef<L.MarkerClusterGroup | null>(null);
+  const previewRootsRef = useRef<Root[]>([]);
+
+  /** Рендерит PetMapPopup в отдельный React-корень: Leaflet принимает готовый DOM-узел. */
+  const createPreviewNode = (pet: Pet, onDetails?: () => void): HTMLDivElement => {
+    const container = document.createElement('div');
+    const animal = t.pet.animalType[pet.animalType];
+    const root = createRoot(container);
+    root.render(
+      <PetMapPopup
+        pet={pet}
+        title={pet.breed ? `${animal} — ${pet.breed}` : animal}
+        statusLabel={t.pet.status[pet.status]}
+        detailsLabel={t.petCard.details}
+        onDetails={onDetails}
+      />,
+    );
+    previewRootsRef.current.push(root);
+    return container;
+  };
 
   // Initialize Map
   useEffect(() => {
@@ -163,26 +128,24 @@ export default function MapView({ pets, onPetClick, onBoundsChange, center = [53
         { icon: getPetPhotoCircleDivIcon({ photoUrl: pet.photos?.[0], status: pet.status }) }
       );
 
-      const previewContent = createPreviewContent(pet);
-
       if (isTouchDevice) {
-        previewContent.style.cursor = 'pointer';
-        previewContent.addEventListener('click', () => {
-          onPetClick(pet);
-          mapInstanceRef.current?.closePopup();
-        });
-
-        marker.bindPopup(previewContent, {
-          offset: [0, -10],
-          closeButton: true,
-          className: 'pet-preview-popup',
-        });
+        marker.bindPopup(
+          createPreviewNode(pet, () => {
+            onPetClick(pet);
+            mapInstanceRef.current?.closePopup();
+          }),
+          {
+            offset: [0, -10],
+            closeButton: true,
+            className: 'pet-preview-popup',
+          },
+        );
       } else {
         marker.on('click', () => {
           onPetClick(pet);
         });
 
-        marker.bindTooltip(createPreviewContent(pet), {
+        marker.bindTooltip(createPreviewNode(pet), {
           direction: 'top',
           offset: [0, -10],
           opacity: 0.95,
@@ -192,7 +155,13 @@ export default function MapView({ pets, onPetClick, onBoundsChange, center = [53
       markersLayerRef.current?.addLayer(marker);
     });
 
-  }, [pets, onPetClick]);
+    return () => {
+      const roots = previewRootsRef.current;
+      previewRootsRef.current = [];
+      /* Асинхронно: React запрещает синхронный unmount корня из жизненного цикла другого дерева. */
+      setTimeout(() => roots.forEach(root => root.unmount()), 0);
+    };
+  }, [pets, onPetClick, t]);
 
   return (
     <div className="h-full w-full rounded-lg overflow-hidden border border-border">

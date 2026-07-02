@@ -1,1 +1,1 @@
-﻿export * from './_primitives/collapsible.tsx';
+export * from './_primitives/collapsible.tsx';

@@ -38,10 +38,12 @@ import { Header } from '@/widgets/layout/Header';
 import { PageLoader } from '@/shared/ui/page-loader';
 import { Button } from '@/shared/ui/button';
 import { FavoriteHeartButton } from '../../components/favorite-heart-button';
+import { RevealPhoneButton } from '../../components/reveal-phone-button';
 import { ShelterPetTraits } from '../../components/ShelterPetTraits';
 import { useI18n } from '@/app/providers/I18nContext';
 import type { Pet } from '@/entities/pet/model/types';
 import { formatCalendarDate, formatRelativeTime } from '@/shared/lib/pet-helpers';
+import { petScenarioSoftPillClass } from '@/shared/lib/pet-scenario-colors';
 import { appMessengerCtaSizingClass, appOutlineCtaClass, appPrimaryCtaClass } from '@/shared/styles/cta-classes';
 import { applySeo, canonicalUrlFromPath, SEO_KEYWORDS } from '@/shared/lib/seo';
 import { cn } from '@/shared/ui/utils';
@@ -264,8 +266,8 @@ export default function ShelterPetDetailPage() {
       if (s === 'not_for_adoption') return t.myShelterPetsList.statusNotForAdoption;
       return t.myShelterPetsList.statusAvailable;
     })();
-    const title = `${pet.name?.trim() || pet.breed || t.pet.animalType[pet.animalType]} вЂ” РёС‰РµС‚ РґРѕРј`;
-    const description = `${adoptionSeo} В· ${pet.city}. РЈР·РЅР°Р№С‚Рµ Р±РѕР»СЊС€Рµ Рѕ РїРёС‚РѕРјС†Рµ РЅР° DorogaDomoy.by`;
+    const title = `${pet.name?.trim() || pet.breed || t.pet.animalType[pet.animalType]} — ищет дом`;
+    const description = `${adoptionSeo} · ${pet.city}. Узнайте больше о питомце на DorogaDomoy.by`;
     applySeo({
       title,
       description,
@@ -506,7 +508,7 @@ export default function ShelterPetDetailPage() {
 
   const renderFundraisingCardBody = () => (
     <>
-      <div className="mb-5 hidden lg:inline-flex rounded-xl border border-border bg-background p-1">
+      <div className="mb-5 hidden lg:inline-flex rounded-md border border-border bg-background p-1">
         <button
           type="button"
           onClick={() => setFundraisingPanel('fundraising')}
@@ -517,7 +519,7 @@ export default function ShelterPetDetailPage() {
               : 'text-muted-foreground hover:bg-muted',
           )}
         >
-          РЎР±РѕСЂ
+          Сбор
         </button>
         <button
           type="button"
@@ -529,17 +531,17 @@ export default function ShelterPetDetailPage() {
               : 'text-muted-foreground hover:bg-muted',
           )}
         >
-          РСЃС‚РѕСЂРёСЏ СЃР±РѕСЂРѕРІ
+          История сборов
         </button>
       </div>
 
       {showCampaign ? (
         <div>
-          <h2 className="typo-h2">РўРµРєСѓС‰РёР№ СЃР±РѕСЂ</h2>
+          <h2 className="typo-h2">Текущий сбор</h2>
           {campaignsLoading ? (
-            <p className="mt-3 text-sm text-muted-foreground">Р—Р°РіСЂСѓР·РєР° СЃР±РѕСЂР°...</p>
+            <p className="mt-3 text-sm text-muted-foreground">Загрузка сбора...</p>
           ) : currentCampaign ? (
-            <div className="mt-4 space-y-4 rounded-xl border border-border/70 bg-muted/20 p-4">
+            <div className="mt-4 space-y-4 rounded-md border border-border/70 bg-muted/20 p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <h3 className="text-lg font-semibold">{currentCampaign.title}</h3>
@@ -547,43 +549,43 @@ export default function ShelterPetDetailPage() {
                     <p className="mt-1 text-sm text-muted-foreground">{currentCampaign.description}</p>
                   ) : null}
                 </div>
-                <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">РђРєС‚РёРІРЅС‹Р№</span>
+                <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">Активный</span>
               </div>
               <div className="grid gap-2 text-sm sm:grid-cols-3">
-                <p><span className="text-muted-foreground">Р¦РµР»СЊ: </span>{currentCampaign.goal_amount} BYN</p>
-                <p><span className="text-muted-foreground">РЎРѕР±СЂР°РЅРѕ: </span>{currentCampaign.collected_amount} BYN</p>
-                <p><span className="text-muted-foreground">РџСЂРѕРіСЂРµСЃСЃ: </span>{progressPercent}%</p>
+                <p><span className="text-muted-foreground">Цель: </span>{currentCampaign.goal_amount} BYN</p>
+                <p><span className="text-muted-foreground">Собрано: </span>{currentCampaign.collected_amount} BYN</p>
+                <p><span className="text-muted-foreground">Прогресс: </span>{progressPercent}%</p>
               </div>
               <p className="text-xs text-muted-foreground">
-                РћР±РЅРѕРІР»РµРЅРѕ: {formatCalendarDate(new Date(currentCampaign.updated_at))}
+                Обновлено: {formatCalendarDate(new Date(currentCampaign.updated_at))}
               </p>
               <div className="h-2 rounded-full bg-muted">
                 <div className="h-2 rounded-full bg-primary transition-all" style={{ width: `${progressPercent}%` }} />
               </div>
               {hasValidCurrentCampaignEndsAt && currentCampaignEndsAt ? (
                 <p className="text-xs text-muted-foreground">
-                  РЎСЂРѕРє: РґРѕ {formatCalendarDate(currentCampaignEndsAt)}
+                  Срок: до {formatCalendarDate(currentCampaignEndsAt)}
                 </p>
               ) : null}
               <Button type="button" variant="outline" onClick={() => setShowHelpDetails((v) => !v)}>
-                {showHelpDetails ? 'РЎРєСЂС‹С‚СЊ СЂРµРєРІРёР·РёС‚С‹' : 'РљР°Рє РїРѕРјРѕС‡СЊ'}
+                {showHelpDetails ? 'Скрыть реквизиты' : 'Как помочь'}
               </Button>
               {showHelpDetails ? (
                 <div className="rounded-lg border border-border bg-background p-3 text-sm whitespace-pre-line">
-                  {currentCampaign.help_details?.trim() || 'Р РµРєРІРёР·РёС‚С‹ РїРѕРєР° РЅРµ СѓРєР°Р·Р°РЅС‹ РѕСЂРіР°РЅРёР·Р°С†РёРµР№.'}
+                  {currentCampaign.help_details?.trim() || 'Реквизиты пока не указаны организацией.'}
                 </div>
               ) : null}
             </div>
           ) : (
             <div className="mt-3 space-y-3">
-              <p className="text-muted-foreground">РђРєС‚РёРІРЅРѕРіРѕ СЃР±РѕСЂР° РїРѕРєР° РЅРµС‚.</p>
+              <p className="text-muted-foreground">Активного сбора пока нет.</p>
             </div>
           )}
         </div>
       ) : null}
       {showHistory ? (
         <div>
-          <h2 className="typo-h2">РСЃС‚РѕСЂРёСЏ СЃР±РѕСЂРѕРІ</h2>
+          <h2 className="typo-h2">История сборов</h2>
           {historyCampaigns.length === 0 ? (
             <p className="mt-3 text-muted-foreground">
               {t.petDetail.shelterCampaignHistoryEmpty}
@@ -591,17 +593,17 @@ export default function ShelterPetDetailPage() {
           ) : (
             <div className="mt-4 space-y-3">
               {historyCampaigns.map((item) => (
-                <div key={item.id} className="rounded-xl border border-border/70 p-4">
+                <div key={item.id} className="rounded-md border border-border/70 p-4">
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <p className="font-medium">{item.title}</p>
-                    <span className="text-xs text-muted-foreground">Р—Р°РІРµСЂС€С‘РЅ</span>
+                    <span className="text-xs text-muted-foreground">Завершён</span>
                   </div>
                   <p className="mt-1 text-sm text-muted-foreground">
                     {item.collected_amount} / {item.goal_amount} BYN
                   </p>
                   {item.close_reason ? (
                     <p className="mt-1 text-xs text-muted-foreground">
-                      РџСЂРёС‡РёРЅР°: {item.close_reason}
+                      Причина: {item.close_reason}
                     </p>
                   ) : null}
                 </div>
@@ -647,7 +649,7 @@ export default function ShelterPetDetailPage() {
 
           <div className="flex flex-col gap-4 lg:grid lg:grid-cols-12 lg:items-start lg:gap-6">
             <div className="flex flex-col gap-4 lg:col-span-7 lg:col-start-6 lg:row-start-1 lg:self-start">
-            <div className="-mx-4 h-fit shrink-0 overflow-hidden border-y border-border bg-card sm:mx-0 sm:rounded-2xl sm:border">
+            <div className="-mx-4 h-fit shrink-0 overflow-hidden border-y border-border bg-card sm:mx-0 sm:rounded-lg sm:border">
               <div className="relative aspect-[4/3] w-full bg-muted">
                 {heroPhoto ? (
                   <img src={heroPhoto} alt={title} className="block size-full max-h-full object-cover" />
@@ -706,7 +708,7 @@ export default function ShelterPetDetailPage() {
 
             <div
               className={cn(
-                'hidden rounded-2xl border border-border bg-card p-6 shadow-sm lg:block',
+                'hidden rounded-lg border border-border bg-card p-6 shadow-sm lg:block',
                 !showFundraisingSection && 'hidden',
               )}
             >
@@ -715,9 +717,9 @@ export default function ShelterPetDetailPage() {
             </div>
 
             <div
-              className="flex gap-1 rounded-xl border border-border bg-background p-1 lg:hidden"
+              className="flex gap-1 rounded-md border border-border bg-background p-1 lg:hidden"
               role="tablist"
-              aria-label="Р Р°Р·РґРµР»С‹ РєР°СЂС‚РѕС‡РєРё РїРёС‚РѕРјС†Р°"
+              aria-label="Разделы карточки питомца"
             >
               <button
                 type="button"
@@ -731,7 +733,7 @@ export default function ShelterPetDetailPage() {
                     : 'text-muted-foreground hover:bg-muted',
                 )}
               >
-                Рћ РїРёС‚РѕРјС†Рµ
+                О питомце
               </button>
               <button
                 type="button"
@@ -745,7 +747,7 @@ export default function ShelterPetDetailPage() {
                     : 'text-muted-foreground hover:bg-muted',
                 )}
               >
-                РЎР±РѕСЂ
+                Сбор
               </button>
               <button
                 type="button"
@@ -759,28 +761,28 @@ export default function ShelterPetDetailPage() {
                     : 'text-muted-foreground hover:bg-muted',
                 )}
               >
-                РСЃС‚РѕСЂРёСЏ СЃР±РѕСЂРѕРІ
+                История сборов
               </button>
             </div>
 
             <div className="contents lg:col-span-5 lg:col-start-1 lg:row-start-1 lg:flex lg:flex-col lg:gap-4 lg:self-start">
             <div
               className={cn(
-                'rounded-2xl border border-border bg-card p-6 shadow-sm',
+                'rounded-lg border border-border bg-card p-6 shadow-sm',
                 !showAbout && 'hidden',
               )}
             >
-                <h2 className="typo-h2 mb-4 max-lg:hidden">Рћ РїРёС‚РѕРјС†Рµ</h2>
+                <h2 className="typo-h2 mb-4 max-lg:hidden">О питомце</h2>
                 <div className="space-y-3 text-sm">
                   <h1 className="typo-h1">{title}</h1>
                   <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
                     <div className="flex flex-wrap gap-2">
-                      <span className="rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary">{adoption}</span>
+                      <span className={cn('rounded-full px-3 py-1 text-sm font-medium', petScenarioSoftPillClass.shelter)}>{adoption}</span>
                       <span className="rounded-full bg-muted px-3 py-1 text-sm text-muted-foreground">{t.pet.animalType[pet.animalType]}</span>
                     </div>
                     <div
                       className="flex shrink-0 items-center gap-2.5"
-                      aria-label={`${t.pet.genderLabel}: ${t.pet.gender[pet.gender]}. Р—РґРѕСЂРѕРІСЊРµ: ${health}`}
+                      aria-label={`${t.pet.genderLabel}: ${t.pet.gender[pet.gender]}. Здоровье: ${health}`}
                     >
                       <span
                         title={`${t.pet.genderLabel}: ${t.pet.gender[pet.gender]}`}
@@ -788,7 +790,7 @@ export default function ShelterPetDetailPage() {
                       >
                         <ShelterPetGenderGlyph gender={pet.gender} />
                       </span>
-                      <span title={`Р—РґРѕСЂРѕРІСЊРµ: ${health}`} className="inline-flex text-rose-500">
+                      <span title={`Здоровье: ${health}`} className="inline-flex text-rose-500">
                         <ShelterPetHealthGlyph healthStatus={pet.healthStatus} clipId={treatmentClipId} />
                       </span>
                     </div>
@@ -815,7 +817,7 @@ export default function ShelterPetDetailPage() {
                   <p><span className="text-muted-foreground">{t.pet.breedLabel}: </span>{pet.breed?.trim() || '?'}</p>
                   <p><span className="text-muted-foreground">{t.pet.colorLabel}: </span>{colors}</p>
                   <p><span className="text-muted-foreground">{t.pet.ageLabel}: </span>{pet.approximateAge?.trim() || '?'}</p>
-                  <p><span className="text-muted-foreground">РЁРµСЂСЃС‚СЊ: </span>{coat}</p>
+                  <p><span className="text-muted-foreground">Шерсть: </span>{coat}</p>
                   <ShelterPetTraits pet={pet} className="mt-3" />
                   <div className="border-t border-border pt-3 text-muted-foreground">
                     <p className="inline-flex items-start gap-2">
@@ -841,7 +843,7 @@ export default function ShelterPetDetailPage() {
                     </Button>
 
                     {showShareMenu ? (
-                      <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-[min(70vh,520px)] overflow-hidden overflow-y-auto rounded-xl border border-border bg-card shadow-lg">
+                      <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-[min(70vh,520px)] overflow-hidden overflow-y-auto rounded-md border border-border bg-card shadow-lg">
                         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border/60 bg-card px-4 py-2.5 dark:border-border">
                           <span className="text-sm font-semibold text-foreground">{t.petDetail.share}</span>
                           <button
@@ -942,19 +944,19 @@ export default function ShelterPetDetailPage() {
 
             <div
               className={cn(
-                'rounded-2xl border border-border bg-card p-6 shadow-sm lg:hidden',
+                'rounded-lg border border-border bg-card p-6 shadow-sm lg:hidden',
                 !showFundraisingSection && 'hidden',
               )}
             >
               {renderFundraisingCardBody()}
             </div>
 
-            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
               <h2 className="typo-h2 mb-4">{t.landing.shelters.detailContacts}</h2>
               {shelter ? (
-                <div className="mb-4 rounded-xl border border-border/70 bg-muted/30 p-3 text-sm">
+                <div className="mb-4 rounded-md border border-border/70 bg-muted/30 p-3 text-sm">
                   <div className="flex gap-3">
-                    <div className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border/60 bg-background">
+                    <div className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border/60 bg-background">
                       {shelterLogoUrl ? (
                         <img
                           src={shelterLogoUrl}
@@ -982,14 +984,7 @@ export default function ShelterPetDetailPage() {
                 </div>
               ) : null}
               <div className="space-y-3">
-                {displayPhone ? (
-                  <Button className={cn(appPrimaryCtaClass, 'w-full')} asChild>
-                    <a href={`tel:${displayPhone}`}>
-                      <Phone className="size-5" />
-                      {displayPhone}
-                    </a>
-                  </Button>
-                ) : null}
+                {displayPhone ? <RevealPhoneButton phone={displayPhone} /> : null}
                 {displayTelegram ? (
                   <Button className={cn(appMessengerCtaSizingClass, 'w-full border-0 bg-telegram text-white hover:bg-telegram-hover')} asChild>
                     <a href={`https://t.me/${displayTelegram.replace('@', '')}`} target="_blank" rel="noopener noreferrer">
@@ -1018,7 +1013,7 @@ export default function ShelterPetDetailPage() {
                   <Button className={cn(appOutlineCtaClass, 'w-full')} asChild>
                     <a href={displayWebsiteUrl} target="_blank" rel="noopener noreferrer">
                       <Globe className="size-5" />
-                      РћС‚РєСЂС‹С‚СЊ СЃР°Р№С‚
+                      Открыть сайт
                     </a>
                   </Button>
                 ) : null}
@@ -1026,7 +1021,7 @@ export default function ShelterPetDetailPage() {
                   <p className="text-sm text-muted-foreground">
                     {shelter ? (
                       <>
-                        РЈ РѕСЂРіР°РЅРёР·Р°С†РёРё РЅРµС‚ РїСЂСЏРјС‹С… РєРѕРЅС‚Р°РєС‚РѕРІ вЂ” РЅР°РїРёС€РёС‚Рµ С‡РµСЂРµР·{' '}
+                        У организации нет прямых контактов — напишите через{' '}
                         <Link to={`/shelters/${shelter.id}`} className="font-medium text-primary underline-offset-4 hover:underline">
                           {t.backQuickMenu.shelterPage}
                         </Link>
@@ -1058,7 +1053,7 @@ export default function ShelterPetDetailPage() {
           }}
         >
           <div
-            className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-border bg-white shadow-xl dark:border-border dark:bg-card"
+            className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg border border-border bg-white shadow-xl dark:border-border dark:bg-card"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-6">

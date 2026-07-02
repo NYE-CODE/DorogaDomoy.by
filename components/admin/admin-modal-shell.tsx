@@ -18,7 +18,7 @@ interface AdminModalShellProps {
   maxWidthClass?: string;
 }
 
-/** Р”РѕСЃС‚СѓРїРЅР°СЏ РѕР±РѕР»РѕС‡РєР° РјРѕРґР°Р»РѕРє Р°РґРјРёРЅРєРё (Radix Dialog + focus trap). */
+/** Доступная оболочка модалок админки (Radix Dialog + focus trap). */
 export function AdminModalShell({
   open,
   onClose,
@@ -33,7 +33,7 @@ export function AdminModalShell({
       <DialogContent
         showCloseButton={false}
         className={cn(
-          'gap-0 overflow-hidden rounded-xl p-0',
+          'gap-0 overflow-hidden rounded-md p-0',
           maxWidthClass,
           'max-h-[90vh] flex flex-col',
         )}
@@ -49,7 +49,7 @@ export function AdminModalShell({
             type="button"
             onClick={onClose}
             className="rounded p-1 hover:bg-accent"
-            aria-label="Р—Р°РєСЂС‹С‚СЊ"
+            aria-label="Закрыть"
           >
             <X className="size-5 text-muted-foreground" />
           </button>

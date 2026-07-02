@@ -1,4 +1,4 @@
-﻿import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 
 const STORAGE_KEY = 'pet_finder_user_location';
 const CONFIRMED_KEY = 'pet_finder_city_confirmed';

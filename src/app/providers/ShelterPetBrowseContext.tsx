@@ -1,4 +1,4 @@
-п»їimport { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router';
 
 type BrowseNavState = {
@@ -57,7 +57,7 @@ export function useShelterPetBrowse() {
   return ctx;
 }
 
-/** Р‘РµР·РѕРїР°СЃРЅС‹Р№ РґРѕСЃС‚СѓРї РёР· MobileBottomNav вЂ” РїСЂРѕРІР°Р№РґРµСЂ РјРѕР¶РµС‚ Р±С‹С‚СЊ РІС‹С€Рµ СЂРѕСѓС‚РµСЂР°. */
+/** Безопасный доступ из MobileBottomNav — провайдер может быть выше роутера. */
 export function useShelterPetBrowseOptional() {
   return useContext(ShelterPetBrowseContext);
 }

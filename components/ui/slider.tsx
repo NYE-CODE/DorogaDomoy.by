@@ -1,2 +1,2 @@
-п»ї/** @deprecated РСЃРїРѕР»СЊР·СѓР№С‚Рµ `@/shared/ui/slider`. */
+/** @deprecated Используйте `@/shared/ui/slider`. */
 export * from '../../src/shared/ui/slider.tsx';

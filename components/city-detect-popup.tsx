@@ -1,4 +1,4 @@
-﻿import { MapPin } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 import { useScrollLock } from './ui/use-scroll-lock';
 import { useI18n } from '../context/I18nContext';
 
@@ -19,7 +19,7 @@ export function CityDetectPopup({ open, detectedCity, onConfirm, onReject }: Cit
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
 
-      <div className="relative bg-card rounded-2xl w-full max-w-sm shadow-2xl p-6 text-center animate-in fade-in zoom-in-95 duration-200">
+      <div className="relative bg-card rounded-lg w-full max-w-sm shadow-2xl p-6 text-center animate-in fade-in zoom-in-95 duration-200">
         <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
           <MapPin className="w-7 h-7 text-primary" />
         </div>

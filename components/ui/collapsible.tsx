@@ -1,2 +1,2 @@
-п»ї/** @deprecated РСЃРїРѕР»СЊР·СѓР№С‚Рµ `@/shared/ui/collapsible`. */
+/** @deprecated Используйте `@/shared/ui/collapsible`. */
 export * from '../../src/shared/ui/collapsible.tsx';

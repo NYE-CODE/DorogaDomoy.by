@@ -1,2 +1,2 @@
-п»ї/** @deprecated РСЃРїРѕР»СЊР·СѓР№С‚Рµ `@/shared/ui/empty-state`. */
+/** @deprecated Используйте `@/shared/ui/empty-state`. */
 export * from '../../src/shared/ui/empty-state.tsx';

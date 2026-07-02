@@ -1,4 +1,4 @@
-п»їimport { useState } from 'react';
+import { useState } from 'react';
 import {
   Home,
   Heart,
@@ -27,21 +27,21 @@ interface PetsAdminPanelProps {
 }
 
 function getArchiveReasonStyle(reason: string | undefined) {
-  if (!reason) return { label: 'вЂ”', className: 'text-muted-foreground/80' };
-  if (reason.includes('РІРµСЂРЅСѓР»СЃСЏ РґРѕРјРѕР№') || reason.includes('РЅР°Р№РґРµРЅ С…РѕР·СЏРёРЅ'))
+  if (!reason) return { label: '—', className: 'text-muted-foreground/80' };
+  if (reason.includes('вернулся домой') || reason.includes('найден хозяин'))
     return { label: reason, className: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400', icon: Home };
-  if (reason.includes('РїСЂРёСЃС‚СЂРѕРµРЅ'))
+  if (reason.includes('пристроен'))
     return { label: reason, className: 'bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-400', icon: Heart };
-  if (reason.includes('РїСЂРёСЋС‚'))
+  if (reason.includes('приют'))
     return { label: reason, className: 'bg-muted text-muted-foreground', icon: Building2 };
   return { label: reason, className: 'bg-muted dark:bg-accent text-foreground/90', icon: Archive };
 }
 
 function getRewardLabel(pet: Pet): string {
   if (pet.rewardMode === 'money') {
-    return pet.rewardAmountByn ? `${pet.rewardAmountByn} BYN` : 'Р”РµРЅСЊРіРё (РЅРµ СѓРєР°Р·Р°РЅРѕ)';
+    return pet.rewardAmountByn ? `${pet.rewardAmountByn} BYN` : 'Деньги (не указано)';
   }
-  return `${pet.rewardPoints ?? 0} РѕС‡РєРѕРІ`;
+  return `${pet.rewardPoints ?? 0} очков`;
 }
 
 function comparePetsByReward(a: Pet, b: Pet, dir: 1 | -1): number {
@@ -141,7 +141,7 @@ export function PetsAdminPanel({ pets, users = [], onDeletePet, onOpenPet }: Pet
     <div className={adm.page}>
       <div className={adm.headerRow}>
         <div className={adm.headerText}>
-          <h2 className={adm.title}>РЈРїСЂР°РІР»РµРЅРёРµ РѕР±СЉСЏРІР»РµРЅРёСЏРјРё</h2>
+          <h2 className={adm.title}>Управление объявлениями</h2>
         </div>
       </div>
 
@@ -149,7 +149,7 @@ export function PetsAdminPanel({ pets, users = [], onDeletePet, onOpenPet }: Pet
       <div className={adm.filtersCard}>
         <div className="flex flex-wrap gap-4 items-center">
           <div className="w-full sm:w-auto">
-            <label className={adm.labelFilter}>РЎС‚Р°С‚СѓСЃ Р°СЂС…РёРІР°С†РёРё</label>
+            <label className={adm.labelFilter}>Статус архивации</label>
             <div className="flex gap-2 overflow-x-auto scrollbar-hide">
               <button
                 onClick={() => {
@@ -162,7 +162,7 @@ export function PetsAdminPanel({ pets, users = [], onDeletePet, onOpenPet }: Pet
                     : 'bg-muted dark:bg-accent text-foreground/90 hover:bg-accent dark:hover:bg-accent'
                 }`}
               >
-                Р’СЃРµ ({pets.length})
+                Все ({pets.length})
               </button>
               <button
                 onClick={() => {
@@ -175,7 +175,7 @@ export function PetsAdminPanel({ pets, users = [], onDeletePet, onOpenPet }: Pet
                     : 'bg-muted dark:bg-accent text-foreground/90 hover:bg-accent dark:hover:bg-accent'
                 }`}
               >
-                РђРєС‚РёРІРЅС‹Рµ ({pets.filter(p => !p.isArchived).length})
+                Активные ({pets.filter(p => !p.isArchived).length})
               </button>
               <button
                 onClick={() => {
@@ -188,71 +188,71 @@ export function PetsAdminPanel({ pets, users = [], onDeletePet, onOpenPet }: Pet
                     : 'bg-muted dark:bg-accent text-foreground/90 hover:bg-accent dark:hover:bg-accent'
                 }`}
               >
-                РђСЂС…РёРІ ({pets.filter(p => p.isArchived).length})
+                Архив ({pets.filter(p => p.isArchived).length})
               </button>
             </div>
           </div>
 
           <div className="flex-1 min-w-[200px]">
-            <label className={adm.labelFilter}>РўРёРї Р¶РёРІРѕС‚РЅРѕРіРѕ</label>
+            <label className={adm.labelFilter}>Тип животного</label>
             <Select value={petsAnimalType} onValueChange={(v) => { setPetsAnimalType(v); setPetsPage(1); }}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Р’СЃРµ Р¶РёРІРѕС‚РЅС‹Рµ" />
+                <SelectValue placeholder="Все животные" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Р’СЃРµ Р¶РёРІРѕС‚РЅС‹Рµ</SelectItem>
-                <SelectItem value="cat">РљРѕС‚С‹</SelectItem>
-                <SelectItem value="dog">РЎРѕР±Р°РєРё</SelectItem>
-                <SelectItem value="other">Р”СЂСѓРіРёРµ</SelectItem>
+                <SelectItem value="all">Все животные</SelectItem>
+                <SelectItem value="cat">Коты</SelectItem>
+                <SelectItem value="dog">Собаки</SelectItem>
+                <SelectItem value="other">Другие</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="flex-1 min-w-[200px]">
-            <label className={adm.labelFilter}>РЎС‚Р°С‚СѓСЃ РѕР±СЉСЏРІР»РµРЅРёСЏ</label>
+            <label className={adm.labelFilter}>Статус объявления</label>
             <Select value={petsStatus} onValueChange={(v) => { setPetsStatus(v); setPetsPage(1); }}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Р’СЃРµ СЃС‚Р°С‚СѓСЃС‹" />
+                <SelectValue placeholder="Все статусы" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Р’СЃРµ СЃС‚Р°С‚СѓСЃС‹</SelectItem>
-                <SelectItem value="searching">РС‰СѓС‚</SelectItem>
-                <SelectItem value="found">РќР°Р№РґРµРЅ</SelectItem>
+                <SelectItem value="all">Все статусы</SelectItem>
+                <SelectItem value="searching">Ищут</SelectItem>
+                <SelectItem value="found">Найден</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="flex-1 min-w-[200px]">
-            <label className={adm.labelFilter}>РњРѕРґРµСЂР°С†РёСЏ</label>
+            <label className={adm.labelFilter}>Модерация</label>
             <Select value={petsModerationFilter} onValueChange={(v) => { setPetsModerationFilter(v); setPetsPage(1); }}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Р’СЃРµ" />
+                <SelectValue placeholder="Все" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Р’СЃРµ</SelectItem>
-                <SelectItem value="pending">РќР° РјРѕРґРµСЂР°С†РёРё</SelectItem>
-                <SelectItem value="approved">РћРїСѓР±Р»РёРєРѕРІР°РЅРѕ</SelectItem>
-                <SelectItem value="rejected">РћС‚РєР»РѕРЅРµРЅРѕ</SelectItem>
+                <SelectItem value="all">Все</SelectItem>
+                <SelectItem value="pending">На модерации</SelectItem>
+                <SelectItem value="approved">Опубликовано</SelectItem>
+                <SelectItem value="rejected">Отклонено</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="flex-1 min-w-[200px]">
-            <label className={adm.labelFilter}>Р”Р°С‚Р° РїСѓР±Р»РёРєР°С†РёРё</label>
+            <label className={adm.labelFilter}>Дата публикации</label>
             <Select value={petsDateFilter} onValueChange={(v) => { setPetsDateFilter(v); setPetsPage(1); }}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Р’СЃРµ РґР°С‚С‹" />
+                <SelectValue placeholder="Все даты" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Р’СЃРµ РґР°С‚С‹</SelectItem>
-                <SelectItem value="last7">Р—Р° РїРѕСЃР»РµРґРЅРёРµ 7 РґРЅРµР№</SelectItem>
-                <SelectItem value="last30">Р—Р° РїРѕСЃР»РµРґРЅРёРµ 30 РґРЅРµР№</SelectItem>
+                <SelectItem value="all">Все даты</SelectItem>
+                <SelectItem value="last7">За последние 7 дней</SelectItem>
+                <SelectItem value="last30">За последние 30 дней</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="text-sm text-muted-foreground ml-auto">
-            РќР°Р№РґРµРЅРѕ: {sortedPets.length} РѕР±СЉСЏРІР»РµРЅРёР№
+            Найдено: {sortedPets.length} объявлений
           </div>
         </div>
       </div>
@@ -262,45 +262,45 @@ export function PetsAdminPanel({ pets, users = [], onDeletePet, onOpenPet }: Pet
         <table className={`${adm.table} min-w-[700px]`}>
           <thead className={adm.thead}>
             <tr>
-              <th className={adm.th}>Р¤РѕС‚Рѕ</th>
-              <th className={adm.th}>РРЅС„РѕСЂРјР°С†РёСЏ</th>
-              <th className={adm.th}>РђРІС‚РѕСЂ</th>
-              <th className={adm.th}>РЎС‚Р°С‚СѓСЃ</th>
-              <th className={adm.th}>РњРѕРґРµСЂР°С†РёСЏ</th>
+              <th className={adm.th}>Фото</th>
+              <th className={adm.th}>Информация</th>
+              <th className={adm.th}>Автор</th>
+              <th className={adm.th}>Статус</th>
+              <th className={adm.th}>Модерация</th>
               <th className={`${adm.th} p-0`}>
                 <button
                   type="button"
                   className={petsSortThBtn}
-                  title="РЎРѕСЂС‚РёСЂРѕРІР°С‚СЊ РїРѕ РЅР°РіСЂР°РґРµ (СЃРЅР°С‡Р°Р»Р° РѕР±СЉСЏРІР»РµРЅРёСЏ В«РёС‰СѓС‚ РґРѕРјВ»; РґРµРЅСЊРіРё Рё РѕС‡РєРё РѕС‚РґРµР»СЊРЅРѕ)"
+                  title="Сортировать по награде (сначала объявления «ищут дом»; деньги и очки отдельно)"
                   onClick={() => togglePetsSort('reward')}
                 >
-                  РќР°РіСЂР°РґР°
+                  Награда
                   {petsSortIcon('reward')}
                 </button>
               </th>
-              <th className={adm.th}>РћС‡РєРё РЅР°С‡РёСЃР»РµРЅС‹</th>
+              <th className={adm.th}>Очки начислены</th>
               {petsFilter === 'archived' && (
-                <th className={adm.th}>РџСЂРёС‡РёРЅР°</th>
+                <th className={adm.th}>Причина</th>
               )}
               <th className={`${adm.th} p-0`}>
                 <button
                   type="button"
                   className={petsSortThBtn}
-                  title="РЎРѕСЂС‚РёСЂРѕРІР°С‚СЊ РїРѕ РґР°С‚Рµ РїСѓР±Р»РёРєР°С†РёРё"
+                  title="Сортировать по дате публикации"
                   onClick={() => togglePetsSort('date')}
                 >
-                  Р”Р°С‚Р°
+                  Дата
                   {petsSortIcon('date')}
                 </button>
               </th>
-              <th className={adm.th}>Р”РµР№СЃС‚РІРёСЏ</th>
+              <th className={adm.th}>Действия</th>
             </tr>
           </thead>
           <tbody className={adm.tbody}>
             {paginatedPets.length === 0 ? (
               <tr>
                 <td colSpan={petsFilter === 'archived' ? 10 : 9} className={adm.tdEmpty}>
-                  РћР±СЉСЏРІР»РµРЅРёСЏ РЅРµ РЅР°Р№РґРµРЅС‹
+                  Объявления не найдены
                 </td>
               </tr>
             ) : (
@@ -310,7 +310,7 @@ export function PetsAdminPanel({ pets, users = [], onDeletePet, onOpenPet }: Pet
                     <img src={pet.photos[0]} alt="" className="w-16 h-16 object-cover rounded-lg" />
                   </td>
                   <td className="px-4 py-3">
-                    <p className="font-medium text-foreground">{pet.breed || 'Р‘РµР· РїРѕСЂРѕРґС‹'}</p>
+                    <p className="font-medium text-foreground">{pet.breed || 'Без породы'}</p>
                     <p className="text-sm text-muted-foreground">{pet.city}</p>
                   </td>
                   <td className="px-4 py-3">
@@ -331,9 +331,9 @@ export function PetsAdminPanel({ pets, users = [], onDeletePet, onOpenPet }: Pet
                         ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
                         : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
                     }`}>
-                      {pet.moderationStatus === 'approved' ? 'РћРїСѓР±Р»РёРєРѕРІР°РЅРѕ' 
-                        : pet.moderationStatus === 'rejected' ? 'РћС‚РєР»РѕРЅРµРЅРѕ' 
-                        : 'РќР° РјРѕРґРµСЂР°С†РёРё'}
+                      {pet.moderationStatus === 'approved' ? 'Опубликовано' 
+                        : pet.moderationStatus === 'rejected' ? 'Отклонено' 
+                        : 'На модерации'}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-sm text-foreground/90 whitespace-nowrap">
@@ -342,7 +342,7 @@ export function PetsAdminPanel({ pets, users = [], onDeletePet, onOpenPet }: Pet
                         {getRewardLabel(pet)}
                       </span>
                     ) : (
-                      <span className="text-xs text-muted-foreground/80">вЂ”</span>
+                      <span className="text-xs text-muted-foreground/80">—</span>
                     )}
                   </td>
                   <td className="px-6 py-4 text-sm text-foreground/90 whitespace-nowrap">
@@ -351,7 +351,7 @@ export function PetsAdminPanel({ pets, users = [], onDeletePet, onOpenPet }: Pet
                         {formatDate(pet.rewardPointsAwardedAt)}
                       </span>
                     ) : (
-                      <span className="text-xs text-muted-foreground/80">РќРµС‚</span>
+                      <span className="text-xs text-muted-foreground/80">Нет</span>
                     )}
                   </td>
                   {petsFilter === 'archived' && (() => {
@@ -365,7 +365,7 @@ export function PetsAdminPanel({ pets, users = [], onDeletePet, onOpenPet }: Pet
                             {style.label}
                           </span>
                         ) : (
-                          <span className="text-xs text-muted-foreground/80">вЂ”</span>
+                          <span className="text-xs text-muted-foreground/80">—</span>
                         )}
                       </td>
                     );
@@ -377,7 +377,7 @@ export function PetsAdminPanel({ pets, users = [], onDeletePet, onOpenPet }: Pet
                     <div className="flex items-center gap-1">
                       <button
                         type="button"
-                        title="РћС‚РєСЂС‹С‚СЊ РѕР±СЉСЏРІР»РµРЅРёРµ"
+                        title="Открыть объявление"
                         onClick={(e) => {
                           e.stopPropagation();
                           onOpenPet?.(pet.id);
@@ -385,11 +385,11 @@ export function PetsAdminPanel({ pets, users = [], onDeletePet, onOpenPet }: Pet
                         className="p-2 rounded-lg text-primary hover:bg-primary/10 dark:hover:bg-primary/20"
                       >
                         <ExternalLink className="w-4 h-4" />
-                        <span className="sr-only">РћС‚РєСЂС‹С‚СЊ РѕР±СЉСЏРІР»РµРЅРёРµ</span>
+                        <span className="sr-only">Открыть объявление</span>
                       </button>
                       <button
                         type="button"
-                        title="РЈРґР°Р»РёС‚СЊ РѕР±СЉСЏРІР»РµРЅРёРµ"
+                        title="Удалить объявление"
                         onClick={(e) => {
                           e.stopPropagation();
                           onDeletePet(pet.id);
@@ -397,7 +397,7 @@ export function PetsAdminPanel({ pets, users = [], onDeletePet, onOpenPet }: Pet
                         className="p-2 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
                       >
                         <Trash2 className="w-4 h-4" />
-                        <span className="sr-only">РЈРґР°Р»РёС‚СЊ РѕР±СЉСЏРІР»РµРЅРёРµ</span>
+                        <span className="sr-only">Удалить объявление</span>
                       </button>
                     </div>
                   </td>
@@ -411,9 +411,9 @@ export function PetsAdminPanel({ pets, users = [], onDeletePet, onOpenPet }: Pet
 
       {selectedPet && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4" onClick={() => setSelectedPet(null)}>
-          <div className="bg-card rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-card rounded-md shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 py-4 border-b dark:border-border sticky top-0 bg-card z-10">
-              <h3 className="font-semibold text-foreground">РљР°СЂС‚РѕС‡РєР° РѕР±СЉСЏРІР»РµРЅРёСЏ</h3>
+              <h3 className="font-semibold text-foreground">Карточка объявления</h3>
               <button type="button" onClick={() => setSelectedPet(null)} className="p-1 hover:bg-accent rounded">
                 <X className="w-5 h-5 dark:text-muted-foreground/80" />
               </button>
@@ -421,32 +421,32 @@ export function PetsAdminPanel({ pets, users = [], onDeletePet, onOpenPet }: Pet
             <div className="px-6 py-4 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <p className="text-xs text-muted-foreground">РџРёС‚РѕРјРµС†</p>
-                  <p className="font-medium text-foreground">{selectedPet.breed || 'Р‘РµР· РїРѕСЂРѕРґС‹'} ({selectedPet.city})</p>
+                  <p className="text-xs text-muted-foreground">Питомец</p>
+                  <p className="font-medium text-foreground">{selectedPet.breed || 'Без породы'} ({selectedPet.city})</p>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">РђРІС‚РѕСЂ</p>
+                  <p className="text-xs text-muted-foreground">Автор</p>
                   <p className="font-medium text-foreground">{selectedPet.authorName}</p>
                 </div>
               </div>
 
               <div className="rounded-lg border border-border p-4">
-                <h4 className="font-semibold text-foreground mb-3">РРЅС„РѕСЂРјР°С†РёСЏ Рѕ РЅР°РіСЂР°РґРµ</h4>
+                <h4 className="font-semibold text-foreground mb-3">Информация о награде</h4>
                 <div className="space-y-2 text-sm">
                   <p className="text-foreground/90">
-                    <span className="text-muted-foreground">Р РµР¶РёРј: </span>
-                    {selectedPet.rewardMode === 'money' ? 'Р”РµРЅСЊРіРё' : 'РћС‡РєРё'}
+                    <span className="text-muted-foreground">Режим: </span>
+                    {selectedPet.rewardMode === 'money' ? 'Деньги' : 'Очки'}
                   </p>
                   <p className="text-foreground/90">
-                    <span className="text-muted-foreground">РЎСѓРјРјР°/РѕС‡РєРё: </span>
+                    <span className="text-muted-foreground">Сумма/очки: </span>
                     {getRewardLabel(selectedPet)}
                   </p>
                   <p className="text-foreground/90">
-                    <span className="text-muted-foreground">РќР°С‡РёСЃР»РµРЅРёРµ: </span>
-                    {selectedPet.rewardPointsAwardedAt ? formatDate(selectedPet.rewardPointsAwardedAt) : 'РџРѕРєР° РЅРµ РЅР°С‡РёСЃР»РµРЅРѕ'}
+                    <span className="text-muted-foreground">Начисление: </span>
+                    {selectedPet.rewardPointsAwardedAt ? formatDate(selectedPet.rewardPointsAwardedAt) : 'Пока не начислено'}
                   </p>
                   <p className="text-foreground/90">
-                    <span className="text-muted-foreground">РџРѕР»СѓС‡Р°С‚РµР»СЊ: </span>
+                    <span className="text-muted-foreground">Получатель: </span>
                     {selectedPet.rewardRecipientUserId ? (
                       (() => {
                         const recipient = users.find((u) => u.id === selectedPet.rewardRecipientUserId);
@@ -461,7 +461,7 @@ export function PetsAdminPanel({ pets, users = [], onDeletePet, onOpenPet }: Pet
                           </a>
                         );
                       })()
-                    ) : 'РќРµ РЅР°Р·РЅР°С‡РµРЅ'}
+                    ) : 'Не назначен'}
                   </p>
                 </div>
               </div>
@@ -469,12 +469,12 @@ export function PetsAdminPanel({ pets, users = [], onDeletePet, onOpenPet }: Pet
             <div className="flex justify-end gap-3 px-6 py-4 border-t dark:border-border">
               <button
                 type="button"
-                title="РћС‚РєСЂС‹С‚СЊ РѕР±СЉСЏРІР»РµРЅРёРµ РЅР° СЃР°Р№С‚Рµ"
+                title="Открыть объявление на сайте"
                 onClick={() => onOpenPet?.(selectedPet.id)}
                 className="p-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center justify-center"
               >
                 <ExternalLink className="w-5 h-5" />
-                <span className="sr-only">РћС‚РєСЂС‹С‚СЊ РѕР±СЉСЏРІР»РµРЅРёРµ РЅР° СЃР°Р№С‚Рµ</span>
+                <span className="sr-only">Открыть объявление на сайте</span>
               </button>
             </div>
           </div>

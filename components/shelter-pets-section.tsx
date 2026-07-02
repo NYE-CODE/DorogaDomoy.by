@@ -183,7 +183,7 @@ export function ShelterPetsSection({ shelterId, initialPets }: { shelterId: stri
             className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-card px-5 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted/70 md:text-base"
           >
             <Filter className="size-4" aria-hidden />
-            {showFilters ? 'РЎРєСЂС‹С‚СЊ С„РёР»СЊС‚СЂС‹' : 'РџРѕРєР°Р·Р°С‚СЊ С„РёР»СЊС‚СЂС‹'}
+            {showFilters ? 'Скрыть фильтры' : 'Показать фильтры'}
           </button>
         </div>
 
@@ -194,7 +194,7 @@ export function ShelterPetsSection({ shelterId, initialPets }: { shelterId: stri
             {showFilters ? (
               <div
                 className={cn(
-                  'rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-6',
+                  'rounded-lg border border-border bg-card p-4 shadow-sm sm:p-6',
                   loading && 'pointer-events-none opacity-60',
                 )}
                 aria-busy={loading}

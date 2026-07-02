@@ -1,1 +1,1 @@
-﻿export * from './_primitives/tabs.tsx';
+export * from './_primitives/tabs.tsx';

@@ -1,1 +1,1 @@
-﻿export * from './atoms/Badge';
+export * from './atoms/Badge';

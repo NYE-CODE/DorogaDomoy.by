@@ -1,2 +1,2 @@
-п»ї/** @deprecated РСЃРїРѕР»СЊР·СѓР№С‚Рµ `@/shared/ui/hover-card`. */
+/** @deprecated Используйте `@/shared/ui/hover-card`. */
 export * from '../../src/shared/ui/hover-card.tsx';

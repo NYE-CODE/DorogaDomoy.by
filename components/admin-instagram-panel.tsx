@@ -1,4 +1,4 @@
-ï»¿import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import {
   instagramApi,
@@ -313,9 +313,9 @@ export function AdminInstagramPanel() {
     }
   };
   const formatQueueDate = (value?: string | null) => {
-    if (!value) return 'â€”';
+    if (!value) return '—';
     const d = new Date(value);
-    return Number.isNaN(d.getTime()) ? 'â€”' : d.toLocaleString();
+    return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString();
   };
 
   if (loading) {
@@ -601,7 +601,7 @@ export function AdminInstagramPanel() {
         </div>
         <div className="mt-4 space-y-2">
           {queueLoading ? (
-            <div className="rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground dark:border-border dark:text-muted-foreground/80">
+            <div className="rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground dark:border-border dark:text-muted-foreground/80">
               {ig.loadingQueue}
             </div>
           ) : null}
@@ -613,7 +613,7 @@ export function AdminInstagramPanel() {
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="font-medium text-foreground flex items-center flex-wrap gap-2">
                   <span>{row.pet_id}</span>
-                  <span className="text-muted-foreground">â€¢ {row.format}</span>
+                  <span className="text-muted-foreground">• {row.format}</span>
                   <span
                     className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${queueStatusBadgeClass(row.status)}`}
                   >
@@ -623,11 +623,11 @@ export function AdminInstagramPanel() {
                 <div className="text-xs text-muted-foreground">{ig.attemptsLabel}: {row.attempts}</div>
               </div>
               <div className="mt-1 text-xs text-muted-foreground">
-                {ig.accountLabel}: {row.account_name || ig.notAssigned} â€¢ {ig.regionLabel}: {row.region_key || 'â€”'}
+                {ig.accountLabel}: {row.account_name || ig.notAssigned} • {ig.regionLabel}: {row.region_key || '—'}
               </div>
               <div className="mt-1 text-xs text-muted-foreground">
-                {ig.createdAtLabel}: {formatQueueDate(row.created_at)} â€¢ {ig.updatedAtLabel}: {formatQueueDate(row.updated_at)}
-                {' â€¢ '}
+                {ig.createdAtLabel}: {formatQueueDate(row.created_at)} • {ig.updatedAtLabel}: {formatQueueDate(row.updated_at)}
+                {' • '}
                 {ig.publishedAtLabel}: {formatQueueDate(row.published_at)}
               </div>
               {row.external_media_id ? (
@@ -679,7 +679,7 @@ export function AdminInstagramPanel() {
             </div>
           ))}
           {visiblePublications.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground dark:border-border dark:text-muted-foreground/80">
+            <div className="rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground dark:border-border dark:text-muted-foreground/80">
               {ig.queueEmpty}
             </div>
           ) : null}
@@ -707,7 +707,7 @@ export function AdminInstagramPanel() {
           onClick={() => setIsManualModalOpen(false)}
         >
           <div
-            className="w-full max-w-lg bg-card border border-border rounded-xl p-6"
+            className="w-full max-w-lg bg-card border border-border rounded-md p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-lg font-semibold text-foreground">{ig.manualModalTitle}</h3>

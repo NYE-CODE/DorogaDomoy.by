@@ -1,4 +1,4 @@
-/** Фирменный оранжевый подбора питомцев — semantic tokens. */
+﻿/** Фирменный оранжевый подбора питомцев — semantic tokens. */
 export const matchOrangeFabClass =
   'bg-primary text-primary-foreground shadow-lg shadow-primary/30 hover:bg-primary-hover transition-[background-color] duration-150 ease-in-out';
 
@@ -45,14 +45,14 @@ export const matchLikeButtonClass =
   'mx-auto flex size-[3.75rem] shrink-0 items-center justify-center rounded-full border-0 bg-success text-primary-foreground shadow-md transition-transform duration-150 ease-in-out active:scale-95 disabled:opacity-50 sm:size-16 lg:size-[4.5rem]';
 
 export const matchCardShellClass =
-  'relative h-full w-full overflow-hidden bg-card max-lg:rounded-none sm:rounded-2xl sm:border sm:border-border/80 sm:shadow-lg sm:ring-1 sm:ring-foreground/5 dark:sm:ring-foreground/10';
+  'relative h-full w-full overflow-hidden bg-card max-lg:rounded-none sm:rounded-lg sm:border sm:border-border/80 sm:shadow-lg sm:ring-1 sm:ring-foreground/5 dark:sm:ring-foreground/10';
 
 /** Область карточки на странице /match (десктоп) — без второй рамки. */
 export const matchDesktopStageClass = 'relative min-h-0 flex-1';
 
 /** Десктоп: одна карточка, без двойной обводки. */
 export const matchCardShellDesktopClass =
-  'relative h-full w-full overflow-hidden rounded-2xl border border-border/80 bg-card shadow-md lg:h-auto lg:overflow-visible';
+  'relative h-full w-full overflow-hidden rounded-lg border border-border/80 bg-card shadow-md lg:h-auto lg:overflow-visible';
 
 /** Фото занимает только область над шторкой (bottom задаётся inline). */
 export const matchCardPhotoClass =
@@ -75,10 +75,10 @@ export const matchSwipePassOverlayClass =
 
 /** Штампы «нравится» / «пропустить» при свайпе. */
 export const matchSwipeLikeStampClass =
-  'pointer-events-none absolute left-[8%] top-1/2 z-20 flex -translate-y-1/2 items-center gap-2 rounded-2xl border-[3px] border-emerald-500 bg-emerald-500/15 px-4 py-2.5 text-emerald-600 shadow-md backdrop-blur-sm dark:text-emerald-300';
+  'pointer-events-none absolute left-[8%] top-1/2 z-20 flex -translate-y-1/2 items-center gap-2 rounded-lg border-[3px] border-emerald-500 bg-emerald-500/15 px-4 py-2.5 text-emerald-600 shadow-md backdrop-blur-sm dark:text-emerald-300';
 
 export const matchSwipePassStampClass =
-  'pointer-events-none absolute right-[8%] top-1/2 z-20 flex -translate-y-1/2 items-center gap-2 rounded-2xl border-[3px] border-rose-500 bg-rose-500/15 px-4 py-2.5 text-rose-600 shadow-md backdrop-blur-sm dark:text-rose-300';
+  'pointer-events-none absolute right-[8%] top-1/2 z-20 flex -translate-y-1/2 items-center gap-2 rounded-lg border-[3px] border-rose-500 bg-rose-500/15 px-4 py-2.5 text-rose-600 shadow-md backdrop-blur-sm dark:text-rose-300';
 
 export const matchSwipeStampLabelClass =
   'text-lg font-black uppercase leading-none tracking-[0.18em] sm:text-xl';

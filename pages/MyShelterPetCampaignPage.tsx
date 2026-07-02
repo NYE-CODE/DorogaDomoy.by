@@ -1,2 +1,2 @@
-п»ї/** @deprecated РСЃРїРѕР»СЊР·СѓР№С‚Рµ `@/pages/MyShelterPetCampaignPage.tsx`. */
+/** @deprecated Используйте `@/pages/MyShelterPetCampaignPage.tsx`. */
 export { default } from '../src/pages/MyShelterPetCampaignPage.tsx';

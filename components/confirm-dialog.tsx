@@ -25,8 +25,8 @@ export function ConfirmDialog({
   title,
   description,
   onConfirm,
-  confirmText = 'ÐŸÐ¾Ð´Ñ‚Ð²ÐµÑ€Ð´Ð¸Ñ‚ÑŒ',
-  cancelText = 'ÐžÑ‚Ð¼ÐµÐ½Ð°',
+  confirmText = 'Ïîäòâåðäèòü',
+  cancelText = 'Îòìåíà',
   confirmClass = 'bg-primary hover:bg-primary/90 text-primary-foreground',
 }: ConfirmDialogProps) {
   const handleConfirm = () => {
@@ -40,7 +40,7 @@ export function ConfirmDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md rounded-2xl" onEscapeKeyDown={handleCancel}>
+      <DialogContent className="max-w-md rounded-lg" onEscapeKeyDown={handleCancel}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>

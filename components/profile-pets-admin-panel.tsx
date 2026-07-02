@@ -1,4 +1,4 @@
-п»їimport { useState } from 'react';
+import { useState } from 'react';
 import {
   Trash2,
   ExternalLink,
@@ -22,14 +22,14 @@ interface ProfilePetsAdminPanelProps {
 }
 
 const speciesLabels: Record<string, string> = {
-  dog: 'РЎРѕР±Р°РєР°',
-  cat: 'РљРѕС‚/РљРѕС€РєР°',
-  other: 'Р”СЂСѓРіРѕРµ',
+  dog: 'Собака',
+  cat: 'Кот/Кошка',
+  other: 'Другое',
 };
 
 const genderLabels: Record<string, string> = {
-  male: 'РњР°Р»СЊС‡РёРє',
-  female: 'Р”РµРІРѕС‡РєР°',
+  male: 'Мальчик',
+  female: 'Девочка',
 };
 
 import { PLACEHOLDER_PET_96 } from '../utils/placeholder-images';
@@ -109,7 +109,7 @@ export function ProfilePetsAdminPanel({ profilePets, onDeleteProfilePet }: Profi
     <div className={adm.page}>
       <div className={adm.headerRow}>
         <div className={adm.headerText}>
-          <h2 className={adm.title}>РџСЂРѕС„РёР»Рё РїРёС‚РѕРјС†РµРІ</h2>
+          <h2 className={adm.title}>Профили питомцев</h2>
         </div>
       </div>
 
@@ -117,12 +117,12 @@ export function ProfilePetsAdminPanel({ profilePets, onDeleteProfilePet }: Profi
       <div className={adm.filtersCard}>
         <div className="flex flex-wrap gap-4 items-end">
           <div className="flex-1 min-w-[250px]">
-            <label className={adm.labelFilter}>РџРѕРёСЃРє</label>
+            <label className={adm.labelFilter}>Поиск</label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/80" />
               <input
                 type="text"
-                placeholder="РРјСЏ, РїРѕСЂРѕРґР°, РІР»Р°РґРµР»РµС†, С‡РёРї..."
+                placeholder="Имя, порода, владелец, чип..."
                 value={searchQuery}
                 onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
                 className="w-full pl-9 pr-4 py-2.5 text-sm border border-border dark:bg-muted dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
@@ -131,22 +131,22 @@ export function ProfilePetsAdminPanel({ profilePets, onDeleteProfilePet }: Profi
           </div>
 
           <div className="min-w-[180px]">
-            <label className={adm.labelFilter}>Р’РёРґ Р¶РёРІРѕС‚РЅРѕРіРѕ</label>
+            <label className={adm.labelFilter}>Вид животного</label>
             <Select value={speciesFilter} onValueChange={(v) => { setSpeciesFilter(v); setPage(1); }}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Р’СЃРµ РІРёРґС‹" />
+                <SelectValue placeholder="Все виды" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Р’СЃРµ РІРёРґС‹</SelectItem>
-                <SelectItem value="dog">РЎРѕР±Р°РєРё</SelectItem>
-                <SelectItem value="cat">РљРѕС‚С‹</SelectItem>
-                <SelectItem value="other">Р”СЂСѓРіРёРµ</SelectItem>
+                <SelectItem value="all">Все виды</SelectItem>
+                <SelectItem value="dog">Собаки</SelectItem>
+                <SelectItem value="cat">Коты</SelectItem>
+                <SelectItem value="other">Другие</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="text-sm text-muted-foreground ml-auto">
-            РќР°Р№РґРµРЅРѕ: {sorted.length} РїСЂРѕС„РёР»РµР№
+            Найдено: {sorted.length} профилей
           </div>
         </div>
       </div>
@@ -157,30 +157,30 @@ export function ProfilePetsAdminPanel({ profilePets, onDeleteProfilePet }: Profi
         <table className={`${adm.table} min-w-[800px]`}>
           <thead className={adm.thead}>
             <tr>
-              <th className={adm.th}>Р¤РѕС‚Рѕ</th>
-              <th className={adm.th}>РџРёС‚РѕРјРµС†</th>
-              <th className={adm.th}>Р’РёРґ / РџРѕСЂРѕРґР°</th>
-              <th className={adm.th}>Р’Р»Р°РґРµР»РµС†</th>
-              <th className={adm.th}>Р§РёРї</th>
+              <th className={adm.th}>Фото</th>
+              <th className={adm.th}>Питомец</th>
+              <th className={adm.th}>Вид / Порода</th>
+              <th className={adm.th}>Владелец</th>
+              <th className={adm.th}>Чип</th>
               <th className={`${adm.th} p-0`}>
                 <button
                   type="button"
                   className={sortThBtn}
-                  title="РЎРѕСЂС‚РёСЂРѕРІР°С‚СЊ РїРѕ РґР°С‚Рµ СЃРѕР·РґР°РЅРёСЏ"
+                  title="Сортировать по дате создания"
                   onClick={toggleCreatedSort}
                 >
-                  РЎРѕР·РґР°РЅ
+                  Создан
                   {createdSortIcon()}
                 </button>
               </th>
-              <th className={adm.th}>Р”РµР№СЃС‚РІРёСЏ</th>
+              <th className={adm.th}>Действия</th>
             </tr>
           </thead>
           <tbody className={adm.tbody}>
             {paginated.length === 0 ? (
               <tr>
                 <td colSpan={7} className={adm.tdEmpty}>
-                  РџСЂРѕС„РёР»Рё РїРёС‚РѕРјС†РµРІ РЅРµ РЅР°Р№РґРµРЅС‹
+                  Профили питомцев не найдены
                 </td>
               </tr>
             ) : (
@@ -196,12 +196,12 @@ export function ProfilePetsAdminPanel({ profilePets, onDeleteProfilePet }: Profi
                   <td className="px-4 py-3">
                     <p className="font-medium text-foreground text-sm">{pet.name}</p>
                     <p className="text-xs text-muted-foreground">
-                      {genderLabels[pet.gender] || pet.gender}{pet.age ? ` В· ${pet.age}` : ''}
+                      {genderLabels[pet.gender] || pet.gender}{pet.age ? ` · ${pet.age}` : ''}
                     </p>
                   </td>
                   <td className="px-4 py-3">
                     <p className="text-sm text-foreground">{speciesLabels[pet.species] || pet.species}</p>
-                    <p className="text-xs text-muted-foreground">{pet.breed || 'вЂ”'}</p>
+                    <p className="text-xs text-muted-foreground">{pet.breed || '—'}</p>
                   </td>
                   <td className="px-4 py-3">
                     {pet.owner_name ? (
@@ -214,7 +214,7 @@ export function ProfilePetsAdminPanel({ profilePets, onDeleteProfilePet }: Profi
                         {pet.owner_name}
                       </a>
                     ) : (
-                      <span className="text-sm text-muted-foreground/80">вЂ”</span>
+                      <span className="text-sm text-muted-foreground/80">—</span>
                     )}
                     {pet.owner_email && (
                       <p className="text-xs text-muted-foreground truncate max-w-[140px]">{pet.owner_email}</p>
@@ -223,10 +223,10 @@ export function ProfilePetsAdminPanel({ profilePets, onDeleteProfilePet }: Profi
                   <td className="px-4 py-3">
                     {pet.is_chipped ? (
                       <span className="inline-flex px-2 py-1 text-xs rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
-                        {pet.chip_number || 'Р”Р°'}
+                        {pet.chip_number || 'Да'}
                       </span>
                     ) : (
-                      <span className="text-xs text-muted-foreground/80">РќРµС‚</span>
+                      <span className="text-xs text-muted-foreground/80">Нет</span>
                     )}
                   </td>
                   <td className="px-4 py-3 text-sm text-muted-foreground">
@@ -237,7 +237,7 @@ export function ProfilePetsAdminPanel({ profilePets, onDeleteProfilePet }: Profi
                       <button
                         onClick={() => setViewingPet(pet)}
                         className="p-1.5 text-primary hover:bg-primary/10 dark:hover:bg-primary/20 rounded transition-colors"
-                        title="РџРѕРґСЂРѕР±РЅРµРµ"
+                        title="Подробнее"
                       >
                         <Eye className="w-4 h-4" />
                       </button>
@@ -246,18 +246,18 @@ export function ProfilePetsAdminPanel({ profilePets, onDeleteProfilePet }: Profi
                         target="_blank"
                         rel="noopener noreferrer"
                         className="p-1.5 text-muted-foreground hover:bg-accent dark:hover:bg-accent rounded transition-colors"
-                        title="РћС‚РєСЂС‹С‚СЊ РїСѓР±Р»РёС‡РЅС‹Р№ РїСЂРѕС„РёР»СЊ"
+                        title="Открыть публичный профиль"
                       >
                         <ExternalLink className="w-4 h-4" />
                       </a>
                       <button
                         onClick={() => {
-                          if (window.confirm(`РЈРґР°Р»РёС‚СЊ РїСЂРѕС„РёР»СЊ РїРёС‚РѕРјС†Р° "${pet.name}"? Р­С‚Рѕ РґРµР№СЃС‚РІРёРµ РЅРµРѕР±СЂР°С‚РёРјРѕ.`)) {
+                          if (window.confirm(`Удалить профиль питомца "${pet.name}"? Это действие необратимо.`)) {
                             onDeleteProfilePet(pet.id);
                           }
                         }}
                         className="p-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
-                        title="РЈРґР°Р»РёС‚СЊ"
+                        title="Удалить"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -294,9 +294,9 @@ export function ProfilePetsAdminPanel({ profilePets, onDeleteProfilePet }: Profi
       {/* Detail Modal */}
       {viewingPet && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4" onClick={() => setViewingPet(null)}>
-          <div className="bg-card rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-card rounded-md shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 py-4 border-b dark:border-border sticky top-0 bg-card z-10">
-              <h3 className="font-semibold text-foreground">РџСЂРѕС„РёР»СЊ РїРёС‚РѕРјС†Р°</h3>
+              <h3 className="font-semibold text-foreground">Профиль питомца</h3>
               <button onClick={() => setViewingPet(null)} className="p-1 hover:bg-accent dark:hover:bg-accent rounded">
                 <X className="w-5 h-5 dark:text-muted-foreground/80" />
               </button>
@@ -318,47 +318,47 @@ export function ProfilePetsAdminPanel({ profilePets, onDeleteProfilePet }: Profi
 
               {/* Main info */}
               <div className="grid grid-cols-2 gap-3">
-                <InfoField label="РРјСЏ" value={viewingPet.name} />
-                <InfoField label="Р’РёРґ" value={speciesLabels[viewingPet.species] || viewingPet.species} />
-                <InfoField label="РџРѕСЂРѕРґР°" value={viewingPet.breed} />
-                <InfoField label="РџРѕР»" value={genderLabels[viewingPet.gender] || viewingPet.gender} />
-                <InfoField label="Р’РѕР·СЂР°СЃС‚" value={viewingPet.age} />
-                <InfoField label="РћРєСЂР°СЃ" value={viewingPet.colors.length > 0 ? viewingPet.colors.join(', ') : null} />
-                <InfoField label="РҐР°СЂР°РєС‚РµСЂ" value={viewingPet.temperament} />
-                <InfoField label="РћС‚РєР»РёРєР°РµС‚СЃСЏ РЅР° РёРјСЏ" value={viewingPet.responds_to_name ? 'Р”Р°' : 'РќРµС‚'} />
+                <InfoField label="Имя" value={viewingPet.name} />
+                <InfoField label="Вид" value={speciesLabels[viewingPet.species] || viewingPet.species} />
+                <InfoField label="Порода" value={viewingPet.breed} />
+                <InfoField label="Пол" value={genderLabels[viewingPet.gender] || viewingPet.gender} />
+                <InfoField label="Возраст" value={viewingPet.age} />
+                <InfoField label="Окрас" value={viewingPet.colors.length > 0 ? viewingPet.colors.join(', ') : null} />
+                <InfoField label="Характер" value={viewingPet.temperament} />
+                <InfoField label="Откликается на имя" value={viewingPet.responds_to_name ? 'Да' : 'Нет'} />
               </div>
 
               {/* Chip */}
               {viewingPet.is_chipped && (
                 <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                  <p className="text-sm font-medium text-green-800 dark:text-green-300">Р§РёРїРёСЂРѕРІР°РЅ</p>
+                  <p className="text-sm font-medium text-green-800 dark:text-green-300">Чипирован</p>
                   {viewingPet.chip_number && (
-                    <p className="text-xs text-green-600 dark:text-green-400 mt-0.5">РќРѕРјРµСЂ: {viewingPet.chip_number}</p>
+                    <p className="text-xs text-green-600 dark:text-green-400 mt-0.5">Номер: {viewingPet.chip_number}</p>
                   )}
                 </div>
               )}
 
               {/* Extra info */}
               {viewingPet.special_marks && (
-                <InfoBlock label="РћСЃРѕР±С‹Рµ РїСЂРёРјРµС‚С‹" value={viewingPet.special_marks} />
+                <InfoBlock label="Особые приметы" value={viewingPet.special_marks} />
               )}
               {viewingPet.medical_info && (
-                <InfoBlock label="РњРµРґРёС†РёРЅСЃРєР°СЏ РёРЅС„РѕСЂРјР°С†РёСЏ" value={viewingPet.medical_info} />
+                <InfoBlock label="Медицинская информация" value={viewingPet.medical_info} />
               )}
               {viewingPet.favorite_treats && (
-                <InfoBlock label="Р›СЋР±РёРјС‹Рµ Р»Р°РєРѕРјСЃС‚РІР°" value={viewingPet.favorite_treats} />
+                <InfoBlock label="Любимые лакомства" value={viewingPet.favorite_treats} />
               )}
               {viewingPet.favorite_walks && (
-                <InfoBlock label="Р›СЋР±РёРјС‹Рµ РјРµСЃС‚Р° РїСЂРѕРіСѓР»РѕРє" value={viewingPet.favorite_walks} />
+                <InfoBlock label="Любимые места прогулок" value={viewingPet.favorite_walks} />
               )}
 
               {/* Owner */}
               <div className="border-t dark:border-border pt-4">
-                <p className="text-xs font-medium text-muted-foreground uppercase mb-2">Р’Р»Р°РґРµР»РµС†</p>
+                <p className="text-xs font-medium text-muted-foreground uppercase mb-2">Владелец</p>
                 <div className="grid grid-cols-2 gap-3">
-                  <InfoField label="РРјСЏ" value={viewingPet.owner_name} />
+                  <InfoField label="Имя" value={viewingPet.owner_name} />
                   <InfoField label="Email" value={viewingPet.owner_email} />
-                  <InfoField label="РўРµР»РµС„РѕРЅ" value={viewingPet.owner_phone} />
+                  <InfoField label="Телефон" value={viewingPet.owner_phone} />
                   <InfoField label="Viber" value={viewingPet.owner_viber} />
                 </div>
               </div>
@@ -366,8 +366,8 @@ export function ProfilePetsAdminPanel({ profilePets, onDeleteProfilePet }: Profi
               {/* Dates */}
               <div className="border-t dark:border-border pt-4">
                 <div className="grid grid-cols-2 gap-3">
-                  <InfoField label="РЎРѕР·РґР°РЅ" value={new Date(viewingPet.created_at).toLocaleString('ru-RU')} />
-                  <InfoField label="РћР±РЅРѕРІР»С‘РЅ" value={new Date(viewingPet.updated_at).toLocaleString('ru-RU')} />
+                  <InfoField label="Создан" value={new Date(viewingPet.created_at).toLocaleString('ru-RU')} />
+                  <InfoField label="Обновлён" value={new Date(viewingPet.updated_at).toLocaleString('ru-RU')} />
                 </div>
               </div>
             </div>
@@ -382,7 +382,7 @@ function InfoField({ label, value }: { label: string; value: string | null | und
   return (
     <div>
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="text-sm text-foreground">{value || 'вЂ”'}</p>
+      <p className="text-sm text-foreground">{value || '—'}</p>
     </div>
   );
 }

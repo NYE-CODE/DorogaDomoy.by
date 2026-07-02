@@ -1,2 +1,2 @@
-п»ї/** @deprecated РСЃРїРѕР»СЊР·СѓР№С‚Рµ `@/app/providers/AuthContext`. */
+/** @deprecated Используйте `@/app/providers/AuthContext`. */
 export * from '../src/app/providers/AuthContext.tsx';

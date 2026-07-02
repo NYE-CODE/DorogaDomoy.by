@@ -1,2 +1,2 @@
-п»ї/** @deprecated РСЃРїРѕР»СЊР·СѓР№С‚Рµ `@/shared/ui/toggle`. */
+/** @deprecated Используйте `@/shared/ui/toggle`. */
 export * from '../../src/shared/ui/toggle.tsx';

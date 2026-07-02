@@ -1,2 +1,2 @@
-п»ї/** @deprecated РСЃРїРѕР»СЊР·СѓР№С‚Рµ `@/shared/ui/command`. */
+/** @deprecated Используйте `@/shared/ui/command`. */
 export * from '../../src/shared/ui/command.tsx';

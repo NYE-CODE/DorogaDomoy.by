@@ -155,7 +155,7 @@ export default function MyShelterPetsPage() {
 
   const onSave = async () => {
     if (!selectedShelter) {
-      toast.error('Р’С‹Р±РµСЂРёС‚Рµ РїСЂРёСЋС‚');
+      toast.error('Выберите приют');
       return;
     }
     const photos = form.photos;
@@ -164,7 +164,7 @@ export default function MyShelterPetsPage() {
       return;
     }
     if (!form.description.trim()) {
-      toast.error('Р”РѕР±Р°РІСЊС‚Рµ РѕРїРёСЃР°РЅРёРµ');
+      toast.error('Добавьте описание');
       return;
     }
     const colors = form.colorsCsv
@@ -188,7 +188,7 @@ export default function MyShelterPetsPage() {
           location: { lat: selectedShelter.location_lat, lng: selectedShelter.location_lng },
           isPublished: form.isPublished,
         });
-        toast.success('РџРёС‚РѕРјРµС† РѕР±РЅРѕРІР»С‘РЅ');
+        toast.success('Питомец обновлён');
       } else {
         const payload: ShelterPetInput = {
           photos,
@@ -205,7 +205,7 @@ export default function MyShelterPetsPage() {
           isPublished: form.isPublished,
         };
         await sheltersApi.createPet(selectedShelter.id, payload);
-        toast.success('РџРёС‚РѕРјРµС† РґРѕР±Р°РІР»РµРЅ');
+        toast.success('Питомец добавлен');
       }
       setForm(emptyForm());
       loadPets(selectedShelter.id);
@@ -217,10 +217,10 @@ export default function MyShelterPetsPage() {
   };
 
   const onArchive = async (pet: Pet) => {
-    if (!confirm(`РђСЂС…РёРІРёСЂРѕРІР°С‚СЊ РїРёС‚РѕРјС†Р° "${pet.description.slice(0, 40)}..."?`)) return;
+    if (!confirm(`Архивировать питомца "${pet.description.slice(0, 40)}..."?`)) return;
     try {
       await shelterPetsApi.archive(pet.id, 'archived from shelter cabinet');
-      toast.success('РџРёС‚РѕРјРµС† РѕС‚РїСЂР°РІР»РµРЅ РІ Р°СЂС…РёРІ');
+      toast.success('Питомец отправлен в архив');
       if (selectedShelterId) loadPets(selectedShelterId);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : t.common.error);
@@ -248,9 +248,9 @@ export default function MyShelterPetsPage() {
             <BackQuickMenu />
           </div>
 
-          <div className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-card p-4">
+          <div className="mb-6 flex flex-wrap items-center gap-3 rounded-lg border border-border bg-card p-4">
             <Building2 className="size-5 text-primary" />
-            <h1 className="typo-h1">РџРёС‚РѕРјС†С‹ РїСЂРёСЋС‚Р°</h1>
+            <h1 className="typo-h1">Питомцы приюта</h1>
             <select
               className="ml-auto rounded-lg border border-border bg-background px-3 py-2 text-sm"
               value={selectedShelterId}
@@ -267,12 +267,12 @@ export default function MyShelterPetsPage() {
             </select>
             <Button type="button" variant="outline" onClick={startCreate}>
               <Plus className="mr-1 size-4" />
-              РќРѕРІС‹Р№ РїРёС‚РѕРјРµС†
+              Новый питомец
             </Button>
           </div>
 
-          <div className="mb-8 rounded-2xl border border-border bg-card p-4 sm:p-6">
-            <h2 className="mb-4 text-lg font-semibold">{form.id ? 'Р РµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ РїРёС‚РѕРјС†Р°' : 'Р”РѕР±Р°РІР»РµРЅРёРµ РїРёС‚РѕРјС†Р°'}</h2>
+          <div className="mb-8 rounded-lg border border-border bg-card p-4 sm:p-6">
+            <h2 className="mb-4 text-lg font-semibold">{form.id ? 'Редактирование питомца' : 'Добавление питомца'}</h2>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="sm:col-span-2">
                 <label className="mb-2 block text-sm font-semibold uppercase text-muted-foreground">
@@ -334,53 +334,53 @@ export default function MyShelterPetsPage() {
                 onChange={(e) => setForm((p) => ({ ...p, animalType: e.target.value as FormState['animalType'] }))}
                 className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
               >
-                <option value="cat">РљРѕС€РєР°</option>
-                <option value="dog">РЎРѕР±Р°РєР°</option>
-                <option value="other">Р”СЂСѓРіРѕРµ</option>
+                <option value="cat">Кошка</option>
+                <option value="dog">Собака</option>
+                <option value="other">Другое</option>
               </select>
               <select
                 value={form.gender}
                 onChange={(e) => setForm((p) => ({ ...p, gender: e.target.value as FormState['gender'] }))}
                 className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
               >
-                <option value="unknown">РџРѕР» РЅРµРёР·РІРµСЃС‚РµРЅ</option>
-                <option value="male">РЎР°РјРµС†</option>
-                <option value="female">РЎР°РјРєР°</option>
+                <option value="unknown">Пол неизвестен</option>
+                <option value="male">Самец</option>
+                <option value="female">Самка</option>
               </select>
               <select
                 value={form.adoptionStatus}
                 onChange={(e) => setForm((p) => ({ ...p, adoptionStatus: e.target.value as FormState['adoptionStatus'] }))}
                 className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
               >
-                <option value="available">Р”РѕСЃС‚СѓРїРµРЅ</option>
-                <option value="reserved">Р РµР·РµСЂРІ</option>
-                <option value="adopted">РџСЂРёСЃС‚СЂРѕРµРЅ</option>
-                <option value="on_treatment">РќР° Р»РµС‡РµРЅРёРё</option>
-                <option value="not_for_adoption">РќРµ РїСЂРёСЃС‚СЂР°РёРІР°РµС‚СЃСЏ</option>
+                <option value="available">Доступен</option>
+                <option value="reserved">Резерв</option>
+                <option value="adopted">Пристроен</option>
+                <option value="on_treatment">На лечении</option>
+                <option value="not_for_adoption">Не пристраивается</option>
               </select>
               <input
                 value={form.breed}
                 onChange={(e) => setForm((p) => ({ ...p, breed: e.target.value }))}
                 className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
-                placeholder="РџРѕСЂРѕРґР°"
+                placeholder="Порода"
               />
               <input
                 value={form.approximateAge}
                 onChange={(e) => setForm((p) => ({ ...p, approximateAge: e.target.value }))}
                 className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
-                placeholder="Р’РѕР·СЂР°СЃС‚ (РїСЂРёРјРµСЂРЅРѕ)"
+                placeholder="Возраст (примерно)"
               />
               <input
                 value={form.colorsCsv}
                 onChange={(e) => setForm((p) => ({ ...p, colorsCsv: e.target.value }))}
                 className="rounded-lg border border-border bg-background px-3 py-2 text-sm sm:col-span-2"
-                placeholder="РћРєСЂР°СЃС‹ С‡РµСЂРµР· Р·Р°РїСЏС‚СѓСЋ: black, white"
+                placeholder="Окрасы через запятую: black, white"
               />
               <textarea
                 value={form.description}
                 onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
                 className="min-h-24 rounded-lg border border-border bg-background px-3 py-2 text-sm sm:col-span-2"
-                placeholder="РћРїРёСЃР°РЅРёРµ РїРёС‚РѕРјС†Р°"
+                placeholder="Описание питомца"
               />
               <label className="inline-flex items-center gap-2 text-sm sm:col-span-2">
                 <input
@@ -388,47 +388,47 @@ export default function MyShelterPetsPage() {
                   checked={form.isPublished}
                   onChange={(e) => setForm((p) => ({ ...p, isPublished: e.target.checked }))}
                 />
-                РћРїСѓР±Р»РёРєРѕРІР°РЅ
+                Опубликован
               </label>
             </div>
             <div className="mt-4 flex flex-wrap gap-2">
               <Button type="button" onClick={() => void onSave()} disabled={saving || !selectedShelterId}>
                 <Save className="mr-1 size-4" />
-                {saving ? 'РЎРѕС…СЂР°РЅРµРЅРёРµ...' : form.id ? 'РЎРѕС…СЂР°РЅРёС‚СЊ РёР·РјРµРЅРµРЅРёСЏ' : 'Р”РѕР±Р°РІРёС‚СЊ РїРёС‚РѕРјС†Р°'}
+                {saving ? 'Сохранение...' : form.id ? 'Сохранить изменения' : 'Добавить питомца'}
               </Button>
               <Button type="button" variant="outline" onClick={() => setForm(emptyForm())}>
-                РЎР±СЂРѕСЃРёС‚СЊ
+                Сбросить
               </Button>
             </div>
           </div>
 
-          <div className="rounded-2xl border border-border bg-card p-4 sm:p-6">
-            <h2 className="mb-4 text-lg font-semibold">РЎРїРёСЃРѕРє РїРёС‚РѕРјС†РµРІ ({pets.length})</h2>
+          <div className="rounded-lg border border-border bg-card p-4 sm:p-6">
+            <h2 className="mb-4 text-lg font-semibold">Список питомцев ({pets.length})</h2>
             {loadingPets ? (
               <PageLoader />
             ) : pets.length === 0 ? (
-              <p className="text-sm text-muted-foreground">РџРѕРєР° РЅРµС‚ РїРёС‚РѕРјС†РµРІ Сѓ РІС‹Р±СЂР°РЅРЅРѕРіРѕ РїСЂРёСЋС‚Р°.</p>
+              <p className="text-sm text-muted-foreground">Пока нет питомцев у выбранного приюта.</p>
             ) : (
               <ul className="space-y-3">
                 {pets.map((pet) => (
-                  <li key={pet.id} className="flex flex-wrap items-start justify-between gap-3 rounded-xl border border-border p-3">
+                  <li key={pet.id} className="flex flex-wrap items-start justify-between gap-3 rounded-md border border-border p-3">
                     <div className="min-w-0">
                       <p className="font-medium text-foreground">
-                        {(pet.name?.trim() || pet.breed || pet.animalType)} В· РС‰РµС‚ РґРѕРј
+                        {(pet.name?.trim() || pet.breed || pet.animalType)} · Ищет дом
                       </p>
                       <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{pet.description}</p>
                       <p className="mt-1 text-xs text-muted-foreground">
-                        {pet.adoptionStatus || 'available'} В· {pet.isPublished ? 'published' : 'hidden'}
+                        {pet.adoptionStatus || 'available'} · {pet.isPublished ? 'published' : 'hidden'}
                       </p>
                     </div>
                     <div className="flex gap-2">
                       <Button type="button" variant="outline" size="sm" onClick={() => startEdit(pet)}>
                         <Pencil className="mr-1 size-4" />
-                        Р РµРґ.
+                        Ред.
                       </Button>
                       <Button type="button" variant="outline" size="sm" onClick={() => void onArchive(pet)}>
                         <Trash2 className="mr-1 size-4" />
-                        РђСЂС…РёРІ
+                        Архив
                       </Button>
                     </div>
                   </li>

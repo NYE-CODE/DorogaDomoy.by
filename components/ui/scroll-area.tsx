@@ -1,2 +1,2 @@
-п»ї/** @deprecated РСЃРїРѕР»СЊР·СѓР№С‚Рµ `@/shared/ui/scroll-area`. */
+/** @deprecated Используйте `@/shared/ui/scroll-area`. */
 export * from '../../src/shared/ui/scroll-area.tsx';

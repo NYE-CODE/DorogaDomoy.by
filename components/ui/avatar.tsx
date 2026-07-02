@@ -1,2 +1,2 @@
-п»ї/** @deprecated РСЃРїРѕР»СЊР·СѓР№С‚Рµ `@/shared/ui/avatar`. */
+/** @deprecated Используйте `@/shared/ui/avatar`. */
 export * from '../../src/shared/ui/avatar.tsx';

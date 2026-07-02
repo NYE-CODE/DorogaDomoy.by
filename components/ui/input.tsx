@@ -1,2 +1,2 @@
-п»ї/** @deprecated РСЃРїРѕР»СЊР·СѓР№С‚Рµ `@/shared/ui/input`. */
+/** @deprecated Используйте `@/shared/ui/input`. */
 export * from '../../src/shared/ui/input.tsx';

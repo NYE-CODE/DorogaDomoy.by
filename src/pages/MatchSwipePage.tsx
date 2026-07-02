@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router';
 import { Heart, RotateCcw, Settings2, X } from 'lucide-react';
 import { toast } from 'sonner';
@@ -65,7 +65,7 @@ function MatchDesktopSidebar({
       )}
     >
       {progressLabel ? (
-        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+        <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
           <p className="text-sm font-semibold text-foreground">{s.title}</p>
           <p className="mt-1 text-xs text-muted-foreground">{progressLabel}</p>
           {remainingLabel ? (
@@ -77,7 +77,7 @@ function MatchDesktopSidebar({
         </div>
       ) : null}
 
-      <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+      <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
         <h2 className="text-sm font-semibold text-foreground">{s.yourProfile}</h2>
         <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
           <li>
@@ -277,7 +277,7 @@ export default function MatchSwipePage() {
 
   return (
     <div className="flex min-h-[100dvh] flex-col bg-background lg:bg-muted/20">
-      <Header showCitySelector={false} showHomeModeToggle={false} />
+      <Header showCitySelector={false} />
       <main
         className={cn(
           'flex w-full flex-1 flex-col px-0 pt-0 sm:px-4 sm:pt-4 lg:px-6 lg:pt-6',
@@ -290,7 +290,7 @@ export default function MatchSwipePage() {
               <h1 className="typo-h1-compact">{s.title}</h1>
               {!loading && progressLabel && current && (
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  {progressLabel} · {remainingLabel}
+                  {progressLabel} � {remainingLabel}
                 </p>
               )}
               {isFinished && ranked.length > 0 && (

@@ -1,4 +1,4 @@
-Ôªøimport { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { useAuth } from '@/app/providers/AuthContext';
 import '../../landing/styles/theme-scoped.css';
@@ -104,9 +104,9 @@ export default function EditAdPage() {
 
   return (
     <div className="landing-theme min-h-screen bg-muted/30 dark:bg-background flex flex-col">
-      <Header showHomeModeToggle={false} />
+      <Header />
 
-      {/* –°–µ–∫—Ü–∏—è —à–∞–≥–∞ ‚Äî –∫–∞–∫ –≤ CreateAdPage */}
+      {/* —ÂÍˆËˇ ¯‡„‡ ó Í‡Í ‚ CreateAdPage */}
       {stepInfo && (
         <section className="bg-white dark:bg-card border-b border-border px-4 sm:px-6 lg:px-8">
           <div className="max-w-[736px] mx-auto py-4">
@@ -147,7 +147,7 @@ export default function EditAdPage() {
       )}
 
       <main className="flex-1 px-4 py-8">
-        <div className="max-w-[736px] mx-auto bg-white dark:bg-card rounded-2xl shadow-sm border border-border p-8">
+        <div className="max-w-[736px] mx-auto bg-white dark:bg-card rounded-lg shadow-sm border border-border p-8">
           <PetForm
             variant="page"
             renderStepHeaderExternally

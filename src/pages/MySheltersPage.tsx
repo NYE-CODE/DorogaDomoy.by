@@ -56,7 +56,7 @@ export default function MySheltersPage() {
 
   useEffect(() => {
     applySeo({
-      title: `${ms.title} —ú DorogaDomoy.by`,
+      title: `${ms.title} ù DorogaDomoy.by`,
       description: ms.subtitle,
       canonicalUrl: canonicalUrlFromPath('/my-shelters'),
       robots: SEO_ROBOTS_PRIVATE,
@@ -224,7 +224,7 @@ export default function MySheltersPage() {
       <Header showCitySelector />
       <main className="flex-1 py-6 sm:py-10">
         <div className="page-container">
-          <div className="mb-6 rounded-2xl border border-border bg-card p-4 sm:mb-8 sm:p-6">
+          <div className="mb-6 rounded-lg border border-border bg-card p-4 sm:mb-8 sm:p-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
                 <h1 className="typo-h1 flex items-center gap-2">
@@ -258,7 +258,7 @@ export default function MySheltersPage() {
             />
           ) : (
             <>
-              <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+              <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
                 <div className="hidden grid-cols-[minmax(200px,2fr)_minmax(90px,1fr)_minmax(130px,1fr)_minmax(160px,1fr)_auto_auto] gap-4 border-b border-border bg-muted/40 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground lg:grid">
                   <span>{ms.fieldName}</span>
                   <span>{ms.fieldCity}</span>
@@ -281,7 +281,7 @@ export default function MySheltersPage() {
                             </p>
                           ) : null}
                         </div>
-                        <span className="truncate text-sm text-muted-foreground">{row.city || '—ú'}</span>
+                        <span className="truncate text-sm text-muted-foreground">{row.city || 'ù'}</span>
                         <span className="truncate text-sm text-muted-foreground">{kindLabel(row.kind)}</span>
                         <span className="truncate text-sm text-muted-foreground">{focusLabel(row.animal_focus)}</span>
                         <span
@@ -306,7 +306,7 @@ export default function MySheltersPage() {
                         <div>
                           <p className="font-semibold text-foreground">{row.name}</p>
                           <p className="mt-1 text-sm text-muted-foreground">
-                            {row.city || '—ú'} —ú {kindLabel(row.kind)} —ú {focusLabel(row.animal_focus)}
+                            {row.city || 'ù'} ù {kindLabel(row.kind)} ù {focusLabel(row.animal_focus)}
                           </p>
                         </div>
                         <span

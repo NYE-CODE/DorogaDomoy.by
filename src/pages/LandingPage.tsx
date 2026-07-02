@@ -1,12 +1,12 @@
-п»їimport LandingApp from '../../landing/app/App';
+import LandingApp from '../../landing/app/App';
 import { useTheme } from '@/app/providers/ThemeContext';
 import { FeatureFlagsProvider } from '@/app/providers/FeatureFlagsContext';
 import '../../landing/styles/theme-scoped.css';
 
 /**
- * Р›РµРЅРґРёРЅРі РїРѕ Р°РґСЂРµСЃСѓ /. РљРѕРјРїРѕРЅРµРЅС‚С‹ Рё СЂР°Р·РјРµС‚РєР° РїРµСЂРµРЅРµСЃРµРЅС‹ РѕРґРёРЅ РІ РѕРґРёРЅ РёР· РїР°РїРєРё landing page.
- * РџРѕРґРєР»СЋС‡С‘РЅ Рє Р±СЌРєРµРЅРґСѓ: РѕР±СЉСЏРІР»РµРЅРёСЏ, СЃС‚Р°С‚РёСЃС‚РёРєР°, Р°РІС‚РѕСЂРёР·Р°С†РёСЏ.
- * AuthModal СЂРµРЅРґРµСЂРёС‚СЃСЏ РіР»РѕР±Р°Р»СЊРЅРѕ РІ main.tsx.
+ * Лендинг по адресу /. Компоненты и разметка перенесены один в один из папки landing page.
+ * Подключён к бэкенду: объявления, статистика, авторизация.
+ * AuthModal рендерится глобально в main.tsx.
  */
 export default function LandingPage() {
   const { theme } = useTheme();
