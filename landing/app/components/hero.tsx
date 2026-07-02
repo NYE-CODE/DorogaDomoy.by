@@ -23,6 +23,22 @@ const pathLinks: { key: HeroCta; to: string; icon: typeof Map }[] = [
   { key: "shelterPet", to: "/shelters?tab=pets", icon: Home },
 ];
 
+/** Три пути = три регистра: поиск (rose), действие (бренд-«дорога»), приют (emerald). */
+const pathAccent: Record<HeroCta, { chip: string; hoverBorder: string }> = {
+  map: {
+    chip: "bg-lost-soft text-lost group-hover:bg-lost-soft",
+    hoverBorder: "hover:border-lost-border",
+  },
+  create: {
+    chip: "bg-primary/10 text-primary group-hover:bg-primary/15",
+    hoverBorder: "hover:border-primary/35",
+  },
+  shelterPet: {
+    chip: "bg-shelter-soft text-shelter group-hover:bg-shelter-soft",
+    hoverBorder: "hover:border-shelter-border",
+  },
+};
+
 export function Hero() {
   const { t } = useI18n();
   const hero = t.landing.hero;
@@ -95,9 +111,17 @@ export function Hero() {
                     <Link
                       to={path.to}
                       onClick={() => trackHeroCtaClick(path.key)}
-                      className="group flex h-full flex-col rounded-xl border border-border/80 bg-card p-4 text-left shadow-sm transition-all duration-200 hover:border-primary/35 hover:shadow-md"
+                      className={cn(
+                        "group flex h-full flex-col rounded-xl border border-border/80 bg-card p-4 text-left shadow-sm transition-all duration-200 hover:shadow-md",
+                        pathAccent[path.key].hoverBorder,
+                      )}
                     >
-                      <span className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary/15">
+                      <span
+                        className={cn(
+                          "mb-3 flex h-10 w-10 items-center justify-center rounded-lg transition-colors",
+                          pathAccent[path.key].chip,
+                        )}
+                      >
                         <Icon className="size-5" aria-hidden />
                       </span>
                       <span className="text-sm font-semibold text-foreground">{copy.title}</span>

@@ -7,6 +7,7 @@ import { profilePetsApi, type ProfilePetResponse } from "../api/client";
 import { resolveProfilePetSpecies } from "../utils/profile-pet-display";
 import { compressImageBlobForShare } from "../utils/web-share-image";
 import { Button } from "./ui/button";
+import { RouteProgress } from "@/shared/ui/molecules";
 import { appPrimaryCtaClass } from "@/shared/styles/cta-classes";
 
 interface ProfilePetFormData {
@@ -52,7 +53,7 @@ const emptyForm = (): ProfilePetFormData => ({
 const MAX_PHOTOS = 5;
 const MAX_PROFILE_UPLOAD_BYTES = 750 * 1024;
 
-/** Пост с советами по фото для профиля питомца (шаг «Фотографии»). */
+/**         ( ). */
 const PROFILE_PET_PHOTO_GUIDE_INSTAGRAM_URL =
   "https://www.instagram.com/p/DXpRblXiJwT/?img_index=1";
 
@@ -67,10 +68,10 @@ async function prepareProfilePhotoForUpload(file: File): Promise<File> {
     maxSizeBytes: MAX_PROFILE_UPLOAD_BYTES,
   });
   if (!compressed) {
-    throw new Error("Не удалось обработать изображение");
+    throw new Error("   ");
   }
   if (compressed.size > MAX_PROFILE_UPLOAD_BYTES) {
-    throw new Error("Фото слишком большое. Выберите другое или уменьшите его.");
+    throw new Error("  .     .");
   }
   return new File([compressed], buildCompressedPhotoName(file), {
     type: "image/jpeg",
@@ -316,7 +317,6 @@ export function AddEditPetContent() {
   ] as const;
 
   const currentMeta = stepMeta[currentStep - 1];
-  const progressPercentage = (currentStep / totalSteps) * 100;
 
   const stepLine = f.stepLine
     .replace("{current}", String(currentStep))
@@ -378,12 +378,12 @@ export function AddEditPetContent() {
             </button>
           </div>
 
-          <div className="w-full bg-muted rounded-full h-2">
-            <div
-              className="bg-gradient-to-r from-primary-light to-primary h-2 rounded-full transition-all duration-300"
-              style={{ width: `${progressPercentage}%` }}
-            />
-          </div>
+          <RouteProgress
+            totalSteps={totalSteps}
+            currentStep={currentStep}
+            label={stepLine}
+            className="max-w-sm"
+          />
         </div>
       </div>
 
@@ -872,7 +872,7 @@ export function AddEditPetContent() {
                     : "bg-green-600 hover:bg-green-700"
                 }`}
               >
-                {isSubmitting ? "Сохранение..." : (isEditMode ? f.submitSave : f.submitAdd)}
+                {isSubmitting ? "..." : (isEditMode ? f.submitSave : f.submitAdd)}
               </button>
             )}
           </div>

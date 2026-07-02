@@ -88,7 +88,7 @@ export default function PublicPetProfilePage() {
     if (!pet) return;
     const species = speciesFullLabel(resolveProfilePetSpecies(pet.species, pet.breed), f);
     const city = (pet.owner_city ?? '').trim();
-    const title = `${pet.name} Ч ${species}${city ? `, ${city}` : ''} | DorogaDomoy.by`;
+    const title = `${pet.name} ? ${species}${city ? `, ${city}` : ''} | DorogaDomoy.by`;
     const desc = truncateMetaDescription(
       `${pet.name}, ${species}.${city ? ` ${pp.city}: ${city}.` : ''} ${pp.contactSubtitle} DorogaDomoy.by.`,
     );
@@ -159,7 +159,7 @@ export default function PublicPetProfilePage() {
     } catch (err) {
       if (import.meta.env.DEV && err instanceof Error) console.warn('[sendFoundSignal]', err);
       const msg = err instanceof Error ? err.message.toLowerCase() : '';
-      if (msg.includes('своему питомцу')) {
+      if (msg.includes('?????? ???????')) {
         toast.error(pp.signalOwnPetError);
       } else {
         toast.error(pp.signalSendError);
@@ -236,13 +236,13 @@ export default function PublicPetProfilePage() {
                     {pet.name}
                   </h1>
                   <p className="text-muted-foreground mt-2 text-base md:text-lg">
-                    {speciesFullLabel(resolvedSpecies, f)}{pet.breed ? ` Ј ${pet.breed}` : ''}
+                    {speciesFullLabel(resolvedSpecies, f)}{pet.breed ? ` ? ${pet.breed}` : ''}
                   </p>
                 </div>
 
                 <div className="p-5 md:p-6 lg:p-8 grid grid-cols-2 gap-3 md:gap-4">
-                  <div className="bg-primary-light/5 dark:bg-primary-light/10 rounded-md p-3 md:p-4 flex items-center gap-2.5 md:gap-3">
-                    <User size={18} className="text-primary shrink-0 md:w-5 md:h-5" />
+                  <div className="bg-medallion-soft/80 dark:bg-medallion-soft rounded-md p-3 md:p-4 flex items-center gap-2.5 md:gap-3">
+                    <User size={18} className="text-medallion shrink-0 md:w-5 md:h-5" />
                     <div className="min-w-0">
                       <p className="text-xs md:text-sm text-muted-foreground/80">{f.labelGender}</p>
                       <p className="text-sm md:text-base font-medium text-black dark:text-white truncate">
@@ -250,8 +250,8 @@ export default function PublicPetProfilePage() {
                       </p>
                     </div>
                   </div>
-                  <div className="bg-primary-light/5 dark:bg-primary-light/10 rounded-md p-3 md:p-4 flex items-center gap-2.5 md:gap-3">
-                    <Calendar size={18} className="text-primary shrink-0 md:w-5 md:h-5" />
+                  <div className="bg-medallion-soft/80 dark:bg-medallion-soft rounded-md p-3 md:p-4 flex items-center gap-2.5 md:gap-3">
+                    <Calendar size={18} className="text-medallion shrink-0 md:w-5 md:h-5" />
                     <div className="min-w-0">
                       <p className="text-xs md:text-sm text-muted-foreground/80">{f.labelAge}</p>
                       <p className="text-sm md:text-base font-medium text-black dark:text-white truncate">
@@ -259,17 +259,17 @@ export default function PublicPetProfilePage() {
                       </p>
                     </div>
                   </div>
-                  <div className="bg-primary-light/5 dark:bg-primary-light/10 rounded-md p-3 md:p-4 flex items-center gap-2.5 md:gap-3">
-                    <Palette size={18} className="text-primary shrink-0 md:w-5 md:h-5" />
+                  <div className="bg-medallion-soft/80 dark:bg-medallion-soft rounded-md p-3 md:p-4 flex items-center gap-2.5 md:gap-3">
+                    <Palette size={18} className="text-medallion shrink-0 md:w-5 md:h-5" />
                     <div className="min-w-0">
                       <p className="text-xs md:text-sm text-muted-foreground/80">{f.labelColors}</p>
                       <p className="text-sm md:text-base font-medium text-black dark:text-white truncate">
-                        {colorsLine || 'Ч'}
+                        {colorsLine || '?'}
                       </p>
                     </div>
                   </div>
-                  <div className="bg-primary-light/5 dark:bg-primary-light/10 rounded-md p-3 md:p-4 flex items-center gap-2.5 md:gap-3">
-                    <Tag size={18} className="text-primary shrink-0 md:w-5 md:h-5" />
+                  <div className="bg-medallion-soft/80 dark:bg-medallion-soft rounded-md p-3 md:p-4 flex items-center gap-2.5 md:gap-3">
+                    <Tag size={18} className="text-medallion shrink-0 md:w-5 md:h-5" />
                     <div className="min-w-0">
                       <p className="text-xs md:text-sm text-muted-foreground/80">{f.labelTemperament}</p>
                       <p className="text-sm md:text-base font-medium text-black dark:text-white truncate">

@@ -491,11 +491,23 @@ export default function MyPetProfilePage() {
                   <CardDescription className="text-sm leading-relaxed">{op.qrDescription}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div
-                    ref={qrWrapRef}
-                    className="flex items-center justify-center rounded-lg border-2 border-dashed border-primary/25 bg-muted/30 p-6 dark:bg-background/80"
-                  >
-                    <QRCode value={publicPetQrUrl || publicPetUrl} size={220} level="M" />
+                  {/* QR-?????: ???????? ???????? ? ????? ????????? ????????? ? «?????» */}
+                  <div className="flex flex-col items-center gap-3 rounded-lg bg-medallion-soft/70 px-4 pb-4 pt-8 dark:bg-background/80">
+                    <div className="relative">
+                      <span
+                        aria-hidden="true"
+                        className="absolute left-1/2 top-0 z-10 size-7 -translate-x-1/2 -translate-y-1/2 rounded-full border-4 border-medallion bg-transparent"
+                      />
+                      <div
+                        ref={qrWrapRef}
+                        className="flex size-60 items-center justify-center rounded-full border-4 border-medallion bg-white shadow-sm"
+                      >
+                        <QRCode value={publicPetQrUrl || publicPetUrl} size={156} level="M" />
+                      </div>
+                    </div>
+                    {pet?.name ? (
+                      <p className="typo-engraved text-medallion-foreground">{pet.name}</p>
+                    ) : null}
                   </div>
                   <div className="rounded-md border border-border/80 bg-muted/25 p-4">
                     <p className="text-sm font-semibold text-foreground">{op.freeOptionTitle}</p>

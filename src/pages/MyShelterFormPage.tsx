@@ -7,6 +7,7 @@ import { Footer } from '@/widgets/layout/Footer';
 import { BackQuickMenu } from '../../components/navigation/BackQuickMenu';
 import { LocationPicker } from '../../components/location-picker';
 import { PageLoader } from '@/shared/ui/page-loader';
+import { RouteProgress } from '@/shared/ui/molecules';
 import { cn } from '@/shared/ui/utils';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
@@ -82,7 +83,7 @@ export default function MyShelterFormPage() {
   useEffect(() => {
     const path = isCreate ? '/my-shelters/new' : `/my-shelters/edit/${shelterId}`;
     applySeo({
-      title: `${isCreate ? ms.createCard : ms.editCard} — DorogaDomoy.by`,
+      title: `${isCreate ? ms.createCard : ms.editCard}  DorogaDomoy.by`,
       description: ms.subtitle,
       canonicalUrl: canonicalUrlFromPath(path),
       robots: SEO_ROBOTS_PRIVATE,
@@ -156,7 +157,6 @@ export default function MyShelterFormPage() {
   );
 
   const currentStepMeta = stepWizardMeta[formStep - 1] ?? stepWizardMeta[0];
-  const stepProgressPct = (formStep / SHELTER_FORM_STEPS) * 100;
 
   const buildContacts = (): ShelterContacts => {
     const c: ShelterContacts = {};
@@ -374,12 +374,12 @@ export default function MyShelterFormPage() {
           {approvedLocked ? (
             <p className="mb-3 text-sm text-muted-foreground">{ms.approvedEditHint}</p>
           ) : null}
-          <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-primary-light to-primary transition-[width] duration-300 ease-out"
-              style={{ width: `${stepProgressPct}%` }}
-            />
-          </div>
+          <RouteProgress
+            totalSteps={SHELTER_FORM_STEPS}
+            currentStep={formStep}
+            label={`${t.petForm.step} ${formStep} ${t.petForm.of} ${SHELTER_FORM_STEPS}`}
+            className="max-w-sm"
+          />
         </div>
       </section>
 

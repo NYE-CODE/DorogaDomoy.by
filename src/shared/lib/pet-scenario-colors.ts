@@ -46,11 +46,11 @@ export const petScenarioBorderedBadgeClass: Record<PetScenario, string> = {
     'border-emerald-200/90 bg-emerald-50 text-emerald-950 dark:border-emerald-800/80 dark:bg-emerald-950/40 dark:text-emerald-100',
 };
 
-/** Плашка на фото. */
+/** Плашка на фото — жетон: «гравировка» (uppercase + tracking) поверх цвета сценария. */
 export const petScenarioPhotoPillClass: Record<PetScenario, string> = {
-  lost: 'bg-rose-600/95 text-white shadow-sm backdrop-blur-sm dark:bg-rose-600',
-  found: 'bg-sky-600/95 text-white shadow-sm backdrop-blur-sm dark:bg-sky-600',
-  shelter: 'bg-emerald-600/95 text-white shadow-sm backdrop-blur-sm dark:bg-emerald-600',
+  lost: 'uppercase tracking-[0.12em] bg-rose-600/95 text-white shadow-sm backdrop-blur-sm dark:bg-rose-600',
+  found: 'uppercase tracking-[0.12em] bg-sky-600/95 text-white shadow-sm backdrop-blur-sm dark:bg-sky-600',
+  shelter: 'uppercase tracking-[0.12em] bg-emerald-600/95 text-white shadow-sm backdrop-blur-sm dark:bg-emerald-600',
 };
 
 /** Мягкий pill в списках и на детальной. */

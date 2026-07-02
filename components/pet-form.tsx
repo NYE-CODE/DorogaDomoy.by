@@ -22,6 +22,7 @@ import {
 } from '../utils/belarus-phone';
 import { petScenarioFormToggleActiveClass } from '@/shared/lib/pet-helpers';
 import { clearPetFormDraft, loadPetFormDraft, savePetFormDraft } from '@/shared/lib/pet-form-draft';
+import { RouteProgress } from '@/shared/ui/molecules';
 
 const MAX_DESCRIPTION = 500;
 
@@ -487,12 +488,12 @@ export function PetForm({
             <h1 className="typo-h2 mb-3">
               {getPageTitle()}
             </h1>
-            <div className="w-full bg-muted rounded-full h-2 overflow-hidden mb-3">
-              <div
-                className="bg-gradient-to-r from-primary-light to-primary h-2 rounded-full transition-all duration-300"
-                style={{ width: `${(step / totalSteps) * 100}%` }}
-              />
-            </div>
+            <RouteProgress
+              totalSteps={totalSteps}
+              currentStep={step}
+              label={`${t.petForm.step} ${step} ${t.petForm.of} ${totalSteps}`}
+              className="mb-3 max-w-sm"
+            />
             <p className="text-sm font-medium text-foreground/90">
               {t.petForm.step} {step} {t.petForm.of} {totalSteps}: {currentStepTitle}
             </p>
@@ -508,15 +509,13 @@ export function PetForm({
               <h2 className="text-lg font-semibold text-foreground">
                 {isEditing ? t.petForm.editTitle : formData.status === 'searching' ? t.petForm.formTitleLost : t.petForm.formTitleFound}
               </h2>
-              <div className="flex items-center gap-2 mt-1.5">
-                <div className="flex gap-1">
-                  {Array.from({ length: totalSteps }).map((_, i) => (
-                    <div
-                      key={i}
-                      className={`h-1 w-8 rounded-full transition-colors ${step >= i + 1 ? 'bg-primary' : 'bg-muted dark:bg-muted/80'}`}
-                    />
-                  ))}
-                </div>
+              <div className="flex items-center gap-3 mt-1.5">
+                <RouteProgress
+                  totalSteps={totalSteps}
+                  currentStep={step}
+                  label={`${t.petForm.step} ${step} ${t.petForm.of} ${totalSteps}`}
+                  className="w-44"
+                />
                 <span className="text-xs text-muted-foreground/80">{t.petForm.step} {step} {t.petForm.of} {totalSteps}</span>
               </div>
             </div>

@@ -1116,7 +1116,10 @@ export default function PetDetailPage() {
           <div class="author-line">${flyerAuthorName}</div>
         </div>
         <div class="qr">
-          <img src="${qrUrl}" alt="" width="112" height="112" decoding="async" loading="eager" />
+          <div class="qr-medallion">
+            <span class="qr-medallion-ear"></span>
+            <img src="${qrUrl}" alt="" width="112" height="112" decoding="async" loading="eager" />
+          </div>
           <div class="qr-label">${qrLabel}</div>
         </div>
       </div>

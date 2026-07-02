@@ -147,13 +147,34 @@ export function buildPetFlyerCss(palette: FlyerPalette): string {
       min-width: 0;
     }
     .contact-qr .qr { flex: 0 0 auto; text-align: center; }
+    /* QR-жетон: круглый медальон с «ушком» — фирменная форма адресника */
+    .qr-medallion {
+      position: relative;
+      width: 156px;
+      height: 156px;
+      margin: 6px auto 0;
+      border-radius: 50%;
+      border: 3px solid var(--accent);
+      background: ${c.bgBase};
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .qr-medallion-ear {
+      position: absolute;
+      top: -9px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 3px solid var(--accent);
+      background: ${c.bgBase};
+    }
     .contact-qr .qr img {
       width: 100px;
       height: 100px;
       display: block;
-      margin: 0 auto;
-      border-radius: 4px;
-      border: 1px solid var(--line);
     }
     .contact-qr .qr-label {
       font-size: 10px;
@@ -233,7 +254,8 @@ export function buildPetFlyerCss(palette: FlyerPalette): string {
       .phone { font-size: 25px !important; }
       .author-line { font-size: 14px; }
       .contact-qr .qr img { width: 92px !important; height: 92px !important; }
-      .contact-qr .qr-label { font-size: 10px; max-width: 100px; }
+      .qr-medallion { width: 142px; height: 142px; }
+      .contact-qr .qr-label { font-size: 10px; max-width: 130px; }
       * {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
