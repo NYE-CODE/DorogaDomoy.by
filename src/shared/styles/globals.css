@@ -58,6 +58,11 @@
   --color-shelter-soft: var(--color-shelter-soft);
   --color-shelter-border: var(--color-shelter-border);
   --color-shelter-foreground: var(--color-shelter-foreground);
+  --color-medallion: var(--color-medallion);
+  --color-medallion-soft: var(--color-medallion-soft);
+  --color-medallion-border: var(--color-medallion-border);
+  --color-medallion-foreground: var(--color-medallion-foreground);
+  --font-display: var(--font-display);
   --color-telegram: var(--color-telegram);
   --color-telegram-hover: var(--color-telegram-hover);
   --color-viber: var(--color-viber);
@@ -139,6 +144,7 @@
 @layer base {
   :where(:not(:has([class*=' text-']), :not(:has([class^='text-'])))) {
     h1 {
+      font-family: var(--font-display);
       font-size: var(--text-4xl);
       font-weight: var(--weight-semibold);
       line-height: var(--leading-tight);
@@ -147,6 +153,7 @@
     }
 
     h2 {
+      font-family: var(--font-display);
       font-size: var(--text-3xl);
       font-weight: var(--weight-semibold);
       line-height: var(--leading-tight);
@@ -155,6 +162,7 @@
     }
 
     h3 {
+      font-family: var(--font-display);
       font-size: var(--text-xl);
       font-weight: var(--weight-medium);
       line-height: var(--leading-normal);
@@ -162,6 +170,7 @@
     }
 
     h4 {
+      font-family: var(--font-display);
       font-size: var(--text-lg);
       font-weight: var(--weight-medium);
       line-height: var(--leading-normal);

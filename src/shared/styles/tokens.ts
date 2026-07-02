@@ -43,7 +43,8 @@ export const tokens = {
     mapPin: '#2563eb',
   },
   typography: {
-    fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+    fontFamily: "'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+    fontFamilyDisplay: "'Manrope', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
     textXs: '12px',
     textSm: '14px',
     textMd: '16px',
@@ -116,6 +117,13 @@ export const tokens = {
     shelterSoft: '#ecfdf5',
     shelterBorder: '#a7f3d0',
     shelterForeground: '#065f46',
+  },
+  /* Латунь адресника/жетона — регистр «забота и порядок» (без сценарной тревожности) */
+  medallion: {
+    base: '#b98a2f',
+    soft: '#faf6ec',
+    border: '#e7d9b8',
+    foreground: '#7a5b1e',
   },
   map: {
     searching: '#e11d48',

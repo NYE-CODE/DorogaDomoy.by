@@ -114,6 +114,12 @@
   --color-scenario-shelter-border: #a7f3d0;
   --color-scenario-shelter-foreground: #065f46;
 
+  /* ── Medallion (адресник / жетон): латунь. Четвёртый регистр — без сценарного цвета ── */
+  --color-medallion: #b98a2f;
+  --color-medallion-soft: #faf6ec;
+  --color-medallion-border: #e7d9b8;
+  --color-medallion-foreground: #7a5b1e;
+
   /* ── Status semantic tokens (Tailwind: bg-lost-soft, text-lost-foreground, …) ──
      Алиасы на scenario-палитру; тёмная тема переопределяется в .dark ниже. */
   --color-lost: var(--color-scenario-lost);
@@ -183,7 +189,9 @@
 
   /* ── Typography ── */
 
-  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+  --font-display: 'Manrope', var(--font-sans);
 
   --font-family-base: var(--font-sans);
 
@@ -544,6 +552,14 @@
   --color-shelter-border: rgba(6, 95, 70, 0.8);
 
   --color-shelter-foreground: #d1fae5;
+
+  --color-medallion: #d4aa4f;
+
+  --color-medallion-soft: rgba(64, 47, 14, 0.45);
+
+  --color-medallion-border: rgba(151, 116, 42, 0.8);
+
+  --color-medallion-foreground: #f0e3c2;
 
 
 
