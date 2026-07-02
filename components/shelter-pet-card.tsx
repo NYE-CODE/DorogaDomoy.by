@@ -17,8 +17,8 @@ export function ShelterPetCard({ pet, onClick, compact = false }: ShelterPetCard
   const { t } = useI18n();
   const treatmentClipId = useId();
 
-  const gender = pet.gender ? t.pet.gender[pet.gender] : '—';
-  const age = pet.approximateAge?.trim() || '—';
+  const gender = pet.gender ? t.pet.gender[pet.gender] : '˜';
+  const age = pet.approximateAge?.trim() || '˜';
   const sp = t.shelterPet;
   const healthLabel: Record<string, string> = {
     disabled: sp.healthDisabled,
@@ -31,7 +31,7 @@ export function ShelterPetCard({ pet, onClick, compact = false }: ShelterPetCard
     semi: sp.coatSemi,
     fluffy: sp.coatFluffy,
   };
-  const health = pet.healthStatus ? (healthLabel[pet.healthStatus] ?? pet.healthStatus) : '—';
+  const health = pet.healthStatus ? (healthLabel[pet.healthStatus] ?? pet.healthStatus) : '˜';
   const name = pet.name?.trim() || pet.breed || t.pet.animalType[pet.animalType];
   const GenderIcon = pet.gender === 'male' ? Mars : pet.gender === 'female' ? Venus : CircleHelp;
   const genderClass =
@@ -88,7 +88,8 @@ export function ShelterPetCard({ pet, onClick, compact = false }: ShelterPetCard
         className={cn(
           interactiveCardClass,
           'group relative flex items-start gap-3 overflow-hidden rounded-md border border-border bg-card p-3 shadow-sm',
-          'hover:-translate-y-0.5',
+          // ˜˜˜˜˜ ˜˜˜˜˜˜: ˜˜ hover ˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜ ˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜-˜˜˜˜˜˜˜˜˜˜˜˜
+          'hover:-translate-y-0.5 hover:border-shelter-border',
         )}
       >
         <div className="absolute right-2 top-2 z-10">
@@ -104,12 +105,12 @@ export function ShelterPetCard({ pet, onClick, compact = false }: ShelterPetCard
         <div className="min-w-0 flex-1 pr-8">
           <h3 className={cn(typoH4, 'line-clamp-1')}>{name}</h3>
           <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">
-            Ïîğîäà: {pet.breed?.trim() || 'íå óêàçàíà'} · Âîçğàñò: {age}
+            ˜˜˜˜˜˜: {pet.breed?.trim() || '˜˜ ˜˜˜˜˜˜˜'} ˜ ˜˜˜˜˜˜˜: {age}
           </p>
           <div className="mt-1.5 flex items-center gap-2 text-xs text-muted-foreground">
             <GenderIcon className={cn('size-4', genderClass)} aria-hidden />
             <span>{gender}</span>
-            <span className="text-border">·</span>
+            <span className="text-border">˜</span>
             <span>{health}</span>
           </div>
         </div>
@@ -126,7 +127,7 @@ export function ShelterPetCard({ pet, onClick, compact = false }: ShelterPetCard
       className={cn(
         interactiveCardClass,
         'group flex h-full flex-col overflow-hidden rounded-md border border-border bg-card p-4 shadow-sm',
-        'hover:-translate-y-0.5',
+        'hover:-translate-y-0.5 hover:border-shelter-border',
       )}
     >
       <div className="relative mb-3 flex aspect-square w-full items-center justify-center overflow-hidden rounded-md border border-border bg-muted">
@@ -142,33 +143,34 @@ export function ShelterPetCard({ pet, onClick, compact = false }: ShelterPetCard
 
       <div className="flex min-w-0 flex-1 flex-col gap-2.5">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="line-clamp-2 min-w-0 text-lg font-extrabold leading-snug tracking-wide text-foreground uppercase sm:text-xl">
-            {name.toUpperCase()}
+          {/* Ãîëîñ «ïğèşò»: èìÿ — ãëàâíîå â êàğòî÷êå, ò¸ïëîå, áåç ïëàêàòíîãî êàïñà */}
+          <h3 className="line-clamp-2 min-w-0 text-xl font-bold leading-snug text-foreground sm:text-2xl">
+            {name}
           </h3>
           <div className="inline-flex shrink-0 items-center gap-2">
             <span
               className="inline-flex items-center"
-              title={`Ïîë: ${gender}`}
-              aria-label={`Ïîë: ${gender}`}
+              title={`˜˜˜: ${gender}`}
+              aria-label={`˜˜˜: ${gender}`}
             >
               <GenderIcon className={cn('size-5', genderClass)} aria-hidden />
             </span>
             <span
               className="inline-flex items-center text-rose-500"
-              title={`Çäîğîâüå: ${health}`}
-              aria-label={`Çäîğîâüå: ${health}`}
+              title={`˜˜˜˜˜˜˜˜: ${health}`}
+              aria-label={`˜˜˜˜˜˜˜˜: ${health}`}
             >
               {renderHealthIcon()}
             </span>
           </div>
         </div>
         <p className="line-clamp-1 text-sm text-muted-foreground">
-          Ïîğîäà: {pet.breed?.trim() || 'íå óêàçàíà'} · Âîçğàñò: {age}
+          ˜˜˜˜˜˜: {pet.breed?.trim() || '˜˜ ˜˜˜˜˜˜˜'} ˜ ˜˜˜˜˜˜˜: {age}
         </p>
         <div className="mt-1 flex flex-col gap-1.5">
           <span className="flex max-w-full items-center gap-1 self-start rounded-md bg-muted/80 px-[10px] py-[4px] text-xs text-muted-foreground">
             <MapPin size={12} className="shrink-0 opacity-80" aria-hidden />
-            <span className="min-w-0 truncate">{pet.city || '—'}</span>
+            <span className="min-w-0 truncate">{pet.city || '˜'}</span>
           </span>
         </div>
         <div className="mt-auto" />

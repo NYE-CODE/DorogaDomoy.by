@@ -16,11 +16,11 @@ interface PetCardProps {
   compact?: boolean;
   onEdit?: (pet: Pet) => void;
   onDelete?: (pet: Pet) => void;
-  /**  оличество видений (показываетс€ только дл€ status=searching) */
+  /** ?????????? ??????? (???????????? ?????? ??? status=searching) */
   sightingCount?: number;
-  /** —крыть статус (ищу/найден) и бейдж модерации Ч например в Ђћои объ€влени€ї со вкладками */
+  /** ?????? ?????? (???/??????) ? ????? ????????? ? ???????? ? ???? ??????????? ?? ????????? */
   hideStatusBadge?: boolean;
-  /**  нопка Ђв избранноеї на превью (отключить на служебных списках) */
+  /** ?????? ?? ????????? ?? ?????? (????????? ?? ????????? ???????) */
   showFavoriteToggle?: boolean;
 }
 
@@ -98,17 +98,17 @@ export function PetCard({
     let textColor = 'text-green-700 dark:text-green-400';
     let borderColor = 'border-green-200 dark:border-green-800';
     
-    if (pet.archiveReason.includes('вернулс€ домой') || pet.archiveReason.includes('найден хоз€ин')) {
+    if (pet.archiveReason.includes('???????? ?????') || pet.archiveReason.includes('?????? ??????')) {
       icon = <Home className="w-3.5 h-3.5" />;
       bgColor = 'bg-green-50 dark:bg-green-900/20';
       textColor = 'text-green-700 dark:text-green-400';
       borderColor = 'border-green-200 dark:border-green-800';
-    } else if (pet.archiveReason.includes('пристроен')) {
+    } else if (pet.archiveReason.includes('?????????')) {
       icon = <Heart className="w-3.5 h-3.5" />;
       bgColor = 'bg-pink-50 dark:bg-pink-900/20';
       textColor = 'text-pink-700 dark:text-pink-400';
       borderColor = 'border-pink-200 dark:border-pink-800';
-    } else if (pet.archiveReason.includes('приют')) {
+    } else if (pet.archiveReason.includes('?????')) {
       icon = <Building2 className="w-3.5 h-3.5" />;
       bgColor = 'bg-muted';
       textColor = 'text-foreground/90';
@@ -138,7 +138,7 @@ export function PetCard({
 
   if (compact) {
     const photoUrl = pet.photos[0] || 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&h=400&fit=crop';
-    const colorStr = pet.colors.length ? pet.colors.map(c => t.pet.color[c as keyof typeof t.pet.color]).join(', ') : 'Ч';
+    const colorStr = pet.colors.length ? pet.colors.map(c => t.pet.color[c as keyof typeof t.pet.color]).join(', ') : '?';
     const breedStr = pet.breed?.trim() || t.landing.announcements.breedDefault;
     const photoAlt = `${t.pet.animalType[pet.animalType]}${pet.breed ? `, ${pet.breed}` : ''}, ${pet.city}`;
     return (
@@ -179,7 +179,7 @@ export function PetCard({
 
         <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5 pr-8">
           <h3 className={cn(typoH4, 'line-clamp-1 leading-tight')}>
-            {t.pet.animalType[pet.animalType]} <span className="font-medium text-muted-foreground">Ј</span>{' '}
+            {t.pet.animalType[pet.animalType]} <span className="font-medium text-muted-foreground">?</span>{' '}
             <span className="font-medium">{breedStr}</span>
           </h3>
           {getRewardBadgeMeta(pet) ? (
@@ -193,7 +193,14 @@ export function PetCard({
               <MapPin size={12} className="shrink-0 opacity-80" aria-hidden />
               <span className="min-w-0 truncate">{pet.city}</span>
             </span>
-            <span className="flex items-center gap-1.5 self-start rounded-md bg-muted/70 px-2.5 py-1 text-xs text-muted-foreground">
+            <span
+              className={cn(
+                'flex items-center gap-1.5 self-start rounded-md px-2.5 py-1 text-xs',
+                pet.status === 'searching' && !pet.isArchived
+                  ? 'bg-lost-soft font-semibold text-lost-foreground'
+                  : 'bg-muted/70 text-muted-foreground',
+              )}
+            >
               <Clock size={12} className="shrink-0 opacity-80" aria-hidden />
               {formatRelativeTime(pet.publishedAt)}
             </span>
@@ -236,7 +243,7 @@ export function PetCard({
           </div>
         )}
         
-        {/* Owner or Admin Actions Ч three-dots menu on the right */}
+        {/* Owner or Admin Actions ? three-dots menu on the right */}
         {canEditDelete && (onEdit || onDelete) && (
           <div className="absolute top-3 right-3" ref={menuRef}>
             <button
@@ -276,7 +283,7 @@ export function PetCard({
         <div className="mb-3">
           <div className="flex items-start justify-between gap-2 mb-2">
             <h3 className="font-semibold text-lg text-foreground">
-              {t.pet.animalType[pet.animalType]} {pet.breed && `Ј ${pet.breed}`}
+              {t.pet.animalType[pet.animalType]} {pet.breed && `? ${pet.breed}`}
             </h3>
             <div className="flex items-center gap-2 shrink-0">
               <RewardBadge pet={pet} />
@@ -291,8 +298,8 @@ export function PetCard({
           
           <div className="flex flex-wrap gap-2 text-sm text-muted-foreground mb-2">
             <span>{t.pet.colorLabel}: {pet.colors.map(c => t.pet.color[c as keyof typeof t.pet.color]).join(', ')}</span>
-            {pet.gender && <span>Ј {t.pet.gender[pet.gender]}</span>}
-            {pet.approximateAge && <span>Ј {pet.approximateAge}</span>}
+            {pet.gender && <span>? {t.pet.gender[pet.gender]}</span>}
+            {pet.approximateAge && <span>? {pet.approximateAge}</span>}
           </div>
 
           <p className="text-sm text-foreground/90 line-clamp-2 mb-3">
@@ -306,7 +313,14 @@ export function PetCard({
             </div>
             <div className="flex items-center gap-1">
               <Clock className="h-4 w-4 shrink-0" aria-hidden />
-              <span>{formatDate(pet.publishedAt)}</span>
+              {/* ????? ????????: ????? ? ??????? ?????????, ? ?? ???? ?????????? */}
+              {pet.status === 'searching' && !pet.isArchived ? (
+                <span className="font-semibold text-lost-foreground">
+                  {formatRelativeTime(pet.publishedAt)}
+                </span>
+              ) : (
+                <span>{formatDate(pet.publishedAt)}</span>
+              )}
             </div>
           </div>
           
@@ -357,7 +371,13 @@ export function PetCard({
               {pet.contacts.phone && (
                 <button
                   onClick={(e) => handleContactClick(e, `tel:${pet.contacts.phone}`)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-muted text-muted-foreground rounded-lg hover:bg-accent transition-colors text-sm"
+                  className={cn(
+                    'flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors text-sm',
+                    // ????? ????????: ?????? ? ??????? ????????, ????????? ?????? ????????
+                    pet.status === 'searching'
+                      ? 'bg-primary text-primary-foreground font-semibold hover:bg-primary-hover'
+                      : 'bg-muted text-muted-foreground hover:bg-accent',
+                  )}
                 >
                   <Phone className="w-4 h-4" />
                   {t.profile.phone}
