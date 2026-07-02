@@ -36,7 +36,7 @@ export default function MyAdsPageRoute() {
 
   useEffect(() => {
     if (isLoading) return;
-    // Ïåðåõîä ñ /create ïîñëå óñïåøíîãî ñîçäàíèÿ — íå ðåäèðåêòèòü íà /
+    // ÐŸÐµÑ€ÐµÑ…Ð¾Ð´ Ñ /create Ð¿Ð¾ÑÐ»Ðµ ÑƒÑÐ¿ÐµÑˆÐ½Ð¾Ð³Ð¾ ÑÐ¾Ð·Ð´Ð°Ð½Ð¸Ñ â€” Ð½Ðµ Ñ€ÐµÐ´Ð¸Ñ€ÐµÐºÑ‚Ð¸Ñ‚ÑŒ Ð½Ð° /
     const fromCreate = (location.state as { fromCreate?: boolean })?.fromCreate;
     if (fromCreate) {
       setDataLoading(true);
@@ -180,7 +180,7 @@ export default function MyAdsPageRoute() {
             deletingPet.status === 'searching' && deletingPet.rewardMode === 'points'
           }
           rewardPoints={deletingPet.rewardPoints ?? 50}
-          petDescription={`${deletingPet.animalType === 'cat' ? 'Êîò' : deletingPet.animalType === 'dog' ? 'Ñîáàêà' : 'Æèâîòíîå'} ${deletingPet.breed ? `(${deletingPet.breed})` : ''} - ${deletingPet.city}`}
+          petDescription={`${deletingPet.animalType === 'cat' ? 'ÐšÐ¾Ñ‚' : deletingPet.animalType === 'dog' ? 'Ð¡Ð¾Ð±Ð°ÐºÐ°' : 'Ð–Ð¸Ð²Ð¾Ñ‚Ð½Ð¾Ðµ'} ${deletingPet.breed ? `(${deletingPet.breed})` : ''} - ${deletingPet.city}`}
         />
       )}
 

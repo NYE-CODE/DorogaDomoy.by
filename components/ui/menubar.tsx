@@ -1,2 +1,2 @@
-/** @deprecated Используйте `@/shared/ui/menubar`. */
+/** @deprecated РСЃРїРѕР»СЊР·СѓР№С‚Рµ `@/shared/ui/menubar`. */
 export * from '../../src/shared/ui/menubar.tsx';

@@ -56,7 +56,7 @@ export default function MySheltersPage() {
 
   useEffect(() => {
     applySeo({
-      title: `${ms.title} ù DorogaDomoy.by`,
+      title: `${ms.title} —ú DorogaDomoy.by`,
       description: ms.subtitle,
       canonicalUrl: canonicalUrlFromPath('/my-shelters'),
       robots: SEO_ROBOTS_PRIVATE,
@@ -281,7 +281,7 @@ export default function MySheltersPage() {
                             </p>
                           ) : null}
                         </div>
-                        <span className="truncate text-sm text-muted-foreground">{row.city || 'ù'}</span>
+                        <span className="truncate text-sm text-muted-foreground">{row.city || '—ú'}</span>
                         <span className="truncate text-sm text-muted-foreground">{kindLabel(row.kind)}</span>
                         <span className="truncate text-sm text-muted-foreground">{focusLabel(row.animal_focus)}</span>
                         <span
@@ -306,7 +306,7 @@ export default function MySheltersPage() {
                         <div>
                           <p className="font-semibold text-foreground">{row.name}</p>
                           <p className="mt-1 text-sm text-muted-foreground">
-                            {row.city || 'ù'} ù {kindLabel(row.kind)} ù {focusLabel(row.animal_focus)}
+                            {row.city || '—ú'} —ú {kindLabel(row.kind)} —ú {focusLabel(row.animal_focus)}
                           </p>
                         </div>
                         <span

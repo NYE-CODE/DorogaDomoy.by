@@ -22,8 +22,8 @@ import {
 let publisherEnsured = false;
 
 /**
- * Синхронизирует canonical, robots и базовые title/description по маршруту.
- * Страницы с данными (/pet/:id, /blog/:slug, …) дополняют мету через applySeo.
+ * РЎРёРЅС…СЂРѕРЅРёР·РёСЂСѓРµС‚ canonical, robots Рё Р±Р°Р·РѕРІС‹Рµ title/description РїРѕ РјР°СЂС€СЂСѓС‚Сѓ.
+ * РЎС‚СЂР°РЅРёС†С‹ СЃ РґР°РЅРЅС‹РјРё (/pet/:id, /blog/:slug, вЂ¦) РґРѕРїРѕР»РЅСЏСЋС‚ РјРµС‚Сѓ С‡РµСЂРµР· applySeo.
  */
 export function SeoRouteSync() {
   const { pathname } = useLocation();
@@ -102,7 +102,7 @@ export function SeoRouteSync() {
     }
 
     applySeo({
-      title: 'DorogaDomoy.by — экосистема помощи животным',
+      title: 'DorogaDomoy.by вЂ” СЌРєРѕСЃРёСЃС‚РµРјР° РїРѕРјРѕС‰Рё Р¶РёРІРѕС‚РЅС‹Рј',
       description: SEO_HOME_DESCRIPTION,
       canonicalUrl: canonical,
       robots,

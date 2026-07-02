@@ -1,2 +1,2 @@
-/** @deprecated Используйте `@/shared/ui/card`. */
+/** @deprecated РСЃРїРѕР»СЊР·СѓР№С‚Рµ `@/shared/ui/card`. */
 export * from '../../src/shared/ui/card.tsx';

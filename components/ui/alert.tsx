@@ -1,2 +1,2 @@
-/** @deprecated Используйте `@/shared/ui/alert`. */
+/** @deprecated РСЃРїРѕР»СЊР·СѓР№С‚Рµ `@/shared/ui/alert`. */
 export * from '../../src/shared/ui/alert.tsx';

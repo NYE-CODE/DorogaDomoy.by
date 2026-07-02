@@ -43,7 +43,7 @@ interface MyAdsPageProps {
   onEditPet: (pet: Pet) => void;
   onDeletePet: (pet: Pet) => void;
   onBoostPet: (pet: Pet) => void;
-  /** Зависит от ff_instagram_boost_stories в профиле */
+  /** Р—Р°РІРёСЃРёС‚ РѕС‚ ff_instagram_boost_stories РІ РїСЂРѕС„РёР»Рµ */
   instagramBoostEnabled?: boolean;
 }
 
@@ -407,7 +407,7 @@ export function MyAdsPage({
                                   <h3 className="text-sm font-semibold text-foreground sm:text-base">
                                     {getStatusTitle(pet)}
                                   </h3>
-                                  <span className="hidden text-muted-foreground sm:inline">·</span>
+                                  <span className="hidden text-muted-foreground sm:inline">В·</span>
                                   <span className="hidden text-xs text-muted-foreground sm:inline sm:text-sm">
                                     {getPetTypeLabel(pet)}
                                   </span>
@@ -415,7 +415,7 @@ export function MyAdsPage({
                                     pet.status === 'searching' &&
                                     sightingCount > 0 && (
                                       <>
-                                        <span className="hidden text-muted-foreground sm:inline">·</span>
+                                        <span className="hidden text-muted-foreground sm:inline">В·</span>
                                         <span className="flex items-center gap-1 text-xs text-muted-foreground sm:text-sm">
                                           <Eye className="size-3.5 sm:size-4" aria-hidden />
                                           {sightingCount}
@@ -466,7 +466,7 @@ export function MyAdsPage({
 
                                 <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground sm:gap-2 sm:text-sm">
                                   <span className="truncate">{pet.city}</span>
-                                  <span className="shrink-0" aria-hidden>·</span>
+                                  <span className="shrink-0" aria-hidden>В·</span>
                                   <span className="shrink-0">{formatDate(pet.publishedAt)}</span>
                                 </div>
                               </div>

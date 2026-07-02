@@ -68,7 +68,7 @@ export default function BlogPostPage() {
               .replace(/\[([^\]]+)]\([^)]+\)/g, '$1'),
           );
         applySeo({
-          title: `${p.title} — ${t.landing.blog.pageTitle} | DorogaDomoy.by`,
+          title: `${p.title} вЂ” ${t.landing.blog.pageTitle} | DorogaDomoy.by`,
           description: meta,
           canonicalUrl: canonicalUrlFromPath(`/blog/${p.slug}`),
           robots: SEO_ROBOTS_PUBLIC,
@@ -84,7 +84,7 @@ export default function BlogPostPage() {
     if (post) return;
     applySeo({
       title: `${b.notFound} | DorogaDomoy.by`,
-      description: 'Статья не найдена или снята с публикации. Другие материалы — в блоге DorogaDomoy.by.',
+      description: 'РЎС‚Р°С‚СЊСЏ РЅРµ РЅР°Р№РґРµРЅР° РёР»Рё СЃРЅСЏС‚Р° СЃ РїСѓР±Р»РёРєР°С†РёРё. Р”СЂСѓРіРёРµ РјР°С‚РµСЂРёР°Р»С‹ вЂ” РІ Р±Р»РѕРіРµ DorogaDomoy.by.',
       canonicalUrl: canonicalUrlFromPath(`/blog/${slug}`),
       robots: SEO_ROBOTS_PRIVATE,
       keywords: SEO_KEYWORDS,

@@ -266,8 +266,8 @@ export default function ShelterPetDetailPage() {
       if (s === 'not_for_adoption') return t.myShelterPetsList.statusNotForAdoption;
       return t.myShelterPetsList.statusAvailable;
     })();
-    const title = `${pet.name?.trim() || pet.breed || t.pet.animalType[pet.animalType]} — ищет дом`;
-    const description = `${adoptionSeo} · ${pet.city}. Узнайте больше о питомце на DorogaDomoy.by`;
+    const title = `${pet.name?.trim() || pet.breed || t.pet.animalType[pet.animalType]} вЂ” РёС‰РµС‚ РґРѕРј`;
+    const description = `${adoptionSeo} В· ${pet.city}. РЈР·РЅР°Р№С‚Рµ Р±РѕР»СЊС€Рµ Рѕ РїРёС‚РѕРјС†Рµ РЅР° DorogaDomoy.by`;
     applySeo({
       title,
       description,
@@ -519,7 +519,7 @@ export default function ShelterPetDetailPage() {
               : 'text-muted-foreground hover:bg-muted',
           )}
         >
-          Сбор
+          РЎР±РѕСЂ
         </button>
         <button
           type="button"
@@ -531,15 +531,15 @@ export default function ShelterPetDetailPage() {
               : 'text-muted-foreground hover:bg-muted',
           )}
         >
-          История сборов
+          РСЃС‚РѕСЂРёСЏ СЃР±РѕСЂРѕРІ
         </button>
       </div>
 
       {showCampaign ? (
         <div>
-          <h2 className="typo-h2">Текущий сбор</h2>
+          <h2 className="typo-h2">РўРµРєСѓС‰РёР№ СЃР±РѕСЂ</h2>
           {campaignsLoading ? (
-            <p className="mt-3 text-sm text-muted-foreground">Загрузка сбора...</p>
+            <p className="mt-3 text-sm text-muted-foreground">Р—Р°РіСЂСѓР·РєР° СЃР±РѕСЂР°...</p>
           ) : currentCampaign ? (
             <div className="mt-4 space-y-4 rounded-md border border-border/70 bg-muted/20 p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
@@ -549,43 +549,43 @@ export default function ShelterPetDetailPage() {
                     <p className="mt-1 text-sm text-muted-foreground">{currentCampaign.description}</p>
                   ) : null}
                 </div>
-                <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">Активный</span>
+                <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">РђРєС‚РёРІРЅС‹Р№</span>
               </div>
               <div className="grid gap-2 text-sm sm:grid-cols-3">
-                <p><span className="text-muted-foreground">Цель: </span>{currentCampaign.goal_amount} BYN</p>
-                <p><span className="text-muted-foreground">Собрано: </span>{currentCampaign.collected_amount} BYN</p>
-                <p><span className="text-muted-foreground">Прогресс: </span>{progressPercent}%</p>
+                <p><span className="text-muted-foreground">Р¦РµР»СЊ: </span>{currentCampaign.goal_amount} BYN</p>
+                <p><span className="text-muted-foreground">РЎРѕР±СЂР°РЅРѕ: </span>{currentCampaign.collected_amount} BYN</p>
+                <p><span className="text-muted-foreground">РџСЂРѕРіСЂРµСЃСЃ: </span>{progressPercent}%</p>
               </div>
               <p className="text-xs text-muted-foreground">
-                Обновлено: {formatCalendarDate(new Date(currentCampaign.updated_at))}
+                РћР±РЅРѕРІР»РµРЅРѕ: {formatCalendarDate(new Date(currentCampaign.updated_at))}
               </p>
               <div className="h-2 rounded-full bg-muted">
                 <div className="h-2 rounded-full bg-primary transition-all" style={{ width: `${progressPercent}%` }} />
               </div>
               {hasValidCurrentCampaignEndsAt && currentCampaignEndsAt ? (
                 <p className="text-xs text-muted-foreground">
-                  Срок: до {formatCalendarDate(currentCampaignEndsAt)}
+                  РЎСЂРѕРє: РґРѕ {formatCalendarDate(currentCampaignEndsAt)}
                 </p>
               ) : null}
               <Button type="button" variant="outline" onClick={() => setShowHelpDetails((v) => !v)}>
-                {showHelpDetails ? 'Скрыть реквизиты' : 'Как помочь'}
+                {showHelpDetails ? 'РЎРєСЂС‹С‚СЊ СЂРµРєРІРёР·РёС‚С‹' : 'РљР°Рє РїРѕРјРѕС‡СЊ'}
               </Button>
               {showHelpDetails ? (
                 <div className="rounded-lg border border-border bg-background p-3 text-sm whitespace-pre-line">
-                  {currentCampaign.help_details?.trim() || 'Реквизиты пока не указаны организацией.'}
+                  {currentCampaign.help_details?.trim() || 'Р РµРєРІРёР·РёС‚С‹ РїРѕРєР° РЅРµ СѓРєР°Р·Р°РЅС‹ РѕСЂРіР°РЅРёР·Р°С†РёРµР№.'}
                 </div>
               ) : null}
             </div>
           ) : (
             <div className="mt-3 space-y-3">
-              <p className="text-muted-foreground">Активного сбора пока нет.</p>
+              <p className="text-muted-foreground">РђРєС‚РёРІРЅРѕРіРѕ СЃР±РѕСЂР° РїРѕРєР° РЅРµС‚.</p>
             </div>
           )}
         </div>
       ) : null}
       {showHistory ? (
         <div>
-          <h2 className="typo-h2">История сборов</h2>
+          <h2 className="typo-h2">РСЃС‚РѕСЂРёСЏ СЃР±РѕСЂРѕРІ</h2>
           {historyCampaigns.length === 0 ? (
             <p className="mt-3 text-muted-foreground">
               {t.petDetail.shelterCampaignHistoryEmpty}
@@ -596,14 +596,14 @@ export default function ShelterPetDetailPage() {
                 <div key={item.id} className="rounded-md border border-border/70 p-4">
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <p className="font-medium">{item.title}</p>
-                    <span className="text-xs text-muted-foreground">Завершён</span>
+                    <span className="text-xs text-muted-foreground">Р—Р°РІРµСЂС€С‘РЅ</span>
                   </div>
                   <p className="mt-1 text-sm text-muted-foreground">
                     {item.collected_amount} / {item.goal_amount} BYN
                   </p>
                   {item.close_reason ? (
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Причина: {item.close_reason}
+                      РџСЂРёС‡РёРЅР°: {item.close_reason}
                     </p>
                   ) : null}
                 </div>
@@ -719,7 +719,7 @@ export default function ShelterPetDetailPage() {
             <div
               className="flex gap-1 rounded-md border border-border bg-background p-1 lg:hidden"
               role="tablist"
-              aria-label="Разделы карточки питомца"
+              aria-label="Р Р°Р·РґРµР»С‹ РєР°СЂС‚РѕС‡РєРё РїРёС‚РѕРјС†Р°"
             >
               <button
                 type="button"
@@ -733,7 +733,7 @@ export default function ShelterPetDetailPage() {
                     : 'text-muted-foreground hover:bg-muted',
                 )}
               >
-                О питомце
+                Рћ РїРёС‚РѕРјС†Рµ
               </button>
               <button
                 type="button"
@@ -747,7 +747,7 @@ export default function ShelterPetDetailPage() {
                     : 'text-muted-foreground hover:bg-muted',
                 )}
               >
-                Сбор
+                РЎР±РѕСЂ
               </button>
               <button
                 type="button"
@@ -761,7 +761,7 @@ export default function ShelterPetDetailPage() {
                     : 'text-muted-foreground hover:bg-muted',
                 )}
               >
-                История сборов
+                РСЃС‚РѕСЂРёСЏ СЃР±РѕСЂРѕРІ
               </button>
             </div>
 
@@ -772,7 +772,7 @@ export default function ShelterPetDetailPage() {
                 !showAbout && 'hidden',
               )}
             >
-                <h2 className="typo-h2 mb-4 max-lg:hidden">О питомце</h2>
+                <h2 className="typo-h2 mb-4 max-lg:hidden">Рћ РїРёС‚РѕРјС†Рµ</h2>
                 <div className="space-y-3 text-sm">
                   <h1 className="typo-h1">{title}</h1>
                   <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
@@ -782,7 +782,7 @@ export default function ShelterPetDetailPage() {
                     </div>
                     <div
                       className="flex shrink-0 items-center gap-2.5"
-                      aria-label={`${t.pet.genderLabel}: ${t.pet.gender[pet.gender]}. Здоровье: ${health}`}
+                      aria-label={`${t.pet.genderLabel}: ${t.pet.gender[pet.gender]}. Р—РґРѕСЂРѕРІСЊРµ: ${health}`}
                     >
                       <span
                         title={`${t.pet.genderLabel}: ${t.pet.gender[pet.gender]}`}
@@ -790,7 +790,7 @@ export default function ShelterPetDetailPage() {
                       >
                         <ShelterPetGenderGlyph gender={pet.gender} />
                       </span>
-                      <span title={`Здоровье: ${health}`} className="inline-flex text-rose-500">
+                      <span title={`Р—РґРѕСЂРѕРІСЊРµ: ${health}`} className="inline-flex text-rose-500">
                         <ShelterPetHealthGlyph healthStatus={pet.healthStatus} clipId={treatmentClipId} />
                       </span>
                     </div>
@@ -817,7 +817,7 @@ export default function ShelterPetDetailPage() {
                   <p><span className="text-muted-foreground">{t.pet.breedLabel}: </span>{pet.breed?.trim() || '?'}</p>
                   <p><span className="text-muted-foreground">{t.pet.colorLabel}: </span>{colors}</p>
                   <p><span className="text-muted-foreground">{t.pet.ageLabel}: </span>{pet.approximateAge?.trim() || '?'}</p>
-                  <p><span className="text-muted-foreground">Шерсть: </span>{coat}</p>
+                  <p><span className="text-muted-foreground">РЁРµСЂСЃС‚СЊ: </span>{coat}</p>
                   <ShelterPetTraits pet={pet} className="mt-3" />
                   <div className="border-t border-border pt-3 text-muted-foreground">
                     <p className="inline-flex items-start gap-2">
@@ -1013,7 +1013,7 @@ export default function ShelterPetDetailPage() {
                   <Button className={cn(appOutlineCtaClass, 'w-full')} asChild>
                     <a href={displayWebsiteUrl} target="_blank" rel="noopener noreferrer">
                       <Globe className="size-5" />
-                      Открыть сайт
+                      РћС‚РєСЂС‹С‚СЊ СЃР°Р№С‚
                     </a>
                   </Button>
                 ) : null}
@@ -1021,7 +1021,7 @@ export default function ShelterPetDetailPage() {
                   <p className="text-sm text-muted-foreground">
                     {shelter ? (
                       <>
-                        У организации нет прямых контактов — напишите через{' '}
+                        РЈ РѕСЂРіР°РЅРёР·Р°С†РёРё РЅРµС‚ РїСЂСЏРјС‹С… РєРѕРЅС‚Р°РєС‚РѕРІ вЂ” РЅР°РїРёС€РёС‚Рµ С‡РµСЂРµР·{' '}
                         <Link to={`/shelters/${shelter.id}`} className="font-medium text-primary underline-offset-4 hover:underline">
                           {t.backQuickMenu.shelterPage}
                         </Link>

@@ -18,7 +18,7 @@ interface AdminModalShellProps {
   maxWidthClass?: string;
 }
 
-/** Äîñòóïíàÿ îáîëî÷êà ìîäàëîê àäìèíêè (Radix Dialog + focus trap). */
+/** Ð”Ð¾ÑÑ‚ÑƒÐ¿Ð½Ð°Ñ Ð¾Ð±Ð¾Ð»Ð¾Ñ‡ÐºÐ° Ð¼Ð¾Ð´Ð°Ð»Ð¾Ðº Ð°Ð´Ð¼Ð¸Ð½ÐºÐ¸ (Radix Dialog + focus trap). */
 export function AdminModalShell({
   open,
   onClose,
@@ -49,7 +49,7 @@ export function AdminModalShell({
             type="button"
             onClick={onClose}
             className="rounded p-1 hover:bg-accent"
-            aria-label="Çàêðûòü"
+            aria-label="Ð—Ð°ÐºÑ€Ñ‹Ñ‚ÑŒ"
           >
             <X className="size-5 text-muted-foreground" />
           </button>

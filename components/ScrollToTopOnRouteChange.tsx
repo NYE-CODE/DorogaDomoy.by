@@ -1,2 +1,2 @@
-/** @deprecated Используйте `@/widgets/seo/ScrollToTopOnRouteChange`. */
+/** @deprecated РСЃРїРѕР»СЊР·СѓР№С‚Рµ `@/widgets/seo/ScrollToTopOnRouteChange`. */
 export { ScrollToTopOnRouteChange } from '../src/widgets/seo/ScrollToTopOnRouteChange';

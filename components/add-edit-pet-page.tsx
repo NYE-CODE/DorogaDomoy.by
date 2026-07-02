@@ -53,7 +53,7 @@ const emptyForm = (): ProfilePetFormData => ({
 const MAX_PHOTOS = 5;
 const MAX_PROFILE_UPLOAD_BYTES = 750 * 1024;
 
-/** ˜˜˜˜ ˜ ˜˜˜˜˜˜˜˜ ˜˜ ˜˜˜˜ ˜˜˜ ˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜ (˜˜˜ ˜˜˜˜˜˜˜˜˜˜˜). */
+/** ï¿½ï¿½ï¿½ï¿½ ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½). */
 const PROFILE_PET_PHOTO_GUIDE_INSTAGRAM_URL =
   "https://www.instagram.com/p/DXpRblXiJwT/?img_index=1";
 
@@ -68,10 +68,10 @@ async function prepareProfilePhotoForUpload(file: File): Promise<File> {
     maxSizeBytes: MAX_PROFILE_UPLOAD_BYTES,
   });
   if (!compressed) {
-    throw new Error("˜˜ ˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜˜˜");
+    throw new Error("ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½");
   }
   if (compressed.size > MAX_PROFILE_UPLOAD_BYTES) {
-    throw new Error("˜˜˜˜ ˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜. ˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜ ˜˜˜ ˜˜˜˜˜˜˜˜˜ ˜˜˜.");
+    throw new Error("ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½. ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½.");
   }
   return new File([compressed], buildCompressedPhotoName(file), {
     type: "image/jpeg",
@@ -872,7 +872,7 @@ export function AddEditPetContent() {
                     : "bg-green-600 hover:bg-green-700"
                 }`}
               >
-                {isSubmitting ? "˜˜˜˜˜˜˜˜˜˜..." : (isEditMode ? f.submitSave : f.submitAdd)}
+                {isSubmitting ? "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½..." : (isEditMode ? f.submitSave : f.submitAdd)}
               </button>
             )}
           </div>

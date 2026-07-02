@@ -88,7 +88,7 @@ export default function PublicPetProfilePage() {
     if (!pet) return;
     const species = speciesFullLabel(resolveProfilePetSpecies(pet.species, pet.breed), f);
     const city = (pet.owner_city ?? '').trim();
-    const title = `${pet.name} ? ${species}${city ? `, ${city}` : ''} | DorogaDomoy.by`;
+    const title = `${pet.name} — ${species}${city ? `, ${city}` : ''} | DorogaDomoy.by`;
     const desc = truncateMetaDescription(
       `${pet.name}, ${species}.${city ? ` ${pp.city}: ${city}.` : ''} ${pp.contactSubtitle} DorogaDomoy.by.`,
     );
@@ -159,7 +159,7 @@ export default function PublicPetProfilePage() {
     } catch (err) {
       if (import.meta.env.DEV && err instanceof Error) console.warn('[sendFoundSignal]', err);
       const msg = err instanceof Error ? err.message.toLowerCase() : '';
-      if (msg.includes('?????? ???????')) {
+      if (msg.includes('своему питомцу')) {
         toast.error(pp.signalOwnPetError);
       } else {
         toast.error(pp.signalSendError);
@@ -236,7 +236,7 @@ export default function PublicPetProfilePage() {
                     {pet.name}
                   </h1>
                   <p className="text-muted-foreground mt-2 text-base md:text-lg">
-                    {speciesFullLabel(resolvedSpecies, f)}{pet.breed ? ` ? ${pet.breed}` : ''}
+                    {speciesFullLabel(resolvedSpecies, f)}{pet.breed ? ` · ${pet.breed}` : ''}
                   </p>
                 </div>
 
@@ -264,7 +264,7 @@ export default function PublicPetProfilePage() {
                     <div className="min-w-0">
                       <p className="text-xs md:text-sm text-muted-foreground/80">{f.labelColors}</p>
                       <p className="text-sm md:text-base font-medium text-black dark:text-white truncate">
-                        {colorsLine || '?'}
+                        {colorsLine || '—'}
                       </p>
                     </div>
                   </div>

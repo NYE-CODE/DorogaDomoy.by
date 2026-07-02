@@ -1,2 +1,2 @@
-/** @deprecated Используйте `@/pages/EditAdPage.tsx`. */
+/** @deprecated РСЃРїРѕР»СЊР·СѓР№С‚Рµ `@/pages/EditAdPage.tsx`. */
 export { default } from '../src/pages/EditAdPage.tsx';

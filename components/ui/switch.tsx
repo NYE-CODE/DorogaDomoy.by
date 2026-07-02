@@ -1,2 +1,2 @@
-/** @deprecated Используйте `@/shared/ui/switch`. */
+/** @deprecated РСЃРїРѕР»СЊР·СѓР№С‚Рµ `@/shared/ui/switch`. */
 export * from '../../src/shared/ui/switch.tsx';

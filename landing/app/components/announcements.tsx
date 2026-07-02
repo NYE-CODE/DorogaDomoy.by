@@ -52,7 +52,7 @@ export function Announcements() {
     type: pet.status === "searching" ? "lost" : "found",
     petType: animalTypeLabels[pet.animalType] ?? pet.animalType,
     breed: pet.breed || copy.breedDefault,
-    color: pet.colors?.length ? pet.colors.map((c) => colorLabels[c] ?? c).join(", ") : "—",
+    color: pet.colors?.length ? pet.colors.map((c) => colorLabels[c] ?? c).join(", ") : "â€”",
     location: pet.city,
     time: formatRelativeTime(pet.publishedAt),
     image: pet.photos?.[0] || DEFAULT_PHOTO,

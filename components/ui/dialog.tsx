@@ -1,2 +1,2 @@
-/** @deprecated Используйте `@/shared/ui/dialog`. */
+/** @deprecated РСЃРїРѕР»СЊР·СѓР№С‚Рµ `@/shared/ui/dialog`. */
 export * from '../../src/shared/ui/dialog.tsx';

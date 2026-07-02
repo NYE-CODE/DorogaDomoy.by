@@ -164,7 +164,7 @@ export default function MyShelterPetsListPage() {
       <DropdownMenuContent align="end" className="w-44">
         <DropdownMenuItem onClick={() => navigate(`/my-shelters/${selectedShelterId}/pets/${pet.id}/campaign`)}>
           <CircleDollarSign className="mr-2 size-4" />
-          Сбор
+          РЎР±РѕСЂ
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => navigate(`/my-shelters/${selectedShelterId}/pets/${pet.id}/edit`)}>
           <Pencil className="mr-2 size-4" />
@@ -262,11 +262,11 @@ export default function MyShelterPetsListPage() {
               <>
                 <div className="hidden grid-cols-[64px_minmax(180px,2fr)_minmax(130px,1fr)_120px_150px_170px_120px_56px] gap-4 border-b border-border bg-muted/40 px-4 py-3 text-xs font-semibold text-muted-foreground lg:grid">
                   <span>{tp.colImage}</span>
-                  <span>Питомец</span>
+                  <span>РџРёС‚РѕРјРµС†</span>
                   <span className="text-center">{tp.colStatus}</span>
-                  <span className="text-center">Активный сбор</span>
-                  <span className="text-center">Собрано / Цель</span>
-                  <span className="text-center">Последнее обновление</span>
+                  <span className="text-center">РђРєС‚РёРІРЅС‹Р№ СЃР±РѕСЂ</span>
+                  <span className="text-center">РЎРѕР±СЂР°РЅРѕ / Р¦РµР»СЊ</span>
+                  <span className="text-center">РџРѕСЃР»РµРґРЅРµРµ РѕР±РЅРѕРІР»РµРЅРёРµ</span>
                   <span className="text-center">{tp.colPublication}</span>
                   <span className="text-center">{tp.colActions}</span>
                 </div>
@@ -291,17 +291,17 @@ export default function MyShelterPetsListPage() {
                         </div>
                         <span className="text-center text-sm text-muted-foreground">{adoptionStatusLabel(pet.adoptionStatus)}</span>
                         <span className="text-center text-sm text-muted-foreground">
-                          {campaignsByPet[pet.id]?.hasActive ? 'Есть' : 'Нет'}
+                          {campaignsByPet[pet.id]?.hasActive ? 'Р•СЃС‚СЊ' : 'РќРµС‚'}
                         </span>
                         <span className="text-center text-sm text-muted-foreground">
                           {campaignsByPet[pet.id]?.hasActive
                             ? `${campaignsByPet[pet.id].collectedAmount} / ${campaignsByPet[pet.id].goalAmount}`
-                            : '—'}
+                            : 'вЂ”'}
                         </span>
                         <span className="text-center text-sm text-muted-foreground">
                           {campaignsByPet[pet.id]?.hasActive && campaignsByPet[pet.id].updatedAt
                             ? formatCalendarDate(new Date(campaignsByPet[pet.id].updatedAt as string))
-                            : '—'}
+                            : 'вЂ”'}
                         </span>
                         <span className="text-center text-sm text-muted-foreground">{pet.isPublished ? tp.published : tp.hidden}</span>
                         <div className="flex justify-center">{renderActionsMenu(pet)}</div>
@@ -322,18 +322,18 @@ export default function MyShelterPetsListPage() {
                           <p className="font-medium text-foreground">{pet.name?.trim() || pet.breed || pet.animalType}</p>
                           <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{pet.description}</p>
                           <p className="mt-1 text-xs text-muted-foreground">
-                            {adoptionStatusLabel(pet.adoptionStatus)} · {pet.isPublished ? tp.published : tp.hidden}
+                            {adoptionStatusLabel(pet.adoptionStatus)} В· {pet.isPublished ? tp.published : tp.hidden}
                           </p>
                           <p className="mt-1 text-xs text-muted-foreground">
-                            Активный сбор: {campaignsByPet[pet.id]?.hasActive ? 'Есть' : 'Нет'}
+                            РђРєС‚РёРІРЅС‹Р№ СЃР±РѕСЂ: {campaignsByPet[pet.id]?.hasActive ? 'Р•СЃС‚СЊ' : 'РќРµС‚'}
                           </p>
                           <p className="mt-1 text-xs text-muted-foreground">
-                            Собрано / Цель: {campaignsByPet[pet.id]?.hasActive ? `${campaignsByPet[pet.id].collectedAmount} / ${campaignsByPet[pet.id].goalAmount}` : '—'}
+                            РЎРѕР±СЂР°РЅРѕ / Р¦РµР»СЊ: {campaignsByPet[pet.id]?.hasActive ? `${campaignsByPet[pet.id].collectedAmount} / ${campaignsByPet[pet.id].goalAmount}` : 'вЂ”'}
                           </p>
                           <p className="mt-1 text-xs text-muted-foreground">
-                            Последнее обновление: {(campaignsByPet[pet.id]?.hasActive && campaignsByPet[pet.id].updatedAt)
+                            РџРѕСЃР»РµРґРЅРµРµ РѕР±РЅРѕРІР»РµРЅРёРµ: {(campaignsByPet[pet.id]?.hasActive && campaignsByPet[pet.id].updatedAt)
                               ? formatCalendarDate(new Date(campaignsByPet[pet.id].updatedAt as string))
-                              : '—'}
+                              : 'вЂ”'}
                           </p>
                           </div>
                         </div>

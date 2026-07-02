@@ -38,12 +38,12 @@ function useLikedPetDisplay(item: RankedPet) {
   const { t } = useI18n();
   const c = t.match.card;
   const name = item.pet.name?.trim() || item.pet.breed || c.defaultName;
-  const meta = [item.pet.breed, item.pet.approximateAge?.trim()].filter(Boolean).join(' · ');
+  const meta = [item.pet.breed, item.pet.approximateAge?.trim()].filter(Boolean).join(' В· ');
   const href = buildShelterPetUrl(item.pet.id, { source: 'match' });
   return { c, name, meta, href };
 }
 
-/** Компактная строка — мобильный список. */
+/** РљРѕРјРїР°РєС‚РЅР°СЏ СЃС‚СЂРѕРєР° вЂ” РјРѕР±РёР»СЊРЅС‹Р№ СЃРїРёСЃРѕРє. */
 function LikedPetRow({ item }: { item: RankedPet }) {
   const { c, name, meta, href } = useLikedPetDisplay(item);
 
@@ -79,7 +79,7 @@ function LikedPetRow({ item }: { item: RankedPet }) {
   );
 }
 
-/** Карточка в сетке — десктоп (компактная). */
+/** РљР°СЂС‚РѕС‡РєР° РІ СЃРµС‚РєРµ вЂ” РґРµСЃРєС‚РѕРї (РєРѕРјРїР°РєС‚РЅР°СЏ). */
 function LikedPetGridCard({ item }: { item: RankedPet }) {
   const { c, name, meta, href } = useLikedPetDisplay(item);
 

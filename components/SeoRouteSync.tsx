@@ -1,2 +1,2 @@
-/** @deprecated Используйте `@/widgets/seo/SeoRouteSync`. */
+/** @deprecated РСЃРїРѕР»СЊР·СѓР№С‚Рµ `@/widgets/seo/SeoRouteSync`. */
 export { SeoRouteSync } from '../src/widgets/seo/SeoRouteSync';

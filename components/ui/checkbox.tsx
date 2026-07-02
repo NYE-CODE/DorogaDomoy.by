@@ -1,2 +1,2 @@
-/** @deprecated Используйте `@/shared/ui/checkbox`. */
+/** @deprecated РСЃРїРѕР»СЊР·СѓР№С‚Рµ `@/shared/ui/checkbox`. */
 export * from '../../src/shared/ui/checkbox.tsx';

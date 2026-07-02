@@ -79,7 +79,7 @@ function useMatchPetDisplay(pet: Pet, match: MatchResult) {
   const name = pet.name?.trim() || pet.breed || c.defaultName;
   const breed = pet.breed?.trim();
   const age = pet.approximateAge?.trim();
-  const meta = [breed, age].filter(Boolean).join(' · ') || '—';
+  const meta = [breed, age].filter(Boolean).join(' Â· ') || 'â€”';
   const energy = petEnergyHint(pet, traitScales);
   const genderLabel: Record<string, string> = {
     male: c.genderMale,
@@ -460,7 +460,7 @@ function MatchPetSummary({
               {pet.city}
             </span>
           ) : null}
-          {pet.city && energy ? <span className="mx-1.5 text-border">·</span> : null}
+          {pet.city && energy ? <span className="mx-1.5 text-border">Â·</span> : null}
           {energy ? (
             <span>
               {activityLabel}: <span className="font-medium text-foreground">{energy}</span>

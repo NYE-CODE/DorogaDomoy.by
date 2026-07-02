@@ -1,2 +1,2 @@
-/** @deprecated Используйте `@/shared/ui/radio-group`. */
+/** @deprecated РСЃРїРѕР»СЊР·СѓР№С‚Рµ `@/shared/ui/radio-group`. */
 export * from '../../src/shared/ui/radio-group.tsx';

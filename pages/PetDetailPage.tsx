@@ -1,2 +1,2 @@
-/** @deprecated Используйте `@/pages/PetDetailPage.tsx`. */
+/** @deprecated РСЃРїРѕР»СЊР·СѓР№С‚Рµ `@/pages/PetDetailPage.tsx`. */
 export { default } from '../src/pages/PetDetailPage.tsx';

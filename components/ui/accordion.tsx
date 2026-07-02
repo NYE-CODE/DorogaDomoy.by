@@ -1,2 +1,2 @@
-/** @deprecated Используйте `@/shared/ui/accordion`. */
+/** @deprecated РСЃРїРѕР»СЊР·СѓР№С‚Рµ `@/shared/ui/accordion`. */
 export * from '../../src/shared/ui/accordion.tsx';

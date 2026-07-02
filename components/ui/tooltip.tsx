@@ -1,2 +1,2 @@
-/** @deprecated Используйте `@/shared/ui/tooltip`. */
+/** @deprecated РСЃРїРѕР»СЊР·СѓР№С‚Рµ `@/shared/ui/tooltip`. */
 export * from '../../src/shared/ui/tooltip.tsx';

@@ -107,7 +107,7 @@ export default function EditAdPage() {
     <div className="landing-theme min-h-screen bg-muted/30 dark:bg-background flex flex-col">
       <Header />
 
-      {/* ˜˜˜˜˜˜ ˜˜˜˜ ˜ ˜˜˜ ˜ CreateAdPage */}
+      {/* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ ï¿½ï¿½ï¿½ ï¿½ CreateAdPage */}
       {stepInfo && (
         <section className="bg-white dark:bg-card border-b border-border px-4 sm:px-6 lg:px-8">
           <div className="max-w-[736px] mx-auto py-4">

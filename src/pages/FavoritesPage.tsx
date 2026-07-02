@@ -39,7 +39,7 @@ export default function FavoritesPage() {
 
   useEffect(() => {
     applySeo({
-      title: `${t.favorites.title} — DorogaDomoy.by`,
+      title: `${t.favorites.title} â€” DorogaDomoy.by`,
       description: t.favorites.subtitle,
       canonicalUrl: canonicalUrlFromPath('/favorites'),
       robots: SEO_ROBOTS_PRIVATE,
@@ -210,7 +210,7 @@ export default function FavoritesPage() {
                 </div>
                 <div className="p-4 md:p-5">
                   <h3 className="mb-1 line-clamp-1 text-lg font-semibold leading-tight text-foreground">
-                    {(pet.name?.trim() || t.pet.animalType[pet.animalType])} {pet.breed ? `· ${pet.breed}` : ''}
+                    {(pet.name?.trim() || t.pet.animalType[pet.animalType])} {pet.breed ? `Â· ${pet.breed}` : ''}
                   </h3>
                   <p className="mb-3 line-clamp-1 text-sm text-muted-foreground">
                     {pet.colors.length > 0
@@ -220,7 +220,7 @@ export default function FavoritesPage() {
                   <div className="flex flex-col gap-2">
                     <div className="flex max-w-full items-center gap-1.5 self-start rounded-md bg-muted/70 px-2.5 py-1 text-xs text-muted-foreground">
                       <MapPin size={14} className="shrink-0" aria-hidden />
-                      <span className="min-w-0 truncate">{pet.city || '—'}</span>
+                      <span className="min-w-0 truncate">{pet.city || 'â€”'}</span>
                     </div>
                     <div className="flex items-center gap-1.5 self-start rounded-md bg-muted/70 px-2.5 py-1 text-xs text-muted-foreground">
                       <Clock size={14} className="shrink-0" aria-hidden />

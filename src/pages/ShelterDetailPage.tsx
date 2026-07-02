@@ -177,7 +177,7 @@ export default function ShelterDetailPage() {
     }
     const kind = shelterKindLabel(row.kind, s);
     const loc = [row.city, row.address].filter(Boolean).join(', ');
-    const title = `${row.name} — ${kind} | DorogaDomoy.by`;
+    const title = `${row.name} вЂ” ${kind} | DorogaDomoy.by`;
     const descSource = row.description?.trim() || `${row.name}. ${loc}. ${s.pageTitle}.`;
     applySeo({
       title,
@@ -313,7 +313,7 @@ export default function ShelterDetailPage() {
                       </div>
                       <p className="mt-2 text-center text-xs font-medium text-white/80 md:text-sm">
                         {subLoading && subCount === null
-                          ? '…'
+                          ? 'вЂ¦'
                           : s.detailSubscribeCount.replace('{n}', String(subCount ?? 0))}
                       </p>
                     </div>
@@ -371,7 +371,7 @@ export default function ShelterDetailPage() {
                     mobileTab === 'about' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'
                   }`}
                 >
-                  О нас
+                  Рћ РЅР°СЃ
                 </button>
                 <button
                   type="button"
@@ -397,7 +397,7 @@ export default function ShelterDetailPage() {
                 {mobileTab === 'about' ? (
                   <section className="rounded-lg border border-border bg-card p-6 shadow-sm">
                     <h2 className="mb-4 text-xl font-bold tracking-tight text-foreground">
-                      О нас
+                      Рћ РЅР°СЃ
                     </h2>
                     {row.description?.trim() ? (
                       <p className="whitespace-pre-wrap leading-relaxed text-muted-foreground">
@@ -421,7 +421,7 @@ export default function ShelterDetailPage() {
                         <div className="flex items-start gap-3">
                           <Phone className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />
                           <div>
-                            <p className="text-sm text-muted-foreground">Телефон</p>
+                            <p className="text-sm text-muted-foreground">РўРµР»РµС„РѕРЅ</p>
                             <a href={`tel:${String(c.phone).replace(/\s/g, '')}`} className="text-foreground transition-colors hover:text-primary">
                               {c.phone}
                             </a>
@@ -500,14 +500,14 @@ export default function ShelterDetailPage() {
                 <section className="self-start rounded-lg border border-border bg-card p-6 shadow-sm lg:col-span-1">
                   <div className="mb-4 flex items-center justify-between gap-3">
                     <h2 className="text-xl font-bold tracking-tight text-foreground md:text-2xl">
-                      О нас
+                      Рћ РЅР°СЃ
                     </h2>
                     <div className="relative" ref={aboutMenuRef}>
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
-                        aria-label="Открыть меню действий"
+                        aria-label="РћС‚РєСЂС‹С‚СЊ РјРµРЅСЋ РґРµР№СЃС‚РІРёР№"
                         aria-expanded={aboutMenuOpen}
                         onClick={() => setAboutMenuOpen((v) => !v)}
                       >
@@ -552,7 +552,7 @@ export default function ShelterDetailPage() {
                       <div className="flex items-start gap-3">
                         <Phone className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />
                         <div>
-                          <p className="text-sm text-muted-foreground">Телефон</p>
+                          <p className="text-sm text-muted-foreground">РўРµР»РµС„РѕРЅ</p>
                           <a href={`tel:${String(c.phone).replace(/\s/g, '')}`} className="text-foreground transition-colors hover:text-primary">
                             {c.phone}
                           </a>
@@ -620,21 +620,21 @@ export default function ShelterDetailPage() {
                         <PawPrint className="size-4 text-primary/90" aria-hidden />
                       </div>
                       <p className="typo-h1 md:text-2xl">{totalPets}</p>
-                      <p className="mt-0.5 text-xs text-muted-foreground md:text-sm">Всего питомцев</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground md:text-sm">Р’СЃРµРіРѕ РїРёС‚РѕРјС†РµРІ</p>
                     </div>
                     <div className="rounded-md border border-border/80 bg-card p-4 text-center shadow-sm">
                       <div className="mx-auto mb-2 hidden size-9 items-center justify-center rounded-full bg-primary/8 sm:flex">
                         <Heart className="size-4 text-primary/90" aria-hidden />
                       </div>
                       <p className="typo-h1 md:text-2xl">{foundPets}</p>
-                      <p className="mt-0.5 text-xs text-muted-foreground md:text-sm">Нашли дом</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground md:text-sm">РќР°С€Р»Рё РґРѕРј</p>
                     </div>
                     <div className="rounded-md border border-border/80 bg-card p-4 text-center shadow-sm">
                       <div className="mx-auto mb-2 hidden size-9 items-center justify-center rounded-full bg-primary/8 sm:flex">
                         <Home className="size-4 text-primary/90" aria-hidden />
                       </div>
                       <p className="typo-h1 md:text-2xl">{searchingPets}</p>
-                      <p className="mt-0.5 text-xs text-muted-foreground md:text-sm">Ищут дом</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground md:text-sm">РС‰СѓС‚ РґРѕРј</p>
                     </div>
                   </div>
 

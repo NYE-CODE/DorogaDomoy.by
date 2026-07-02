@@ -57,7 +57,7 @@ export function useShelterPetBrowse() {
   return ctx;
 }
 
-/** Безопасный доступ из MobileBottomNav — провайдер может быть выше роутера. */
+/** Р‘РµР·РѕРїР°СЃРЅС‹Р№ РґРѕСЃС‚СѓРї РёР· MobileBottomNav вЂ” РїСЂРѕРІР°Р№РґРµСЂ РјРѕР¶РµС‚ Р±С‹С‚СЊ РІС‹С€Рµ СЂРѕСѓС‚РµСЂР°. */
 export function useShelterPetBrowseOptional() {
   return useContext(ShelterPetBrowseContext);
 }

@@ -1,2 +1,2 @@
-/** @deprecated Используйте `@/shared/ui/textarea`. */
+/** @deprecated РСЃРїРѕР»СЊР·СѓР№С‚Рµ `@/shared/ui/textarea`. */
 export * from '../../src/shared/ui/textarea.tsx';

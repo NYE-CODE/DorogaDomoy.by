@@ -1,2 +1,2 @@
-/** @deprecated Используйте `@/app/providers/I18nContext`. */
+/** @deprecated РСЃРїРѕР»СЊР·СѓР№С‚Рµ `@/app/providers/I18nContext`. */
 export * from '../src/app/providers/I18nContext.tsx';

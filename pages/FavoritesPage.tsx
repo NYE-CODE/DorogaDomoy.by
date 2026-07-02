@@ -1,2 +1,2 @@
-/** @deprecated Используйте `@/pages/FavoritesPage.tsx`. */
+/** @deprecated РСЃРїРѕР»СЊР·СѓР№С‚Рµ `@/pages/FavoritesPage.tsx`. */
 export { default } from '../src/pages/FavoritesPage.tsx';

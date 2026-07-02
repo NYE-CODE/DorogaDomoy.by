@@ -313,9 +313,9 @@ export function AdminInstagramPanel() {
     }
   };
   const formatQueueDate = (value?: string | null) => {
-    if (!value) return '—';
+    if (!value) return 'â€”';
     const d = new Date(value);
-    return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString();
+    return Number.isNaN(d.getTime()) ? 'â€”' : d.toLocaleString();
   };
 
   if (loading) {
@@ -613,7 +613,7 @@ export function AdminInstagramPanel() {
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="font-medium text-foreground flex items-center flex-wrap gap-2">
                   <span>{row.pet_id}</span>
-                  <span className="text-muted-foreground">• {row.format}</span>
+                  <span className="text-muted-foreground">â€¢ {row.format}</span>
                   <span
                     className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${queueStatusBadgeClass(row.status)}`}
                   >
@@ -623,11 +623,11 @@ export function AdminInstagramPanel() {
                 <div className="text-xs text-muted-foreground">{ig.attemptsLabel}: {row.attempts}</div>
               </div>
               <div className="mt-1 text-xs text-muted-foreground">
-                {ig.accountLabel}: {row.account_name || ig.notAssigned} • {ig.regionLabel}: {row.region_key || '—'}
+                {ig.accountLabel}: {row.account_name || ig.notAssigned} â€¢ {ig.regionLabel}: {row.region_key || 'â€”'}
               </div>
               <div className="mt-1 text-xs text-muted-foreground">
-                {ig.createdAtLabel}: {formatQueueDate(row.created_at)} • {ig.updatedAtLabel}: {formatQueueDate(row.updated_at)}
-                {' • '}
+                {ig.createdAtLabel}: {formatQueueDate(row.created_at)} â€¢ {ig.updatedAtLabel}: {formatQueueDate(row.updated_at)}
+                {' â€¢ '}
                 {ig.publishedAtLabel}: {formatQueueDate(row.published_at)}
               </div>
               {row.external_media_id ? (

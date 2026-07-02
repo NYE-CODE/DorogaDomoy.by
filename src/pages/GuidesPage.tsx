@@ -24,10 +24,10 @@ export default function GuidesPage() {
 
   useEffect(() => {
     const desc = truncateMetaDescription(
-      `${g.pageSubtitle}. DorogaDomoy.by — инструкции и видеогайды по сервису.`,
+      `${g.pageSubtitle}. DorogaDomoy.by вЂ” РёРЅСЃС‚СЂСѓРєС†РёРё Рё РІРёРґРµРѕРіР°Р№РґС‹ РїРѕ СЃРµСЂРІРёСЃСѓ.`,
     );
     applySeo({
-      title: `${g.pageTitle} — DorogaDomoy.by`,
+      title: `${g.pageTitle} вЂ” DorogaDomoy.by`,
       description: desc,
       canonicalUrl: canonicalUrlFromPath('/guides'),
       robots: SEO_ROBOTS_PUBLIC,

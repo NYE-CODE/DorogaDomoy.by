@@ -73,7 +73,7 @@ export function DeleteReasonModal({
       const found = await usersApi.findByHelperCode(normalizedCode);
       setCandidate(found);
     } catch (e) {
-      setLookupError(e instanceof Error ? e.message : 'Не удалось найти пользователя');
+      setLookupError(e instanceof Error ? e.message : 'РќРµ СѓРґР°Р»РѕСЃСЊ РЅР°Р№С‚Рё РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ');
     } finally {
       setLookupLoading(false);
     }
@@ -178,7 +178,7 @@ export function DeleteReasonModal({
                   }}
                   className="w-4 h-4 text-primary focus:ring-primary"
                 />
-                Начислить очки за помощь (+{rewardPoints})
+                РќР°С‡РёСЃР»РёС‚СЊ РѕС‡РєРё Р·Р° РїРѕРјРѕС‰СЊ (+{rewardPoints})
               </label>
 
               {awardPoints && (
@@ -192,7 +192,7 @@ export function DeleteReasonModal({
                         setLookupError(null);
                         setCandidate(null);
                       }}
-                      placeholder="ID получателя очков (DD-XXXXXXXX)"
+                      placeholder="ID РїРѕР»СѓС‡Р°С‚РµР»СЏ РѕС‡РєРѕРІ (DD-XXXXXXXX)"
                       className="flex-1"
                     />
                     <Button

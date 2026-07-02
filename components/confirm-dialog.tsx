@@ -25,8 +25,8 @@ export function ConfirmDialog({
   title,
   description,
   onConfirm,
-  confirmText = 'Ïîäòâåðäèòü',
-  cancelText = 'Îòìåíà',
+  confirmText = 'ÐŸÐ¾Ð´Ñ‚Ð²ÐµÑ€Ð´Ð¸Ñ‚ÑŒ',
+  cancelText = 'ÐžÑ‚Ð¼ÐµÐ½Ð°',
   confirmClass = 'bg-primary hover:bg-primary/90 text-primary-foreground',
 }: ConfirmDialogProps) {
   const handleConfirm = () => {

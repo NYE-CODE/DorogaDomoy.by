@@ -290,7 +290,7 @@ export default function MatchSwipePage() {
               <h1 className="typo-h1-compact">{s.title}</h1>
               {!loading && progressLabel && current && (
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  {progressLabel} · {remainingLabel}
+                  {progressLabel} Â· {remainingLabel}
                 </p>
               )}
               {isFinished && ranked.length > 0 && (

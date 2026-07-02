@@ -1,2 +1,2 @@
-/** @deprecated Используйте `@/shared/ui/progress`. */
+/** @deprecated РСЃРїРѕР»СЊР·СѓР№С‚Рµ `@/shared/ui/progress`. */
 export * from '../../src/shared/ui/progress.tsx';

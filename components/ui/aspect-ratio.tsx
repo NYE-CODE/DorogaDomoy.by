@@ -1,2 +1,2 @@
-/** @deprecated Используйте `@/shared/ui/aspect-ratio`. */
+/** @deprecated РСЃРїРѕР»СЊР·СѓР№С‚Рµ `@/shared/ui/aspect-ratio`. */
 export * from '../../src/shared/ui/aspect-ratio.tsx';

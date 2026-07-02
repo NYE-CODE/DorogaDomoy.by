@@ -1,2 +1,2 @@
-/** @deprecated Используйте `@/pages/ForgotPasswordPage.tsx`. */
+/** @deprecated РСЃРїРѕР»СЊР·СѓР№С‚Рµ `@/pages/ForgotPasswordPage.tsx`. */
 export { default } from '../src/pages/ForgotPasswordPage.tsx';

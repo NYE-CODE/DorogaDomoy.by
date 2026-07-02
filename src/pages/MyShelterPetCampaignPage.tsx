@@ -40,7 +40,7 @@ export default function MyShelterPetCampaignPage() {
         setPet(pets.find((p) => p.id === petId) ?? null);
         setCampaigns(camp);
       })
-      .catch((e) => toast.error(e instanceof Error ? e.message : 'Ошибка загрузки'))
+      .catch((e) => toast.error(e instanceof Error ? e.message : 'РћС€РёР±РєР° Р·Р°РіСЂСѓР·РєРё'))
       .finally(() => setLoading(false));
   }, [shelterId, petId]);
 
@@ -58,7 +58,7 @@ export default function MyShelterPetCampaignPage() {
     const help = form.helpDetails.trim();
     const goal = Number(form.goalAmount);
     if (title.length < 3 || help.length < 10 || !Number.isFinite(goal) || goal < 1) {
-      toast.error('Проверьте название, цель и реквизиты');
+      toast.error('РџСЂРѕРІРµСЂСЊС‚Рµ РЅР°Р·РІР°РЅРёРµ, С†РµР»СЊ Рё СЂРµРєРІРёР·РёС‚С‹');
       return;
     }
     setSaving(true);
@@ -72,9 +72,9 @@ export default function MyShelterPetCampaignPage() {
       });
       setForm({ title: '', description: '', helpDetails: '', goalAmount: '', endsAt: '' });
       await reload();
-      toast.success('Сбор создан');
+      toast.success('РЎР±РѕСЂ СЃРѕР·РґР°РЅ');
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Не удалось создать сбор');
+      toast.error(e instanceof Error ? e.message : 'РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕР·РґР°С‚СЊ СЃР±РѕСЂ');
     } finally {
       setSaving(false);
     }
@@ -85,9 +85,9 @@ export default function MyShelterPetCampaignPage() {
     try {
       await campaignsApi.activate(campaignId);
       await reload();
-      toast.success('Сбор запущен');
+      toast.success('РЎР±РѕСЂ Р·Р°РїСѓС‰РµРЅ');
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Не удалось запустить сбор');
+      toast.error(e instanceof Error ? e.message : 'РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РїСѓСЃС‚РёС‚СЊ СЃР±РѕСЂ');
     } finally {
       setSaving(false);
     }
@@ -97,7 +97,7 @@ export default function MyShelterPetCampaignPage() {
     const amount = Number(closeForm.collectedAmount);
     const reason = closeForm.closeReason.trim();
     if (!Number.isFinite(amount) || amount < 0 || reason.length < 3) {
-      toast.error('Укажите сумму и причину закрытия');
+      toast.error('РЈРєР°Р¶РёС‚Рµ СЃСѓРјРјСѓ Рё РїСЂРёС‡РёРЅСѓ Р·Р°РєСЂС‹С‚РёСЏ');
       return;
     }
     setSaving(true);
@@ -109,9 +109,9 @@ export default function MyShelterPetCampaignPage() {
       });
       setCloseForm({ collectedAmount: '', closeReason: '' });
       await reload();
-      toast.success('Сбор закрыт');
+      toast.success('РЎР±РѕСЂ Р·Р°РєСЂС‹С‚');
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Не удалось закрыть сбор');
+      toast.error(e instanceof Error ? e.message : 'РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РєСЂС‹С‚СЊ СЃР±РѕСЂ');
     } finally {
       setSaving(false);
     }
@@ -120,16 +120,16 @@ export default function MyShelterPetCampaignPage() {
   const updateCollected = async (campaignId: string) => {
     const amount = Number(collectedForm.amount);
     if (!Number.isFinite(amount) || amount < 0) {
-      toast.error('Укажите корректную сумму');
+      toast.error('РЈРєР°Р¶РёС‚Рµ РєРѕСЂСЂРµРєС‚РЅСѓСЋ СЃСѓРјРјСѓ');
       return;
     }
     setSaving(true);
     try {
       await campaignsApi.updateCollected(campaignId, Math.round(amount));
       await reload();
-      toast.success('Сумма обновлена');
+      toast.success('РЎСѓРјРјР° РѕР±РЅРѕРІР»РµРЅР°');
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Не удалось обновить сумму');
+      toast.error(e instanceof Error ? e.message : 'РќРµ СѓРґР°Р»РѕСЃСЊ РѕР±РЅРѕРІРёС‚СЊ СЃСѓРјРјСѓ');
     } finally {
       setSaving(false);
     }
@@ -142,34 +142,34 @@ export default function MyShelterPetCampaignPage() {
         <div className="page-container-narrow space-y-6">
           <BackQuickMenu />
           <div className="rounded-lg border border-border bg-card p-5">
-            <p className="text-sm text-muted-foreground">Питомец</p>
+            <p className="text-sm text-muted-foreground">РџРёС‚РѕРјРµС†</p>
             <h1 className="typo-h1 mt-1">{pet.name?.trim() || pet.breed || pet.animalType}</h1>
             <p className="mt-1 text-sm text-muted-foreground">{pet.description}</p>
             <Link to={`/shelter-pet/${pet.id}`} className="mt-2 inline-block text-sm text-primary hover:text-primary/80">
-              Открыть публичную страницу питомца
+              РћС‚РєСЂС‹С‚СЊ РїСѓР±Р»РёС‡РЅСѓСЋ СЃС‚СЂР°РЅРёС†Сѓ РїРёС‚РѕРјС†Р°
             </Link>
           </div>
 
           {current ? (
             <div className="rounded-lg border border-border bg-card p-5 space-y-3">
-              <h2 className="text-xl font-semibold">Текущий сбор</h2>
+              <h2 className="text-xl font-semibold">РўРµРєСѓС‰РёР№ СЃР±РѕСЂ</h2>
               <p className="font-medium">{current.title}</p>
-              <p className="text-sm text-muted-foreground">{current.description || '—'}</p>
-              <p className="text-sm">Цель: {current.goal_amount} BYN</p>
+              <p className="text-sm text-muted-foreground">{current.description || 'вЂ”'}</p>
+              <p className="text-sm">Р¦РµР»СЊ: {current.goal_amount} BYN</p>
               <div className="rounded-lg border border-border bg-background p-3 text-sm whitespace-pre-line">
-                {current.help_details || '—'}
+                {current.help_details || 'вЂ”'}
               </div>
               {current.status === 'draft' ? (
                 <Button type="button" disabled={saving} onClick={() => void activateCampaign(current.id)}>
-                  Запустить сбор
+                  Р—Р°РїСѓСЃС‚РёС‚СЊ СЃР±РѕСЂ
                 </Button>
               ) : null}
               {current.status === 'active' ? (
                 <div className="grid gap-3 rounded-lg border border-border bg-background p-3">
                   <p className="text-sm text-muted-foreground">
-                    Обновлено: {formatCalendarDate(new Date(current.updated_at))}
+                    РћР±РЅРѕРІР»РµРЅРѕ: {formatCalendarDate(new Date(current.updated_at))}
                   </p>
-                  <p className="text-sm font-medium">Обновить сумму «собрано»</p>
+                  <p className="text-sm font-medium">РћР±РЅРѕРІРёС‚СЊ СЃСѓРјРјСѓ В«СЃРѕР±СЂР°РЅРѕВ»</p>
                   <div className="flex flex-wrap items-center gap-2">
                     <input
                       type="number"
@@ -177,54 +177,54 @@ export default function MyShelterPetCampaignPage() {
                       value={collectedForm.amount}
                       onChange={(e) => setCollectedForm({ amount: e.target.value })}
                       className="h-10 w-52 rounded-lg border border-border bg-background px-3 text-sm"
-                      placeholder="Собрано (BYN)"
+                      placeholder="РЎРѕР±СЂР°РЅРѕ (BYN)"
                     />
                     <Button type="button" variant="outline" disabled={saving} onClick={() => void updateCollected(current.id)}>
-                      Обновить сумму
+                      РћР±РЅРѕРІРёС‚СЊ СЃСѓРјРјСѓ
                     </Button>
                   </div>
-                  <p className="text-sm font-medium">Закрытие активного сбора</p>
+                  <p className="text-sm font-medium">Р—Р°РєСЂС‹С‚РёРµ Р°РєС‚РёРІРЅРѕРіРѕ СЃР±РѕСЂР°</p>
                   <input
                     type="number"
                     min={0}
                     value={closeForm.collectedAmount}
                     onChange={(e) => setCloseForm((p) => ({ ...p, collectedAmount: e.target.value }))}
                     className="h-10 rounded-lg border border-border bg-background px-3 text-sm"
-                    placeholder="Сколько собрано (BYN)"
+                    placeholder="РЎРєРѕР»СЊРєРѕ СЃРѕР±СЂР°РЅРѕ (BYN)"
                   />
                   <textarea
                     value={closeForm.closeReason}
                     onChange={(e) => setCloseForm((p) => ({ ...p, closeReason: e.target.value }))}
                     className="min-h-24 rounded-lg border border-border bg-background px-3 py-2 text-sm"
-                    placeholder="Причина закрытия"
+                    placeholder="РџСЂРёС‡РёРЅР° Р·Р°РєСЂС‹С‚РёСЏ"
                   />
                   <Button type="button" disabled={saving} onClick={() => void closeCampaign(current.id)}>
-                    Завершить сбор
+                    Р—Р°РІРµСЂС€РёС‚СЊ СЃР±РѕСЂ
                   </Button>
                 </div>
               ) : null}
             </div>
           ) : (
             <div className="rounded-lg border border-border bg-card p-5 space-y-3">
-              <h2 className="text-xl font-semibold">Создать сбор</h2>
+              <h2 className="text-xl font-semibold">РЎРѕР·РґР°С‚СЊ СЃР±РѕСЂ</h2>
               <input
                 type="text"
                 value={form.title}
                 onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
                 className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm"
-                placeholder="Название сбора"
+                placeholder="РќР°Р·РІР°РЅРёРµ СЃР±РѕСЂР°"
               />
               <textarea
                 value={form.description}
                 onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
                 className="min-h-24 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
-                placeholder="Описание сбора"
+                placeholder="РћРїРёСЃР°РЅРёРµ СЃР±РѕСЂР°"
               />
               <textarea
                 value={form.helpDetails}
                 onChange={(e) => setForm((p) => ({ ...p, helpDetails: e.target.value }))}
                 className="min-h-28 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
-                placeholder="Как пополнить/отправить средства: реквизиты и инструкция"
+                placeholder="РљР°Рє РїРѕРїРѕР»РЅРёС‚СЊ/РѕС‚РїСЂР°РІРёС‚СЊ СЃСЂРµРґСЃС‚РІР°: СЂРµРєРІРёР·РёС‚С‹ Рё РёРЅСЃС‚СЂСѓРєС†РёСЏ"
               />
               <div className="grid gap-3 sm:grid-cols-2">
                 <input
@@ -233,7 +233,7 @@ export default function MyShelterPetCampaignPage() {
                   value={form.goalAmount}
                   onChange={(e) => setForm((p) => ({ ...p, goalAmount: e.target.value }))}
                   className="h-10 rounded-lg border border-border bg-background px-3 text-sm"
-                  placeholder="Цель (BYN)"
+                  placeholder="Р¦РµР»СЊ (BYN)"
                 />
                 <input
                   type="date"
@@ -243,27 +243,27 @@ export default function MyShelterPetCampaignPage() {
                 />
               </div>
               <Button type="button" disabled={saving} onClick={() => void createCampaign()}>
-                Создать сбор
+                РЎРѕР·РґР°С‚СЊ СЃР±РѕСЂ
               </Button>
             </div>
           )}
 
           <div className="rounded-lg border border-border bg-card p-5">
-            <h2 className="text-xl font-semibold">Завершенные сборы</h2>
+            <h2 className="text-xl font-semibold">Р—Р°РІРµСЂС€РµРЅРЅС‹Рµ СЃР±РѕСЂС‹</h2>
             {completed.length === 0 ? (
-              <p className="mt-2 text-sm text-muted-foreground">Пока нет завершенных сборов.</p>
+              <p className="mt-2 text-sm text-muted-foreground">РџРѕРєР° РЅРµС‚ Р·Р°РІРµСЂС€РµРЅРЅС‹С… СЃР±РѕСЂРѕРІ.</p>
             ) : (
               <div className="mt-3 space-y-3">
                 {completed.map((item) => (
                   <div key={item.id} className="rounded-lg border border-border p-3">
                     <p className="font-medium">{item.title}</p>
                     <p className="text-sm text-muted-foreground">
-                      Собрано: {item.collected_amount} / {item.goal_amount} BYN
+                      РЎРѕР±СЂР°РЅРѕ: {item.collected_amount} / {item.goal_amount} BYN
                     </p>
-                    <p className="text-sm text-muted-foreground">Причина: {item.close_reason || '—'}</p>
+                    <p className="text-sm text-muted-foreground">РџСЂРёС‡РёРЅР°: {item.close_reason || 'вЂ”'}</p>
                     {item.closed_at ? (
                       <p className="text-xs text-muted-foreground">
-                        Закрыт: {formatCalendarDate(new Date(item.closed_at))}
+                        Р—Р°РєСЂС‹С‚: {formatCalendarDate(new Date(item.closed_at))}
                       </p>
                     ) : null}
                   </div>

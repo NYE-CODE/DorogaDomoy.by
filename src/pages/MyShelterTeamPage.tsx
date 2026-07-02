@@ -67,9 +67,9 @@ export default function MyShelterTeamPage() {
       setMembers(list);
     } catch (e) {
       const msg = e instanceof Error ? e.message : '';
-      if (/\(403\)|\b403\b|äîñòóï|forbidden|Access|not.*permit/i.test(msg)) {
+      if (/\(403\)|\b403\b|Ð´Ð¾ÑÑ‚ÑƒÐ¿|forbidden|Access|not.*permit/i.test(msg)) {
         setForbidden(true);
-      } else if (/\(404\)|\b404\b|íå íàéäåí|not found/i.test(msg)) {
+      } else if (/\(404\)|\b404\b|Ð½Ðµ Ð½Ð°Ð¹Ð´ÐµÐ½|not found/i.test(msg)) {
         setNotFound(true);
       } else {
         toast.error(tm.loadError);
@@ -87,7 +87,7 @@ export default function MyShelterTeamPage() {
 
   useEffect(() => {
     applySeo({
-      title: `${tm.title} — DorogaDomoy.by`,
+      title: `${tm.title} â€” DorogaDomoy.by`,
       description: tm.subtitle,
       canonicalUrl: canonicalUrlFromPath(shelterId ? `/my-shelters/${shelterId}/team` : '/my-shelters'),
       robots: SEO_ROBOTS_PRIVATE,
@@ -237,9 +237,9 @@ export default function MyShelterTeamPage() {
               <div className="min-w-0">
                 <h1 className="typo-h1 flex flex-wrap items-center gap-2">
                   <Users className="size-6 shrink-0 text-primary" aria-hidden />
-                  {shelter?.name ?? '—'}
+                  {shelter?.name ?? 'â€”'}
                   <span className="text-base font-semibold text-muted-foreground sm:ml-1">
-                    · {tm.title}
+                    Â· {tm.title}
                   </span>
                 </h1>
                 <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{tm.subtitle}</p>
@@ -270,7 +270,7 @@ export default function MyShelterTeamPage() {
                     value={inviteUserId}
                     onChange={(e) => setInviteUserId(e.target.value)}
                     className="rounded-lg border border-border bg-background px-3 py-2 font-mono text-xs"
-                    placeholder="uuid…"
+                    placeholder="uuidâ€¦"
                     autoComplete="off"
                   />
                 </label>
@@ -304,7 +304,7 @@ export default function MyShelterTeamPage() {
                   const label =
                     m.user_name ||
                     m.user_email ||
-                    (m.user_id ? `${m.user_id.slice(0, 8)}…` : '—');
+                    (m.user_id ? `${m.user_id.slice(0, 8)}â€¦` : 'â€”');
                   const showAccept = isSelf && m.status === 'invited';
                   const showManage =
                     canManage && m.role !== 'owner' && (m.status === 'active' || m.status === 'invited');

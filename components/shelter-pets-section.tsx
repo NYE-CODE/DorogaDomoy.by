@@ -183,7 +183,7 @@ export function ShelterPetsSection({ shelterId, initialPets }: { shelterId: stri
             className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-card px-5 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted/70 md:text-base"
           >
             <Filter className="size-4" aria-hidden />
-            {showFilters ? 'Скрыть фильтры' : 'Показать фильтры'}
+            {showFilters ? 'РЎРєСЂС‹С‚СЊ С„РёР»СЊС‚СЂС‹' : 'РџРѕРєР°Р·Р°С‚СЊ С„РёР»СЊС‚СЂС‹'}
           </button>
         </div>
 

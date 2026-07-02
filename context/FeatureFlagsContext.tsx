@@ -1,2 +1,2 @@
-/** @deprecated Используйте `@/app/providers/FeatureFlagsContext`. */
+/** @deprecated РСЃРїРѕР»СЊР·СѓР№С‚Рµ `@/app/providers/FeatureFlagsContext`. */
 export * from '../src/app/providers/FeatureFlagsContext.tsx';

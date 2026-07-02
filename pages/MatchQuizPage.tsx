@@ -1,2 +1,2 @@
-/** @deprecated Используйте `@/pages/MatchQuizPage.tsx`. */
+/** @deprecated РСЃРїРѕР»СЊР·СѓР№С‚Рµ `@/pages/MatchQuizPage.tsx`. */
 export { default } from '../src/pages/MatchQuizPage.tsx';

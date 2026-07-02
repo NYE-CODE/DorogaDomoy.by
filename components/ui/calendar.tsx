@@ -1,2 +1,2 @@
-/** @deprecated Используйте `@/shared/ui/calendar`. */
+/** @deprecated РСЃРїРѕР»СЊР·СѓР№С‚Рµ `@/shared/ui/calendar`. */
 export * from '../../src/shared/ui/calendar.tsx';

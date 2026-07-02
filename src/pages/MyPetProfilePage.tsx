@@ -203,16 +203,16 @@ export default function MyPetProfilePage() {
   const photos = pet.photos?.length ? pet.photos : [];
   const mainPhoto = photos[photoIndex] ?? photos[0];
   const ageDisplay = formatPetAgeDisplay(pet.age, locale, pp);
-  const colorsLine = (pet.colors ?? []).filter(Boolean).join(', ') || '—';
+  const colorsLine = (pet.colors ?? []).filter(Boolean).join(', ') || 'вЂ”';
   const resolvedSpecies = resolveProfilePetSpecies(pet.species, pet.breed);
-  const speciesLine = `${speciesPlainLabel(resolvedSpecies, f)}${pet.breed ? ` · ${pet.breed}` : ''}`;
+  const speciesLine = `${speciesPlainLabel(resolvedSpecies, f)}${pet.breed ? ` В· ${pet.breed}` : ''}`;
   const addedAt = pet.created_at
     ? new Date(pet.created_at).toLocaleDateString(dateLocaleForUi(locale), {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',
       })
-    : '—';
+    : 'вЂ”';
 
   const fieldClass = 'rounded-md border border-border/70 bg-muted/25 p-4 transition-colors hover:bg-muted/40';
   const sectionTitleClass = typoH3;
@@ -251,7 +251,7 @@ export default function MyPetProfilePage() {
                 </Card>
               )}
 
-              {/* Обложка + шапка профиля; миниатюры сразу под фото — без скролла к галерее */}
+              {/* РћР±Р»РѕР¶РєР° + С€Р°РїРєР° РїСЂРѕС„РёР»СЏ; РјРёРЅРёР°С‚СЋСЂС‹ СЃСЂР°Р·Сѓ РїРѕРґ С„РѕС‚Рѕ вЂ” Р±РµР· СЃРєСЂРѕР»Р»Р° Рє РіР°Р»РµСЂРµРµ */}
               <Card className="gap-0 overflow-hidden border-border/80 shadow-md ring-1 ring-border/50">
                 <div className="relative bg-muted">
                   {photos.length > 1 && (
@@ -491,7 +491,7 @@ export default function MyPetProfilePage() {
                   <CardDescription className="text-sm leading-relaxed">{op.qrDescription}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* QR-?????: ???????? ???????? ? ????? ????????? ????????? ? «?????» */}
+                  {/* QR-?????: ???????? ???????? ? ????? вЂ” ?????????? ???????? ? В«?????В» */}
                   <div className="flex flex-col items-center gap-3 rounded-lg bg-medallion-soft/70 px-4 pb-4 pt-8 dark:bg-background/80">
                     <div className="relative">
                       <span

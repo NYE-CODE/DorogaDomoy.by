@@ -46,10 +46,10 @@ export default function BlogListPage() {
 
   useEffect(() => {
     const desc = truncateMetaDescription(
-      `${b.pageSubtitle}. DorogaDomoy.by — экосистема помощи животным: поиск, приюты и поддержка в Беларуси.`,
+      `${b.pageSubtitle}. DorogaDomoy.by вЂ” СЌРєРѕСЃРёСЃС‚РµРјР° РїРѕРјРѕС‰Рё Р¶РёРІРѕС‚РЅС‹Рј: РїРѕРёСЃРє, РїСЂРёСЋС‚С‹ Рё РїРѕРґРґРµСЂР¶РєР° РІ Р‘РµР»Р°СЂСѓСЃРё.`,
     );
     applySeo({
-      title: `${b.pageTitle} — DorogaDomoy.by`,
+      title: `${b.pageTitle} вЂ” DorogaDomoy.by`,
       description: desc,
       canonicalUrl: canonicalUrlFromPath('/blog'),
       robots: SEO_ROBOTS_PUBLIC,

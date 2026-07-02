@@ -1,2 +1,2 @@
-/** @deprecated Используйте `@/shared/ui/badge`. */
+/** @deprecated РСЃРїРѕР»СЊР·СѓР№С‚Рµ `@/shared/ui/badge`. */
 export * from '../../src/shared/ui/badge.tsx';

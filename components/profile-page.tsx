@@ -24,7 +24,7 @@ import {
   isValidBelarusMobilePhoneOptional,
 } from '../utils/belarus-phone';
 
-/** Только https://t.me / telegram.me — без javascript: и посторонних доменов. */
+/** РўРѕР»СЊРєРѕ https://t.me / telegram.me вЂ” Р±РµР· javascript: Рё РїРѕСЃС‚РѕСЂРѕРЅРЅРёС… РґРѕРјРµРЅРѕРІ. */
 function sanitizeTelegramBotUrl(raw: string): string | null {
   try {
     const u = new URL(raw.trim());
@@ -105,14 +105,14 @@ export default function ProfilePage() {
     if (tab === 'notifications' || tab === 'security' || tab === 'personal') {
       setActiveTab(tab);
     } else {
-      // Нет параметра или неверное значение (например после перехода /profile?tab=notifications > /profile)
+      // РќРµС‚ РїР°СЂР°РјРµС‚СЂР° РёР»Рё РЅРµРІРµСЂРЅРѕРµ Р·РЅР°С‡РµРЅРёРµ (РЅР°РїСЂРёРјРµСЂ РїРѕСЃР»Рµ РїРµСЂРµС…РѕРґР° /profile?tab=notifications > /profile)
       setActiveTab('personal');
     }
   }, [searchParams]);
 
   const isTelegramLinked = !!user?.telegramId;
 
-  /** Telegram для API: не отправлять "@undefined" при привязке без username. */
+  /** Telegram РґР»СЏ API: РЅРµ РѕС‚РїСЂР°РІР»СЏС‚СЊ "@undefined" РїСЂРё РїСЂРёРІСЏР·РєРµ Р±РµР· username. */
   const resolveTelegramContactForSave = useCallback((): string | undefined => {
     if (!isTelegramLinked) return undefined;
     const u = user?.telegramUsername?.trim();
@@ -264,7 +264,7 @@ export default function ProfilePage() {
     toast.success(t.profile.profileUpdated);
   };
 
-  /** Сохранить профиль + контакты одной кнопкой (таб «Личные данные») */
+  /** РЎРѕС…СЂР°РЅРёС‚СЊ РїСЂРѕС„РёР»СЊ + РєРѕРЅС‚Р°РєС‚С‹ РѕРґРЅРѕР№ РєРЅРѕРїРєРѕР№ (С‚Р°Р± В«Р›РёС‡РЅС‹Рµ РґР°РЅРЅС‹РµВ») */
   const handleSavePersonal = async (e: React.FormEvent) => {
     e.preventDefault();
     if (name.trim().length < 2) {
@@ -503,7 +503,7 @@ export default function ProfilePage() {
             </div>
 
             <div className="p-8">
-              {/* Tab: Личные данные */}
+              {/* Tab: Р›РёС‡РЅС‹Рµ РґР°РЅРЅС‹Рµ */}
               {activeTab === 'personal' && (
                 <div className="space-y-6">
                   <div className="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-border">
@@ -552,7 +552,7 @@ export default function ProfilePage() {
                         disabled={!user?.helperCode}
                       >
                         {helperCopied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4 text-gray-500" />}
-                        <span className="font-mono text-sm">{user?.helperCode ?? '—'}</span>
+                        <span className="font-mono text-sm">{user?.helperCode ?? 'вЂ”'}</span>
                       </button>
                     </div>
                     <div className="grid grid-cols-2 gap-3 mt-4">
@@ -715,7 +715,7 @@ export default function ProfilePage() {
 
               {activeTab === 'notifications' && (
                 <div className="space-y-6">
-                  {/* Карточка Telegram */}
+                  {/* РљР°СЂС‚РѕС‡РєР° Telegram */}
                   <div className="border border-gray-200 dark:border-gray-700 rounded-md p-6">
                     <h3 className="font-bold text-black dark:text-white mb-2 flex items-center gap-2">
                       <Send className="w-5 h-5 text-[#FF9800]" />
@@ -765,7 +765,7 @@ export default function ProfilePage() {
                     )}
                   </div>
 
-                  {/* Карточка уведомлений */}
+                  {/* РљР°СЂС‚РѕС‡РєР° СѓРІРµРґРѕРјР»РµРЅРёР№ */}
                   <div className="border border-gray-200 dark:border-gray-700 rounded-md p-6">
                     <div className="flex items-start gap-3 mb-4">
                       <Bell className="w-5 h-5 text-[#FF9800] mt-0.5 shrink-0" />

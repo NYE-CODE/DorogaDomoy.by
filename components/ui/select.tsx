@@ -1,2 +1,2 @@
-/** @deprecated Используйте `@/shared/ui/select`. */
+/** @deprecated РСЃРїРѕР»СЊР·СѓР№С‚Рµ `@/shared/ui/select`. */
 export * from '../../src/shared/ui/select.tsx';

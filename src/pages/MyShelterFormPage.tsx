@@ -83,7 +83,7 @@ export default function MyShelterFormPage() {
   useEffect(() => {
     const path = isCreate ? '/my-shelters/new' : `/my-shelters/edit/${shelterId}`;
     applySeo({
-      title: `${isCreate ? ms.createCard : ms.editCard} ù DorogaDomoy.by`,
+      title: `${isCreate ? ms.createCard : ms.editCard} —ú DorogaDomoy.by`,
       description: ms.subtitle,
       canonicalUrl: canonicalUrlFromPath(path),
       robots: SEO_ROBOTS_PRIVATE,
