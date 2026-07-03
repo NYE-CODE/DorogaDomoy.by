@@ -1,5 +1,6 @@
 ﻿import { translations } from '@/shared/i18n/translations';
 import type { ProfilePetResponse } from '@/shared/api/client';
+import { getProfilePetPrimaryPhoto } from '@/shared/lib/profile-pet-photo-slots';
 
 type Form = (typeof translations)['ru']['myPets']['form'];
 
@@ -66,7 +67,7 @@ export function profilePetToListCard(pet: ProfilePetResponse, form: Form): Profi
   return {
     id: pet.id,
     name: pet.name,
-    photo: pet.photos?.[0] ?? '',
+    photo: getProfilePetPrimaryPhoto(pet.photos),
     subtitle: [species, pet.breed].filter(Boolean).join(', '),
   };
 }

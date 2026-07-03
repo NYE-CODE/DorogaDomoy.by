@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import {
   Home,
   Heart,
@@ -411,7 +411,7 @@ export function PetsAdminPanel({ pets, users = [], onDeletePet, onOpenPet }: Pet
 
       {selectedPet && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4" onClick={() => setSelectedPet(null)}>
-          <div className="bg-card rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-card rounded-md shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 py-4 border-b dark:border-border sticky top-0 bg-card z-10">
               <h3 className="font-semibold text-foreground">Карточка объявления</h3>
               <button type="button" onClick={() => setSelectedPet(null)} className="p-1 hover:bg-accent rounded">

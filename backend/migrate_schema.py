@@ -60,6 +60,10 @@ PET_REGISTRATION_COLUMNS_TO_ADD = [
     ("registration_token_number", "VARCHAR"),
 ]
 
+PET_LISTING_EXPIRY_COLUMNS_TO_ADD = [
+    ("expires_at", "DATETIME"),
+]
+
 SHELTER_PET_DETAILS_COLUMNS_TO_ADD = [
     ("nickname", "VARCHAR"),
     ("health_status", "VARCHAR"),
@@ -413,7 +417,8 @@ def migrate(conn):
             PET_COLUMNS_TO_ADD
             + PET_BOUNTY_COLUMNS_TO_ADD
             + PET_SHELTER_COLUMNS_TO_ADD
-            + PET_REGISTRATION_COLUMNS_TO_ADD,
+            + PET_REGISTRATION_COLUMNS_TO_ADD
+            + PET_LISTING_EXPIRY_COLUMNS_TO_ADD,
         ),
         ("users", USER_COLUMNS_TO_ADD),
         ("profile_pets", PROFILE_PET_COLUMNS_TO_ADD),
@@ -602,6 +607,27 @@ def backfill_shelter_owner_memberships(conn):
         return
 
 
+def backfill_pet_listing_expires_at(conn):
+    """expires_at для активных lost_found объявлений без срока."""
+    try:
+        row = conn.execute(
+            "SELECT value FROM platform_settings WHERE key = 'auto_archive_days' LIMIT 1"
+        ).fetchone()
+        days = int(row[0]) if row and row[0] else 90
+        conn.execute(
+            f"""
+            UPDATE pets
+            SET expires_at = datetime(published_at, '+{days} days')
+            WHERE expires_at IS NULL
+              AND COALESCE(pet_scope, 'lost_found') = 'lost_found'
+              AND moderation_status = 'approved'
+              AND COALESCE(is_archived, 0) = 0
+            """
+        )
+    except sqlite3.OperationalError:
+        return
+
+
 def backfill_shelter_pet_details(conn):
     """Backfill details table from pets for shelter scope."""
     try:
@@ -645,6 +671,7 @@ if __name__ == "__main__":
         backfill_helper_codes(conn)
         backfill_shelter_owner_memberships(conn)
         backfill_shelter_pet_details(conn)
+        backfill_pet_listing_expires_at(conn)
         conn.commit()
         if changes:
             print("Added columns:", ", ".join(changes))

@@ -24,6 +24,7 @@ from integrations.telegram import send_profile_pet_signal_sync
 from time_utils import utc_now
 from upload_utils import save_data_image
 from rate_limit import limiter
+from profile_pet_photo_slots import PROFILE_PET_PHOTO_SLOT_COUNT, pad_profile_pet_photos
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +33,7 @@ router = APIRouter(prefix="/profile-pets", tags=["profile-pets"])
 UPLOADS_DIR = Path(__file__).resolve().parent.parent / "uploads"
 UPLOADS_DIR.mkdir(exist_ok=True)
 
-MAX_PHOTOS = 5
+MAX_PHOTOS = PROFILE_PET_PHOTO_SLOT_COUNT
 SIGNAL_COOLDOWN_MINUTES = 30
 MIME_TO_EXT = {
     "image/jpeg": ".jpg",
@@ -179,13 +180,26 @@ def get_profile_pet(
     return _to_response(p)
 
 
+def _normalize_profile_pet_photos(raw: list[str] | None) -> list[str]:
+    """Ровно 6 позиций; пустые слоты сохраняются как \"\" для фиксированного порядка."""
+    if not raw:
+        return pad_profile_pet_photos([])
+    out: list[str] = []
+    for ph in raw[:MAX_PHOTOS]:
+        if not ph or not str(ph).strip():
+            out.append("")
+            continue
+        out.append(_save_base64(ph))
+    return pad_profile_pet_photos(out)
+
+
 @router.post("", response_model=ProfilePetResponse, status_code=201)
 def create_profile_pet(
     data: ProfilePetCreate,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user_required),
 ):
-    photos = [_save_base64(ph) for ph in (data.photos or [])[:MAX_PHOTOS]]
+    photos = _normalize_profile_pet_photos(data.photos)
     pet = ProfilePet(
         id=uuid.uuid4().hex,
         owner_id=user.id,
@@ -230,7 +244,7 @@ def update_profile_pet(
 
     update_data = data.model_dump(exclude_unset=True)
     if "photos" in update_data and update_data["photos"] is not None:
-        update_data["photos"] = [_save_base64(ph) for ph in update_data["photos"][:MAX_PHOTOS]]
+        update_data["photos"] = _normalize_profile_pet_photos(update_data["photos"])
     if "is_chipped" in update_data and not update_data["is_chipped"]:
         update_data["chip_number"] = None
 

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { useAuth } from '@/app/providers/AuthContext';
 import '../../landing/styles/theme-scoped.css';
@@ -11,6 +11,7 @@ import { petsApi } from '@/shared/api/client';
 import { Pet } from '@/entities/pet/model/types';
 import { toast } from 'sonner';
 import { getHomePath } from '@/shared/lib/home-route';
+import { RouteProgress } from '@/shared/ui/molecules';
 
 export default function EditAdPage() {
   const { id } = useParams<{ id: string }>();
@@ -104,9 +105,9 @@ export default function EditAdPage() {
 
   return (
     <div className="landing-theme min-h-screen bg-muted/30 dark:bg-background flex flex-col">
-      <Header showHomeModeToggle={false} />
+      <Header />
 
-      {/* Секция шага — как в CreateAdPage */}
+      {/* ������ ���� � ��� � CreateAdPage */}
       {stepInfo && (
         <section className="bg-white dark:bg-card border-b border-border px-4 sm:px-6 lg:px-8">
           <div className="max-w-[736px] mx-auto py-4">
@@ -136,18 +137,18 @@ export default function EditAdPage() {
                 {t.petForm.close}
               </button>
             </div>
-            <div className="w-full bg-muted rounded-full h-2">
-              <div
-                className="bg-gradient-to-r from-primary-light to-primary h-2 rounded-full transition-all duration-300"
-                style={{ width: `${(stepInfo.step / stepInfo.totalSteps) * 100}%` }}
-              />
-            </div>
+            <RouteProgress
+              totalSteps={stepInfo.totalSteps}
+              currentStep={stepInfo.step}
+              label={`${t.petForm.step} ${stepInfo.step} ${t.petForm.of} ${stepInfo.totalSteps}`}
+              className="max-w-sm"
+            />
           </div>
         </section>
       )}
 
       <main className="flex-1 px-4 py-8">
-        <div className="max-w-[736px] mx-auto bg-white dark:bg-card rounded-2xl shadow-sm border border-border p-8">
+        <div className="max-w-[736px] mx-auto bg-white dark:bg-card rounded-lg shadow-sm border border-border p-8">
           <PetForm
             variant="page"
             renderStepHeaderExternally

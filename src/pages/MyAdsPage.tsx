@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router';
 import { useAuth } from '@/app/providers/AuthContext';
 import { useI18n } from '@/app/providers/I18nContext';
@@ -121,6 +121,27 @@ export default function MyAdsPageRoute() {
     setDeletingPet(null);
   };
 
+  const handleRenewPet = async (pet: Pet) => {
+    try {
+      const updated = await petsApi.renew(pet.id);
+      setPets((prev) => prev.map((p) => (p.id === pet.id ? updated : p)));
+      const dateStr = updated.expiresAt
+        ? updated.expiresAt.toLocaleDateString('ru-RU', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+          })
+        : '';
+      toast.success(
+        dateStr
+          ? t.common.toasts.listingRenewed.replace('{date}', dateStr)
+          : t.myAds.renewPublication,
+      );
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t.common.toasts.listingRenewFailed);
+    }
+  };
+
   const handleBoostPet = async (pet: Pet) => {
     try {
       const eligibility = await instagramApi.boostEligibility(pet.id);
@@ -169,6 +190,9 @@ export default function MyAdsPageRoute() {
         instagramBoostEnabled={instagramBoostEnabled}
         onBoostPet={(pet) => {
           void handleBoostPet(pet);
+        }}
+        onRenewPet={(pet) => {
+          void handleRenewPet(pet);
         }}
       />
 

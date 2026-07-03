@@ -194,7 +194,7 @@ export function ShelterPetsSection({ shelterId, initialPets }: { shelterId: stri
             {showFilters ? (
               <div
                 className={cn(
-                  'rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-6',
+                  'rounded-lg border border-border bg-card p-4 shadow-sm sm:p-6',
                   loading && 'pointer-events-none opacity-60',
                 )}
                 aria-busy={loading}

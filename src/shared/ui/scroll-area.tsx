@@ -1,1 +1,1 @@
-﻿export * from './_primitives/scroll-area.tsx';
+export * from './_primitives/scroll-area.tsx';

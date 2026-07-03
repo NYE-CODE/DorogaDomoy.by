@@ -115,7 +115,7 @@ export default function GuidesPage() {
               <ul className="grid gap-8 sm:grid-cols-2">
                 {filteredVideos.map((video) => (
                   <li key={video.id}>
-                    <article className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+                    <article className="overflow-hidden rounded-md border border-border bg-card shadow-sm">
                       <div className="aspect-video w-full bg-muted">
                         <iframe
                           src={video.embed_url}

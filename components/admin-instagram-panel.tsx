@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import {
   instagramApi,
@@ -601,7 +601,7 @@ export function AdminInstagramPanel() {
         </div>
         <div className="mt-4 space-y-2">
           {queueLoading ? (
-            <div className="rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground dark:border-border dark:text-muted-foreground/80">
+            <div className="rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground dark:border-border dark:text-muted-foreground/80">
               {ig.loadingQueue}
             </div>
           ) : null}
@@ -679,7 +679,7 @@ export function AdminInstagramPanel() {
             </div>
           ))}
           {visiblePublications.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground dark:border-border dark:text-muted-foreground/80">
+            <div className="rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground dark:border-border dark:text-muted-foreground/80">
               {ig.queueEmpty}
             </div>
           ) : null}
@@ -707,7 +707,7 @@ export function AdminInstagramPanel() {
           onClick={() => setIsManualModalOpen(false)}
         >
           <div
-            className="w-full max-w-lg bg-card border border-border rounded-xl p-6"
+            className="w-full max-w-lg bg-card border border-border rounded-md p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-lg font-semibold text-foreground">{ig.manualModalTitle}</h3>

@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { Mail, Lock, ArrowRight } from 'lucide-react';
@@ -10,6 +10,7 @@ import { useAuth } from '@/app/providers/AuthContext';
 import { useI18n } from '@/app/providers/I18nContext';
 import { getHomePath } from '@/shared/lib/home-route';
 import { getSafeReturnPath } from '@/shared/lib/auth-return-path';
+import { shouldShowPetProfileOnboarding } from '@/shared/lib/pet-profile-onboarding';
 
 export default function CompleteProfilePage() {
   const { t } = useI18n();
@@ -17,9 +18,9 @@ export default function CompleteProfilePage() {
   const { user, completeProfile, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const returnPath = getSafeReturnPath(
-    (location.state as { fromProtected?: string } | null)?.fromProtected,
-  );
+  const locationState = location.state as { fromProtected?: string; suggestPetProfile?: boolean } | null;
+  const returnPath = getSafeReturnPath(locationState?.fromProtected);
+  const suggestPetProfile = Boolean(locationState?.suggestPetProfile);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [signupRole, setSignupRole] = useState<'user' | 'volunteer'>('user');
@@ -52,7 +53,14 @@ export default function CompleteProfilePage() {
         password: password.trim() || undefined,
       });
       toast.success(cp.success);
-      navigate(returnPath ?? getHomePath(), { replace: true });
+      if (suggestPetProfile && user && shouldShowPetProfileOnboarding(user.id)) {
+        navigate('/welcome/pet-profile', {
+          replace: true,
+          state: returnPath ? { fromProtected: returnPath } : undefined,
+        });
+      } else {
+        navigate(returnPath ?? getHomePath(), { replace: true });
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t.common.error);
     } finally {
@@ -62,9 +70,9 @@ export default function CompleteProfilePage() {
 
   return (
     <div className="landing-theme min-h-screen flex flex-col bg-muted/30 dark:bg-background">
-      <Header showCitySelector showHomeModeToggle={false} />
+      <Header showCitySelector />
       <main className="flex-1 px-4 py-10">
-        <div className="mx-auto max-w-md rounded-2xl border border-border bg-card p-8 shadow-sm">
+        <div className="mx-auto max-w-md rounded-lg border border-border bg-card p-8 shadow-sm">
           <h1 className="typo-h1">{cp.title}</h1>
           <p className="mt-2 text-sm text-muted-foreground">{cp.subtitle}</p>
           <p className="mt-1 text-sm text-muted-foreground">

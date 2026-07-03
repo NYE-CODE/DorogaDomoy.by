@@ -5,6 +5,11 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from belarus_phone import format_belarus_phone_storage
+from profile_pet_photo_slots import (
+    PROFILE_PET_PHOTO_SLOT_COUNT,
+    PROFILE_PET_PHOTOS_FIELD_DESCRIPTION,
+    validate_profile_pet_photos_raw,
+)
 
 
 # --- User ---
@@ -333,6 +338,7 @@ class ShelterPetUpdate(BaseModel):
 class PetResponse(PetBase):
     id: str
     published_at: datetime
+    expires_at: Optional[datetime] = None
     updated_at: datetime
     author_id: str
     author_name: str
@@ -835,7 +841,11 @@ class ProfilePetCreate(BaseModel):
     responds_to_name: bool = True
     favorite_treats: Optional[str] = None
     favorite_walks: Optional[str] = None
-    photos: list[str] = []
+    photos: list[str] = Field(
+        default_factory=list,
+        max_length=PROFILE_PET_PHOTO_SLOT_COUNT,
+        description=PROFILE_PET_PHOTOS_FIELD_DESCRIPTION,
+    )
 
     @field_validator("breed", mode="before")
     @classmethod
@@ -846,6 +856,12 @@ class ProfilePetCreate(BaseModel):
     @classmethod
     def trim_profile_registration_create(cls, v):
         return _trim_optional_str(v)
+
+    @field_validator("photos")
+    @classmethod
+    def validate_photos_create(cls, v: list[str]) -> list[str]:
+        validate_profile_pet_photos_raw(v)
+        return v
 
 
 class ProfilePetUpdate(BaseModel):
@@ -865,7 +881,11 @@ class ProfilePetUpdate(BaseModel):
     responds_to_name: Optional[bool] = None
     favorite_treats: Optional[str] = None
     favorite_walks: Optional[str] = None
-    photos: Optional[list[str]] = None
+    photos: Optional[list[str]] = Field(
+        None,
+        max_length=PROFILE_PET_PHOTO_SLOT_COUNT,
+        description=PROFILE_PET_PHOTOS_FIELD_DESCRIPTION,
+    )
 
     @field_validator("breed", mode="before")
     @classmethod
@@ -876,6 +896,14 @@ class ProfilePetUpdate(BaseModel):
     @classmethod
     def trim_profile_registration_update(cls, v):
         return _trim_optional_str(v)
+
+    @field_validator("photos")
+    @classmethod
+    def validate_photos_update(cls, v: list[str] | None) -> list[str] | None:
+        if v is None:
+            return v
+        validate_profile_pet_photos_raw(v)
+        return v
 
 
 class ProfilePetResponse(BaseModel):

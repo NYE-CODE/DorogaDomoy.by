@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Header } from '@/widgets/layout/Header';
 import { Footer } from '@/widgets/layout/Footer';
@@ -32,7 +32,7 @@ function ChoiceBtn({
       type="button"
       onClick={onClick}
       className={cn(
-        'rounded-xl border px-4 py-3 text-left text-sm font-medium transition-colors',
+        'rounded-md border px-4 py-3 text-left text-sm font-medium transition-colors',
         active ? matchChoiceActiveClass : 'border-border bg-background text-foreground hover:bg-muted',
       )}
     >
@@ -127,7 +127,7 @@ export default function MatchQuizPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <Header showCitySelector={false} showHomeModeToggle={false} />
+      <Header showCitySelector={false} />
       <section className="border-b border-border bg-card px-4 sm:px-6">
         <div className="mx-auto max-w-lg py-4">
           <div className="mb-4 flex items-center gap-3">
@@ -146,7 +146,7 @@ export default function MatchQuizPage() {
       </section>
 
       <main className="flex-1 px-4 py-8">
-        <div className="mx-auto max-w-lg rounded-2xl border border-border bg-card p-6 shadow-sm">
+        <div className="mx-auto max-w-lg rounded-lg border border-border bg-card p-6 shadow-sm">
           {step === 1 && (
             <div className="grid gap-2">
               <p className="mb-2 text-sm text-muted-foreground">{q.animalIntro}</p>
@@ -229,7 +229,7 @@ export default function MatchQuizPage() {
               ].map(({ label, value, set }) => (
                 <label
                   key={label}
-                  className="flex cursor-pointer items-center gap-3 rounded-xl border border-border px-4 py-3"
+                  className="flex cursor-pointer items-center gap-3 rounded-md border border-border px-4 py-3"
                 >
                   <input
                     type="checkbox"
@@ -298,7 +298,7 @@ export default function MatchQuizPage() {
               ].map(({ label, hint, value, set }) => (
                 <label
                   key={label}
-                  className="flex cursor-pointer items-start gap-3 rounded-xl border border-border px-4 py-3"
+                  className="flex cursor-pointer items-start gap-3 rounded-md border border-border px-4 py-3"
                 >
                   <input
                     type="checkbox"

@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useCallback, useLayoutEffect } from 'react';
+import { useState, useRef, useCallback, useLayoutEffect } from 'react';
 
 /** Минимальная высота: ручка + заголовок (можно опустить вниз) */
 const COLLAPSED_HEIGHT = 96;
@@ -8,7 +8,7 @@ const SNAP_THRESHOLD_FULL = 0.6; // если > 60% экрана — раскры
 const SNAP_THRESHOLD_PEEK = 0.25; // если < 25% экрана — свернуть до минимума
 /** Fallback отступ сверху, если измерение недоступно */
 const SITE_HEADER_SAFE_FALLBACK = 170;
-/** Запас снизу, если элемент навигации ещё не в DOM (≈ h-16 + safe area) */
+/** Запас снизу, если элемент навигации ещё не в DOM (? h-16 + safe area) */
 const BOTTOM_NAV_FALLBACK_PX = 96;
 /** Высота полки над ручкой — чтобы при раскрытии ручка не пряталась под шапкой (компактно) */
 const HANDLE_SPACER = 16;

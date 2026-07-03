@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router';
 import { X, Search, ChevronLeft, Upload } from 'lucide-react';
 import { AnimalType, PetStatus, PetColor, Gender, Pet } from '../types/pet';
@@ -20,11 +20,9 @@ import {
   formatBelarusPhoneStorage,
   isValidBelarusMobilePhoneOptional,
 } from '../utils/belarus-phone';
-import {
-  clearPetFormDraft,
-  loadPetFormDraft,
-  savePetFormDraft,
-} from '@/shared/lib/pet-form-draft';
+import { petScenarioFormToggleActiveClass } from '@/shared/lib/pet-helpers';
+import { clearPetFormDraft, loadPetFormDraft, savePetFormDraft } from '@/shared/lib/pet-form-draft';
+import { RouteProgress } from '@/shared/ui/molecules';
 
 const MAX_DESCRIPTION = 500;
 
@@ -42,15 +40,15 @@ interface PetFormProps {
   onSubmit: (data: PetFormData) => void;
   initialData?: Pet;
   isEditing?: boolean;
-  /** При создании: статус выбран в модалке «потерял/нашёл», в форме не показываем выбор */
+  /** ��� ��������: ������ ������ � ������� ��������/�����, � ����� �� ���������� ����� */
   initialStatus?: PetStatus;
-  /** Режим отображения: modal — поверх страницы, page — контент на странице без оверлея */
+  /** ����� �����������: modal � ������ ��������, page � ������� �� �������� ��� ������� */
   variant?: 'modal' | 'page';
-  /** При true и variant=page: шаг рендерится снаружи (родитель), форма не рисует header с шагом */
+  /** ��� true � variant=page: ��� ���������� ������� (��������), ����� �� ������ header � ����� */
   renderStepHeaderExternally?: boolean;
-  /** Вызывается при смене шага — родитель может отрисовать секцию шага под хедером */
+  /** ���������� ��� ����� ���� � �������� ����� ���������� ������ ���� ��� ������� */
   onStepChange?: (info: PetFormStepInfo) => void;
-  /** Частичное предзаполнение при создании (например из «Мои питомцы») */
+  /** ��������� �������������� ��� �������� (�������� �� ���� ��������) */
   prefillPartial?: Partial<PetFormData> | null;
 }
 
@@ -73,24 +71,24 @@ export interface PetFormData {
     phone?: string;
     viber?: string;
   };
-  /** Использовать контакты из профиля (только для создания) */
+  /** ������������ �������� �� ������� (������ ��� ��������) */
   useProfileContacts?: boolean;
-  /** Имя для отображения в объявлении (если не из профиля) */
+  /** ��� ��� ����������� � ���������� (���� �� �� �������) */
   contactName?: string;
-  /** Телефон для объявления (если не из профиля) */
+  /** ������� ��� ���������� (���� �� �� �������) */
   contactPhone?: string;
-  /** Согласие с политикой конфиденциальности (только для создания) */
+  /** �������� � ��������� ������������������ (������ ��� ��������) */
   agreeToPrivacy?: boolean;
-  /** Награда за помощь */
+  /** ������� �� ������ */
   rewardMode?: 'points' | 'money';
   rewardAmountByn?: number;
-  /** Госучёт РБ (жетон): орган ведения учёта */
+  /** ������� �� (�����): ����� ������� ����� */
   registrationAuthority?: string;
-  /** Номер жетона */
+  /** ����� ������ */
   registrationTokenNumber?: string;
 }
 
-/** Город и точка на карте по выбранному в фильтре городу (иначе Минск). */
+/** ����� � ����� �� ����� �� ���������� � ������� ������ (����� �����). */
 function defaultsFromSelectedCity(selectedCity: string): Pick<PetFormData, 'city' | 'location'> {
   const trimmed = selectedCity.trim();
   if (!trimmed) {
@@ -162,9 +160,9 @@ function formDataFromPet(pet: Pet): PetFormData {
 }
 
 const animalTypeOptions: { value: AnimalType; icon: string }[] = [
-  { value: 'cat', icon: '🐱' },
-  { value: 'dog', icon: '🐕' },
-  { value: 'other', icon: '🦔' },
+  { value: 'cat', icon: '??' },
+  { value: 'dog', icon: '??' },
+  { value: 'other', icon: '??' },
 ];
 
 const genderOptions: { value: Gender }[] = [
@@ -173,7 +171,7 @@ const genderOptions: { value: Gender }[] = [
   { value: 'female' },
 ];
 
-const agePresetValues = ['', 'менее 2 года', 'более 2 года'] as const;
+const agePresetValues = ['', '����� 2 ����', '����� 2 ����'] as const;
 
 const TOTAL_STEPS_CREATE = 5;
 const TOTAL_STEPS_EDIT = 5;
@@ -197,9 +195,9 @@ export function PetForm({
 
   const getAgeLabel = (value: string, short: boolean) => {
     const pf = t.petForm as { ageUnknownShort?: string; ageLess2?: string; ageLess2Short?: string; ageMore2?: string; ageMore2Short?: string };
-    if (value === '') return short ? (pf.ageUnknownShort ?? 'Неизв.') : t.pet.gender.unknown;
-    if (value === 'менее 2 года') return short ? (pf.ageLess2Short ?? '< 2 года') : (pf.ageLess2 ?? 'менее 2 года');
-    if (value === 'более 2 года') return short ? (pf.ageMore2Short ?? '> 2 года') : (pf.ageMore2 ?? 'более 2 года');
+    if (value === '') return short ? (pf.ageUnknownShort ?? '�����.') : t.pet.gender.unknown;
+    if (value === '����� 2 ����') return short ? (pf.ageLess2Short ?? '< 2 ����') : (pf.ageLess2 ?? '����� 2 ����');
+    if (value === '����� 2 ����') return short ? (pf.ageMore2Short ?? '> 2 ����') : (pf.ageMore2 ?? '����� 2 ����');
     return value;
   };
 
@@ -282,7 +280,7 @@ export function PetForm({
     }
   }, [initialData?.id, user?.id, prefillPartial, initialStatus]);
 
-  /** Подстраиваем адрес шага 3 под смену города в фильтре (только создание объявления). */
+  /** ������������ ����� ���� 3 ��� ����� ������ � ������� (������ �������� ����������). */
   useEffect(() => {
     if (initialData || isEditing) return;
     const fromFilter = defaultsFromSelectedCity(selectedCity);
@@ -347,17 +345,17 @@ export function PetForm({
   const step4Errors = () => {
     const errs: Record<string, string> = {};
     if (!formData.description?.trim()) errs.description = t.petForm.enterDescription;
-    else if (formData.description.length > MAX_DESCRIPTION) errs.description = `Макс. ${MAX_DESCRIPTION} символов`;
+    else if (formData.description.length > MAX_DESCRIPTION) errs.description = `����. ${MAX_DESCRIPTION} ��������`;
     if (formData.status === 'searching' && formData.rewardMode === 'money') {
       const amount = Number(formData.rewardAmountByn);
       if (!Number.isFinite(amount) || amount <= 0) {
-        errs.rewardAmountByn = 'Укажите сумму в BYN';
+        errs.rewardAmountByn = '������� ����� � BYN';
       }
     }
     const raLen = (formData.registrationAuthority ?? '').trim().length;
     const rtLen = (formData.registrationTokenNumber ?? '').trim().length;
-    if (raLen > 300) errs.registrationAuthority = 'Макс. 300 символов';
-    if (rtLen > 80) errs.registrationTokenNumber = 'Макс. 80 символов';
+    if (raLen > 300) errs.registrationAuthority = '����. 300 ��������';
+    if (rtLen > 80) errs.registrationTokenNumber = '����. 80 ��������';
     return errs;
   };
 
@@ -426,7 +424,7 @@ export function PetForm({
       if (!isEditing && user?.id) clearPetFormDraft(user.id);
       onClose();
     } catch {
-      // Ошибка — остаёмся на форме, родитель показал toast
+      // ������ � ������� �� �����, �������� ������� toast
     }
   };
 
@@ -465,7 +463,7 @@ export function PetForm({
 
   const content = (
     <>
-      {/* Header — при renderStepHeaderExternally рисуется снаружи (PostPage) */}
+      {/* Header � ��� renderStepHeaderExternally �������� ������� (PostPage) */}
       {!(variant === 'page' && renderStepHeaderExternally) && (
       <div className={`sticky top-0 z-10 ${variant === 'page' ? 'pb-6 border-b border-border' : 'bg-white/95 dark:bg-card/95 backdrop-blur-sm border-b border-border/60 dark:border-border rounded-t-2xl'}`}>
         {variant === 'page' ? (
@@ -490,12 +488,12 @@ export function PetForm({
             <h1 className="typo-h2 mb-3">
               {getPageTitle()}
             </h1>
-            <div className="w-full bg-muted rounded-full h-2 overflow-hidden mb-3">
-              <div
-                className="bg-gradient-to-r from-primary-light to-primary h-2 rounded-full transition-all duration-300"
-                style={{ width: `${(step / totalSteps) * 100}%` }}
-              />
-            </div>
+            <RouteProgress
+              totalSteps={totalSteps}
+              currentStep={step}
+              label={`${t.petForm.step} ${step} ${t.petForm.of} ${totalSteps}`}
+              className="mb-3 max-w-sm"
+            />
             <p className="text-sm font-medium text-foreground/90">
               {t.petForm.step} {step} {t.petForm.of} {totalSteps}: {currentStepTitle}
             </p>
@@ -511,15 +509,13 @@ export function PetForm({
               <h2 className="text-lg font-semibold text-foreground">
                 {isEditing ? t.petForm.editTitle : formData.status === 'searching' ? t.petForm.formTitleLost : t.petForm.formTitleFound}
               </h2>
-              <div className="flex items-center gap-2 mt-1.5">
-                <div className="flex gap-1">
-                  {Array.from({ length: totalSteps }).map((_, i) => (
-                    <div
-                      key={i}
-                      className={`h-1 w-8 rounded-full transition-colors ${step >= i + 1 ? 'bg-primary' : 'bg-muted dark:bg-muted/80'}`}
-                    />
-                  ))}
-                </div>
+              <div className="flex items-center gap-3 mt-1.5">
+                <RouteProgress
+                  totalSteps={totalSteps}
+                  currentStep={step}
+                  label={`${t.petForm.step} ${step} ${t.petForm.of} ${totalSteps}`}
+                  className="w-44"
+                />
                 <span className="text-xs text-muted-foreground/80">{t.petForm.step} {step} {t.petForm.of} {totalSteps}</span>
               </div>
             </div>
@@ -535,7 +531,7 @@ export function PetForm({
           {draftRestored && !isEditing ? (
             <div
               role="status"
-              className="mb-6 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-foreground"
+              className="mb-6 rounded-md border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-foreground"
             >
               <p className="font-medium">{t.petForm.draftRestored}</p>
               {draftPhotoCount > 0 ? (
@@ -545,47 +541,46 @@ export function PetForm({
               ) : null}
             </div>
           ) : null}
-          {/* stepDesc для шагов 2–5 — сверху формы, как в эталоне */}
+          {/* stepDesc ��� ����� 2�5 � ������ �����, ��� � ������� */}
           {variant === 'page' && step >= 2 && currentStepDesc && (
             <p className="text-muted-foreground mb-6">{currentStepDesc}</p>
           )}
-          {/* Step 1: Тип питомца, пол, цвет, возраст */}
+          {/* Step 1: ��� �������, ���, ����, ������� */}
           {step === 1 && (
             <div className="space-y-6">
-              {/* Announcement type - только при создании */}
-              {!isEditing && (
-                <>
-                  <div className="mb-8 pb-6 border-b border-border">
-                    <label className="block text-sm font-semibold text-muted-foreground uppercase mb-3">
-                      Тип объявления
-                    </label>
-                    <div className="flex gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setFormData({ ...formData, status: 'searching' })}
-                        className={`flex-1 rounded-lg px-6 py-3 font-medium transition-colors ${
-                          formData.status === 'searching'
-                            ? 'bg-rose-600 text-white shadow-sm hover:bg-rose-600/90'
-                            : 'bg-muted text-muted-foreground hover:bg-muted dark:bg-secondary dark:text-secondary-foreground dark:hover:bg-secondary/80'
-                        }`}
-                      >
-                        Пропала
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setFormData({ ...formData, status: 'found' })}
-                        className={`flex-1 rounded-lg px-6 py-3 font-medium transition-colors ${
-                          formData.status === 'found'
-                            ? 'bg-sky-600 text-white shadow-sm hover:bg-sky-600/90'
-                            : 'bg-muted text-muted-foreground hover:bg-muted dark:bg-secondary dark:text-secondary-foreground dark:hover:bg-secondary/80'
-                        }`}
-                      >
-                        Найдена
-                      </button>
-                    </div>
+              {!isEditing && !initialStatus && (
+                <div className="mb-8 pb-6 border-b border-border">
+                  <label className="block text-sm font-semibold text-muted-foreground uppercase mb-3">
+                    ��� ����������
+                  </label>
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, status: 'searching' })}
+                      className={`flex-1 rounded-lg px-6 py-3 font-medium transition-colors ${
+                        formData.status === 'searching'
+                          ? petScenarioFormToggleActiveClass.lost
+                          : 'bg-muted text-muted-foreground hover:bg-muted dark:bg-secondary dark:text-secondary-foreground dark:hover:bg-secondary/80'
+                      }`}
+                    >
+                      �������
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, status: 'found' })}
+                      className={`flex-1 rounded-lg px-6 py-3 font-medium transition-colors ${
+                        formData.status === 'found'
+                          ? petScenarioFormToggleActiveClass.found
+                          : 'bg-muted text-muted-foreground hover:bg-muted dark:bg-secondary dark:text-secondary-foreground dark:hover:bg-secondary/80'
+                      }`}
+                    >
+                      �������
+                    </button>
                   </div>
-                  <p className="text-muted-foreground mb-6">{t.petForm.step1Desc}</p>
-                </>
+                </div>
+              )}
+              {!isEditing && (
+                <p className="text-muted-foreground mb-6">{t.petForm.step1Desc}</p>
               )}
               {/* Animal type + Breed */}
               <div className="flex flex-col sm:flex-row sm:items-end gap-3">
@@ -624,7 +619,7 @@ export function PetForm({
                         type="text"
                         value={formData.breed}
                         onChange={(e) => setFormData({ ...formData, breed: e.target.value.slice(0, 80) })}
-                        placeholder="Введите породу (необязательно)"
+                        placeholder="������� ������ (�������������)"
                         maxLength={80}
                         className={variant === 'page' ? 'w-full px-4 py-3 border border-black/10 dark:border-border rounded-lg bg-input-background dark:bg-input-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent' : 'w-full px-4 py-3 border border-border dark:border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent'}
                       />
@@ -633,7 +628,7 @@ export function PetForm({
                         breeds={formData.animalType === 'cat' ? CAT_BREEDS : DOG_BREEDS}
                         value={formData.breed}
                         onChange={(breed) => setFormData({ ...formData, breed })}
-                        placeholder="Выберите или введите породу"
+                        placeholder="�������� ��� ������� ������"
                         className={variant === 'page' ? 'bg-input-background dark:bg-input-background border-black/10 dark:border-border' : undefined}
                       />
                     )}
@@ -644,7 +639,7 @@ export function PetForm({
               {/* Colors */}
               <div>
                 <label className="block text-sm font-semibold text-muted-foreground uppercase mb-3">{t.petForm.colorLabel}</label>
-                <div className={`flex flex-wrap gap-2 mt-1.5 ${errors.colors ? 'ring-2 ring-red-300 bg-red-50/50 dark:bg-red-900/20 p-2 rounded-xl' : ''}`}>
+                <div className={`flex flex-wrap gap-2 mt-1.5 ${errors.colors ? 'ring-2 ring-red-300 bg-red-50/50 dark:bg-red-900/20 p-2 rounded-md' : ''}`}>
                   {(Object.keys(t.pet.color) as PetColor[]).map((color) => (
                     <button
                       key={color}
@@ -688,7 +683,7 @@ export function PetForm({
                         }`}
                       >
                         {isMobile && opt.value === 'unknown'
-                          ? ((t.pet.gender as { unknownShort?: string }).unknownShort ?? 'Неизв.')
+                          ? ((t.pet.gender as { unknownShort?: string }).unknownShort ?? '�����.')
                           : t.pet.gender[opt.value]}
                       </button>
                     ))}
@@ -718,7 +713,7 @@ export function PetForm({
                       type="text"
                       value={formData.approximateAge}
                       onChange={(e) => setFormData({ ...formData, approximateAge: e.target.value })}
-                      placeholder="Напр.: 2 года"
+                      placeholder="����.: 2 ����"
                       className="block mt-1.5 w-full px-4 py-3 border border-border dark:border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
                   )}
@@ -727,16 +722,16 @@ export function PetForm({
             </div>
           )}
 
-          {/* Step 2: Фото — точно по эталону */}
+          {/* Step 2: ���� � ����� �� ������� */}
           {step === 2 && (
             <div>
               <div className="text-right text-sm text-muted-foreground mb-4">
-                {formData.photos.length} из {maxPhotos}
+                {formData.photos.length} �� {maxPhotos}
               </div>
               <div className="grid grid-cols-3 gap-4 mb-4">
                 {formData.photos.map((photo, index) => (
                   <div key={index} className="relative aspect-square rounded-lg overflow-hidden group">
-                    <img src={photo} alt={`Фото ${index + 1}`} className="w-full h-full object-cover" />
+                    <img src={photo} alt={`���� ${index + 1}`} className="w-full h-full object-cover" />
                     <button
                       type="button"
                       onClick={() => setFormData({ ...formData, photos: formData.photos.filter((_, i) => i !== index) })}
@@ -762,8 +757,8 @@ export function PetForm({
               {formData.photos.length === 0 && (
                 <label className={`flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary hover:bg-muted/50/50 transition-colors ${errors.photos ? '!border-destructive bg-red-50/50 dark:bg-red-950/20' : ''}`}>
                   <Upload size={48} className="text-muted-foreground mb-4" />
-                  <span className="text-muted-foreground dark:text-foreground font-medium">{(t.petForm as { uploadPhotoHint?: string }).uploadPhotoHint || 'Нажмите для загрузки фото'}</span>
-                  <span className="text-sm text-muted-foreground mt-2">{(t.petForm as { uploadPhotoDrag?: string }).uploadPhotoDrag || 'или перетащите файлы сюда'}</span>
+                  <span className="text-muted-foreground dark:text-foreground font-medium">{(t.petForm as { uploadPhotoHint?: string }).uploadPhotoHint || '������� ��� �������� ����'}</span>
+                  <span className="text-sm text-muted-foreground mt-2">{(t.petForm as { uploadPhotoDrag?: string }).uploadPhotoDrag || '��� ���������� ����� ����'}</span>
                   <input
                     type="file"
                     accept="image/*"
@@ -774,13 +769,13 @@ export function PetForm({
                 </label>
               )}
               {formData.photos.length >= maxPhotos && (
-                <p className="text-sm text-muted-foreground text-center py-1">Загружено максимальное количество фото</p>
+                <p className="text-sm text-muted-foreground text-center py-1">��������� ������������ ���������� ����</p>
               )}
               {errors.photos && <p className="text-xs text-red-500 mt-1">{errors.photos}</p>}
             </div>
           )}
 
-          {/* Step 3: Адрес и карта */}
+          {/* Step 3: ����� � ����� */}
           {step === 3 && (
             <div className="space-y-5">
               <div>
@@ -790,7 +785,7 @@ export function PetForm({
                     type="text"
                     value={formData.city}
                     onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                    placeholder="Минск, ул. Примерная, 1"
+                    placeholder="�����, ��. ���������, 1"
                     className={variant === 'page' ? `flex-1 w-full px-4 py-3 border rounded-lg bg-input-background dark:bg-input-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${errors.city ? 'border-destructive' : 'border-black/10 dark:border-border'}` : `flex-1 w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${errors.city ? 'border-destructive' : 'border-border dark:border-border'}`}
                     required
                   />
@@ -811,7 +806,7 @@ export function PetForm({
                       }
                     }}
                     className="px-6 h-12 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-hover transition-colors flex items-center gap-1.5 shrink-0"
-                    title="Показать на карте"
+                    title="�������� �� �����"
                   >
                     <Search className="w-4 h-4" />
                     {t.pet.onMap}
@@ -819,12 +814,12 @@ export function PetForm({
                 </div>
                 {errors.city
                   ? <p className="text-xs text-red-500 mt-1">{errors.city}</p>
-                  : <p className="text-xs text-muted-foreground/80 mt-1">Введите адрес и нажмите «На карте» или выберите точку на карте</p>
+                  : <p className="text-xs text-muted-foreground/80 mt-1">������� ����� � ������� ��� ����� ��� �������� ����� �� �����</p>
                 }
               </div>
               <div>
-                <span className="text-xs font-medium text-muted-foreground/80 uppercase tracking-wide">Точка на карте *</span>
-                <div className={`mt-2 rounded-xl overflow-hidden border ${variant === 'page' ? 'border-black/10 dark:border-border' : 'border-border'}`}>
+                <span className="text-xs font-medium text-muted-foreground/80 uppercase tracking-wide">����� �� ����� *</span>
+                <div className={`mt-2 rounded-md overflow-hidden border ${variant === 'page' ? 'border-black/10 dark:border-border' : 'border-border'}`}>
                   <LocationPicker
                     initialLocation={formData.location}
                     onLocationSelect={(newLocation) => setFormData((prev) => ({ ...prev, location: newLocation }))}
@@ -838,7 +833,7 @@ export function PetForm({
             </div>
           )}
 
-          {/* Step 4: Описание — как в эталоне */}
+          {/* Step 4: �������� � ��� � ������� */}
           {step === 4 && (
             <div>
               <div className="flex justify-between items-center mb-3">
@@ -914,7 +909,7 @@ export function PetForm({
               {formData.status === 'searching' && (
               <div className="mt-8 border-t border-border pt-6">
                 <div className="text-sm font-semibold text-muted-foreground uppercase mb-3">
-                  {(t.petForm as { rewardTitle?: string }).rewardTitle ?? 'Награда за помощь'}
+                  {(t.petForm as { rewardTitle?: string }).rewardTitle ?? '������� �� ������'}
                 </div>
                 <div className="space-y-3">
                   <label className="flex items-center gap-3 p-4 border border-border rounded-lg cursor-pointer hover:bg-muted/50 dark:hover:bg-muted/10 transition-colors">
@@ -933,7 +928,7 @@ export function PetForm({
                     />
                     <span className="text-foreground/90">
                       {(t.petForm as { rewardPointsMode?: string }).rewardPointsMode ??
-                        'Награда платформы: очки'}
+                        '������� ���������: ����'}
                     </span>
                   </label>
                   <label className="flex items-center gap-3 p-4 border border-border rounded-lg cursor-pointer hover:bg-muted/50 dark:hover:bg-muted/10 transition-colors">
@@ -952,7 +947,7 @@ export function PetForm({
                     />
                     <span className="text-foreground/90">
                       {(t.petForm as { rewardMoneyMode?: string }).rewardMoneyMode ??
-                        'Денежное вознаграждение (передача напрямую)'}
+                        '�������� �������������� (�������� ��������)'}
                     </span>
                   </label>
                 </div>
@@ -961,7 +956,7 @@ export function PetForm({
                   <div className="mt-4">
                     <label className="block text-sm font-medium text-foreground/90 mb-2">
                       {(t.petForm as { rewardAmountLabel?: string }).rewardAmountLabel ??
-                        'Сумма вознаграждения, BYN'}
+                        '����� ��������������, BYN'}
                     </label>
                     <input
                       type="number"
@@ -982,13 +977,13 @@ export function PetForm({
                     {errors.rewardAmountByn && <p className="text-xs text-red-500 mt-1">{errors.rewardAmountByn}</p>}
                     <p className="text-xs text-muted-foreground mt-2">
                       {(t.petForm as { rewardMoneyHint?: string }).rewardMoneyHint ??
-                        'Платформа не участвует в передаче средств: владелец передаёт вознаграждение лично.'}
+                        '��������� �� ��������� � �������� �������: �������� ������� �������������� �����.'}
                     </p>
                   </div>
                 ) : (
                   <p className="text-xs text-muted-foreground mt-3">
                     {(t.petForm as { rewardPointsHint?: string }).rewardPointsHint ??
-                      'Если владелец подтвердит помощника по ID после закрытия объявления, система начислит очки.'}
+                      '���� �������� ���������� ��������� �� ID ����� �������� ����������, ������� �������� ����.'}
                   </p>
                 )}
               </div>
@@ -996,7 +991,7 @@ export function PetForm({
             </div>
           )}
 
-          {/* Step 5: Контакты — при создании и редактировании */}
+          {/* Step 5: �������� � ��� �������� � �������������� */}
           {step === 5 && (
             <div className="space-y-6">
               <div>
@@ -1035,7 +1030,7 @@ export function PetForm({
                       type="text"
                       value={formData.contactName ?? ''}
                       onChange={(e) => setFormData({ ...formData, contactName: e.target.value })}
-                      placeholder="Ваше имя"
+                      placeholder="���� ���"
                       className={variant === 'page' ? `w-full px-4 py-3 border rounded-lg bg-input-background dark:bg-input-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${errors.contactName ? 'border-destructive' : 'border-border'}` : `w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${errors.contactName ? 'border-destructive' : 'border-border dark:border-border'}`}
                     />
                     {errors.contactName && <p className="text-xs text-red-500 mt-1">{errors.contactName}</p>}
@@ -1101,7 +1096,7 @@ export function PetForm({
                 }}
                 className={`flex items-center justify-center gap-1.5 px-6 py-3 text-white font-medium rounded-lg transition-colors ${variant === 'page' ? 'w-full h-12 bg-primary hover:bg-primary-hover text-lg' : 'bg-primary hover:bg-primary/90 text-sm'}`}
               >
-                {variant === 'page' ? (t.petForm as { nextStep?: string }).nextStep || 'Следующий шаг' : t.common.next}
+                {variant === 'page' ? (t.petForm as { nextStep?: string }).nextStep || '��������� ���' : t.common.next}
               </button>
             ) : (
               <button
@@ -1118,7 +1113,7 @@ export function PetForm({
   );
 
   const cardClass = variant === 'modal'
-    ? 'bg-card rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl'
+    ? 'bg-card rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl'
     : 'w-full';
 
   if (variant === 'page') {

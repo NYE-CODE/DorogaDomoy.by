@@ -1,1 +1,1 @@
-﻿export * from './_primitives/textarea.tsx';
+export * from './_primitives/textarea.tsx';

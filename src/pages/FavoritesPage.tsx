@@ -189,7 +189,7 @@ export default function FavoritesPage() {
               <div
                 key={pet.id}
                 onClick={() => window.open(`/pet/${pet.id}`, '_blank')}
-                className="group relative cursor-pointer overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-xl"
+                className="group relative cursor-pointer overflow-hidden rounded-lg border border-border/80 bg-card shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-xl"
               >
                 <div className="relative overflow-hidden">
                   {pet.photos?.[0] ? (

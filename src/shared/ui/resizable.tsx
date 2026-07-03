@@ -1,1 +1,1 @@
-﻿export * from './_primitives/resizable.tsx';
+export * from './_primitives/resizable.tsx';

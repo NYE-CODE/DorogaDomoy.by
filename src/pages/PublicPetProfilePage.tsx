@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router';
 import {
   Phone,
@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useI18n } from '@/app/providers/I18nContext';
 import { profilePetsApi, type ProfilePetResponse } from '@/shared/api/client';
+import { getProfilePetGalleryPhotos } from '@/shared/lib/profile-pet-photo-slots';
 import { resolveProfilePetSpecies, speciesFullLabel } from '@/shared/lib/profile-pet-display';
 import {
   applySeo,
@@ -136,7 +137,7 @@ export default function PublicPetProfilePage() {
     );
   }
 
-  const photos = pet.photos?.length ? pet.photos : [];
+  const photos = getProfilePetGalleryPhotos(pet.photos);
   const mainPhoto = photos[mainPhotoIndex] ?? photos[0];
   const ageDisplay = formatPetAgeDisplay(pet.age, locale, pp);
   const colorsLine = (pet.colors ?? []).filter(Boolean).join(', ');
@@ -180,7 +181,7 @@ export default function PublicPetProfilePage() {
         <div className="grid lg:grid-cols-3 gap-6 lg:gap-8">
             <div className="lg:col-span-2 space-y-6">
               {showFoundSignalCta && (
-                <div className="rounded-2xl bg-primary-light/10 dark:bg-primary-light/15 border border-primary-light/30 dark:border-primary-light/25 p-4 md:p-6">
+                <div className="rounded-lg bg-primary-light/10 dark:bg-primary-light/15 border border-primary-light/30 dark:border-primary-light/25 p-4 md:p-6">
                   <div className="flex items-start gap-3 md:gap-4">
                     <div className="w-10 h-10 md:w-12 md:h-12 bg-primary rounded-full flex items-center justify-center shrink-0">
                       <PawPrint size={20} className="text-white md:w-6 md:h-6" />
@@ -241,8 +242,8 @@ export default function PublicPetProfilePage() {
                 </div>
 
                 <div className="p-5 md:p-6 lg:p-8 grid grid-cols-2 gap-3 md:gap-4">
-                  <div className="bg-primary-light/5 dark:bg-primary-light/10 rounded-xl p-3 md:p-4 flex items-center gap-2.5 md:gap-3">
-                    <User size={18} className="text-primary shrink-0 md:w-5 md:h-5" />
+                  <div className="bg-medallion-soft/80 dark:bg-medallion-soft rounded-md p-3 md:p-4 flex items-center gap-2.5 md:gap-3">
+                    <User size={18} className="text-medallion shrink-0 md:w-5 md:h-5" />
                     <div className="min-w-0">
                       <p className="text-xs md:text-sm text-muted-foreground/80">{f.labelGender}</p>
                       <p className="text-sm md:text-base font-medium text-black dark:text-white truncate">
@@ -250,8 +251,8 @@ export default function PublicPetProfilePage() {
                       </p>
                     </div>
                   </div>
-                  <div className="bg-primary-light/5 dark:bg-primary-light/10 rounded-xl p-3 md:p-4 flex items-center gap-2.5 md:gap-3">
-                    <Calendar size={18} className="text-primary shrink-0 md:w-5 md:h-5" />
+                  <div className="bg-medallion-soft/80 dark:bg-medallion-soft rounded-md p-3 md:p-4 flex items-center gap-2.5 md:gap-3">
+                    <Calendar size={18} className="text-medallion shrink-0 md:w-5 md:h-5" />
                     <div className="min-w-0">
                       <p className="text-xs md:text-sm text-muted-foreground/80">{f.labelAge}</p>
                       <p className="text-sm md:text-base font-medium text-black dark:text-white truncate">
@@ -259,8 +260,8 @@ export default function PublicPetProfilePage() {
                       </p>
                     </div>
                   </div>
-                  <div className="bg-primary-light/5 dark:bg-primary-light/10 rounded-xl p-3 md:p-4 flex items-center gap-2.5 md:gap-3">
-                    <Palette size={18} className="text-primary shrink-0 md:w-5 md:h-5" />
+                  <div className="bg-medallion-soft/80 dark:bg-medallion-soft rounded-md p-3 md:p-4 flex items-center gap-2.5 md:gap-3">
+                    <Palette size={18} className="text-medallion shrink-0 md:w-5 md:h-5" />
                     <div className="min-w-0">
                       <p className="text-xs md:text-sm text-muted-foreground/80">{f.labelColors}</p>
                       <p className="text-sm md:text-base font-medium text-black dark:text-white truncate">
@@ -268,8 +269,8 @@ export default function PublicPetProfilePage() {
                       </p>
                     </div>
                   </div>
-                  <div className="bg-primary-light/5 dark:bg-primary-light/10 rounded-xl p-3 md:p-4 flex items-center gap-2.5 md:gap-3">
-                    <Tag size={18} className="text-primary shrink-0 md:w-5 md:h-5" />
+                  <div className="bg-medallion-soft/80 dark:bg-medallion-soft rounded-md p-3 md:p-4 flex items-center gap-2.5 md:gap-3">
+                    <Tag size={18} className="text-medallion shrink-0 md:w-5 md:h-5" />
                     <div className="min-w-0">
                       <p className="text-xs md:text-sm text-muted-foreground/80">{f.labelTemperament}</p>
                       <p className="text-sm md:text-base font-medium text-black dark:text-white truncate">
@@ -281,7 +282,7 @@ export default function PublicPetProfilePage() {
 
                 {pet.responds_to_name && (
                   <div className="px-5 md:px-6 lg:px-8 pb-4">
-                    <div className="bg-primary-light/10 dark:bg-primary-light/15 border border-primary-light/20 dark:border-primary-light/30 rounded-xl px-4 py-3 md:px-5 md:py-4 text-sm md:text-base text-foreground/90">
+                    <div className="bg-primary-light/10 dark:bg-primary-light/15 border border-primary-light/20 dark:border-primary-light/30 rounded-md px-4 py-3 md:px-5 md:py-4 text-sm md:text-base text-foreground/90">
                       <span className="font-medium">{pp.respondsLine.replace('{name}', pet.name)}</span>
                     </div>
                   </div>
@@ -289,7 +290,7 @@ export default function PublicPetProfilePage() {
 
                 {pet.special_marks?.trim() && (
                   <div className="px-5 md:px-6 lg:px-8 pb-4">
-                    <div className="bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800/40 rounded-xl px-4 py-3 md:px-5 md:py-4">
+                    <div className="bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800/40 rounded-md px-4 py-3 md:px-5 md:py-4">
                       <p className="text-xs md:text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-1 flex items-center gap-2">
                         <AlertTriangle size={16} className="shrink-0" />
                         {pp.specialMarksTitle}
@@ -301,7 +302,7 @@ export default function PublicPetProfilePage() {
 
                 {pet.favorite_treats?.trim() && (
                   <div className="px-5 md:px-6 lg:px-8 pb-5 md:pb-6 lg:pb-8">
-                    <div className="bg-muted/50 dark:bg-muted/50 rounded-xl px-4 py-3 md:px-5 md:py-4 border border-border/60">
+                    <div className="bg-muted/50 dark:bg-muted/50 rounded-md px-4 py-3 md:px-5 md:py-4 border border-border/60">
                       <p className="text-xs md:text-sm font-medium text-muted-foreground mb-1">
                         {f.labelTreats}
                       </p>
@@ -312,7 +313,7 @@ export default function PublicPetProfilePage() {
 
                 {pet.medical_info?.trim() && (
                   <div className="px-5 md:px-6 lg:px-8 pb-5 md:pb-6 lg:pb-8">
-                    <div className="bg-muted/50 dark:bg-muted/50 rounded-xl px-4 py-3 md:px-5 md:py-4 border border-border/60">
+                    <div className="bg-muted/50 dark:bg-muted/50 rounded-md px-4 py-3 md:px-5 md:py-4 border border-border/60">
                       <p className="text-xs md:text-sm font-medium text-muted-foreground mb-1">
                         {f.labelMedical}
                       </p>
@@ -323,7 +324,7 @@ export default function PublicPetProfilePage() {
 
                 {pet.favorite_walks?.trim() && (
                   <div className="px-5 md:px-6 lg:px-8 pb-5 md:pb-6 lg:pb-8">
-                    <div className="bg-muted/50 dark:bg-muted/50 rounded-xl px-4 py-3 md:px-5 md:py-4 border border-border/60">
+                    <div className="bg-muted/50 dark:bg-muted/50 rounded-md px-4 py-3 md:px-5 md:py-4 border border-border/60">
                       <p className="text-xs md:text-sm font-medium text-muted-foreground mb-1">
                         {f.labelWalks}
                       </p>
@@ -334,7 +335,7 @@ export default function PublicPetProfilePage() {
 
                 {pet.is_chipped && pet.chip_number?.trim() && (
                   <div className="px-5 md:px-6 lg:px-8 pb-5 md:pb-6 lg:pb-8">
-                    <div className="bg-muted/50 dark:bg-muted/50 rounded-xl px-4 py-3 md:px-5 md:py-4 border border-border/60">
+                    <div className="bg-muted/50 dark:bg-muted/50 rounded-md px-4 py-3 md:px-5 md:py-4 border border-border/60">
                       <p className="text-xs md:text-sm font-medium text-muted-foreground mb-1">
                         {pp.chipTitle}
                       </p>
@@ -345,7 +346,7 @@ export default function PublicPetProfilePage() {
 
                 {(pet.registration_authority?.trim() || pet.registration_token_number?.trim()) && (
                   <div className="px-5 md:px-6 lg:px-8 pb-5 md:pb-6 lg:pb-8">
-                    <div className="bg-muted/50 dark:bg-muted/50 rounded-xl px-4 py-3 md:px-5 md:py-4 border border-border/60">
+                    <div className="bg-muted/50 dark:bg-muted/50 rounded-md px-4 py-3 md:px-5 md:py-4 border border-border/60">
                       <p className="text-xs md:text-sm font-medium text-muted-foreground mb-2">
                         {pp.registrationTitle}
                       </p>
@@ -444,7 +445,7 @@ export default function PublicPetProfilePage() {
                 </div>
               </div>
 
-              <div className="bg-white dark:bg-card rounded-2xl border border-border shadow-sm p-5 md:p-6 text-center">
+              <div className="bg-white dark:bg-card rounded-lg border border-border shadow-sm p-5 md:p-6 text-center">
                 <p className="text-sm md:text-base text-muted-foreground mb-1">{pp.promoService}</p>
                 <p className="font-medium text-black dark:text-white mb-4 text-sm md:text-base">{pp.promoText}</p>
                 <Button className={cn(appPrimaryCtaClass, 'w-full md:w-auto')} asChild>

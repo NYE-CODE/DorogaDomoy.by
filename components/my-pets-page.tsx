@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router";
 import { Plus, QrCode, Edit, PawPrint, MoreVertical, AlertCircle, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
@@ -9,6 +9,7 @@ import { PageLoader } from "./ui/page-loader";
 import { EmptyState } from "./ui/empty-state";
 import { ConfirmDialog } from "./confirm-dialog";
 import { Button } from "./ui/button";
+import { PetMedallion } from "@/shared/ui/atoms";
 import { appPrimaryCtaClass } from "@/shared/styles/cta-classes";
 
 export function MyPetsContent() {
@@ -177,7 +178,7 @@ function PetCard({
   };
 }) {
   return (
-    <div className="bg-white dark:bg-card rounded-2xl shadow-sm hover:shadow-md transition-all border border-border overflow-hidden group relative">
+    <div className="bg-white dark:bg-card rounded-lg shadow-sm hover:shadow-md transition-all border border-border overflow-hidden group relative">
       <div className="absolute top-3 right-3 z-10 pet-card-menu">
         <button
           type="button"
@@ -242,26 +243,20 @@ function PetCard({
       </div>
 
       <Link to={`/my-pets/${pet.id}`}>
-        <div className="aspect-square overflow-hidden bg-muted relative">
-          {pet.photo ? (
-            <img
-              src={pet.photo}
-              alt={pet.name}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-              width={400}
-              height={400}
-              loading="lazy"
-              decoding="async"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <PawPrint size={48} className="text-muted-foreground/50 dark:text-muted-foreground/60" />
-            </div>
-          )}
+        {/* Адресник-регистр: питомец — медальон на латунной подложке */}
+        <div className="flex items-center justify-center bg-medallion-soft/70 dark:bg-background pt-9 pb-6 transition-colors group-hover:bg-medallion-soft dark:group-hover:bg-muted/40">
+          <PetMedallion
+            src={pet.photo || undefined}
+            alt={pet.name}
+            register="medallion"
+            size="xl"
+            withEar
+            className="transition-transform duration-300 group-hover:scale-[1.03]"
+          />
         </div>
 
-        <div className="p-4">
-          <h3 className="typo-h1 mb-0.5 transition-colors">{pet.name}</h3>
+        <div className="p-4 text-center">
+          <h3 className="typo-h4 mb-0.5 transition-colors">{pet.name}</h3>
           <p className="text-sm text-muted-foreground">
             {pet.subtitle}
           </p>

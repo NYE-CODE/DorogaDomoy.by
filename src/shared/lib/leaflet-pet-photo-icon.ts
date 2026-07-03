@@ -1,16 +1,19 @@
-﻿import L from 'leaflet';
+import L from 'leaflet';
 import { tokens } from '@/shared/styles/tokens';
-import { PET_STATUS_MARKER_BORDER_HEX } from './pet-helpers';
+import { PET_STATUS_MARKER_BORDER_HEX, PET_SCENARIO_MARKER_HEX } from './pet-helpers';
 import { PLACEHOLDER_PET_MAP } from './placeholder-images';
 
 /** Цвет обводки кружка маркера по статусу объявления */
 export const PET_STATUS_MARKER_COLORS: Record<string, string> = {
   ...PET_STATUS_MARKER_BORDER_HEX,
+  searching: PET_SCENARIO_MARKER_HEX.lost,
+  found: PET_SCENARIO_MARKER_HEX.found,
   spotted: tokens.map.spotted,
   fostering: tokens.map.fostering,
-  shelter: tokens.map.shelter,
+  shelter: PET_SCENARIO_MARKER_HEX.shelter,
+  shelter_pet: PET_SCENARIO_MARKER_HEX.shelter,
   returned: tokens.map.returned,
-  adopted: tokens.map.adopted,
+  adopted: PET_SCENARIO_MARKER_HEX.shelter,
   transferred: tokens.map.transferred,
 };
 

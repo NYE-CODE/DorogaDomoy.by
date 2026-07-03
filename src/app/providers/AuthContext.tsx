@@ -1,4 +1,4 @@
-﻿import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authApi, type TelegramAuthPayload } from '@/shared/api/client';
 import type { User } from '@/entities/user/model/types';
 

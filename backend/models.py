@@ -66,6 +66,7 @@ class Pet(Base):
     location_lat = Column(Float, nullable=False)
     location_lng = Column(Float, nullable=False)
     published_at = Column(DateTime, default=datetime.utcnow)
+    expires_at = Column(DateTime, nullable=True)  # срок размещения (lost_found)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     author_id = Column(String, ForeignKey("users.id"), nullable=False)
     author_name = Column(String, nullable=False)

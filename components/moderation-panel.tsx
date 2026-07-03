@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { CheckCircle2, XCircle, X, Ban } from 'lucide-react';
 import { Pet } from '../types/pet';
 import { formatDate, statusLabels, animalTypeLabels, petStatusSoftPillClass } from '../utils/pet-helpers';

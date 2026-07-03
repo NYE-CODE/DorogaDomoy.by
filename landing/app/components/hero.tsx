@@ -1,100 +1,125 @@
 ﻿import { Link } from "react-router";
+import { Home, Map, Plus } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { Button } from "./ui/button";
 import { useI18n } from "../../../context/I18nContext";
-import type { HomeMode } from "../App";
 import { trackYmGoal } from "../../../utils/ym";
 import {
+  landingCell,
   landingContainerWide,
   landingHeroY,
   landingOutlineHeroCtaClass,
+  landingPathAccentBorder,
   landingPrimaryCtaClass,
 } from "./landing-section-styles";
-import { tokens } from "@/shared/styles/tokens";
+import { typoH1, typoLead } from "@/shared/styles/typography-classes";
+import { cn } from "./ui/utils";
 
-function trackHeroCtaClick(mode: HomeMode, cta: "primary" | "secondary") {
-  trackYmGoal("hero_cta_click", { mode, cta });
+type HeroCta = "map" | "create" | "shelterPet";
+
+function trackHeroCtaClick(cta: HeroCta) {
+  trackYmGoal("hero_cta_click", { cta });
 }
 
-export function Hero({ mode = "search" }: { mode?: HomeMode }) {
+const pathLinks: { key: HeroCta; to: string; icon: LucideIcon }[] = [
+  { key: "map", to: "/search", icon: Map },
+  { key: "create", to: "/create", icon: Plus },
+  { key: "shelterPet", to: "/shelters?tab=pets", icon: Home },
+];
+
+const pathAccentBorder: Record<HeroCta, string> = {
+  map: landingPathAccentBorder.lost,
+  create: landingPathAccentBorder.primary,
+  shelterPet: landingPathAccentBorder.shelter,
+};
+
+export function Hero() {
   const { t } = useI18n();
-  const isSheltersMode = mode === "shelters";
-  const sheltersTitle1 = "Найдите друга,";
-  const sheltersTitle2 = "который ждал";
-  const sheltersTitle3 = "именно вас";
-  const sheltersSubtitle = "Познакомьтесь с питомцами из приютов и подарите кому-то настоящий дом";
-  const searchTitle1 = "Вместе вернём";
-  const searchTitle2 = "вашего питомца";
-  const searchTitle3 = "домой";
-  const searchSubtitle = "Помогаем находить потерявшихся животных по всей стране";
-  const sheltersPrimary = "Смотреть приюты";
-  const sheltersSecondary = "Выбрать питомца";
-  const heroImage = isSheltersMode ? "/hero/shelters-main.webp" : "/hero/search-main.webp";
-  const heroTitleClass = "mb-6 text-4xl font-bold leading-[1.08] text-foreground sm:text-5xl md:text-6xl lg:text-7xl";
-  const underlineSvgClass = "absolute -bottom-1.5 left-0 w-full";
-  const underlineStroke = 6;
+  const hero = t.landing.hero;
+  const pathCopy = [hero.paths.search, hero.paths.create, hero.paths.shelter];
 
   return (
-    <section className={`relative overflow-hidden bg-background ${landingHeroY}`}>
+    <section className={cn("bg-background", landingHeroY)}>
       <div className={landingContainerWide}>
-        <div className="grid md:grid-cols-2 gap-12 items-center">
-          <div className="text-center md:text-left z-10">
-            {isSheltersMode ? (
-              <h1 className={heroTitleClass}>
-                {sheltersTitle1} <br />
-                <span className="relative inline-block whitespace-nowrap">
-                  {sheltersTitle2}
-                  <svg className={underlineSvgClass} viewBox="0 0 200 10" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M0 5 Q50 0, 100 5 T200 5" stroke={tokens.colors.primaryLight} strokeWidth={underlineStroke} fill="none"/>
-                  </svg>
-                </span>{" "}
-                {sheltersTitle3}
+        <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
+          <div className="flex flex-col gap-6 text-center lg:gap-7 lg:text-left">
+            <div className="space-y-4">
+              <h1 id="landing-hero-heading" className={cn(typoH1, "text-balance")}>
+                {hero.title}{" "}
+                <span className="text-primary">{hero.titleHighlight}</span>
               </h1>
-            ) : (
-              <h1 className={heroTitleClass}>
-                {searchTitle1} <br />
-                <span className="relative inline-block whitespace-nowrap">
-                  {searchTitle2}
-                  <svg className={underlineSvgClass} viewBox="0 0 200 10" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M0 5 Q50 0, 100 5 T200 5" stroke={tokens.colors.primaryLight} strokeWidth={underlineStroke} fill="none"/>
-                  </svg>
-                </span> {searchTitle3}
-              </h1>
-            )}
-            <p className="text-xl text-muted-foreground mb-10 max-w-xl">
-              {isSheltersMode ? sheltersSubtitle : searchSubtitle}
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
+              <p className={cn(typoLead, "mx-auto max-w-lg text-balance lg:mx-0")}>
+                {hero.subtitle}
+              </p>
+            </div>
+
+            <div className="flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
               <Button asChild>
                 <Link
-                  to={isSheltersMode ? "/shelters" : "/create?mode=quick"}
+                  to="/search"
                   className={landingPrimaryCtaClass}
-                  onClick={() => trackHeroCtaClick(mode, "primary")}
+                  onClick={() => trackHeroCtaClick("map")}
                 >
-                  {isSheltersMode ? sheltersPrimary : t.landing.hero.createAd}
+                  <Map className="size-5 shrink-0" aria-hidden />
+                  {hero.primaryCta}
                 </Link>
               </Button>
               <Button asChild variant="outline">
                 <Link
-                  to={isSheltersMode ? "/shelters?tab=pets" : "/search"}
+                  to="/create"
                   className={landingOutlineHeroCtaClass}
-                  onClick={() => trackHeroCtaClick(mode, "secondary")}
+                  onClick={() => trackHeroCtaClick("create")}
                 >
-                  {isSheltersMode ? sheltersSecondary : t.landing.hero.viewMap}
+                  <Plus className="size-5 shrink-0" aria-hidden />
+                  {hero.secondaryCta}
                 </Link>
               </Button>
             </div>
+
+            <nav className="mx-auto w-full max-w-xl lg:mx-0" aria-labelledby="landing-hero-heading">
+              <ul className="grid overflow-hidden rounded-lg border border-border bg-card sm:grid-cols-3">
+                {pathLinks.map((path, index) => {
+                  const Icon = path.icon;
+                  const copy = pathCopy[index];
+                  return (
+                    <li
+                      key={path.key}
+                      className="border-b border-border last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0"
+                    >
+                      <Link
+                        to={path.to}
+                        onClick={() => trackHeroCtaClick(path.key)}
+                        className={cn(
+                          landingCell,
+                          "flex h-full min-h-[44px] flex-col justify-center gap-1 border-l-[3px] px-4 py-3 text-left sm:border-l-0 sm:border-t-[3px]",
+                          pathAccentBorder[path.key],
+                        )}
+                      >
+                        <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                          <Icon className="size-4 shrink-0 opacity-70" aria-hidden />
+                          {copy.title}
+                        </span>
+                        <span className="hidden text-xs leading-snug text-muted-foreground sm:block">
+                          {copy.desc}
+                        </span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </nav>
           </div>
-          <div className="relative hidden md:block">
-            <div
-              className={`absolute -top-10 -right-10 h-64 w-64 rounded-full blur-3xl ${
-                isSheltersMode ? "bg-emerald-300/40" : "bg-primary-light opacity-20"
-              }`}
-            />
-            <div className="relative z-10 aspect-[4/3] w-full overflow-hidden rounded-2xl shadow-xl">
+
+          <div className="mx-auto w-full max-w-md lg:max-w-none">
+            <div className="overflow-hidden rounded-lg border border-border shadow-md">
               <img
-                src={heroImage}
-                alt={isSheltersMode ? "Питомцы из приюта" : t.landing.hero.petsAlt}
-                className="size-full object-cover"
+                src="/hero/search-main.webp"
+                alt={hero.imageSearchAlt}
+                className="aspect-[4/3] w-full object-cover lg:aspect-[5/4]"
+                width={960}
+                height={720}
+                fetchPriority="high"
+                decoding="async"
               />
             </div>
           </div>

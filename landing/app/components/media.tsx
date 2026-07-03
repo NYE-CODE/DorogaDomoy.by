@@ -8,9 +8,13 @@ import {
   landingContainerWide,
   landingH2,
   landingLeadCenter,
+  landingPanel,
+  landingSectionAlt,
   landingSectionHeader,
   landingSectionY,
 } from "./landing-section-styles";
+import { cn } from "./ui/utils";
+import { interactiveTransitionClass } from "@/shared/styles/interactive-classes";
 
 function formatMediaDate(dateStr: string): string {
   const d = new Date(dateStr);
@@ -55,7 +59,7 @@ export function Media() {
 
   if (loading) {
     return (
-      <section id="media" className={`${landingSectionY} bg-background scroll-mt-24`}>
+      <section id="media" className={cn(landingSectionAlt, landingSectionY)}>
         <div className={landingContainerWide}>
           <div className={landingSectionHeader}>
             <h2 className={landingH2}>{t.landing.media.title}</h2>
@@ -68,7 +72,7 @@ export function Media() {
 
   if (articles.length === 0) {
     return (
-      <section id="media" className={`${landingSectionY} bg-background scroll-mt-24`}>
+      <section id="media" className={cn(landingSectionAlt, landingSectionY)}>
         <div className={landingContainerWide}>
           <div className={landingSectionHeader}>
             <h2 className={landingH2}>{t.landing.media.title}</h2>
@@ -80,7 +84,7 @@ export function Media() {
   }
 
   return (
-    <section id="media" className={`${landingSectionY} bg-background scroll-mt-24`}>
+    <section id="media" className={cn(landingSectionAlt, landingSectionY)}>
       <div className={landingContainerWide}>
         <div className={landingSectionHeader}>
           <h2 className={landingH2}>{t.landing.media.title}</h2>
@@ -135,7 +139,11 @@ export function Media() {
                     href={article.link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block rounded-2xl border border-border bg-card p-6 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md md:p-7"
+                    className={cn(
+                      landingPanel,
+                      interactiveTransitionClass,
+                      "block p-6 hover:bg-muted/20 md:p-7",
+                    )}
                   >
                     {content}
                   </a>
@@ -145,7 +153,7 @@ export function Media() {
               return (
                 <div
                   key={article.id}
-                  className="rounded-2xl border border-border bg-card p-6 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md md:p-7"
+                  className={cn(landingPanel, "p-6 md:p-7")}
                 >
                   {content}
                 </div>

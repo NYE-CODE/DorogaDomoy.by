@@ -1,12 +1,20 @@
-﻿import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router";
-import { ChevronLeft, Upload, X } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
+import {
+  countFilledProfilePetPhotoSlots,
+  emptyStoredProfilePetPhotos,
+  slotsFromStoredPhotos,
+  storedPhotosFromSlots,
+} from '@/shared/lib/profile-pet-photo-slots';
 import { toast } from "sonner";
 import { useI18n } from "../context/I18nContext";
 import { profilePetsApi, type ProfilePetResponse } from "../api/client";
 import { resolveProfilePetSpecies } from "../utils/profile-pet-display";
 import { compressImageBlobForShare } from "../utils/web-share-image";
 import { Button } from "./ui/button";
+import { ProfilePetPhotoSlotPicker } from "./profile-pet-photo-slot-picker";
+import { RouteProgress } from "@/shared/ui/molecules";
 import { appPrimaryCtaClass } from "@/shared/styles/cta-classes";
 
 interface ProfilePetFormData {
@@ -46,13 +54,12 @@ const emptyForm = (): ProfilePetFormData => ({
   respondsToName: "yes",
   favoriteTreats: "",
   favoriteWalks: "",
-  photos: [],
+  photos: emptyStoredProfilePetPhotos(),
 });
 
-const MAX_PHOTOS = 5;
 const MAX_PROFILE_UPLOAD_BYTES = 750 * 1024;
 
-/** Пост с советами по фото для профиля питомца (шаг «Фотографии»). */
+/** ���� � �������� �� ���� ��� ������� ������� (��� �����������). */
 const PROFILE_PET_PHOTO_GUIDE_INSTAGRAM_URL =
   "https://www.instagram.com/p/DXpRblXiJwT/?img_index=1";
 
@@ -67,10 +74,10 @@ async function prepareProfilePhotoForUpload(file: File): Promise<File> {
     maxSizeBytes: MAX_PROFILE_UPLOAD_BYTES,
   });
   if (!compressed) {
-    throw new Error("Не удалось обработать изображение");
+    throw new Error("�� ������� ���������� �����������");
   }
   if (compressed.size > MAX_PROFILE_UPLOAD_BYTES) {
-    throw new Error("Фото слишком большое. Выберите другое или уменьшите его.");
+    throw new Error("���� ������� �������. �������� ������ ��� ��������� ���.");
   }
   return new File([compressed], buildCompressedPhotoName(file), {
     type: "image/jpeg",
@@ -95,7 +102,7 @@ function profilePetToForm(p: ProfilePetResponse): ProfilePetFormData {
     respondsToName: p.responds_to_name ? "yes" : "no",
     favoriteTreats: p.favorite_treats ?? "",
     favoriteWalks: p.favorite_walks ?? "",
-    photos: p.photos ?? [],
+    photos: storedPhotosFromSlots(slotsFromStoredPhotos(p.photos ?? [])),
   };
 }
 
@@ -113,8 +120,10 @@ export function AddEditPetContent() {
   const [isLoadingProfile, setIsLoadingProfile] = useState(isEditMode);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isUploadingPhotos, setIsUploadingPhotos] = useState(false);
+  const [uploadingSlotIndex, setUploadingSlotIndex] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const pendingSlotRef = useRef(0);
 
   const loadProfilePet = useCallback(async () => {
     if (!isEditMode || !id) {
@@ -178,56 +187,55 @@ export function AddEditPetContent() {
     });
   };
 
-  const handlePickPhotos = () => {
+  const handlePickSlot = (slotIndex: number) => {
     if (isUploadingPhotos) return;
+    pendingSlotRef.current = slotIndex;
     fileInputRef.current?.click();
   };
 
-  const addPhotoFiles = async (fileList: FileList | null) => {
-    if (!fileList?.length || isUploadingPhotos) return;
-    const images = Array.from(fileList).filter((file) => file.type.startsWith("image/"));
-    if (!images.length) return;
-    const room = Math.max(0, MAX_PHOTOS - formData.photos.length);
-    if (room <= 0) return;
-    const toUpload = images.slice(0, room);
-    if (!toUpload.length) return;
-
+  const uploadPhotoToSlot = async (slotIndex: number, file: File) => {
+    if (!file.type.startsWith("image/")) return;
     setIsUploadingPhotos(true);
-    const uploadedUrls: string[] = [];
-    let failedUploads = 0;
+    setUploadingSlotIndex(slotIndex);
     try {
-      for (const file of toUpload) {
-        try {
-          const preparedFile = await prepareProfilePhotoForUpload(file);
-          const url = await profilePetsApi.uploadPhoto(preparedFile);
-          uploadedUrls.push(url);
-        } catch (error) {
-          failedUploads += 1;
-          toast.error(error instanceof Error ? error.message : t.common.error);
+      const preparedFile = await prepareProfilePhotoForUpload(file);
+      const url = await profilePetsApi.uploadPhoto(preparedFile);
+      setFormData((prev) => {
+        const next = [...prev.photos];
+        while (next.length < emptyStoredProfilePetPhotos().length) {
+          next.push("");
         }
-      }
-      if (uploadedUrls.length) {
-        setFormData((prev) => ({
-          ...prev,
-          photos: [...prev.photos, ...uploadedUrls].slice(0, MAX_PHOTOS),
-        }));
-        toast.success(f.toastPhotoAdded);
-      }
-      if (failedUploads > 0 && uploadedUrls.length === 0) {
-        toast.error(t.common.toasts.photoUploadError);
-      }
+        next[slotIndex] = url;
+        return { ...prev, photos: storedPhotosFromSlots(slotsFromStoredPhotos(next)) };
+      });
+      toast.success(f.toastPhotoAdded);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t.common.error);
     } finally {
       setIsUploadingPhotos(false);
+      setUploadingSlotIndex(null);
     }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    void addPhotoFiles(e.target.files);
+    const file = e.target.files?.[0];
     e.target.value = "";
+    if (!file) return;
+    void uploadPhotoToSlot(pendingSlotRef.current, file);
   };
 
-  const handleRemovePhoto = (index: number) => {
-    setFormData((prev) => ({ ...prev, photos: prev.photos.filter((_, i) => i !== index) }));
+  const handleRemovePhoto = (slotIndex: number) => {
+    setFormData((prev) => {
+      const slots = slotsFromStoredPhotos(prev.photos);
+      slots[slotIndex] = null;
+      return { ...prev, photos: storedPhotosFromSlots(slots) };
+    });
+  };
+
+  const handleSlotFileDrop = (slotIndex: number, fileList: FileList | null) => {
+    const file = fileList?.[0];
+    if (!file) return;
+    void uploadPhotoToSlot(slotIndex, file);
   };
 
   const handleNext = () => {
@@ -242,7 +250,7 @@ export function AddEditPetContent() {
         toast.error(t.common.toasts.photoUploadWait);
         return;
       }
-      if (formData.photos.length === 0) {
+      if (!countFilledProfilePetPhotoSlots(formData.photos)) {
         toast.error(f.toastAddPhoto);
         return;
       }
@@ -283,7 +291,7 @@ export function AddEditPetContent() {
       responds_to_name: formData.respondsToName === "yes",
       favorite_treats: formData.favoriteTreats || undefined,
       favorite_walks: formData.favoriteWalks || undefined,
-      photos: formData.photos,
+      photos: storedPhotosFromSlots(slotsFromStoredPhotos(formData.photos)),
     };
 
     try {
@@ -316,7 +324,6 @@ export function AddEditPetContent() {
   ] as const;
 
   const currentMeta = stepMeta[currentStep - 1];
-  const progressPercentage = (currentStep / totalSteps) * 100;
 
   const stepLine = f.stepLine
     .replace("{current}", String(currentStep))
@@ -334,7 +341,7 @@ export function AddEditPetContent() {
   if (isEditMode && loadError) {
     return (
       <div className="min-h-screen bg-muted/30 dark:bg-background flex items-center justify-center px-4 py-12">
-        <div className="max-w-md w-full bg-white dark:bg-card rounded-2xl border border-border shadow-sm p-6 text-center">
+        <div className="max-w-md w-full bg-white dark:bg-card rounded-lg border border-border shadow-sm p-6 text-center">
           <h1 className="typo-h2 mb-3">{mp.loadErrorTitle}</h1>
           <p className="text-muted-foreground mb-3">{mp.loadErrorDesc}</p>
           <p className="text-sm text-muted-foreground mb-6">{loadError}</p>
@@ -378,17 +385,17 @@ export function AddEditPetContent() {
             </button>
           </div>
 
-          <div className="w-full bg-muted rounded-full h-2">
-            <div
-              className="bg-gradient-to-r from-primary-light to-primary h-2 rounded-full transition-all duration-300"
-              style={{ width: `${progressPercentage}%` }}
-            />
-          </div>
+          <RouteProgress
+            totalSteps={totalSteps}
+            currentStep={currentStep}
+            label={stepLine}
+            className="max-w-sm"
+          />
         </div>
       </div>
 
       <div className="max-w-3xl mx-auto px-4 py-8">
-        <div className="bg-white dark:bg-card rounded-2xl shadow-sm border border-border p-8">
+        <div className="bg-white dark:bg-card rounded-lg shadow-sm border border-border p-8">
           <div className="mb-6 space-y-2">
             <p className="text-muted-foreground">{currentMeta.subtitle}</p>
             {currentStep === 2 ? (
@@ -411,7 +418,6 @@ export function AddEditPetContent() {
             ref={fileInputRef}
             type="file"
             accept="image/*"
-            multiple
             className="hidden"
             onChange={handleFileChange}
           />
@@ -578,68 +584,32 @@ export function AddEditPetContent() {
           )}
 
           {currentStep === 2 && (
-            <div>
-              <div className="text-right text-sm text-muted-foreground mb-4">
-                {f.photosCount.replace("{n}", String(formData.photos.length))}
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">{f.step2PhotoHint}</p>
+              <div className="text-right text-sm text-muted-foreground">
+                {f.photosCount.replace(
+                  "{n}",
+                  String(countFilledProfilePetPhotoSlots(formData.photos)),
+                )}
               </div>
 
-              <div className="grid grid-cols-3 gap-4 mb-4">
-                {formData.photos.map((photo, index) => (
-                  <div key={`${photo}-${index}`} className="relative aspect-square">
-                    <img
-                      src={photo}
-                      alt={f.photoAlt.replace("{n}", String(index + 1))}
-                      className="w-full h-full object-cover rounded-lg"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleRemovePhoto(index)}
-                      className="absolute top-2 right-2 p-1 bg-black/50 hover:bg-black/70 rounded-full text-white transition-colors"
-                    >
-                      <X size={16} />
-                    </button>
-                  </div>
-                ))}
-              </div>
+              <ProfilePetPhotoSlotPicker
+                photos={storedPhotosFromSlots(slotsFromStoredPhotos(formData.photos))}
+                labels={f.photoSlots}
+                addLabel={f.photoSlotAdd}
+                replaceLabel={f.photoSlotReplace}
+                optionalLabel={f.photoSlotOptional}
+                recommendedLabel={f.photoSlotRecommended}
+                photoAlt={(n) => f.photoAlt.replace("{n}", String(n))}
+                disabled={isUploadingPhotos}
+                uploadingSlotIndex={uploadingSlotIndex}
+                onPickSlot={handlePickSlot}
+                onRemoveSlot={handleRemovePhoto}
+                onFileDrop={handleSlotFileDrop}
+              />
 
               {isUploadingPhotos && (
-                <p className="text-sm text-muted-foreground mb-4">
-                  {t.common.toasts.photoUploading}
-                </p>
-              )}
-
-              {formData.photos.length < MAX_PHOTOS && (
-                <div
-                  role="button"
-                  tabIndex={0}
-                  onClick={handlePickPhotos}
-                  onKeyDown={(e) => {
-                    if (isUploadingPhotos) return;
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      handlePickPhotos();
-                    }
-                  }}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                  }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (isUploadingPhotos) return;
-                    void addPhotoFiles(e.dataTransfer.files);
-                  }}
-                  className={`flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-border rounded-lg transition-colors outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                    isUploadingPhotos
-                      ? "opacity-60 cursor-not-allowed"
-                      : "hover:border-primary hover:bg-muted/50/50 cursor-pointer"
-                  }`}
-                >
-                  <Upload size={48} className="text-muted-foreground mb-4" />
-                  <span className="text-muted-foreground dark:text-foreground font-medium">{f.uploadTitle}</span>
-                  <span className="text-sm text-muted-foreground mt-2">{f.uploadHint}</span>
-                </div>
+                <p className="text-sm text-muted-foreground">{t.common.toasts.photoUploading}</p>
               )}
             </div>
           )}
@@ -872,7 +842,7 @@ export function AddEditPetContent() {
                     : "bg-green-600 hover:bg-green-700"
                 }`}
               >
-                {isSubmitting ? "Сохранение..." : (isEditMode ? f.submitSave : f.submitAdd)}
+                {isSubmitting ? "����������..." : (isEditMode ? f.submitSave : f.submitAdd)}
               </button>
             )}
           </div>

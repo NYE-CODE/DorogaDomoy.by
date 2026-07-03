@@ -232,7 +232,7 @@ export default function MyShelterTeamPage() {
             <BackQuickMenu />
           </div>
 
-          <div className="mb-6 rounded-2xl border border-border bg-card p-4 sm:mb-8 sm:p-6">
+          <div className="mb-6 rounded-lg border border-border bg-card p-4 sm:mb-8 sm:p-6">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
                 <h1 className="typo-h1 flex flex-wrap items-center gap-2">
@@ -248,7 +248,7 @@ export default function MyShelterTeamPage() {
           </div>
 
           {canManage ? (
-            <div className="mb-6 rounded-2xl border border-border bg-card p-4 sm:mb-8 sm:p-6">
+            <div className="mb-6 rounded-lg border border-border bg-card p-4 sm:mb-8 sm:p-6">
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-lg font-semibold">{tm.inviteTitle}</h2>
               </div>
@@ -288,7 +288,7 @@ export default function MyShelterTeamPage() {
             </div>
           ) : null}
 
-          <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+          <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
             <div className="hidden grid-cols-[1fr_auto_auto_auto] gap-4 border-b border-border bg-muted/40 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:grid">
               <span>{tm.colMember}</span>
               <span>{tm.colRole}</span>

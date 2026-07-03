@@ -11,11 +11,18 @@ import {
   XCircle,
   MoreVertical,
   Rocket,
+  CalendarClock,
 } from 'lucide-react';
 import { Pet } from '../types/pet';
 import { useAuth } from '../context/AuthContext';
 import { useI18n } from '../context/I18nContext';
 import { sightingsApi } from '../api/client';
+import {
+  daysUntilListingExpires,
+  listingExpiryUrgency,
+  listingNeedsRenewal,
+  LISTING_EXPIRED_ARCHIVE_REASON,
+} from '@/shared/lib/listing-expiry';
 import { Header } from './layout/Header';
 import { Footer } from './layout/Footer';
 import { RewardBadge } from './reward-badge';
@@ -43,6 +50,7 @@ interface MyAdsPageProps {
   onEditPet: (pet: Pet) => void;
   onDeletePet: (pet: Pet) => void;
   onBoostPet: (pet: Pet) => void;
+  onRenewPet?: (pet: Pet) => void;
   /** Зависит от ff_instagram_boost_stories в профиле */
   instagramBoostEnabled?: boolean;
 }
@@ -54,6 +62,7 @@ export function MyAdsPage({
   onEditPet,
   onDeletePet,
   onBoostPet,
+  onRenewPet,
   instagramBoostEnabled = true,
 }: MyAdsPageProps) {
   const { user } = useAuth();
@@ -71,7 +80,7 @@ export function MyAdsPage({
           user &&
           (pet.authorId === user.id ||
             (user.id === 'user-demo' && pet.authorId === 'current-user')) &&
-          !pet.isArchived
+          (!pet.isArchived || pet.archiveReason === LISTING_EXPIRED_ARCHIVE_REASON)
       ),
     [pets, user]
   );
@@ -173,6 +182,35 @@ export function MyAdsPage({
     onBoostPet(pet);
   };
 
+  const handleRenew = (e: React.MouseEvent, pet: Pet) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setOpenMenuId(null);
+    onRenewPet?.(pet);
+  };
+
+  const getExpiryLabel = (pet: Pet) => {
+    if (pet.archiveReason === LISTING_EXPIRED_ARCHIVE_REASON) {
+      return t.myAds.expiredArchived;
+    }
+    const days = daysUntilListingExpires(pet.expiresAt);
+    if (days === null) return null;
+    if (days <= 0) return t.myAds.expiresToday;
+    if (days === 1) return t.myAds.expiresTomorrow;
+    if (days <= 3) return t.myAds.expiresInDays.replace('{n}', String(days));
+    if (pet.expiresAt) {
+      return t.myAds.expiresOn.replace(
+        '{date}',
+        pet.expiresAt.toLocaleDateString(dateLocale, {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        }),
+      );
+    }
+    return null;
+  };
+
   const totalActive = publishedCount + pendingCount + rejectedCount;
 
   return (
@@ -181,7 +219,7 @@ export function MyAdsPage({
 
       <main className="flex-1 py-6 sm:py-10">
         <div className="page-container">
-          <div className="mb-6 flex flex-col gap-4 rounded-2xl border border-border bg-muted/25 p-6 sm:mb-8 sm:flex-row sm:items-end sm:justify-between sm:p-8">
+          <div className="mb-6 flex flex-col gap-4 rounded-lg border border-border bg-muted/25 p-6 sm:mb-8 sm:flex-row sm:items-end sm:justify-between sm:p-8">
             <div className="min-w-0">
               <button
                 type="button"
@@ -216,7 +254,7 @@ export function MyAdsPage({
             />
           ) : (
             <>
-              <div className="overflow-visible rounded-2xl border border-border bg-card shadow-sm">
+              <div className="overflow-visible rounded-lg border border-border bg-card shadow-sm">
                 <div className="flex flex-wrap gap-1.5 border-b border-border bg-muted/40 p-2 sm:flex-nowrap sm:gap-1">
                   {STATUS_TABS.map((tab) => {
                     const Icon = tab.icon;
@@ -234,7 +272,7 @@ export function MyAdsPage({
                         type="button"
                         onClick={() => setStatusTab(tab.value)}
                         className={cn(
-                          'flex min-w-[calc(33.333%-0.25rem)] flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition-all sm:min-w-0',
+                          'flex min-w-[calc(33.333%-0.25rem)] flex-1 items-center justify-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium transition-all sm:min-w-0',
                           isActive
                             ? 'bg-card text-primary shadow-sm ring-1 ring-primary/20'
                             : 'text-muted-foreground hover:bg-background/80 hover:text-foreground',
@@ -310,11 +348,15 @@ export function MyAdsPage({
                           pet.moderationStatus === 'rejected' &&
                           pet.moderationReason &&
                           hoveredTooltipId === pet.id;
+                        const daysLeft = daysUntilListingExpires(pet.expiresAt);
+                        const expiryUrgency = listingExpiryUrgency(daysLeft);
+                        const showRenew = listingNeedsRenewal(pet);
+                        const expiryLabel = getExpiryLabel(pet);
 
                         return (
                           <div
                             key={pet.id}
-                            className="group/card relative rounded-2xl border border-border bg-card p-3 transition-all hover:border-primary/30 hover:shadow-md sm:p-4"
+                            className="group/card relative rounded-lg border border-border bg-card p-3 transition-all hover:border-primary/30 hover:shadow-md sm:p-4"
                           >
                             <div
                               className="absolute right-2 top-2 z-30 sm:right-3 sm:top-3"
@@ -326,14 +368,14 @@ export function MyAdsPage({
                                   e.stopPropagation();
                                   setOpenMenuId(openMenuId === pet.id ? null : pet.id);
                                 }}
-                                className="rounded-xl p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                                className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                                 aria-label={t.common.options}
                               >
                                 <MoreVertical className="size-[1.125rem] sm:size-5" />
                               </button>
 
                               {openMenuId === pet.id && (
-                                <div className="absolute right-0 z-40 mt-1 w-52 overflow-hidden rounded-xl border border-border bg-popover py-1 text-popover-foreground shadow-lg sm:w-56">
+                                <div className="absolute right-0 z-40 mt-1 w-52 overflow-hidden rounded-md border border-border bg-popover py-1 text-popover-foreground shadow-lg sm:w-56">
                                   {pet.moderationStatus === 'rejected' && (
                                     <button
                                       type="button"
@@ -346,6 +388,18 @@ export function MyAdsPage({
                                   )}
                                   {pet.moderationStatus !== 'pending' && (
                                     <>
+                                      {showRenew && onRenewPet && (
+                                        <button
+                                          type="button"
+                                          onClick={(e) => handleRenew(e, pet)}
+                                          className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm transition-colors hover:bg-amber-500/10"
+                                        >
+                                          <CalendarClock className="size-4 shrink-0 text-amber-700 dark:text-amber-400" />
+                                          <span className="font-medium text-amber-800 dark:text-amber-300">
+                                            {t.myAds.renewPublication}
+                                          </span>
+                                        </button>
+                                      )}
                                       {instagramBoostEnabled &&
                                         pet.moderationStatus === 'approved' &&
                                         pet.status === 'searching' && (
@@ -385,7 +439,7 @@ export function MyAdsPage({
                               className="flex cursor-pointer items-start gap-3 no-underline text-inherit sm:gap-4"
                               onClick={() => setOpenMenuId(null)}
                             >
-                              <div className="relative size-24 shrink-0 overflow-hidden rounded-xl bg-muted ring-1 ring-border sm:size-28">
+                              <div className="relative size-24 shrink-0 overflow-hidden rounded-md bg-muted ring-1 ring-border sm:size-28">
                                 <img
                                   src={photoUrl}
                                   alt={getStatusTitle(pet)}
@@ -452,7 +506,7 @@ export function MyAdsPage({
                                       </span>
 
                                       {showRejectionTooltip && (
-                                        <div className="pointer-events-none absolute bottom-full left-0 z-20 mb-2 w-56 rounded-xl bg-foreground p-3 text-xs text-background shadow-lg sm:left-1/2 sm:w-64 sm:-translate-x-1/2">
+                                        <div className="pointer-events-none absolute bottom-full left-0 z-20 mb-2 w-56 rounded-md bg-foreground p-3 text-xs text-background shadow-lg sm:left-1/2 sm:w-64 sm:-translate-x-1/2">
                                           <div className="mb-1 font-medium">{t.myAds.rejectionReasonTitle}</div>
                                           <div className="text-background/90">{pet.moderationReason}</div>
                                           <div className="absolute left-4 top-full -mt-px sm:left-1/2 sm:-translate-x-1/2">
@@ -468,9 +522,41 @@ export function MyAdsPage({
                                   <span className="truncate">{pet.city}</span>
                                   <span className="shrink-0" aria-hidden>·</span>
                                   <span className="shrink-0">{formatDate(pet.publishedAt)}</span>
+                                  {expiryLabel && pet.moderationStatus === 'approved' && (
+                                    <>
+                                      <span className="shrink-0" aria-hidden>·</span>
+                                      <span
+                                        className={cn(
+                                          'shrink-0 font-medium',
+                                          expiryUrgency === 'critical' || expiryUrgency === 'expired'
+                                            ? 'text-destructive'
+                                            : expiryUrgency === 'warning'
+                                              ? 'text-amber-700 dark:text-amber-400'
+                                              : 'text-muted-foreground',
+                                        )}
+                                      >
+                                        {expiryLabel}
+                                      </span>
+                                    </>
+                                  )}
                                 </div>
                               </div>
                             </Link>
+
+                            {showRenew && onRenewPet && (
+                              <div className="mt-2 pl-[6.75rem] sm:mt-3 sm:pl-[8.25rem]">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-8 border-amber-300 text-amber-900 hover:bg-amber-50 dark:border-amber-700 dark:text-amber-200 dark:hover:bg-amber-950/40"
+                                  onClick={(e) => handleRenew(e, pet)}
+                                >
+                                  <CalendarClock className="size-4" aria-hidden />
+                                  {t.myAds.renewPublication}
+                                </Button>
+                              </div>
+                            )}
                           </div>
                         );
                       })}

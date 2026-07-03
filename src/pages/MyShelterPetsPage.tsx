@@ -248,7 +248,7 @@ export default function MyShelterPetsPage() {
             <BackQuickMenu />
           </div>
 
-          <div className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-card p-4">
+          <div className="mb-6 flex flex-wrap items-center gap-3 rounded-lg border border-border bg-card p-4">
             <Building2 className="size-5 text-primary" />
             <h1 className="typo-h1">Питомцы приюта</h1>
             <select
@@ -271,7 +271,7 @@ export default function MyShelterPetsPage() {
             </Button>
           </div>
 
-          <div className="mb-8 rounded-2xl border border-border bg-card p-4 sm:p-6">
+          <div className="mb-8 rounded-lg border border-border bg-card p-4 sm:p-6">
             <h2 className="mb-4 text-lg font-semibold">{form.id ? 'Редактирование питомца' : 'Добавление питомца'}</h2>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="sm:col-span-2">
@@ -402,7 +402,7 @@ export default function MyShelterPetsPage() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-border bg-card p-4 sm:p-6">
+          <div className="rounded-lg border border-border bg-card p-4 sm:p-6">
             <h2 className="mb-4 text-lg font-semibold">Список питомцев ({pets.length})</h2>
             {loadingPets ? (
               <PageLoader />
@@ -411,7 +411,7 @@ export default function MyShelterPetsPage() {
             ) : (
               <ul className="space-y-3">
                 {pets.map((pet) => (
-                  <li key={pet.id} className="flex flex-wrap items-start justify-between gap-3 rounded-xl border border-border p-3">
+                  <li key={pet.id} className="flex flex-wrap items-start justify-between gap-3 rounded-md border border-border p-3">
                     <div className="min-w-0">
                       <p className="font-medium text-foreground">
                         {(pet.name?.trim() || pet.breed || pet.animalType)} · Ищет дом

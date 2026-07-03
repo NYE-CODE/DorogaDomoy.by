@@ -1,2 +1,2 @@
-﻿/** @deprecated Используйте `@/pages/SettingsPage.tsx`. */
+/** @deprecated Используйте `@/pages/SettingsPage.tsx`. */
 export { default } from '../src/pages/SettingsPage.tsx';

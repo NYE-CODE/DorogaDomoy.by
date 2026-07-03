@@ -1,4 +1,4 @@
-﻿import { useRef, useState, useCallback, useLayoutEffect, useEffect, useMemo, useImperativeHandle, forwardRef, type PointerEvent, type RefObject } from 'react';
+import { useRef, useState, useCallback, useLayoutEffect, useEffect, useMemo, useImperativeHandle, forwardRef, type PointerEvent, type RefObject } from 'react';
 import { Link } from 'react-router';
 import { ChevronRight, Heart, MapPin, Sparkles, X } from 'lucide-react';
 import type { Pet } from '../../types/pet';
@@ -414,7 +414,7 @@ function MatchPetDetailsBody({
 
       <div className="grid grid-cols-2 gap-2 lg:gap-2.5">
         {detailItems.map(([label, value]) => (
-          <div key={label} className="rounded-xl border border-border/60 bg-muted/35 px-3 py-2 lg:px-3.5 lg:py-2.5">
+          <div key={label} className="rounded-md border border-border/60 bg-muted/35 px-3 py-2 lg:px-3.5 lg:py-2.5">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
             <p className="mt-0.5 text-sm font-semibold text-foreground">{value}</p>
           </div>

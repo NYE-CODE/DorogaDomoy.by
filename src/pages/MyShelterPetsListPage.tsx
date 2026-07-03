@@ -199,7 +199,7 @@ export default function MyShelterPetsListPage() {
             <BackQuickMenu />
           </div>
 
-          <div className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-card p-4">
+          <div className="mb-6 flex flex-wrap items-center gap-3 rounded-lg border border-border bg-card p-4">
             <Building2 className="size-5 text-primary" />
             <h1 className="typo-h1">{tp.title}</h1>
             <select
@@ -224,7 +224,7 @@ export default function MyShelterPetsListPage() {
             </Button>
           </div>
 
-          <div className="mb-4 grid gap-3 rounded-2xl border border-border bg-card p-4 lg:grid-cols-[1fr_200px]">
+          <div className="mb-4 grid gap-3 rounded-lg border border-border bg-card p-4 lg:grid-cols-[1fr_200px]">
             <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -245,7 +245,7 @@ export default function MyShelterPetsListPage() {
             </select>
           </div>
 
-          <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+          <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <h2 className="text-lg font-semibold">{tp.listTitle}</h2>
               <span className="text-sm text-muted-foreground">

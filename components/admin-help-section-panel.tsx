@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { ExternalLink, Heart, Plus, Save, Trash2, X } from 'lucide-react';
 import { helpApi, type HelpDonationTier } from '../api/client';
@@ -129,7 +129,7 @@ export function AdminHelpSectionPanel() {
         <p className={adm.subtitle}>{h.hint}</p>
       </div>
 
-      <section className="rounded-xl border border-border bg-white dark:bg-card/50 p-5 space-y-4">
+      <section className="rounded-md border border-border bg-white dark:bg-card/50 p-5 space-y-4">
         <h3 className="text-base font-semibold text-foreground">{h.volunteerTitle}</h3>
         <p className="text-sm text-muted-foreground">{h.volunteerHint}</p>
         <label className="block text-sm font-medium text-foreground/90">{h.volunteerUrlLabel}</label>
@@ -170,7 +170,7 @@ export function AdminHelpSectionPanel() {
           </button>
         </div>
 
-        <div className="overflow-x-auto rounded-xl border border-border">
+        <div className="overflow-x-auto rounded-md border border-border">
           <table className="w-full text-sm">
             <thead className="bg-muted/50 dark:bg-muted/80">
               <tr>
@@ -232,7 +232,7 @@ export function AdminHelpSectionPanel() {
 
       {tierEdit && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-lg rounded-xl bg-white dark:bg-card border border-border shadow-xl p-6">
+          <div className="w-full max-w-lg rounded-md bg-white dark:bg-card border border-border shadow-xl p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-foreground">
                 {tierEdit.mode === 'create' ? h.tierModalAdd : h.tierModalEdit}

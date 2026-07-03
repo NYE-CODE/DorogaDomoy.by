@@ -33,7 +33,7 @@ export function AdminModalShell({
       <DialogContent
         showCloseButton={false}
         className={cn(
-          'gap-0 overflow-hidden rounded-xl p-0',
+          'gap-0 overflow-hidden rounded-md p-0',
           maxWidthClass,
           'max-h-[90vh] flex flex-col',
         )}

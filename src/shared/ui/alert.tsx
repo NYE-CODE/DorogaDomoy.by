@@ -1,1 +1,1 @@
-﻿export * from './_primitives/alert.tsx';
+export * from './_primitives/alert.tsx';

@@ -423,7 +423,7 @@ export default function UserProfilePage() {
                   {profilePets.map((pet) => (
                     <div
                       key={pet.id}
-                      className="bg-white dark:bg-card rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 group border border-border"
+                      className="bg-white dark:bg-card rounded-md overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 group border border-border"
                     >
                       <div className="relative overflow-hidden">
                         <img
@@ -478,7 +478,7 @@ export default function UserProfilePage() {
                       <Link
                         key={pet.id}
                         to={`/pet/${pet.id}`}
-                        className="bg-white dark:bg-transparent rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 group block"
+                        className="bg-white dark:bg-transparent rounded-lg overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 group block"
                       >
                         <div className="relative overflow-hidden">
                           <img

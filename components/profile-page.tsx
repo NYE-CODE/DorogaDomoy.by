@@ -105,7 +105,7 @@ export default function ProfilePage() {
     if (tab === 'notifications' || tab === 'security' || tab === 'personal') {
       setActiveTab(tab);
     } else {
-      // Нет параметра или неверное значение (например после перехода /profile?tab=notifications → /profile)
+      // Нет параметра или неверное значение (например после перехода /profile?tab=notifications > /profile)
       setActiveTab('personal');
     }
   }, [searchParams]);
@@ -459,7 +459,7 @@ export default function ProfilePage() {
             </p>
           </div>
 
-          <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+          <div className="bg-card rounded-lg border border-border shadow-sm overflow-hidden">
             {/* Tabs */}
             <div className="border-b border-border">
               <div className="flex overflow-x-auto">
@@ -535,7 +535,7 @@ export default function ProfilePage() {
                     </div>
                   </div>
 
-                  <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-4 bg-gray-50/60 dark:bg-gray-800/40">
+                  <div className="rounded-md border border-gray-200 dark:border-gray-700 p-4 bg-gray-50/60 dark:bg-gray-800/40">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                       <div>
                         <div className="text-sm font-semibold text-gray-700 dark:text-gray-300">
@@ -589,7 +589,7 @@ export default function ProfilePage() {
                       </div>
 
                       {user?.role === 'admin' && (
-                        <div className="md:col-span-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-800/40 p-4">
+                        <div className="md:col-span-2 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-800/40 p-4">
                           <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             {t.profile.roleFieldLabel}
                           </div>
@@ -716,7 +716,7 @@ export default function ProfilePage() {
               {activeTab === 'notifications' && (
                 <div className="space-y-6">
                   {/* Карточка Telegram */}
-                  <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-6">
+                  <div className="border border-gray-200 dark:border-gray-700 rounded-md p-6">
                     <h3 className="font-bold text-black dark:text-white mb-2 flex items-center gap-2">
                       <Send className="w-5 h-5 text-[#FF9800]" />
                       {t.profile.telegram}
@@ -766,7 +766,7 @@ export default function ProfilePage() {
                   </div>
 
                   {/* Карточка уведомлений */}
-                  <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-6">
+                  <div className="border border-gray-200 dark:border-gray-700 rounded-md p-6">
                     <div className="flex items-start gap-3 mb-4">
                       <Bell className="w-5 h-5 text-[#FF9800] mt-0.5 shrink-0" />
                       <div>

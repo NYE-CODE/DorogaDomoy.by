@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { Header } from '@/widgets/layout/Header';
 import { Footer } from '@/widgets/layout/Footer';
@@ -149,7 +149,7 @@ export default function BlogPostPage() {
           </nav>
 
           {img ? (
-            <div className="rounded-xl overflow-hidden border border-border mb-8 aspect-[21/9] max-h-[320px] bg-muted">
+            <div className="rounded-md overflow-hidden border border-border mb-8 aspect-[21/9] max-h-[320px] bg-muted">
               <img src={img} alt="" className="w-full h-full object-cover" />
             </div>
           ) : null}

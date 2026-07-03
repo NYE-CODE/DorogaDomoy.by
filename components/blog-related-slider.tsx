@@ -69,7 +69,7 @@ export function BlogRelatedSlider({ posts, sectionTitle, ariaPrev, ariaNext }: B
             <Link
               key={p.id}
               to={`/blog/${p.slug}`}
-              className="group flex flex-col w-[min(100%,280px)] sm:w-72 shrink-0 snap-start rounded-xl border border-border bg-card overflow-hidden shadow-sm hover:shadow-md hover:border-primary/30 transition-all"
+              className="group flex flex-col w-[min(100%,280px)] sm:w-72 shrink-0 snap-start rounded-md border border-border bg-card overflow-hidden shadow-sm hover:shadow-md hover:border-primary/30 transition-all"
             >
               <div className="aspect-[16/10] bg-muted overflow-hidden">
                 {img ? (

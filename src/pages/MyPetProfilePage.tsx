@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+﻿import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useParams, useNavigate } from 'react-router';
 import QRCode from 'react-qr-code';
 import {
@@ -21,6 +21,7 @@ import { useI18n } from '@/app/providers/I18nContext';
 import { useAuth } from '@/app/providers/AuthContext';
 import { profilePetsApi, partnersApi, type ProfilePetResponse, type Partner } from '@/shared/api/client';
 import { BackQuickMenu } from '../../components/navigation/BackQuickMenu';
+import { getProfilePetGalleryPhotos } from '@/shared/lib/profile-pet-photo-slots';
 import { resolveProfilePetSpecies, speciesPlainLabel } from '@/shared/lib/profile-pet-display';
 import { dateLocaleForUi, formatPetAgeDisplay, genderLabel, temperamentLabel } from '@/shared/lib/profile-pet-text';
 import { PageLoader } from '@/shared/ui/page-loader';
@@ -200,7 +201,7 @@ export default function MyPetProfilePage() {
     );
   }
 
-  const photos = pet.photos?.length ? pet.photos : [];
+  const photos = getProfilePetGalleryPhotos(pet.photos);
   const mainPhoto = photos[photoIndex] ?? photos[0];
   const ageDisplay = formatPetAgeDisplay(pet.age, locale, pp);
   const colorsLine = (pet.colors ?? []).filter(Boolean).join(', ') || '—';
@@ -214,7 +215,7 @@ export default function MyPetProfilePage() {
       })
     : '—';
 
-  const fieldClass = 'rounded-xl border border-border/70 bg-muted/25 p-4 transition-colors hover:bg-muted/40';
+  const fieldClass = 'rounded-md border border-border/70 bg-muted/25 p-4 transition-colors hover:bg-muted/40';
   const sectionTitleClass = typoH3;
 
   return (
@@ -306,7 +307,7 @@ export default function MyPetProfilePage() {
                           }}
                           onClick={() => setPhotoIndex(i)}
                           className={cn(
-                            'relative size-[4.5rem] shrink-0 snap-start overflow-hidden rounded-xl border-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:size-20',
+                            'relative size-[4.5rem] shrink-0 snap-start overflow-hidden rounded-md border-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:size-20',
                             i === photoIndex
                               ? 'border-primary ring-2 ring-primary/30'
                               : 'border-border/80 opacity-90 hover:border-primary/50 hover:opacity-100',
@@ -491,13 +492,25 @@ export default function MyPetProfilePage() {
                   <CardDescription className="text-sm leading-relaxed">{op.qrDescription}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div
-                    ref={qrWrapRef}
-                    className="flex items-center justify-center rounded-2xl border-2 border-dashed border-primary/25 bg-muted/30 p-6 dark:bg-background/80"
-                  >
-                    <QRCode value={publicPetQrUrl || publicPetUrl} size={220} level="M" />
+                  {/* QR-жетон: латунный медальон с ушком — физический адресник в «цифре» */}
+                  <div className="flex flex-col items-center gap-3 rounded-lg bg-medallion-soft/70 px-4 pb-4 pt-8 dark:bg-background/80">
+                    <div className="relative">
+                      <span
+                        aria-hidden="true"
+                        className="absolute left-1/2 top-0 z-10 size-7 -translate-x-1/2 -translate-y-1/2 rounded-full border-4 border-medallion bg-transparent"
+                      />
+                      <div
+                        ref={qrWrapRef}
+                        className="flex size-60 items-center justify-center rounded-full border-4 border-medallion bg-white shadow-sm"
+                      >
+                        <QRCode value={publicPetQrUrl || publicPetUrl} size={156} level="M" />
+                      </div>
+                    </div>
+                    {pet?.name ? (
+                      <p className="typo-engraved text-medallion-foreground">{pet.name}</p>
+                    ) : null}
                   </div>
-                  <div className="rounded-xl border border-border/80 bg-muted/25 p-4">
+                  <div className="rounded-md border border-border/80 bg-muted/25 p-4">
                     <p className="text-sm font-semibold text-foreground">{op.freeOptionTitle}</p>
                     <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{op.freeOptionHint}</p>
                   </div>
@@ -516,7 +529,7 @@ export default function MyPetProfilePage() {
                       <span>{op.shareLink}</span>
                     </Button>
                   </div>
-                  <div className="rounded-xl border border-border/80 bg-muted/25 p-4">
+                  <div className="rounded-md border border-border/80 bg-muted/25 p-4">
                     <p className="text-sm font-semibold text-foreground">{op.partnerOptionTitle}</p>
                     <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{op.partnerOptionHint}</p>
                   </div>
@@ -529,7 +542,7 @@ export default function MyPetProfilePage() {
                     <ExternalLink size={18} />
                     {op.orderFromPartners}
                   </Button>
-                  <div className="rounded-xl border border-amber-200/70 bg-amber-50/80 p-4 dark:border-amber-800/50 dark:bg-amber-950/30">
+                  <div className="rounded-md border border-amber-200/70 bg-amber-50/80 p-4 dark:border-amber-800/50 dark:bg-amber-950/30">
                     <p className="text-sm leading-relaxed text-amber-950 dark:text-amber-100">
                       <strong>{op.qrTipBold}</strong> {op.qrTip}
                     </p>
@@ -563,7 +576,7 @@ export default function MyPetProfilePage() {
               medallionPartners.map((partner) => (
                 <div
                   key={partner.id}
-                  className="flex flex-col gap-3 rounded-xl border border-border/80 bg-muted/20 p-4 sm:flex-row sm:items-center"
+                  className="flex flex-col gap-3 rounded-md border border-border/80 bg-muted/20 p-4 sm:flex-row sm:items-center"
                 >
                   {partner.logo_url ? (
                     <img

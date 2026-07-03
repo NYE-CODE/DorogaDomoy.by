@@ -1,1 +1,1 @@
-﻿export * from './molecules/Card';
+export * from './molecules/Card';

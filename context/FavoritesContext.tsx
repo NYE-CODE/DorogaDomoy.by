@@ -1,2 +1,2 @@
-﻿/** @deprecated Используйте `@/app/providers/FavoritesContext`. */
+/** @deprecated Используйте `@/app/providers/FavoritesContext`. */
 export * from '../src/app/providers/FavoritesContext.tsx';

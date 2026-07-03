@@ -1,2 +1,2 @@
-﻿/** @deprecated Используйте `@/widgets/layout/Footer.tsx`. */
+/** @deprecated Используйте `@/widgets/layout/Footer.tsx`. */
 export * from '../../src/widgets/layout/Footer.tsx';

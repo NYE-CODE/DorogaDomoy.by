@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { Image, MapPin, Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
@@ -7,6 +7,7 @@ import { Footer } from '@/widgets/layout/Footer';
 import { BackQuickMenu } from '../../components/navigation/BackQuickMenu';
 import { LocationPicker } from '../../components/location-picker';
 import { PageLoader } from '@/shared/ui/page-loader';
+import { RouteProgress } from '@/shared/ui/molecules';
 import { cn } from '@/shared/ui/utils';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
@@ -82,7 +83,7 @@ export default function MyShelterFormPage() {
   useEffect(() => {
     const path = isCreate ? '/my-shelters/new' : `/my-shelters/edit/${shelterId}`;
     applySeo({
-      title: `${isCreate ? ms.createCard : ms.editCard} — DorogaDomoy.by`,
+      title: `${isCreate ? ms.createCard : ms.editCard} ќ DorogaDomoy.by`,
       description: ms.subtitle,
       canonicalUrl: canonicalUrlFromPath(path),
       robots: SEO_ROBOTS_PRIVATE,
@@ -156,7 +157,6 @@ export default function MyShelterFormPage() {
   );
 
   const currentStepMeta = stepWizardMeta[formStep - 1] ?? stepWizardMeta[0];
-  const stepProgressPct = (formStep / SHELTER_FORM_STEPS) * 100;
 
   const buildContacts = (): ShelterContacts => {
     const c: ShelterContacts = {};
@@ -337,7 +337,7 @@ export default function MyShelterFormPage() {
   if (bootLoading) {
     return (
       <div className="flex min-h-screen flex-col bg-background dark:bg-background">
-        <Header showCitySelector showHomeModeToggle={false} />
+        <Header showCitySelector />
         <main className="flex flex-1 items-center justify-center py-16">
           <PageLoader />
         </main>
@@ -348,7 +348,7 @@ export default function MyShelterFormPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-muted/30 dark:bg-background">
-      <Header showCitySelector showHomeModeToggle={false} />
+      <Header showCitySelector />
 
       <section className="border-b border-border bg-white dark:border-border dark:bg-card">
         <div className="mx-auto max-w-[736px] px-4 py-4 sm:px-6 lg:px-8">
@@ -374,18 +374,18 @@ export default function MyShelterFormPage() {
           {approvedLocked ? (
             <p className="mb-3 text-sm text-muted-foreground">{ms.approvedEditHint}</p>
           ) : null}
-          <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-primary-light to-primary transition-[width] duration-300 ease-out"
-              style={{ width: `${stepProgressPct}%` }}
-            />
-          </div>
+          <RouteProgress
+            totalSteps={SHELTER_FORM_STEPS}
+            currentStep={formStep}
+            label={`${t.petForm.step} ${formStep} ${t.petForm.of} ${SHELTER_FORM_STEPS}`}
+            className="max-w-sm"
+          />
         </div>
       </section>
 
       <main className="flex-1 py-6 sm:py-10">
         <div className="mx-auto max-w-[736px] px-4 sm:px-6 lg:px-8">
-        <div className="rounded-2xl border border-border bg-white p-6 shadow-sm dark:border-border dark:bg-card sm:p-8">
+        <div className="rounded-lg border border-border bg-white p-6 shadow-sm dark:border-border dark:bg-card sm:p-8">
           <Card className="border-0 shadow-none">
             <CardHeader className="px-0 pt-0">
               <CardDescription className="text-sm leading-relaxed text-muted-foreground">
@@ -557,7 +557,7 @@ export default function MyShelterFormPage() {
                         <img
                           src={form.logoDataUrl || logoPreview(form.existingLogo) || ''}
                           alt=""
-                          className="size-20 rounded-xl border border-border object-cover shadow-sm"
+                          className="size-20 rounded-md border border-border object-cover shadow-sm"
                         />
                       )}
                       <input
@@ -594,7 +594,7 @@ export default function MyShelterFormPage() {
                     <Label>{ms.fieldCover}</Label>
                     <p className="text-sm text-muted-foreground">{ms.coverHint}</p>
                     {(form.coverDataUrl || form.existingCover) && (
-                      <div className="overflow-hidden rounded-xl border border-border bg-muted shadow-sm">
+                      <div className="overflow-hidden rounded-md border border-border bg-muted shadow-sm">
                         <img
                           src={form.coverDataUrl || logoPreview(form.existingCover) || ''}
                           alt=""

@@ -49,3 +49,7 @@ export const typoH1Compact =
 /** h1 на тёмном hero (ShelterDetail). */
 export const typoH1OnDark =
   'typo-h1 text-white';
+
+/** «Гравировка» — текст на жетоне: статусы, brand-strip, подпись QR. */
+export const typoEngraved =
+  'typo-engraved';

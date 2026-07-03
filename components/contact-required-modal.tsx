@@ -24,7 +24,7 @@ export function ContactRequiredModal({ open, onGoToProfile, onClose }: ContactRe
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-md overflow-hidden rounded-2xl p-0" showCloseButton={Boolean(onClose)}>
+      <DialogContent className="max-w-md overflow-hidden rounded-lg p-0" showCloseButton={Boolean(onClose)}>
         <div className="flex flex-col">
           <div className="flex justify-center bg-primary/10 px-6 py-8">
             <div className="flex size-16 items-center justify-center rounded-full bg-background border border-primary/20">

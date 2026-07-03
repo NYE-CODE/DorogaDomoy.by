@@ -1,4 +1,4 @@
-﻿import { Search, X } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { API_BASE, usersApi } from '../api/client';
 import { useI18n } from '../context/I18nContext';
@@ -99,7 +99,7 @@ export function DeleteReasonModal({
 
   return (
     <Dialog open onOpenChange={(next) => !next && onClose()}>
-      <DialogContent className="max-w-md rounded-2xl p-0" showCloseButton={false}>
+      <DialogContent className="max-w-md rounded-lg p-0" showCloseButton={false}>
         <DialogHeader className="border-b border-border p-4">
           <div className="flex items-start justify-between gap-4">
           <div>

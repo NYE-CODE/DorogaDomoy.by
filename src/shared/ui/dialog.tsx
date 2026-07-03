@@ -1,1 +1,1 @@
-﻿export * from './molecules/Modal';
+export * from './molecules/Modal';

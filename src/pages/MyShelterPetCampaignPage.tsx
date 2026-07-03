@@ -141,7 +141,7 @@ export default function MyShelterPetCampaignPage() {
       <main className="flex-1 py-6 sm:py-10">
         <div className="page-container-narrow space-y-6">
           <BackQuickMenu />
-          <div className="rounded-2xl border border-border bg-card p-5">
+          <div className="rounded-lg border border-border bg-card p-5">
             <p className="text-sm text-muted-foreground">Питомец</p>
             <h1 className="typo-h1 mt-1">{pet.name?.trim() || pet.breed || pet.animalType}</h1>
             <p className="mt-1 text-sm text-muted-foreground">{pet.description}</p>
@@ -151,7 +151,7 @@ export default function MyShelterPetCampaignPage() {
           </div>
 
           {current ? (
-            <div className="rounded-2xl border border-border bg-card p-5 space-y-3">
+            <div className="rounded-lg border border-border bg-card p-5 space-y-3">
               <h2 className="text-xl font-semibold">Текущий сбор</h2>
               <p className="font-medium">{current.title}</p>
               <p className="text-sm text-muted-foreground">{current.description || '—'}</p>
@@ -205,7 +205,7 @@ export default function MyShelterPetCampaignPage() {
               ) : null}
             </div>
           ) : (
-            <div className="rounded-2xl border border-border bg-card p-5 space-y-3">
+            <div className="rounded-lg border border-border bg-card p-5 space-y-3">
               <h2 className="text-xl font-semibold">Создать сбор</h2>
               <input
                 type="text"
@@ -248,7 +248,7 @@ export default function MyShelterPetCampaignPage() {
             </div>
           )}
 
-          <div className="rounded-2xl border border-border bg-card p-5">
+          <div className="rounded-lg border border-border bg-card p-5">
             <h2 className="text-xl font-semibold">Завершенные сборы</h2>
             {completed.length === 0 ? (
               <p className="mt-2 text-sm text-muted-foreground">Пока нет завершенных сборов.</p>

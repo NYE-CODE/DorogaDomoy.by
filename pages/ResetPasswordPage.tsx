@@ -1,2 +1,2 @@
-﻿/** @deprecated Используйте `@/pages/ResetPasswordPage.tsx`. */
+/** @deprecated Используйте `@/pages/ResetPasswordPage.tsx`. */
 export { default } from '../src/pages/ResetPasswordPage.tsx';

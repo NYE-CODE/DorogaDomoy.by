@@ -1,1 +1,1 @@
-﻿export * from './_primitives/progress.tsx';
+export * from './_primitives/progress.tsx';

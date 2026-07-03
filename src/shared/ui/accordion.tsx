@@ -1,1 +1,1 @@
-﻿export * from './_primitives/accordion.tsx';
+export * from './_primitives/accordion.tsx';

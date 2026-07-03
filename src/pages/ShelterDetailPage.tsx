@@ -266,7 +266,7 @@ export default function ShelterDetailPage() {
             <div className="mb-6">
               <BackQuickMenu />
             </div>
-            <div className="space-y-3 rounded-xl border border-border bg-muted/30 p-8 text-center">
+            <div className="space-y-3 rounded-md border border-border bg-muted/30 p-8 text-center">
               <Building2 className="mx-auto size-12 text-muted-foreground opacity-50" aria-hidden />
               <h1 className="typo-h1">{s.detailNotFound}</h1>
               <p className="mx-auto max-w-md text-sm text-muted-foreground">{s.detailNotFoundHint}</p>
@@ -281,7 +281,7 @@ export default function ShelterDetailPage() {
               <div className="mb-4 sm:mb-6">
                 <BackQuickMenu />
               </div>
-              <section className="relative overflow-hidden rounded-2xl border border-border/60">
+              <section className="relative overflow-hidden rounded-lg border border-border/60">
                 <div className="h-64 overflow-hidden bg-muted md:h-80 lg:h-96">
                   {cover ? (
                     <img
@@ -300,7 +300,7 @@ export default function ShelterDetailPage() {
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent">
                   <div className="flex items-end gap-4 px-5 pb-5 pt-6 md:gap-6 md:px-6 md:pb-6 md:pt-8">
                     <div className="shrink-0">
-                      <div className="flex size-20 items-center justify-center overflow-hidden rounded-2xl border-2 border-white/95 bg-card shadow-lg md:size-30 lg:size-36">
+                      <div className="flex size-20 items-center justify-center overflow-hidden rounded-lg border-2 border-white/95 bg-card shadow-lg md:size-30 lg:size-36">
                         {logo ? (
                           <img
                             src={logo}
@@ -395,7 +395,7 @@ export default function ShelterDetailPage() {
 
               <div className="mb-8 space-y-4 lg:hidden">
                 {mobileTab === 'about' ? (
-                  <section className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+                  <section className="rounded-lg border border-border bg-card p-6 shadow-sm">
                     <h2 className="mb-4 text-xl font-bold tracking-tight text-foreground">
                       О нас
                     </h2>
@@ -487,7 +487,7 @@ export default function ShelterDetailPage() {
                 ) : null}
 
                 {mobileTab === 'fundraisers' ? (
-                  <section className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+                  <section className="rounded-lg border border-border bg-card p-6 shadow-sm">
                     <h2 className="text-xl font-bold tracking-tight text-foreground">
                       {s.detailFundraisersTitle}
                     </h2>
@@ -497,7 +497,7 @@ export default function ShelterDetailPage() {
               </div>
 
               <div className="mb-8 hidden items-start gap-6 lg:grid lg:grid-cols-3">
-                <section className="self-start rounded-2xl border border-border bg-card p-6 shadow-sm lg:col-span-1">
+                <section className="self-start rounded-lg border border-border bg-card p-6 shadow-sm lg:col-span-1">
                   <div className="mb-4 flex items-center justify-between gap-3">
                     <h2 className="text-xl font-bold tracking-tight text-foreground md:text-2xl">
                       О нас
@@ -615,21 +615,21 @@ export default function ShelterDetailPage() {
 
                 <aside className="space-y-4 lg:col-span-2">
                   <div className="grid grid-cols-3 gap-4">
-                    <div className="rounded-xl border border-border/80 bg-card p-4 text-center shadow-sm">
+                    <div className="rounded-md border border-border/80 bg-card p-4 text-center shadow-sm">
                       <div className="mx-auto mb-2 hidden size-9 items-center justify-center rounded-full bg-primary/8 sm:flex">
                         <PawPrint className="size-4 text-primary/90" aria-hidden />
                       </div>
                       <p className="typo-h1 md:text-2xl">{totalPets}</p>
                       <p className="mt-0.5 text-xs text-muted-foreground md:text-sm">Всего питомцев</p>
                     </div>
-                    <div className="rounded-xl border border-border/80 bg-card p-4 text-center shadow-sm">
+                    <div className="rounded-md border border-border/80 bg-card p-4 text-center shadow-sm">
                       <div className="mx-auto mb-2 hidden size-9 items-center justify-center rounded-full bg-primary/8 sm:flex">
                         <Heart className="size-4 text-primary/90" aria-hidden />
                       </div>
                       <p className="typo-h1 md:text-2xl">{foundPets}</p>
                       <p className="mt-0.5 text-xs text-muted-foreground md:text-sm">Нашли дом</p>
                     </div>
-                    <div className="rounded-xl border border-border/80 bg-card p-4 text-center shadow-sm">
+                    <div className="rounded-md border border-border/80 bg-card p-4 text-center shadow-sm">
                       <div className="mx-auto mb-2 hidden size-9 items-center justify-center rounded-full bg-primary/8 sm:flex">
                         <Home className="size-4 text-primary/90" aria-hidden />
                       </div>
@@ -662,7 +662,7 @@ export default function ShelterDetailPage() {
                   {activeTab === 'pets' ? (
                     <ShelterPetsSection shelterId={row.id} initialPets={shelterPets} />
                   ) : (
-                    <section className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+                    <section className="rounded-lg border border-border bg-card p-6 shadow-sm">
                       <h2 className="text-xl font-bold tracking-tight text-foreground md:text-2xl">
                         {s.detailFundraisersTitle}
                       </h2>

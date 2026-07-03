@@ -40,7 +40,7 @@ export function ConfirmDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md rounded-2xl" onEscapeKeyDown={handleCancel}>
+      <DialogContent className="max-w-md rounded-lg" onEscapeKeyDown={handleCancel}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
