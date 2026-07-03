@@ -23,11 +23,15 @@ import {
 import { petScenarioFormToggleActiveClass } from '@/shared/lib/pet-helpers';
 import { clearPetFormDraft, loadPetFormDraft, savePetFormDraft } from '@/shared/lib/pet-form-draft';
 import { RouteProgress } from '@/shared/ui/molecules';
-import {
+
+/** API/DB age preset values — keep in sync with profile-pet-prefill and filters */
+const APPROXIMATE_AGE_LESS_2 = 'менее 2 года' as const;
+const APPROXIMATE_AGE_MORE_2 = 'более 2 года' as const;
+const APPROXIMATE_AGE_PRESET_VALUES = [
+  '',
   APPROXIMATE_AGE_LESS_2,
   APPROXIMATE_AGE_MORE_2,
-  APPROXIMATE_AGE_PRESET_VALUES,
-} from '@/shared/lib/approximate-age-presets';
+] as const;
 
 const MAX_DESCRIPTION = 500;
 
