@@ -12,12 +12,16 @@ import {
 import { useI18n } from "../../../context/I18nContext";
 import { useAuthenticatedAction } from "../../../utils/use-authenticated-action";
 import { Button } from "./ui/button";
+import { cn } from "./ui/utils";
 import {
-  landingBandMuted,
   landingContainerWide,
   landingH2,
+  landingIconChipPrimary,
   landingLeadWideCenter,
+  landingPanel,
+  landingPathAccentBorder,
   landingPrimaryCtaClass,
+  landingSectionBase,
   landingSectionHeader,
   landingSectionY,
 } from "./landing-section-styles";
@@ -35,7 +39,7 @@ export function PetsFeature() {
   const p = t.landing.petsFeature;
 
   return (
-    <section id="pets-feature" className={`${landingSectionY} ${landingBandMuted} scroll-mt-24`}>
+    <section id="pets-feature" className={cn(landingSectionBase, landingSectionY)}>
       <div className={landingContainerWide}>
         <header className={landingSectionHeader}>
           <h2 className={landingH2}>{p.title}</h2>
@@ -43,12 +47,8 @@ export function PetsFeature() {
         </header>
 
         <div className="mb-10 grid items-center gap-8 lg:mb-14 lg:grid-cols-2 lg:gap-12">
-          <div className="relative mx-auto w-full max-w-lg lg:max-w-none">
-            <div
-              className="pointer-events-none absolute -right-6 -top-6 hidden h-40 w-40 rounded-full bg-primary/15 blur-3xl sm:block"
-              aria-hidden
-            />
-            <div className="relative overflow-hidden rounded-lg border border-border/80 bg-muted shadow-[0_20px_50px_-24px_rgba(0,0,0,0.25)] ring-1 ring-foreground/5 sm:rounded-lg">
+          <div className="mx-auto w-full max-w-lg lg:max-w-none">
+            <div className="overflow-hidden rounded-lg border border-border shadow-md">
               <img
                 src={DOG_IMAGE}
                 alt={p.imageAlt}
@@ -67,10 +67,14 @@ export function PetsFeature() {
               return (
                 <li
                   key={feature.title}
-                  className="flex gap-4 rounded-lg border border-border bg-card p-4 shadow-sm transition-shadow duration-200 hover:shadow-md sm:p-5"
+                  className={cn(
+                    "flex gap-4 rounded-lg border border-border bg-card p-4 sm:p-5",
+                    landingPathAccentBorder.medallion,
+                    "border-l-[3px] sm:border-l-[3px] sm:border-t-0",
+                  )}
                 >
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary dark:bg-primary/15">
-                    <Icon size={22} aria-hidden />
+                  <span className={landingIconChipPrimary}>
+                    <Icon size={20} aria-hidden />
                   </span>
                   <div className="min-w-0">
                     <h3 className="text-base font-semibold text-foreground sm:text-lg">{feature.title}</h3>
@@ -88,24 +92,24 @@ export function PetsFeature() {
           <h3 className="mb-5 text-center text-lg font-semibold text-foreground sm:mb-6 sm:text-xl">
             {p.howTitle}
           </h3>
-          <ol className="grid gap-4 sm:grid-cols-3 sm:gap-5">
+          <ol className={cn(landingPanel, "grid sm:grid-cols-3")}>
             {p.steps.map((step, index) => {
               const StepIcon = stepIcons[index];
               return (
                 <li
                   key={step.title}
-                  className="relative flex flex-col rounded-lg border border-border bg-card p-5 shadow-sm transition-shadow duration-200 hover:shadow-md"
+                  className={cn(
+                    "flex flex-col gap-3 border-border p-4 sm:p-5",
+                    index > 0 && "border-t sm:border-t-0 sm:border-l",
+                  )}
                 >
-                  <div className="mb-4 flex items-start justify-between gap-3">
-                    <span className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-primary/10 text-primary dark:bg-primary/15">
-                      <StepIcon size={22} aria-hidden />
-                    </span>
-                    <span className="text-xs font-semibold tabular-nums text-muted-foreground">
-                      {String(index + 1).padStart(2, "0")}
-                    </span>
+                  <span className={landingIconChipPrimary}>
+                    <StepIcon size={20} aria-hidden />
+                  </span>
+                  <div>
+                    <h4 className="text-base font-semibold leading-snug text-foreground">{step.title}</h4>
+                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{step.desc}</p>
                   </div>
-                  <h4 className="text-base font-semibold leading-snug text-foreground">{step.title}</h4>
-                  <p className="mt-2 flex-grow text-sm leading-relaxed text-muted-foreground">{step.desc}</p>
                 </li>
               );
             })}

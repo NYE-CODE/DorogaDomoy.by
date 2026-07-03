@@ -249,6 +249,7 @@ interface PetResponse {
   city: string;
   location: { lat: number; lng: number };
   published_at: string;
+  expires_at?: string | null;
   updated_at: string;
   author_id: string;
   author_name: string;
@@ -346,6 +347,7 @@ function toPet(p: PetResponse): Pet {
     city: p.city,
     location: p.location,
     publishedAt: parseApiDate(p.published_at),
+    expiresAt: p.expires_at ? parseApiDate(p.expires_at) : undefined,
     updatedAt: parseApiDate(p.updated_at),
     authorId: p.author_id,
     authorName: p.author_name,
@@ -612,6 +614,9 @@ export const petsApi = {
   },
 
   delete: (id: string) => api<void>(`/pets/${id}`, { method: 'DELETE' }),
+
+  renew: (id: string) =>
+    api<PetResponse>(`/pets/${id}/renew`, { method: 'POST' }).then(toPet),
 
   statistics: () => api<StatisticsResponse>('/pets/statistics'),
 };

@@ -1,4 +1,5 @@
-﻿import type { ProfilePetResponse } from '@/shared/api/client';
+﻿import { getProfilePetGalleryPhotos } from '@/shared/lib/profile-pet-photo-slots';
+import type { ProfilePetResponse } from '@/shared/api/client';
 import type { PetFormData } from '../../../components/pet-form';
 import type { AnimalType, Gender, PetColor } from '@/entities/pet/model/types';
 import { resolveProfilePetSpecies } from './profile-pet-display';
@@ -104,7 +105,7 @@ export function buildPrefillFromProfilePet(
   const description = lines.join('\n\n').slice(0, 500);
 
   return {
-    photos: [...(p.photos ?? [])],
+    photos: getProfilePetGalleryPhotos(p.photos),
     animalType,
     breed: (p.breed ?? '').trim(),
     colors: profileColorsToPetColors(p.colors ?? []),

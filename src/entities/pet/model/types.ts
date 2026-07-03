@@ -38,6 +38,7 @@ export interface Pet {
     lng: number;
   };
   publishedAt: Date;
+  expiresAt?: Date;
   updatedAt: Date;
   authorId: string;
   authorName: string;

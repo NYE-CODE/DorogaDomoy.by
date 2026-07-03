@@ -21,6 +21,7 @@ import { useI18n } from '@/app/providers/I18nContext';
 import { useAuth } from '@/app/providers/AuthContext';
 import { profilePetsApi, partnersApi, type ProfilePetResponse, type Partner } from '@/shared/api/client';
 import { BackQuickMenu } from '../../components/navigation/BackQuickMenu';
+import { getProfilePetGalleryPhotos } from '@/shared/lib/profile-pet-photo-slots';
 import { resolveProfilePetSpecies, speciesPlainLabel } from '@/shared/lib/profile-pet-display';
 import { dateLocaleForUi, formatPetAgeDisplay, genderLabel, temperamentLabel } from '@/shared/lib/profile-pet-text';
 import { PageLoader } from '@/shared/ui/page-loader';
@@ -200,7 +201,7 @@ export default function MyPetProfilePage() {
     );
   }
 
-  const photos = pet.photos?.length ? pet.photos : [];
+  const photos = getProfilePetGalleryPhotos(pet.photos);
   const mainPhoto = photos[photoIndex] ?? photos[0];
   const ageDisplay = formatPetAgeDisplay(pet.age, locale, pp);
   const colorsLine = (pet.colors ?? []).filter(Boolean).join(', ') || '—';

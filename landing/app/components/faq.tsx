@@ -8,10 +8,13 @@ import {
 import { useI18n } from "../../../context/I18nContext";
 import { faqApi, type FaqItem } from "../../../api/client";
 import { Skeleton } from "../../../components/ui/skeleton";
+import { cn } from "./ui/utils";
 import {
   landingContainerReadable,
   landingH2,
   landingLeadCenter,
+  landingPanel,
+  landingSectionBase,
   landingSectionHeader,
   landingSectionY,
 } from "./landing-section-styles";
@@ -65,11 +68,7 @@ export function FAQ() {
   }, [apiItems, locale, t.landing.faq.items]);
 
   return (
-    <section
-      id="faq"
-      className={`relative scroll-mt-24 bg-gradient-to-b from-muted/40 via-background to-background ${landingSectionY}`}
-    >
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+    <section id="faq" className={`${landingSectionBase} ${landingSectionY}`}>
       <div className={landingContainerReadable}>
         <div className={landingSectionHeader}>
           <h2 className={landingH2}>{t.landing.faq.title}</h2>
@@ -79,10 +78,7 @@ export function FAQ() {
         {faqs === null ? (
           <div className="space-y-3" aria-busy="true">
             {[0, 1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="rounded-md border border-border bg-card p-5 shadow-sm"
-              >
+              <div key={i} className={cn(landingPanel, "p-5")}>
                 <Skeleton className="mb-3 h-5 w-[88%] max-w-md rounded-md" />
                 <Skeleton className="h-4 w-full rounded-md" />
                 <Skeleton className="mt-2 h-4 w-[70%] rounded-md" />
@@ -96,7 +92,10 @@ export function FAQ() {
               <AccordionItem
                 key={`faq-${index}`}
                 value={`item-${index}`}
-                className="rounded-md border border-border/90 bg-card px-1 shadow-sm transition-shadow data-[state=open]:border-primary/25 data-[state=open]:shadow-md overflow-hidden border-b-0"
+                className={cn(
+                  landingPanel,
+                  "overflow-hidden border-b-0 px-1 data-[state=open]:border-primary/30",
+                )}
               >
                 <AccordionTrigger className="text-left text-base font-semibold text-foreground hover:no-underline py-4 px-4 md:px-5 [&[data-state=open]]:pb-2">
                   <span className="pr-2 leading-snug">{faq.q}</span>

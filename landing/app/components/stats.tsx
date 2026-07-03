@@ -4,7 +4,15 @@ import { MapPin, PawPrint, TrendingUp, Users } from "lucide-react";
 import { petsApi } from "../../../api/client";
 import { useI18n } from "../../../context/I18nContext";
 import { petScenarioStatsIconClass } from "@/shared/lib/pet-scenario-colors";
-import { landingContainerWide, landingH2 } from "./landing-section-styles";
+import {
+  landingContainerWide,
+  landingH2,
+  landingIconChip,
+  landingIconChipPrimary,
+  landingPanel,
+  landingSectionBase,
+} from "./landing-section-styles";
+import { cn } from "./ui/utils";
 
 interface StatsResponse {
   searching: number;
@@ -22,6 +30,9 @@ export function Stats() {
     petsApi.statistics().then(setStats).catch(() => setStats(null));
   }, []);
 
+  const statsTitle =
+    (t.landing.help as { statsTitle?: string }).statsTitle ?? "В цифрах";
+
   const searchItems = [
     {
       key: "active",
@@ -32,9 +43,8 @@ export function Stats() {
           : "0",
       label:
         (t.landing.help as { statsActiveAds?: string }).statsActiveAds ??
-        "�������� ����������",
-      iconClass:
-        "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200",
+        "Активных объявлений",
+      iconClass: landingIconChipPrimary,
     },
     {
       key: "users",
@@ -44,56 +54,50 @@ export function Stats() {
           ? stats.users_count.toLocaleString("ru")
           : "50,000+",
       label: t.landing.help.statsUsers,
-      iconClass: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+      iconClass: landingIconChip,
     },
     {
       key: "cities",
       icon: MapPin,
       value: stats ? (stats.cities_count ?? 0).toLocaleString("ru") : "200+",
       label: t.landing.help.statsCities,
-      iconClass:
-        "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300",
+      iconClass: landingIconChip,
     },
     {
       key: "success",
       icon: TrendingUp,
       value: stats ? (stats.found_pets ?? 0).toLocaleString("ru") : "0",
       label: t.landing.help.statsSuccess,
-      iconClass: petScenarioStatsIconClass.found,
+      iconClass: cn(landingIconChip, petScenarioStatsIconClass.found),
     },
   ];
-  const items = searchItems;
 
   return (
-    <section id="stats" className="relative z-10 -mt-10 pb-8 md:-mt-14 md:pb-12 scroll-mt-24">
+    <section id="stats" className={cn(landingSectionBase, "pb-8 md:pb-12")}>
       <div className={landingContainerWide}>
-        <div className="mb-5 md:mb-7">
-          <h2 className={`${landingH2} mb-0 text-left`}>
-            {(t.landing.help as { statsTitle?: string }).statsTitle ?? "� ������"}
-          </h2>
-        </div>
+        <h2 className={cn(landingH2, "mb-5 md:mb-6")}>{statsTitle}</h2>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5">
-          {items.map((item) => {
+        <div className={cn(landingPanel, "grid grid-cols-2 sm:grid-cols-4")}>
+          {searchItems.map((item, index) => {
             const Icon = item.icon;
             return (
               <div
                 key={item.key}
-                className="rounded-md md:rounded-lg border border-border bg-card p-3 sm:p-4 md:p-5 shadow-sm"
+                className={cn(
+                  "flex flex-col gap-3 border-border p-4 sm:p-5",
+                  index > 0 && "border-t sm:border-t-0 sm:border-l",
+                  index >= 2 && "border-t sm:border-t-0",
+                )}
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground leading-none truncate">
-                      {item.value}
-                    </div>
-                    <div className="mt-2 text-xs sm:text-sm text-muted-foreground leading-tight">
-                      {item.label}
-                    </div>
+                <span className={item.iconClass}>
+                  <Icon size={18} aria-hidden />
+                </span>
+                <div>
+                  <div className="text-2xl font-bold leading-none text-foreground sm:text-3xl">
+                    {item.value}
                   </div>
-                  <div
-                    className={`shrink-0 inline-flex items-center justify-center w-9 h-9 rounded-lg ${item.iconClass}`}
-                  >
-                    <Icon size={18} />
+                  <div className="mt-1.5 text-xs leading-snug text-muted-foreground sm:text-sm">
+                    {item.label}
                   </div>
                 </div>
               </div>

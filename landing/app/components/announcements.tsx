@@ -9,11 +9,14 @@ import { formatRelativeTime, petStatusPhotoPillClass } from "../../../utils/pet-
 import { RewardBadge, getRewardBadgeMeta } from "../../../components/reward-badge";
 import { FavoriteHeartButton } from "../../../components/favorite-heart-button";
 import { trackYmGoal } from "../../../utils/ym";
+import { cn } from "./ui/utils";
 import {
   landingContainerWide,
   landingH2,
   landingLeadCenter,
+  landingPanel,
   landingPrimaryCtaClass,
+  landingSectionAlt,
   landingSectionHeader,
   landingSectionY,
 } from "./landing-section-styles";
@@ -59,7 +62,7 @@ export function Announcements() {
   }));
 
   return (
-    <section id="announcements" className={`${landingSectionY} bg-background scroll-mt-24`}>
+    <section id="announcements" className={cn(landingSectionAlt, landingSectionY)}>
       <div className={landingContainerWide}>
         <div className={landingSectionHeader}>
           <h2 className={landingH2}>{copy.title}</h2>
@@ -75,7 +78,7 @@ export function Announcements() {
             cards.map((announcement) => (
               <div
                 key={announcement.id}
-                className="group relative overflow-hidden rounded-lg border border-border/70 bg-card shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-border hover:shadow-lg"
+                className={cn(landingPanel, "group relative")}
               >
                 <Link
                   to={`/pet/${announcement.id}`}
@@ -86,7 +89,7 @@ export function Announcements() {
                     <img
                       src={announcement.image}
                       alt={announcement.petType}
-                      className="h-52 w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      className="h-52 w-full object-cover"
                     />
                     <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
                     <div className="absolute left-3 right-3 top-3 flex items-start justify-between gap-2">

@@ -4,11 +4,14 @@ import { useI18n } from "../../../context/I18nContext";
 import type { Partner } from "../../../api/client";
 import { API_BASE } from "../../../api/client";
 import { Skeleton } from "../../../components/ui/skeleton";
+import { cn } from "./ui/utils";
 import {
-  landingBandMuted,
   landingContainerNarrow,
   landingH2,
   landingLeadCenter,
+  landingPanel,
+  landingPrimaryCtaClass,
+  landingSectionBase,
   landingSectionHeader,
   landingSectionY,
 } from "./landing-section-styles";
@@ -24,7 +27,7 @@ function PartnerTile({ partner }: { partner: Partner }) {
   const [logoFailed, setLogoFailed] = useState(false);
 
   const cardInner = (
-    <div className="flex min-h-[7rem] flex-col items-center justify-center rounded-md bg-transparent p-4 transition-all duration-300 hover:-translate-y-0.5">
+    <div className="flex min-h-[7rem] flex-col items-center justify-center rounded-lg p-4 transition-opacity hover:opacity-90">
       {logoUrl && !logoFailed ? (
         <>
           <img
@@ -38,7 +41,7 @@ function PartnerTile({ partner }: { partner: Partner }) {
           </span>
         </>
       ) : (
-        <span className="text-center text-sm font-semibold leading-snug text-foreground line-clamp-3 px-1">
+        <span className="line-clamp-3 px-1 text-center text-sm font-semibold leading-snug text-foreground">
           {partner.name}
         </span>
       )}
@@ -51,13 +54,13 @@ function PartnerTile({ partner }: { partner: Partner }) {
         href={partner.link}
         target="_blank"
         rel="noopener noreferrer"
-        className="group block rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        className="group block rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
         {cardInner}
       </a>
     );
   }
-  return <div className="group block rounded-md">{cardInner}</div>;
+  return <div className="group block rounded-lg">{cardInner}</div>;
 }
 
 export function Partners() {
@@ -74,8 +77,7 @@ export function Partners() {
   }, []);
 
   return (
-    <section id="partners" className={`relative ${landingSectionY} ${landingBandMuted} scroll-mt-24`}>
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+    <section id="partners" className={cn(landingSectionBase, landingSectionY)}>
       <div className={landingContainerNarrow}>
         <div className={landingSectionHeader}>
           <h2 className={landingH2}>{t.landing.partners.title}</h2>
@@ -83,11 +85,11 @@ export function Partners() {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-10 md:mb-12">
+          <div className="mb-10 grid grid-cols-2 gap-4 sm:grid-cols-3 md:mb-12 lg:grid-cols-4">
             {Array.from({ length: 8 }).map((_, i) => (
               <div
                 key={i}
-                className="flex h-28 flex-col items-center justify-center rounded-md bg-muted/30 p-4"
+                className="flex h-28 flex-col items-center justify-center rounded-lg bg-muted/30 p-4"
               >
                 <Skeleton className="h-10 w-24 rounded-md" />
                 <Skeleton className="mt-3 h-3 w-16 rounded-md" />
@@ -95,7 +97,7 @@ export function Partners() {
             ))}
           </div>
         ) : partners.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-10 md:mb-12">
+          <div className="mb-10 grid grid-cols-2 gap-4 sm:grid-cols-3 md:mb-12 lg:grid-cols-4">
             {partners.map((partner) => (
               <PartnerTile key={partner.id} partner={partner} />
             ))}
@@ -103,21 +105,22 @@ export function Partners() {
         ) : null}
 
         <div className="text-center">
-          <div className="relative mx-auto max-w-2xl overflow-hidden rounded-lg border border-white/20 bg-primary p-8 md:p-10 shadow-lg">
-            <div className="relative z-10">
-              <h3 className="text-xl md:text-2xl font-bold text-white mb-2">
-                {t.landing.partners.ctaTitle}
-              </h3>
-              <p className="text-sm md:text-base text-white/95 mb-6 max-w-lg mx-auto leading-relaxed">
-                {t.landing.partners.ctaSubtitle}
-              </p>
-              <a
-                href="mailto:contact@dorogadomoy.by"
-                className="inline-flex items-center justify-center rounded-lg bg-white px-7 py-3 text-base font-semibold text-primary-emphasis shadow-md transition-colors hover:bg-white/95 dark:bg-card dark:text-primary dark:hover:bg-card/95"
-              >
-                {t.landing.partners.ctaButton}
-              </a>
-            </div>
+          <div className={cn(landingPanel, "mx-auto max-w-2xl border-primary/20 bg-primary p-8 md:p-10")}>
+            <h3 className="mb-2 text-xl font-bold text-primary-foreground md:text-2xl">
+              {t.landing.partners.ctaTitle}
+            </h3>
+            <p className="mx-auto mb-6 max-w-lg text-sm leading-relaxed text-primary-foreground/95 md:text-base">
+              {t.landing.partners.ctaSubtitle}
+            </p>
+            <a
+              href="mailto:contact@dorogadomoy.by"
+              className={cn(
+                landingPrimaryCtaClass,
+                "inline-flex bg-primary-foreground text-primary hover:bg-primary-foreground/95",
+              )}
+            >
+              {t.landing.partners.ctaButton}
+            </a>
           </div>
         </div>
       </div>

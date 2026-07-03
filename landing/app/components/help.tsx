@@ -13,19 +13,23 @@ import { useFeatureFlags } from "../../../context/FeatureFlagsContext";
 import { helpApi, type HelpDonationTier } from "../../../api/client";
 import { copyText } from "../../../utils/copy-text";
 import { safeExternalUrl } from "../../../utils/safe-external-url";
+import { cn } from "./ui/utils";
 import {
-  landingBandMuted,
   landingContainerWide,
   landingH2,
+  landingIconChip,
   landingLeadWideCenter,
+  landingPanel,
+  landingPathAccentBorder,
+  landingSectionAlt,
   landingSectionHeader,
   landingSectionY,
 } from "./landing-section-styles";
 
 const CARD_CONFIG = [
-  { icon: Share2, tone: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300", variant: "secondary" as const },
-  { icon: Users, tone: "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300", variant: "secondary" as const },
-  { icon: Heart, tone: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300", variant: "default" as const },
+  { icon: Share2, accent: landingPathAccentBorder.found, variant: "secondary" as const },
+  { icon: Users, accent: landingPathAccentBorder.shelter, variant: "secondary" as const },
+  { icon: Heart, accent: landingPathAccentBorder.lost, variant: "default" as const },
 ];
 
 export function Help() {
@@ -111,21 +115,21 @@ export function Help() {
 
   if (!ff_landing_show_help) {
     return (
-      <section id="help" className={`${landingSectionY} ${landingBandMuted} scroll-mt-24`}>
+      <section id="help" className={cn(landingSectionAlt, landingSectionY)}>
         <div className={landingContainerWide} />
       </section>
     );
   }
 
   return (
-    <section id="help" className={`${landingSectionY} ${landingBandMuted} scroll-mt-24`}>
+    <section id="help" className={cn(landingSectionAlt, landingSectionY)}>
       <div className={landingContainerWide}>
         <div className={landingSectionHeader}>
           <h2 className={landingH2}>{h.title}</h2>
           <p className={landingLeadWideCenter}>{h.subtitle}</p>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+        <div className="grid gap-4 sm:grid-cols-2 md:gap-5 lg:grid-cols-3">
           {CARD_CONFIG.map((card, index) => {
             const w = ways[index];
             if (!w) return null;
@@ -136,21 +140,23 @@ export function Help() {
             return (
               <div
                 key={index}
-                className="group relative flex flex-col rounded-lg border border-border bg-card p-5 md:p-6 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
+                className={cn(
+                  landingPanel,
+                  "flex flex-col p-5 md:p-6",
+                  card.accent,
+                  "border-l-[3px] sm:border-l-[3px] sm:border-t-0",
+                )}
               >
-                <div className="flex items-start justify-between gap-4 mb-5">
-                  <div className={`inline-flex h-12 w-12 items-center justify-center rounded-md ${card.tone}`}>
-                    <Icon size={22} />
-                  </div>
-                  <span className="text-xs font-semibold text-muted-foreground">
-                    {(index + 1).toString().padStart(2, "0")}
-                  </span>
-                </div>
-                <h3 className="text-lg md:typo-h1 mb-2 leading-tight">{w.title}</h3>
-                <p className="text-sm md:text-base text-muted-foreground mb-5 leading-relaxed flex-grow">{w.desc}</p>
+                <span className={cn(landingIconChip, "mb-5")}>
+                  <Icon size={20} aria-hidden />
+                </span>
+                <h3 className="mb-2 text-lg font-semibold leading-tight">{w.title}</h3>
+                <p className="mb-5 flex-grow text-sm leading-relaxed text-muted-foreground md:text-base">
+                  {w.desc}
+                </p>
                 <Button
                   type="button"
-                  className="w-full h-11 rounded-lg font-medium mt-auto"
+                  className="mt-auto h-11 w-full rounded-lg font-medium"
                   variant={card.variant}
                   onClick={onClick}
                 >
@@ -174,7 +180,7 @@ export function Help() {
               <DialogDescription>{h.supportModalHint}</DialogDescription>
             </DialogHeader>
             {sortedTiers.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-2">{h.supportEmpty}</p>
+              <p className="py-2 text-sm text-muted-foreground">{h.supportEmpty}</p>
             ) : (
               <div className="grid gap-2 pt-1">
                 {sortedTiers.map((tier) => (

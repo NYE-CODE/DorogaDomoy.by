@@ -1,14 +1,18 @@
 ﻿import { Link } from "react-router";
-import { ChevronRight, Home, Map, Plus } from "lucide-react";
+import { Home, Map, Plus } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { Button } from "./ui/button";
 import { useI18n } from "../../../context/I18nContext";
 import { trackYmGoal } from "../../../utils/ym";
 import {
+  landingCell,
   landingContainerWide,
   landingHeroY,
   landingOutlineHeroCtaClass,
+  landingPathAccentBorder,
   landingPrimaryCtaClass,
 } from "./landing-section-styles";
+import { typoH1, typoLead } from "@/shared/styles/typography-classes";
 import { cn } from "./ui/utils";
 
 type HeroCta = "map" | "create" | "shelterPet";
@@ -17,26 +21,16 @@ function trackHeroCtaClick(cta: HeroCta) {
   trackYmGoal("hero_cta_click", { cta });
 }
 
-const pathLinks: { key: HeroCta; to: string; icon: typeof Map }[] = [
+const pathLinks: { key: HeroCta; to: string; icon: LucideIcon }[] = [
   { key: "map", to: "/search", icon: Map },
   { key: "create", to: "/create", icon: Plus },
   { key: "shelterPet", to: "/shelters?tab=pets", icon: Home },
 ];
 
-/** Три пути = три регистра: поиск (rose), действие (бренд-«дорога»), приют (emerald). */
-const pathAccent: Record<HeroCta, { chip: string; hoverBorder: string }> = {
-  map: {
-    chip: "bg-lost-soft text-lost group-hover:bg-lost-soft",
-    hoverBorder: "hover:border-lost-border",
-  },
-  create: {
-    chip: "bg-primary/10 text-primary group-hover:bg-primary/15",
-    hoverBorder: "hover:border-primary/35",
-  },
-  shelterPet: {
-    chip: "bg-shelter-soft text-shelter group-hover:bg-shelter-soft",
-    hoverBorder: "hover:border-shelter-border",
-  },
+const pathAccentBorder: Record<HeroCta, string> = {
+  map: landingPathAccentBorder.lost,
+  create: landingPathAccentBorder.primary,
+  shelterPet: landingPathAccentBorder.shelter,
 };
 
 export function Hero() {
@@ -45,41 +39,21 @@ export function Hero() {
   const pathCopy = [hero.paths.search, hero.paths.create, hero.paths.shelter];
 
   return (
-    <section className={`relative overflow-hidden bg-background ${landingHeroY}`}>
-      <div
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,color-mix(in_srgb,var(--primary)_14%,transparent),transparent)]"
-        aria-hidden
-      />
-
-      <div className={cn(landingContainerWide, "relative")}>
-        <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-14">
-          <div className="text-center lg:text-left">
-            <p className="mb-5 inline-flex items-center rounded-full border border-primary/20 bg-primary/8 px-3.5 py-1 text-sm font-medium text-primary">
-              {hero.badge}
-            </p>
-
-            <h1 className="mb-5 text-4xl font-bold leading-[1.1] tracking-tight text-foreground sm:text-5xl lg:text-[3.25rem]">
-              {hero.title}{" "}
-              <span className="text-primary">{hero.titleHighlight}</span>
-            </h1>
-
-            <p className="mx-auto mb-8 max-w-xl text-lg leading-relaxed text-muted-foreground lg:mx-0">
-              {hero.subtitle}
-            </p>
-
-            <div className="relative mx-auto mb-8 max-w-lg overflow-hidden rounded-xl border border-border/70 shadow-lg lg:hidden">
-              <img
-                src="/hero/search-main.webp"
-                alt={hero.imageSearchAlt}
-                className="aspect-[16/10] w-full object-cover"
-                width={960}
-                height={600}
-                fetchPriority="high"
-                decoding="async"
-              />
+    <section className={cn("bg-background", landingHeroY)}>
+      <div className={landingContainerWide}>
+        <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
+          <div className="flex flex-col gap-6 text-center lg:gap-7 lg:text-left">
+            <div className="space-y-4">
+              <h1 id="landing-hero-heading" className={cn(typoH1, "text-balance")}>
+                {hero.title}{" "}
+                <span className="text-primary">{hero.titleHighlight}</span>
+              </h1>
+              <p className={cn(typoLead, "mx-auto max-w-lg text-balance lg:mx-0")}>
+                {hero.subtitle}
+              </p>
             </div>
 
-            <div className="mb-8 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
+            <div className="flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
               <Button asChild>
                 <Link
                   to="/search"
@@ -102,71 +76,51 @@ export function Hero() {
               </Button>
             </div>
 
-            <ul className="grid gap-3 sm:grid-cols-3">
-              {pathLinks.map((path, index) => {
-                const Icon = path.icon;
-                const copy = pathCopy[index];
-                return (
-                  <li key={path.key}>
-                    <Link
-                      to={path.to}
-                      onClick={() => trackHeroCtaClick(path.key)}
-                      className={cn(
-                        "group flex h-full flex-col rounded-xl border border-border/80 bg-card p-4 text-left shadow-sm transition-all duration-200 hover:shadow-md",
-                        pathAccent[path.key].hoverBorder,
-                      )}
+            <nav className="mx-auto w-full max-w-xl lg:mx-0" aria-labelledby="landing-hero-heading">
+              <ul className="grid overflow-hidden rounded-lg border border-border bg-card sm:grid-cols-3">
+                {pathLinks.map((path, index) => {
+                  const Icon = path.icon;
+                  const copy = pathCopy[index];
+                  return (
+                    <li
+                      key={path.key}
+                      className="border-b border-border last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0"
                     >
-                      <span
+                      <Link
+                        to={path.to}
+                        onClick={() => trackHeroCtaClick(path.key)}
                         className={cn(
-                          "mb-3 flex h-10 w-10 items-center justify-center rounded-lg transition-colors",
-                          pathAccent[path.key].chip,
+                          landingCell,
+                          "flex h-full min-h-[44px] flex-col justify-center gap-1 border-l-[3px] px-4 py-3 text-left sm:border-l-0 sm:border-t-[3px]",
+                          pathAccentBorder[path.key],
                         )}
                       >
-                        <Icon className="size-5" aria-hidden />
-                      </span>
-                      <span className="text-sm font-semibold text-foreground">{copy.title}</span>
-                      <span className="mt-1 flex-1 text-xs leading-relaxed text-muted-foreground">
-                        {copy.desc}
-                      </span>
-                      <ChevronRight
-                        className="mt-3 size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary"
-                        aria-hidden
-                      />
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
+                        <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                          <Icon className="size-4 shrink-0 opacity-70" aria-hidden />
+                          {copy.title}
+                        </span>
+                        <span className="hidden text-xs leading-snug text-muted-foreground sm:block">
+                          {copy.desc}
+                        </span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </nav>
           </div>
 
-          <div className="relative hidden lg:block">
-            <div
-              className="pointer-events-none absolute -right-8 top-8 h-56 w-56 rounded-full bg-primary/15 blur-3xl"
-              aria-hidden
-            />
-            <div className="relative ml-auto w-full max-w-[34rem]">
-              <div className="overflow-hidden rounded-2xl border border-border/70 shadow-[0_24px_60px_-28px_rgba(0,0,0,0.35)]">
-                <img
-                  src="/hero/shelters-main.webp"
-                  alt={hero.imageShelterAlt}
-                  className="aspect-[5/6] w-full object-cover"
-                  width={800}
-                  height={960}
-                  loading="eager"
-                  decoding="async"
-                />
-              </div>
-              <div className="absolute -bottom-8 -left-10 w-[72%] overflow-hidden rounded-2xl border-4 border-background shadow-xl">
-                <img
-                  src="/hero/search-main.webp"
-                  alt={hero.imageSearchAlt}
-                  className="aspect-[4/3] w-full object-cover"
-                  width={640}
-                  height={480}
-                  fetchPriority="high"
-                  decoding="async"
-                />
-              </div>
+          <div className="mx-auto w-full max-w-md lg:max-w-none">
+            <div className="overflow-hidden rounded-lg border border-border shadow-md">
+              <img
+                src="/hero/search-main.webp"
+                alt={hero.imageSearchAlt}
+                className="aspect-[4/3] w-full object-cover lg:aspect-[5/4]"
+                width={960}
+                height={720}
+                fetchPriority="high"
+                decoding="async"
+              />
             </div>
           </div>
         </div>

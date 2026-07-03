@@ -6,12 +6,13 @@ import { useI18n } from "../../../context/I18nContext";
 import type { Pet } from "../../../types/pet";
 import { ShelterPetCard } from "../../../components/shelter-pet-card";
 import { trackYmGoal } from "../../../utils/ym";
+import { cn } from "./ui/utils";
 import {
-  landingBandMuted,
   landingContainerWide,
   landingH2,
   landingLeadCenter,
   landingPrimaryCtaClass,
+  landingSectionBase,
   landingSectionHeader,
   landingSectionY,
 } from "./landing-section-styles";
@@ -41,7 +42,7 @@ export function ShelterPets() {
   }, []);
 
   return (
-    <section id="shelter-pets" className={`${landingSectionY} ${landingBandMuted} scroll-mt-24`}>
+    <section id="shelter-pets" className={cn(landingSectionBase, landingSectionY)}>
       <div className={landingContainerWide}>
         <div className={landingSectionHeader}>
           <h2 className={landingH2}>{copy.title}</h2>

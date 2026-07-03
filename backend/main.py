@@ -21,7 +21,7 @@ from database import init_db, check_db_writable
 import models  # noqa: F401 — регистрация ORM до init_db()
 from instagram_worker import process_single_publication
 from rate_limit import limiter
-from routers import auth, pets, users, reports, settings, telegram, notifications, media, partners, feature_flags, profile_pets, blog, faq, social_card, instagram_publish, rewards, favorites, shelters, shelter_pets, shelter_campaigns, shelter_subscriptions, help, guides
+from routers import auth, pets, users, reports, settings, telegram, notifications, media, partners, feature_flags, profile_pets, blog, faq, social_card, instagram_publish, rewards, favorites, shelters, shelter_pets, shelter_campaigns, shelter_subscriptions, help, guides, internal_cron
 from telegram_bot import BOT_TOKEN, process_telegram_update
 
 logging.basicConfig(
@@ -212,6 +212,7 @@ api_v1.include_router(shelters.router)
 api_v1.include_router(shelter_pets.router)
 api_v1.include_router(shelter_campaigns.router)
 api_v1.include_router(shelter_subscriptions.router)
+api_v1.include_router(internal_cron.router)
 app.include_router(api_v1)
 
 

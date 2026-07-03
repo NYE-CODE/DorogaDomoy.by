@@ -33,6 +33,10 @@ from auth import get_current_user, get_current_user_required, require_admin
 from platform_settings import DEFAULT_MAX_PHOTOS, get_bool_setting, get_int_setting, get_settings_with_defaults
 from integrations.telegram import send_notifications_for_pet, send_pending_moderation_alert_sync
 from instagram_publications import enqueue_autopublish_for_pet
+from listing_lifecycle import (
+    LISTING_EXPIRED_ARCHIVE_REASON,
+    compute_listing_expires_at,
+)
 from time_utils import utc_now
 from upload_utils import save_data_image
 from rate_limit import limiter
@@ -146,6 +150,7 @@ def pet_to_response(p: Pet) -> PetResponse:
         city=p.city,
         location={"lat": p.location_lat, "lng": p.location_lng},
         published_at=p.published_at,
+        expires_at=getattr(p, "expires_at", None),
         updated_at=p.updated_at,
         author_id=p.author_id,
         author_name=p.author_name,
@@ -551,6 +556,7 @@ async def create_pet(
 
     pet_id = "pet-" + str(uuid.uuid4())[:8]
     author_name = (data.author_name and data.author_name.strip()) or user.name or "Пользователь"
+    now = utc_now()
     pet = Pet(
         id=pet_id,
         photos=photo_urls,
@@ -568,6 +574,8 @@ async def create_pet(
         author_name=author_name,
         contacts=_contacts_to_dict(data.contacts),
         moderation_status=initial_status,
+        published_at=now,
+        expires_at=compute_listing_expires_at(db, now) if initial_status == "approved" else None,
         reward_mode=reward_mode,
         reward_amount_byn=reward_amount_byn,
         reward_points=reward_points,
@@ -754,6 +762,8 @@ async def update_pet(
             pet.moderation_reason = None
             pet.moderated_at = None
             pet.moderated_by = None
+    if old_moderation_status != "approved" and pet.moderation_status == "approved" and not pet.expires_at:
+        pet.expires_at = compute_listing_expires_at(db)
     try:
         db.commit()
     except Exception as e:
@@ -777,6 +787,37 @@ async def update_pet(
         except Exception as e:
             logging.exception("Instagram autopublish enqueue failed for pet %s: %s", pet.id, e)
 
+    return pet_to_response(pet)
+
+
+@router.post("/{pet_id}/renew", response_model=PetResponse)
+@limiter.limit("30/minute")
+def renew_pet_listing(
+    request: Request,
+    pet_id: str,
+    user: User = Depends(get_current_user_required),
+    db: Session = Depends(get_db),
+):
+    pet = db.scalar(select(Pet).where(Pet.id == pet_id))
+    if not pet:
+        raise HTTPException(status_code=404, detail="Объявление не найдено")
+    if pet.author_id != user.id and user.role != "admin":
+        raise HTTPException(status_code=403, detail="Нет прав на продление")
+    if (pet.pet_scope or "lost_found") != "lost_found":
+        raise HTTPException(status_code=400, detail="Продление доступно только для объявлений")
+
+    expired_archive = pet.is_archived and pet.archive_reason == LISTING_EXPIRED_ARCHIVE_REASON
+    active_listing = not pet.is_archived and pet.moderation_status == "approved"
+    if not active_listing and not expired_archive:
+        raise HTTPException(status_code=400, detail="Нельзя продлить это объявление")
+
+    pet.expires_at = compute_listing_expires_at(db)
+    pet.is_archived = False
+    pet.archive_reason = None
+    pet.updated_at = utc_now()
+    pet.updated_by_user_id = user.id
+    db.commit()
+    db.refresh(pet)
     return pet_to_response(pet)
 
 

@@ -11,11 +11,18 @@ import {
   XCircle,
   MoreVertical,
   Rocket,
+  CalendarClock,
 } from 'lucide-react';
 import { Pet } from '../types/pet';
 import { useAuth } from '../context/AuthContext';
 import { useI18n } from '../context/I18nContext';
 import { sightingsApi } from '../api/client';
+import {
+  daysUntilListingExpires,
+  listingExpiryUrgency,
+  listingNeedsRenewal,
+  LISTING_EXPIRED_ARCHIVE_REASON,
+} from '@/shared/lib/listing-expiry';
 import { Header } from './layout/Header';
 import { Footer } from './layout/Footer';
 import { RewardBadge } from './reward-badge';
@@ -43,6 +50,7 @@ interface MyAdsPageProps {
   onEditPet: (pet: Pet) => void;
   onDeletePet: (pet: Pet) => void;
   onBoostPet: (pet: Pet) => void;
+  onRenewPet?: (pet: Pet) => void;
   /** Зависит от ff_instagram_boost_stories в профиле */
   instagramBoostEnabled?: boolean;
 }
@@ -54,6 +62,7 @@ export function MyAdsPage({
   onEditPet,
   onDeletePet,
   onBoostPet,
+  onRenewPet,
   instagramBoostEnabled = true,
 }: MyAdsPageProps) {
   const { user } = useAuth();
@@ -71,7 +80,7 @@ export function MyAdsPage({
           user &&
           (pet.authorId === user.id ||
             (user.id === 'user-demo' && pet.authorId === 'current-user')) &&
-          !pet.isArchived
+          (!pet.isArchived || pet.archiveReason === LISTING_EXPIRED_ARCHIVE_REASON)
       ),
     [pets, user]
   );
@@ -171,6 +180,35 @@ export function MyAdsPage({
     e.stopPropagation();
     setOpenMenuId(null);
     onBoostPet(pet);
+  };
+
+  const handleRenew = (e: React.MouseEvent, pet: Pet) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setOpenMenuId(null);
+    onRenewPet?.(pet);
+  };
+
+  const getExpiryLabel = (pet: Pet) => {
+    if (pet.archiveReason === LISTING_EXPIRED_ARCHIVE_REASON) {
+      return t.myAds.expiredArchived;
+    }
+    const days = daysUntilListingExpires(pet.expiresAt);
+    if (days === null) return null;
+    if (days <= 0) return t.myAds.expiresToday;
+    if (days === 1) return t.myAds.expiresTomorrow;
+    if (days <= 3) return t.myAds.expiresInDays.replace('{n}', String(days));
+    if (pet.expiresAt) {
+      return t.myAds.expiresOn.replace(
+        '{date}',
+        pet.expiresAt.toLocaleDateString(dateLocale, {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        }),
+      );
+    }
+    return null;
   };
 
   const totalActive = publishedCount + pendingCount + rejectedCount;
@@ -310,6 +348,10 @@ export function MyAdsPage({
                           pet.moderationStatus === 'rejected' &&
                           pet.moderationReason &&
                           hoveredTooltipId === pet.id;
+                        const daysLeft = daysUntilListingExpires(pet.expiresAt);
+                        const expiryUrgency = listingExpiryUrgency(daysLeft);
+                        const showRenew = listingNeedsRenewal(pet);
+                        const expiryLabel = getExpiryLabel(pet);
 
                         return (
                           <div
@@ -346,6 +388,18 @@ export function MyAdsPage({
                                   )}
                                   {pet.moderationStatus !== 'pending' && (
                                     <>
+                                      {showRenew && onRenewPet && (
+                                        <button
+                                          type="button"
+                                          onClick={(e) => handleRenew(e, pet)}
+                                          className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm transition-colors hover:bg-amber-500/10"
+                                        >
+                                          <CalendarClock className="size-4 shrink-0 text-amber-700 dark:text-amber-400" />
+                                          <span className="font-medium text-amber-800 dark:text-amber-300">
+                                            {t.myAds.renewPublication}
+                                          </span>
+                                        </button>
+                                      )}
                                       {instagramBoostEnabled &&
                                         pet.moderationStatus === 'approved' &&
                                         pet.status === 'searching' && (
@@ -468,9 +522,41 @@ export function MyAdsPage({
                                   <span className="truncate">{pet.city}</span>
                                   <span className="shrink-0" aria-hidden>·</span>
                                   <span className="shrink-0">{formatDate(pet.publishedAt)}</span>
+                                  {expiryLabel && pet.moderationStatus === 'approved' && (
+                                    <>
+                                      <span className="shrink-0" aria-hidden>·</span>
+                                      <span
+                                        className={cn(
+                                          'shrink-0 font-medium',
+                                          expiryUrgency === 'critical' || expiryUrgency === 'expired'
+                                            ? 'text-destructive'
+                                            : expiryUrgency === 'warning'
+                                              ? 'text-amber-700 dark:text-amber-400'
+                                              : 'text-muted-foreground',
+                                        )}
+                                      >
+                                        {expiryLabel}
+                                      </span>
+                                    </>
+                                  )}
                                 </div>
                               </div>
                             </Link>
+
+                            {showRenew && onRenewPet && (
+                              <div className="mt-2 pl-[6.75rem] sm:mt-3 sm:pl-[8.25rem]">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-8 border-amber-300 text-amber-900 hover:bg-amber-50 dark:border-amber-700 dark:text-amber-200 dark:hover:bg-amber-950/40"
+                                  onClick={(e) => handleRenew(e, pet)}
+                                >
+                                  <CalendarClock className="size-4" aria-hidden />
+                                  {t.myAds.renewPublication}
+                                </Button>
+                              </div>
+                            )}
                           </div>
                         );
                       })}
