@@ -69,7 +69,34 @@ def init_db():
     _ensure_shelters_table()
     _ensure_shelter_pet_details_table()
     _ensure_shelter_campaigns_table()
+    _run_sqlite_schema_migrations()
     logger.info("Database URL: %s", SQLALCHEMY_DATABASE_URL)
+
+
+def _run_sqlite_schema_migrations() -> None:
+    """Применить migrate_schema.py при старте (добавляет pets.expires_at и др.)."""
+    if not SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
+        return
+    db_path = SQLALCHEMY_DATABASE_URL.replace("sqlite:///", "")
+    if not Path(db_path).exists():
+        return
+    import sqlite3
+
+    try:
+        from migrate_schema import backfill_pet_listing_expires_at, ensure_new_tables, migrate
+
+        conn = sqlite3.connect(db_path, timeout=30)
+        try:
+            changes = migrate(conn)
+            ensure_new_tables(conn)
+            backfill_pet_listing_expires_at(conn)
+            conn.commit()
+            if changes:
+                logger.warning("Startup migrate_schema added: %s", ", ".join(changes))
+        finally:
+            conn.close()
+    except Exception:
+        logger.exception("Startup migrate_schema failed")
 
 
 def _ensure_instagram_publications_columns() -> None:
@@ -131,6 +158,7 @@ def _ensure_bounty_and_helper_columns() -> None:
         "updated_by_user_id": "VARCHAR",
         "registration_authority": "VARCHAR",
         "registration_token_number": "VARCHAR",
+        "expires_at": "DATETIME",
     }
     partner_columns = {
         "is_medallion_partner": "INTEGER DEFAULT 0",
@@ -194,6 +222,28 @@ def _ensure_bounty_and_helper_columns() -> None:
                 text("UPDATE pets SET is_published = 1 WHERE is_published IS NULL")
             )
             conn.execute(text("CREATE INDEX IF NOT EXISTS ix_pets_shelter_id ON pets(shelter_id)"))
+
+            days_row = conn.execute(
+                text("SELECT value FROM platform_settings WHERE key = 'auto_archive_days' LIMIT 1")
+            ).fetchone()
+            archive_days = 90
+            if days_row and days_row[0]:
+                try:
+                    archive_days = max(1, int(days_row[0]))
+                except (TypeError, ValueError):
+                    archive_days = 90
+            conn.execute(
+                text(
+                    f"""
+                    UPDATE pets
+                    SET expires_at = datetime(published_at, '+{archive_days} days')
+                    WHERE expires_at IS NULL
+                      AND COALESCE(pet_scope, 'lost_found') = 'lost_found'
+                      AND moderation_status = 'approved'
+                      AND COALESCE(is_archived, 0) = 0
+                    """
+                )
+            )
 
         # partners.*
         partners_exists = conn.execute(
