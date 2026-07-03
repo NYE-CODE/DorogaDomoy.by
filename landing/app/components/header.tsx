@@ -204,7 +204,7 @@ export function Header(props: HeaderProps = {}) {
             </div>
           </nav>
 
-          {/* Mobile Navigation � burger only, rest moved to MobileBottomNav */}
+          {/* Mobile: burger only; rest in MobileBottomNav */}
           <nav className="md:hidden flex items-center">
             <button
               type="button"
@@ -233,7 +233,7 @@ export function Header(props: HeaderProps = {}) {
         )}
       </div>
 
-      {/* City Select Modal � ����� ����� �� ����������� ��������� (�������� ��� onCityClick) */}
+      {/* City modal when parent handles onCityClick */}
       {!hasCityControl && cityContext && showCitySelector && (
         <CitySelectModal
           open={isRegionOpen}
@@ -252,7 +252,7 @@ export function Header(props: HeaderProps = {}) {
       )}
     </header>
 
-    {/* ��� �����: ����� fixed+z-index ������� � ��������� z-40 � ���� ����������� ��� ��������� */}
+      {/* Mobile menu overlay above z-40 content */}
     <MobileMenuDrawer open={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
     </>
   );

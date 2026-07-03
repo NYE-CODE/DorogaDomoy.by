@@ -28,7 +28,7 @@ type FormState = {
   isPublished: boolean;
   registrationAuthority: string;
   registrationTokenNumber: string;
-  /** ����� 1�5; 0 = �� ������� */
+  /** Trait scale 1-5; 0 = not set */
   energyLevel: number;
   friendlinessLevel: number;
   trainingLevel: number;
@@ -62,25 +62,22 @@ const emptyForm = (): FormState => ({
   goodWithCats: 'unknown',
 });
 
-const TRAIT_SCALE_HINTS: Record<string, [string, string]> = {
-  energyLevel: ['���������', '����� ��������'],
-  friendlinessLevel: ['����������', '����� ����������'],
-  trainingLevel: ['��� �������', '������� ��������'],
-  independenceLevel: ['����� ��������', '����� ����'],
-};
 
 function TraitScale({
   label,
-  field,
+  lowHint,
+  highHint,
+  clearLabel,
   value,
   onChange,
 }: {
   label: string;
-  field: keyof typeof TRAIT_SCALE_HINTS;
+  lowHint: string;
+  highHint: string;
+  clearLabel: string;
   value: number;
   onChange: (v: number) => void;
 }) {
-  const [low, high] = TRAIT_SCALE_HINTS[field];
   return (
     <div className="rounded-lg border border-border bg-background px-3 py-2.5 sm:col-span-2">
       <div className="mb-2 flex items-center justify-between">
@@ -91,7 +88,7 @@ function TraitScale({
             onClick={() => onChange(0)}
             className="text-xs text-muted-foreground hover:text-foreground"
           >
-            ��������
+            {clearLabel}
           </button>
         )}
       </div>
@@ -113,8 +110,8 @@ function TraitScale({
         ))}
       </div>
       <div className="mt-1 flex justify-between text-xs text-muted-foreground">
-        <span>{low}</span>
-        <span>{high}</span>
+        <span>{lowHint}</span>
+        <span>{highHint}</span>
       </div>
     </div>
   );
@@ -124,15 +121,21 @@ function CompatibilitySelect({
   label,
   value,
   onChange,
+  yesLabel,
+  noLabel,
+  unknownLabel,
 }: {
   label: string;
   value: Compatibility;
   onChange: (v: Compatibility) => void;
+  yesLabel: string;
+  noLabel: string;
+  unknownLabel: string;
 }) {
   const options: { v: Compatibility; t: string }[] = [
-    { v: 'yes', t: '��' },
-    { v: 'no', t: '���' },
-    { v: 'unknown', t: '�� ����' },
+    { v: 'yes', t: yesLabel },
+    { v: 'no', t: noLabel },
+    { v: 'unknown', t: unknownLabel },
   ];
   return (
     <div className="rounded-lg border border-border bg-background px-3 py-2.5">
@@ -161,6 +164,13 @@ function CompatibilitySelect({
 export default function MyShelterPetFormPage() {
   const { t } = useI18n();
   const pf = t.petForm;
+  const sp = t.shelterPet;
+  const pt = t.petTraits;
+  const msl = t.myShelterPetsList;
+  const mf = t.myPets.form;
+  const compatYes = mf.yes;
+  const compatNo = mf.no;
+  const compatUnknown = t.pet.gender.unknown;
   const { shelterId, petId } = useParams<{ shelterId: string; petId?: string }>();
   const navigate = useNavigate();
   const isEdit = Boolean(petId);
@@ -226,10 +236,10 @@ export default function MyShelterPetFormPage() {
   }, [isEdit, navigate, petId, shelterId, t.common.error]);
 
   const stepTitle = useMemo(() => {
-    if (step === 1) return '��� 1 �� 3: ����';
-    if (step === 2) return '��� 2 �� 3: � �������';
-    return '��� 3 �� 3: ����������';
-  }, [step]);
+    if (step === 1) return sp.stepPhotos;
+    if (step === 2) return sp.stepAbout;
+    return sp.stepPublication;
+  }, [step, sp.stepPhotos, sp.stepAbout, sp.stepPublication]);
 
   const handlePhotoUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -349,7 +359,7 @@ export default function MyShelterPetFormPage() {
   }
 
   const totalSteps = 3;
-  const pageTitle = isEdit ? '�������������� ������� ������' : '���������� ������� ������';
+  const pageTitle = isEdit ? sp.formEditTitle : sp.formAddTitle;
 
   return (
     <div className="landing-theme min-h-screen bg-muted/30 dark:bg-background flex flex-col">
@@ -361,7 +371,7 @@ export default function MyShelterPetFormPage() {
             <div className="flex-1 min-w-0">
               <h1 className="typo-h1 truncate">{pageTitle}</h1>
               <p className="text-sm text-muted-foreground mt-1">
-                {t.petForm.step} {step} {t.petForm.of} {totalSteps}: {stepTitle.replace(/^��� \d+ �� \d+: /, '')}
+                {t.petForm.step} {step} {t.petForm.of} {totalSteps}: {stepTitle}
               </p>
             </div>
             <Link
@@ -410,63 +420,63 @@ export default function MyShelterPetFormPage() {
 
               {step === 2 ? (
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <input value={form.nickname} onChange={(e) => setForm((p) => ({ ...p, nickname: e.target.value }))} className="rounded-lg border border-border bg-background px-3 py-2 text-sm" placeholder="������" />
+                  <input value={form.nickname} onChange={(e) => setForm((p) => ({ ...p, nickname: e.target.value }))} className="rounded-lg border border-border bg-background px-3 py-2 text-sm" placeholder={sp.nicknamePlaceholder} />
                   <select value={form.animalType} onChange={(e) => setForm((p) => ({ ...p, animalType: e.target.value as FormState['animalType'] }))} className="rounded-lg border border-border bg-background px-3 py-2 text-sm">
-                    <option value="cat">�����</option>
-                    <option value="dog">������</option>
-                    <option value="other">������</option>
+                    <option value="cat">{t.pet.animalType.cat}</option>
+                    <option value="dog">{t.pet.animalType.dog}</option>
+                    <option value="other">{t.pet.animalType.other}</option>
                   </select>
-                  <input value={form.breed} onChange={(e) => setForm((p) => ({ ...p, breed: e.target.value }))} className="rounded-lg border border-border bg-background px-3 py-2 text-sm" placeholder="������" />
+                  <input value={form.breed} onChange={(e) => setForm((p) => ({ ...p, breed: e.target.value }))} className="rounded-lg border border-border bg-background px-3 py-2 text-sm" placeholder={sp.breedPlaceholder} />
                   <select value={form.gender} onChange={(e) => setForm((p) => ({ ...p, gender: e.target.value as FormState['gender'] }))} className="rounded-lg border border-border bg-background px-3 py-2 text-sm">
-                    <option value="unknown">��� ����������</option>
-                    <option value="male">�����</option>
-                    <option value="female">�����</option>
+                    <option value="unknown">{t.pet.gender.unknown}</option>
+                    <option value="male">{t.pet.gender.male}</option>
+                    <option value="female">{t.pet.gender.female}</option>
                   </select>
-                  <input value={form.approximateAge} onChange={(e) => setForm((p) => ({ ...p, approximateAge: e.target.value }))} className="rounded-lg border border-border bg-background px-3 py-2 text-sm" placeholder="������� (��������)" />
-                  <input value={form.colorsCsv} onChange={(e) => setForm((p) => ({ ...p, colorsCsv: e.target.value }))} className="rounded-lg border border-border bg-background px-3 py-2 text-sm" placeholder="������ ����� �������" />
+                  <input value={form.approximateAge} onChange={(e) => setForm((p) => ({ ...p, approximateAge: e.target.value }))} className="rounded-lg border border-border bg-background px-3 py-2 text-sm" placeholder={sp.agePlaceholder} />
+                  <input value={form.colorsCsv} onChange={(e) => setForm((p) => ({ ...p, colorsCsv: e.target.value }))} className="rounded-lg border border-border bg-background px-3 py-2 text-sm" placeholder={sp.colorsPlaceholder} />
                   <select value={form.healthStatus} onChange={(e) => setForm((p) => ({ ...p, healthStatus: e.target.value as FormState['healthStatus'] }))} className="rounded-lg border border-border bg-background px-3 py-2 text-sm">
-                    <option value="disabled">������������</option>
-                    <option value="treatment">��������� �������</option>
-                    <option value="good">�������</option>
-                    <option value="excellent">��������</option>
+                    <option value="disabled">{sp.healthDisabled}</option>
+                    <option value="treatment">{sp.healthTreatment}</option>
+                    <option value="good">{sp.healthGood}</option>
+                    <option value="excellent">{sp.healthExcellent}</option>
                   </select>
                   <select value={form.coatType} onChange={(e) => setForm((p) => ({ ...p, coatType: e.target.value as FormState['coatType'] }))} className="rounded-lg border border-border bg-background px-3 py-2 text-sm">
-                    <option value="smooth">������� ������</option>
-                    <option value="semi">�����������</option>
-                    <option value="fluffy">��������</option>
+                    <option value="smooth">{sp.coatSmooth}</option>
+                    <option value="semi">{sp.coatSemi}</option>
+                    <option value="fluffy">{sp.coatFluffy}</option>
                   </select>
-                  <textarea value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} className="min-h-24 rounded-lg border border-border bg-background px-3 py-2 text-sm sm:col-span-2" placeholder="�������� �������" />
+                  <textarea value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} className="min-h-24 rounded-lg border border-border bg-background px-3 py-2 text-sm sm:col-span-2" placeholder={sp.descriptionPlaceholder} />
                   <input value={form.registrationAuthority} onChange={(e) => setForm((p) => ({ ...p, registrationAuthority: e.target.value }))} className="rounded-lg border border-border bg-background px-3 py-2 text-sm sm:col-span-2" placeholder={t.petForm.registrationAuthorityPlaceholder} maxLength={300} />
                   <input value={form.registrationTokenNumber} onChange={(e) => setForm((p) => ({ ...p, registrationTokenNumber: e.target.value }))} className="rounded-lg border border-border bg-background px-3 py-2 text-sm sm:col-span-2" placeholder={t.petForm.registrationTokenPlaceholder} maxLength={80} />
 
                   <div className="sm:col-span-2 mt-2 border-t border-border pt-4">
-                    <h3 className="text-sm font-semibold text-foreground">�������� � �������������</h3>
+                    <h3 className="text-sm font-semibold text-foreground">{sp.traitsSectionTitle}</h3>
                     <p className="mt-0.5 text-xs text-muted-foreground">
-                      �������� ������� �������� ��������� ������� ��� ���� ����� �����. ����� ����������.
+                      {sp.traitsSectionHint}
                     </p>
                   </div>
-                  <TraitScale label="������� ����������" field="energyLevel" value={form.energyLevel} onChange={(v) => setForm((p) => ({ ...p, energyLevel: v }))} />
-                  <TraitScale label="������� � �����" field="friendlinessLevel" value={form.friendlinessLevel} onChange={(v) => setForm((p) => ({ ...p, friendlinessLevel: v }))} />
-                  <TraitScale label="�������������" field="trainingLevel" value={form.trainingLevel} onChange={(v) => setForm((p) => ({ ...p, trainingLevel: v }))} />
-                  <TraitScale label="�����������������" field="independenceLevel" value={form.independenceLevel} onChange={(v) => setForm((p) => ({ ...p, independenceLevel: v }))} />
-                  <CompatibilitySelect label="����� � ������" value={form.goodWithKids} onChange={(v) => setForm((p) => ({ ...p, goodWithKids: v }))} />
-                  <CompatibilitySelect label="����� � ��������" value={form.goodWithDogs} onChange={(v) => setForm((p) => ({ ...p, goodWithDogs: v }))} />
-                  <CompatibilitySelect label="����� � �������" value={form.goodWithCats} onChange={(v) => setForm((p) => ({ ...p, goodWithCats: v }))} />
+                  <TraitScale label={pt.energyLevel.label} lowHint={pt.energyLevel.levels[0]} highHint={pt.energyLevel.levels[4]} clearLabel={sp.clearTrait} value={form.energyLevel} onChange={(v) => setForm((p) => ({ ...p, energyLevel: v }))} />
+                  <TraitScale label={pt.friendlinessLevel.label} lowHint={pt.friendlinessLevel.levels[0]} highHint={pt.friendlinessLevel.levels[4]} clearLabel={sp.clearTrait} value={form.friendlinessLevel} onChange={(v) => setForm((p) => ({ ...p, friendlinessLevel: v }))} />
+                  <TraitScale label={pt.trainingLevel.label} lowHint={pt.trainingLevel.levels[0]} highHint={pt.trainingLevel.levels[4]} clearLabel={sp.clearTrait} value={form.trainingLevel} onChange={(v) => setForm((p) => ({ ...p, trainingLevel: v }))} />
+                  <TraitScale label={pt.independenceLevel.label} lowHint={pt.independenceLevel.levels[0]} highHint={pt.independenceLevel.levels[4]} clearLabel={sp.clearTrait} value={form.independenceLevel} onChange={(v) => setForm((p) => ({ ...p, independenceLevel: v }))} />
+                  <CompatibilitySelect label={pt.compatYesKids} yesLabel={compatYes} noLabel={compatNo} unknownLabel={compatUnknown} value={form.goodWithKids} onChange={(v) => setForm((p) => ({ ...p, goodWithKids: v }))} />
+                  <CompatibilitySelect label={pt.compatYesDogs} yesLabel={compatYes} noLabel={compatNo} unknownLabel={compatUnknown} value={form.goodWithDogs} onChange={(v) => setForm((p) => ({ ...p, goodWithDogs: v }))} />
+                  <CompatibilitySelect label={pt.compatYesCats} yesLabel={compatYes} noLabel={compatNo} unknownLabel={compatUnknown} value={form.goodWithCats} onChange={(v) => setForm((p) => ({ ...p, goodWithCats: v }))} />
                 </div>
               ) : null}
 
               {step === 3 ? (
                 <div className="grid gap-3 sm:grid-cols-2">
                   <select value={form.adoptionStatus} onChange={(e) => setForm((p) => ({ ...p, adoptionStatus: e.target.value as FormState['adoptionStatus'] }))} className="rounded-lg border border-border bg-background px-3 py-2 text-sm">
-                    <option value="available">���� ���</option>
-                    <option value="reserved">������������</option>
-                    <option value="adopted">���������</option>
-                    <option value="on_treatment">�� �������</option>
-                    <option value="not_for_adoption">�� ��������������</option>
+                    <option value="available">{msl.statusAvailable}</option>
+                    <option value="reserved">{msl.statusReserved}</option>
+                    <option value="adopted">{msl.statusAdopted}</option>
+                    <option value="on_treatment">{msl.statusTreatment}</option>
+                    <option value="not_for_adoption">{msl.statusNotForAdoption}</option>
                   </select>
                   <label className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm">
                     <input type="checkbox" checked={form.isPublished} onChange={(e) => setForm((p) => ({ ...p, isPublished: e.target.checked }))} />
-                    �����������
+                    {sp.publishCheckbox}
                   </label>
                 </div>
               ) : null}
@@ -474,15 +484,15 @@ export default function MyShelterPetFormPage() {
 
             <div className="mt-6 flex flex-wrap gap-2">
               <Button type="button" variant="outline" onClick={() => setStep((s) => Math.max(1, s - 1))} disabled={step === 1 || saving}>
-                �����
+                {t.common.back}
               </Button>
               {step < 3 ? (
                 <Button type="button" onClick={() => setStep((s) => Math.min(3, s + 1))} disabled={!canNext()}>
-                  �����
+                  {t.common.next}
                 </Button>
               ) : (
                 <Button type="button" onClick={() => void onSubmit()} disabled={saving || !canNext()}>
-                  {saving ? '����������...' : isEdit ? '��������� ���������' : '�������� �������'}
+                  {saving ? t.common.submitting : isEdit ? sp.savePet : sp.addPetButton}
                 </Button>
               )}
             </div>

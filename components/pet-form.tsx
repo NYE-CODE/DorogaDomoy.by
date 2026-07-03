@@ -23,6 +23,11 @@ import {
 import { petScenarioFormToggleActiveClass } from '@/shared/lib/pet-helpers';
 import { clearPetFormDraft, loadPetFormDraft, savePetFormDraft } from '@/shared/lib/pet-form-draft';
 import { RouteProgress } from '@/shared/ui/molecules';
+import {
+  APPROXIMATE_AGE_LESS_2,
+  APPROXIMATE_AGE_MORE_2,
+  APPROXIMATE_AGE_PRESET_VALUES,
+} from '@/shared/lib/approximate-age-presets';
 
 const MAX_DESCRIPTION = 500;
 
@@ -40,15 +45,15 @@ interface PetFormProps {
   onSubmit: (data: PetFormData) => void;
   initialData?: Pet;
   isEditing?: boolean;
-  /** ��� ��������: ������ ������ � ������� ��������/�����, � ����� �� ���������� ����� */
+  /** See PetFormProps */
   initialStatus?: PetStatus;
-  /** ����� �����������: modal � ������ ��������, page � ������� �� �������� ��� ������� */
+  /** See PetFormProps */
   variant?: 'modal' | 'page';
-  /** ��� true � variant=page: ��� ���������� ������� (��������), ����� �� ������ header � ����� */
+  /** See PetFormProps */
   renderStepHeaderExternally?: boolean;
-  /** ���������� ��� ����� ���� � �������� ����� ���������� ������ ���� ��� ������� */
+  /** See PetFormProps */
   onStepChange?: (info: PetFormStepInfo) => void;
-  /** ��������� �������������� ��� �������� (�������� �� ���� ��������) */
+  /** See PetFormProps */
   prefillPartial?: Partial<PetFormData> | null;
 }
 
@@ -71,24 +76,24 @@ export interface PetFormData {
     phone?: string;
     viber?: string;
   };
-  /** ������������ �������� �� ������� (������ ��� ��������) */
+  /** See PetFormProps */
   useProfileContacts?: boolean;
-  /** ��� ��� ����������� � ���������� (���� �� �� �������) */
+  /** See PetFormProps */
   contactName?: string;
-  /** ������� ��� ���������� (���� �� �� �������) */
+  /** See PetFormProps */
   contactPhone?: string;
-  /** �������� � ��������� ������������������ (������ ��� ��������) */
+  /** See PetFormProps */
   agreeToPrivacy?: boolean;
-  /** ������� �� ������ */
+  /** See PetFormProps */
   rewardMode?: 'points' | 'money';
   rewardAmountByn?: number;
-  /** ������� �� (�����): ����� ������� ����� */
+  /** See PetFormProps */
   registrationAuthority?: string;
-  /** ����� ������ */
+  /** See PetFormProps */
   registrationTokenNumber?: string;
 }
 
-/** ����� � ����� �� ����� �� ���������� � ������� ������ (����� �����). */
+/** See PetFormProps */
 function defaultsFromSelectedCity(selectedCity: string): Pick<PetFormData, 'city' | 'location'> {
   const trimmed = selectedCity.trim();
   if (!trimmed) {
@@ -160,9 +165,9 @@ function formDataFromPet(pet: Pet): PetFormData {
 }
 
 const animalTypeOptions: { value: AnimalType; icon: string }[] = [
-  { value: 'cat', icon: '??' },
-  { value: 'dog', icon: '??' },
-  { value: 'other', icon: '??' },
+  { value: 'cat', icon: '🐱' },
+  { value: 'dog', icon: '🐶' },
+  { value: 'other', icon: '🐾' },
 ];
 
 const genderOptions: { value: Gender }[] = [
@@ -171,7 +176,7 @@ const genderOptions: { value: Gender }[] = [
   { value: 'female' },
 ];
 
-const agePresetValues = ['', '����� 2 ����', '����� 2 ����'] as const;
+const agePresetValues = APPROXIMATE_AGE_PRESET_VALUES;
 
 const TOTAL_STEPS_CREATE = 5;
 const TOTAL_STEPS_EDIT = 5;
@@ -194,10 +199,10 @@ export function PetForm({
   useScrollLock(variant === 'modal');
 
   const getAgeLabel = (value: string, short: boolean) => {
-    const pf = t.petForm as { ageUnknownShort?: string; ageLess2?: string; ageLess2Short?: string; ageMore2?: string; ageMore2Short?: string };
-    if (value === '') return short ? (pf.ageUnknownShort ?? '�����.') : t.pet.gender.unknown;
-    if (value === '����� 2 ����') return short ? (pf.ageLess2Short ?? '< 2 ����') : (pf.ageLess2 ?? '����� 2 ����');
-    if (value === '����� 2 ����') return short ? (pf.ageMore2Short ?? '> 2 ����') : (pf.ageMore2 ?? '����� 2 ����');
+    const pf = t.petForm;
+    if (value === '') return short ? pf.ageUnknownShort : t.pet.gender.unknown;
+    if (value === APPROXIMATE_AGE_LESS_2) return short ? pf.ageLess2Short : pf.ageLess2;
+    if (value === APPROXIMATE_AGE_MORE_2) return short ? pf.ageMore2Short : pf.ageMore2;
     return value;
   };
 
@@ -280,7 +285,7 @@ export function PetForm({
     }
   }, [initialData?.id, user?.id, prefillPartial, initialStatus]);
 
-  /** ������������ ����� ���� 3 ��� ����� ������ � ������� (������ �������� ����������). */
+  /** See PetFormProps */
   useEffect(() => {
     if (initialData || isEditing) return;
     const fromFilter = defaultsFromSelectedCity(selectedCity);
@@ -345,17 +350,19 @@ export function PetForm({
   const step4Errors = () => {
     const errs: Record<string, string> = {};
     if (!formData.description?.trim()) errs.description = t.petForm.enterDescription;
-    else if (formData.description.length > MAX_DESCRIPTION) errs.description = `����. ${MAX_DESCRIPTION} ��������`;
+    else if (formData.description.length > MAX_DESCRIPTION) {
+      errs.description = t.petForm.descriptionTooLong.replace('{max}', String(MAX_DESCRIPTION));
+    }
     if (formData.status === 'searching' && formData.rewardMode === 'money') {
       const amount = Number(formData.rewardAmountByn);
       if (!Number.isFinite(amount) || amount <= 0) {
-        errs.rewardAmountByn = '������� ����� � BYN';
+        errs.rewardAmountByn = t.petForm.rewardAmountRequired;
       }
     }
     const raLen = (formData.registrationAuthority ?? '').trim().length;
     const rtLen = (formData.registrationTokenNumber ?? '').trim().length;
-    if (raLen > 300) errs.registrationAuthority = '����. 300 ��������';
-    if (rtLen > 80) errs.registrationTokenNumber = '����. 80 ��������';
+    if (raLen > 300) errs.registrationAuthority = t.petForm.registrationAuthorityTooLong;
+    if (rtLen > 80) errs.registrationTokenNumber = t.petForm.registrationTokenTooLong;
     return errs;
   };
 
@@ -424,7 +431,7 @@ export function PetForm({
       if (!isEditing && user?.id) clearPetFormDraft(user.id);
       onClose();
     } catch {
-      // ������ � ������� �� �����, �������� ������� toast
+      // (see i18n)
     }
   };
 
@@ -463,7 +470,7 @@ export function PetForm({
 
   const content = (
     <>
-      {/* Header � ��� renderStepHeaderExternally �������� ������� (PostPage) */}
+      {/* Header — hidden when parent renders step header (PostPage) */}
       {!(variant === 'page' && renderStepHeaderExternally) && (
       <div className={`sticky top-0 z-10 ${variant === 'page' ? 'pb-6 border-b border-border' : 'bg-white/95 dark:bg-card/95 backdrop-blur-sm border-b border-border/60 dark:border-border rounded-t-2xl'}`}>
         {variant === 'page' ? (
@@ -475,7 +482,7 @@ export function PetForm({
                 className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground dark:hover:text-white text-sm font-medium"
               >
                 <ChevronLeft className="w-5 h-5" />
-                {t.common.back}
+                {t.petForm.statusToggleLost}
               </button>
               <button
                 type="button"
@@ -541,17 +548,17 @@ export function PetForm({
               ) : null}
             </div>
           ) : null}
-          {/* stepDesc ��� ����� 2�5 � ������ �����, ��� � ������� */}
+          {/* stepDesc for steps 2–5 below the title, same as modal */}
           {variant === 'page' && step >= 2 && currentStepDesc && (
             <p className="text-muted-foreground mb-6">{currentStepDesc}</p>
           )}
-          {/* Step 1: ��� �������, ���, ����, ������� */}
+          {/* Step 1: type, breed, color, gender */}
           {step === 1 && (
             <div className="space-y-6">
               {!isEditing && !initialStatus && (
                 <div className="mb-8 pb-6 border-b border-border">
                   <label className="block text-sm font-semibold text-muted-foreground uppercase mb-3">
-                    ��� ����������
+                    {t.petForm.whatHappened}
                   </label>
                   <div className="flex gap-3">
                     <button
@@ -563,7 +570,7 @@ export function PetForm({
                           : 'bg-muted text-muted-foreground hover:bg-muted dark:bg-secondary dark:text-secondary-foreground dark:hover:bg-secondary/80'
                       }`}
                     >
-                      �������
+                      {t.petForm.statusToggleLost}
                     </button>
                     <button
                       type="button"
@@ -574,7 +581,7 @@ export function PetForm({
                           : 'bg-muted text-muted-foreground hover:bg-muted dark:bg-secondary dark:text-secondary-foreground dark:hover:bg-secondary/80'
                       }`}
                     >
-                      �������
+                      {t.petForm.statusToggleFound}
                     </button>
                   </div>
                 </div>
@@ -619,7 +626,7 @@ export function PetForm({
                         type="text"
                         value={formData.breed}
                         onChange={(e) => setFormData({ ...formData, breed: e.target.value.slice(0, 80) })}
-                        placeholder="������� ������ (�������������)"
+                        placeholder={t.petForm.otherBreedPlaceholder}
                         maxLength={80}
                         className={variant === 'page' ? 'w-full px-4 py-3 border border-black/10 dark:border-border rounded-lg bg-input-background dark:bg-input-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent' : 'w-full px-4 py-3 border border-border dark:border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent'}
                       />
@@ -628,7 +635,7 @@ export function PetForm({
                         breeds={formData.animalType === 'cat' ? CAT_BREEDS : DOG_BREEDS}
                         value={formData.breed}
                         onChange={(breed) => setFormData({ ...formData, breed })}
-                        placeholder="�������� ��� ������� ������"
+                        placeholder={t.petForm.selectOrEnterBreed}
                         className={variant === 'page' ? 'bg-input-background dark:bg-input-background border-black/10 dark:border-border' : undefined}
                       />
                     )}
@@ -683,7 +690,7 @@ export function PetForm({
                         }`}
                       >
                         {isMobile && opt.value === 'unknown'
-                          ? ((t.pet.gender as { unknownShort?: string }).unknownShort ?? '�����.')
+                          ? t.pet.gender.unknownShort
                           : t.pet.gender[opt.value]}
                       </button>
                     ))}
@@ -713,7 +720,7 @@ export function PetForm({
                       type="text"
                       value={formData.approximateAge}
                       onChange={(e) => setFormData({ ...formData, approximateAge: e.target.value })}
-                      placeholder="����.: 2 ����"
+                      placeholder={t.petForm.ageExamplePlaceholder}
                       className="block mt-1.5 w-full px-4 py-3 border border-border dark:border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
                   )}
@@ -722,16 +729,16 @@ export function PetForm({
             </div>
           )}
 
-          {/* Step 2: ���� � ����� �� ������� */}
+          {/* Step 2: photos */}
           {step === 2 && (
             <div>
               <div className="text-right text-sm text-muted-foreground mb-4">
-                {formData.photos.length} �� {maxPhotos}
+                {t.petForm.photosUploadedCount.replace('{current}', String(formData.photos.length)).replace('{max}', String(maxPhotos))}
               </div>
               <div className="grid grid-cols-3 gap-4 mb-4">
                 {formData.photos.map((photo, index) => (
                   <div key={index} className="relative aspect-square rounded-lg overflow-hidden group">
-                    <img src={photo} alt={`���� ${index + 1}`} className="w-full h-full object-cover" />
+                    <img src={photo} alt={t.petForm.photoAltNumber.replace('{n}', String(index + 1))} className="w-full h-full object-cover" />
                     <button
                       type="button"
                       onClick={() => setFormData({ ...formData, photos: formData.photos.filter((_, i) => i !== index) })}
@@ -757,8 +764,8 @@ export function PetForm({
               {formData.photos.length === 0 && (
                 <label className={`flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary hover:bg-muted/50/50 transition-colors ${errors.photos ? '!border-destructive bg-red-50/50 dark:bg-red-950/20' : ''}`}>
                   <Upload size={48} className="text-muted-foreground mb-4" />
-                  <span className="text-muted-foreground dark:text-foreground font-medium">{(t.petForm as { uploadPhotoHint?: string }).uploadPhotoHint || '������� ��� �������� ����'}</span>
-                  <span className="text-sm text-muted-foreground mt-2">{(t.petForm as { uploadPhotoDrag?: string }).uploadPhotoDrag || '��� ���������� ����� ����'}</span>
+                  <span className="text-muted-foreground dark:text-foreground font-medium">{t.petForm.uploadPhotoHint}</span>
+                  <span className="text-sm text-muted-foreground mt-2">{t.petForm.uploadPhotoDrag}</span>
                   <input
                     type="file"
                     accept="image/*"
@@ -769,13 +776,13 @@ export function PetForm({
                 </label>
               )}
               {formData.photos.length >= maxPhotos && (
-                <p className="text-sm text-muted-foreground text-center py-1">��������� ������������ ���������� ����</p>
+                <p className="text-sm text-muted-foreground text-center py-1">{t.petForm.maxPhotosReached}</p>
               )}
               {errors.photos && <p className="text-xs text-red-500 mt-1">{errors.photos}</p>}
             </div>
           )}
 
-          {/* Step 3: ����� � ����� */}
+          {/* Step 3: address and map */}
           {step === 3 && (
             <div className="space-y-5">
               <div>
@@ -785,7 +792,7 @@ export function PetForm({
                     type="text"
                     value={formData.city}
                     onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                    placeholder="�����, ��. ���������, 1"
+                    placeholder={t.petForm.addressExamplePlaceholder}
                     className={variant === 'page' ? `flex-1 w-full px-4 py-3 border rounded-lg bg-input-background dark:bg-input-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${errors.city ? 'border-destructive' : 'border-black/10 dark:border-border'}` : `flex-1 w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${errors.city ? 'border-destructive' : 'border-border dark:border-border'}`}
                     required
                   />
@@ -806,7 +813,7 @@ export function PetForm({
                       }
                     }}
                     className="px-6 h-12 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-hover transition-colors flex items-center gap-1.5 shrink-0"
-                    title="�������� �� �����"
+                    title={t.petForm.geocodeOnMapTitle}
                   >
                     <Search className="w-4 h-4" />
                     {t.pet.onMap}
@@ -814,11 +821,11 @@ export function PetForm({
                 </div>
                 {errors.city
                   ? <p className="text-xs text-red-500 mt-1">{errors.city}</p>
-                  : <p className="text-xs text-muted-foreground/80 mt-1">������� ����� � ������� ��� ����� ��� �������� ����� �� �����</p>
+                  : <p className="text-xs text-muted-foreground/80 mt-1">{t.petForm.addressMapHint}</p>
                 }
               </div>
               <div>
-                <span className="text-xs font-medium text-muted-foreground/80 uppercase tracking-wide">����� �� ����� *</span>
+                <span className="text-xs font-medium text-muted-foreground/80 uppercase tracking-wide">{t.petForm.mapPointLabel}</span>
                 <div className={`mt-2 rounded-md overflow-hidden border ${variant === 'page' ? 'border-black/10 dark:border-border' : 'border-border'}`}>
                   <LocationPicker
                     initialLocation={formData.location}
@@ -833,7 +840,7 @@ export function PetForm({
             </div>
           )}
 
-          {/* Step 4: �������� � ��� � ������� */}
+          {/* Step 4: description and registration */}
           {step === 4 && (
             <div>
               <div className="flex justify-between items-center mb-3">
@@ -909,7 +916,7 @@ export function PetForm({
               {formData.status === 'searching' && (
               <div className="mt-8 border-t border-border pt-6">
                 <div className="text-sm font-semibold text-muted-foreground uppercase mb-3">
-                  {(t.petForm as { rewardTitle?: string }).rewardTitle ?? '������� �� ������'}
+                  {t.petForm.rewardTitle}
                 </div>
                 <div className="space-y-3">
                   <label className="flex items-center gap-3 p-4 border border-border rounded-lg cursor-pointer hover:bg-muted/50 dark:hover:bg-muted/10 transition-colors">
@@ -927,8 +934,7 @@ export function PetForm({
                       className="w-4 h-4 text-primary"
                     />
                     <span className="text-foreground/90">
-                      {(t.petForm as { rewardPointsMode?: string }).rewardPointsMode ??
-                        '������� ���������: ����'}
+                      {t.petForm.rewardPointsMode}
                     </span>
                   </label>
                   <label className="flex items-center gap-3 p-4 border border-border rounded-lg cursor-pointer hover:bg-muted/50 dark:hover:bg-muted/10 transition-colors">
@@ -946,8 +952,7 @@ export function PetForm({
                       className="w-4 h-4 text-primary"
                     />
                     <span className="text-foreground/90">
-                      {(t.petForm as { rewardMoneyMode?: string }).rewardMoneyMode ??
-                        '�������� �������������� (�������� ��������)'}
+                      {t.petForm.rewardMoneyMode}
                     </span>
                   </label>
                 </div>
@@ -955,8 +960,7 @@ export function PetForm({
                 {formData.rewardMode === 'money' ? (
                   <div className="mt-4">
                     <label className="block text-sm font-medium text-foreground/90 mb-2">
-                      {(t.petForm as { rewardAmountLabel?: string }).rewardAmountLabel ??
-                        '����� ��������������, BYN'}
+                      {t.petForm.rewardAmountLabel}
                     </label>
                     <input
                       type="number"
@@ -976,14 +980,12 @@ export function PetForm({
                     />
                     {errors.rewardAmountByn && <p className="text-xs text-red-500 mt-1">{errors.rewardAmountByn}</p>}
                     <p className="text-xs text-muted-foreground mt-2">
-                      {(t.petForm as { rewardMoneyHint?: string }).rewardMoneyHint ??
-                        '��������� �� ��������� � �������� �������: �������� ������� �������������� �����.'}
+                      {t.petForm.rewardMoneyHint}
                     </p>
                   </div>
                 ) : (
                   <p className="text-xs text-muted-foreground mt-3">
-                    {(t.petForm as { rewardPointsHint?: string }).rewardPointsHint ??
-                      '���� �������� ���������� ��������� �� ID ����� �������� ����������, ������� �������� ����.'}
+                    {t.petForm.rewardPointsHint}
                   </p>
                 )}
               </div>
@@ -991,7 +993,7 @@ export function PetForm({
             </div>
           )}
 
-          {/* Step 5: �������� � ��� �������� � �������������� */}
+          {/* Step 5: contacts and privacy */}
           {step === 5 && (
             <div className="space-y-6">
               <div>
@@ -1030,7 +1032,7 @@ export function PetForm({
                       type="text"
                       value={formData.contactName ?? ''}
                       onChange={(e) => setFormData({ ...formData, contactName: e.target.value })}
-                      placeholder="���� ���"
+                      placeholder={t.petForm.contactNamePlaceholder}
                       className={variant === 'page' ? `w-full px-4 py-3 border rounded-lg bg-input-background dark:bg-input-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${errors.contactName ? 'border-destructive' : 'border-border'}` : `w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${errors.contactName ? 'border-destructive' : 'border-border dark:border-border'}`}
                     />
                     {errors.contactName && <p className="text-xs text-red-500 mt-1">{errors.contactName}</p>}
@@ -1096,7 +1098,7 @@ export function PetForm({
                 }}
                 className={`flex items-center justify-center gap-1.5 px-6 py-3 text-white font-medium rounded-lg transition-colors ${variant === 'page' ? 'w-full h-12 bg-primary hover:bg-primary-hover text-lg' : 'bg-primary hover:bg-primary/90 text-sm'}`}
               >
-                {variant === 'page' ? (t.petForm as { nextStep?: string }).nextStep || '��������� ���' : t.common.next}
+                {variant === 'page' ? t.petForm.nextStep : t.common.next}
               </button>
             ) : (
               <button

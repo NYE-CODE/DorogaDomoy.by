@@ -235,13 +235,13 @@ export default function CreateAdPage() {
         <Header />
         <main className="flex-1 flex flex-col items-center justify-center text-center">
           <p className="text-lg text-muted-foreground mb-6">
-            {(t.app as { loginToCreate?: string }).loginToCreate ?? '������� ��� �����������������, ����� ������� ����������'}
+            {t.app.loginToCreate}
           </p>
           <button
             onClick={openAuthModal}
             className="px-6 py-3 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 font-medium"
           >
-            {(t.auth as { login?: string }).login ?? '�����'}
+            {t.auth.login}
           </button>
         </main>
       </div>

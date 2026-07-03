@@ -47,10 +47,10 @@ interface FiltersProps {
   filters: FilterState;
   onFiltersChange: (filters: FilterState) => void;
   onCreateClick?: () => void;
-  /** ���������� �����: ������ ������ �������� ��� ������, � ������� �������� */
+  /** Embedded mode: no outer card chrome, used inside drawers */
   embedded?: boolean;
   onClose?: () => void;
-  /** ������ �� �������� ������: �������� ������� + ������������� �������������� */
+  /** Layout variant: standalone panel, embedded, or full page */
   variant?: 'standalone' | 'embedded' | 'page';
 }
 
