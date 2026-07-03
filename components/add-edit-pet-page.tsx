@@ -59,7 +59,14 @@ const emptyForm = (): ProfilePetFormData => ({
 
 const MAX_PROFILE_UPLOAD_BYTES = 750 * 1024;
 
-/** ���� � �������� �� ���� ��� ������� ������� (��� �����������). */
+class PhotoPrepareError extends Error {
+  constructor(public readonly kind: "process" | "tooLarge") {
+    super(kind);
+    this.name = "PhotoPrepareError";
+  }
+}
+
+/** Instagram guide for pet photos (external link). */
 const PROFILE_PET_PHOTO_GUIDE_INSTAGRAM_URL =
   "https://www.instagram.com/p/DXpRblXiJwT/?img_index=1";
 
@@ -74,10 +81,10 @@ async function prepareProfilePhotoForUpload(file: File): Promise<File> {
     maxSizeBytes: MAX_PROFILE_UPLOAD_BYTES,
   });
   if (!compressed) {
-    throw new Error("�� ������� ���������� �����������");
+    throw new PhotoPrepareError("process");
   }
   if (compressed.size > MAX_PROFILE_UPLOAD_BYTES) {
-    throw new Error("���� ������� �������. �������� ������ ��� ��������� ���.");
+    throw new PhotoPrepareError("tooLarge");
   }
   return new File([compressed], buildCompressedPhotoName(file), {
     type: "image/jpeg",
@@ -210,7 +217,15 @@ export function AddEditPetContent() {
       });
       toast.success(f.toastPhotoAdded);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : t.common.error);
+      if (error instanceof PhotoPrepareError) {
+        toast.error(
+          error.kind === "tooLarge"
+            ? t.common.toasts.photoTooLargeAfterCompress
+            : t.common.toasts.imageProcessError,
+        );
+      } else {
+        toast.error(error instanceof Error ? error.message : t.common.error);
+      }
     } finally {
       setIsUploadingPhotos(false);
       setUploadingSlotIndex(null);
@@ -842,7 +857,7 @@ export function AddEditPetContent() {
                     : "bg-green-600 hover:bg-green-700"
                 }`}
               >
-                {isSubmitting ? "����������..." : (isEditMode ? f.submitSave : f.submitAdd)}
+                {isSubmitting ? t.common.submitting : (isEditMode ? f.submitSave : f.submitAdd)}
               </button>
             )}
           </div>

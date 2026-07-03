@@ -226,7 +226,7 @@ export function MyAdsPage({
                 onClick={onBack}
                 className="mb-3 text-sm font-medium text-primary underline-offset-4 hover:underline"
               >
-                ? {t.header.searchAds}
+                ← {t.header.searchAds}
               </button>
               <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">{t.myAds.title}</h1>
               <p className="mt-2 max-w-2xl text-sm text-muted-foreground sm:text-base">{t.myAds.subtitle}</p>

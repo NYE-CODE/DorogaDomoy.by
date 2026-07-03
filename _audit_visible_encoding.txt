@@ -1,0 +1,89 @@
+components/add-edit-pet-page.tsx:77: throw new Error("�� ������� ���������� �����������");
+components/add-edit-pet-page.tsx:80: throw new Error("���� ������� �������. �������� ������ ��� ��������� ���.");
+components/add-edit-pet-page.tsx:845: {isSubmitting ? "����������..." : (isEditMode ? f.submitSave : f.submitAdd)}
+components/pet-form.tsx:174: const agePresetValues = ['', '����� 2 ����', '����� 2 ����'] as const;
+components/pet-form.tsx:198: if (value === '') return short ? (pf.ageUnknownShort ?? '�����.') : t.pet.gender.unknown;
+components/pet-form.tsx:199: if (value === '����� 2 ����') return short ? (pf.ageLess2Short ?? '< 2 ����') : (pf.ageLess2 ?? '����� 2 ����');
+components/pet-form.tsx:200: if (value === '����� 2 ����') return short ? (pf.ageMore2Short ?? '> 2 ����') : (pf.ageMore2 ?? '����� 2 ����');
+components/pet-form.tsx:348: else if (formData.description.length > MAX_DESCRIPTION) errs.description = `����. ${MAX_DESCRIPTION} ��������`;
+components/pet-form.tsx:352: errs.rewardAmountByn = '������� ����� � BYN';
+components/pet-form.tsx:357: if (raLen > 300) errs.registrationAuthority = '����. 300 ��������';
+components/pet-form.tsx:358: if (rtLen > 80) errs.registrationTokenNumber = '����. 80 ��������';
+components/pet-form.tsx:554: ��� ����������
+components/pet-form.tsx:566: �������
+components/pet-form.tsx:577: �������
+components/pet-form.tsx:622: placeholder="������� ������ (�������������)"
+components/pet-form.tsx:631: placeholder="�������� ��� ������� ������"
+components/pet-form.tsx:686: ? ((t.pet.gender as { unknownShort?: string }).unknownShort ?? '�����.')
+components/pet-form.tsx:716: placeholder="����.: 2 ����"
+components/pet-form.tsx:729: {formData.photos.length} �� {maxPhotos}
+components/pet-form.tsx:734: <img src={photo} alt={`���� ${index + 1}`} className="w-full h-full object-cover" />
+components/pet-form.tsx:760: <span className="text-muted-foreground dark:text-foreground font-medium">{(t.petForm as { uploadPhotoHint?: string }).uploadPhotoHint || '������� ��� �������� �
+components/pet-form.tsx:761: <span className="text-sm text-muted-foreground mt-2">{(t.petForm as { uploadPhotoDrag?: string }).uploadPhotoDrag || '��� ���������� ����� ����'}</span>
+components/pet-form.tsx:772: <p className="text-sm text-muted-foreground text-center py-1">��������� ������������ ���������� ����</p>
+components/pet-form.tsx:788: placeholder="�����, ��. ���������, 1"
+components/pet-form.tsx:809: title="�������� �� �����"
+components/pet-form.tsx:817: : <p className="text-xs text-muted-foreground/80 mt-1">������� ����� � ������� ��� ����� ��� �������� ����� �� �����</p>
+components/pet-form.tsx:821: <span className="text-xs font-medium text-muted-foreground/80 uppercase tracking-wide">����� �� ����� *</span>
+components/pet-form.tsx:912: {(t.petForm as { rewardTitle?: string }).rewardTitle ?? '������� �� ������'}
+components/pet-form.tsx:931: '������� ���������: ����'}
+components/pet-form.tsx:950: '�������� �������������� (�������� ��������)'}
+components/pet-form.tsx:959: '����� ��������������, BYN'}
+components/pet-form.tsx:980: '��������� �� ��������� � �������� �������: �������� ������� �������������� �����.'}
+components/pet-form.tsx:986: '���� �������� ���������� ��������� �� ID ����� �������� ����������, ������� �������� ����.'}
+components/pet-form.tsx:1033: placeholder="���� ���"
+components/pet-form.tsx:1099: {variant === 'page' ? (t.petForm as { nextStep?: string }).nextStep || '��������� ���' : t.common.next}
+components/auth/AuthModal.tsx:240: {(t.auth as { registerRoleLabel?: string }).registerRoleLabel ?? '����'}
+components/auth/AuthModal.tsx:251: {(t.auth as { registerAsUser?: string }).registerAsUser ?? '������������'}
+components/auth/AuthModal.tsx:261: {(t.auth as { registerAsVolunteer?: string }).registerAsVolunteer ?? '�������'}
+src/pages/CreateAdPage.tsx:238: {(t.app as { loginToCreate?: string }).loginToCreate ?? '������� ��� �����������������, ����� ������� ����������'}
+src/pages/CreateAdPage.tsx:244: {(t.auth as { login?: string }).login ?? '�����'}
+src/pages/MyShelterPetFormPage.tsx:66: energyLevel: ['���������', '����� ��������'],
+src/pages/MyShelterPetFormPage.tsx:67: friendlinessLevel: ['����������', '����� ����������'],
+src/pages/MyShelterPetFormPage.tsx:68: trainingLevel: ['��� �������', '������� ��������'],
+src/pages/MyShelterPetFormPage.tsx:69: independenceLevel: ['����� ��������', '����� ����'],
+src/pages/MyShelterPetFormPage.tsx:94: ��������
+src/pages/MyShelterPetFormPage.tsx:133: { v: 'yes', t: '��' },
+src/pages/MyShelterPetFormPage.tsx:134: { v: 'no', t: '���' },
+src/pages/MyShelterPetFormPage.tsx:135: { v: 'unknown', t: '�� ����' },
+src/pages/MyShelterPetFormPage.tsx:229: if (step === 1) return '��� 1 �� 3: ����';
+src/pages/MyShelterPetFormPage.tsx:230: if (step === 2) return '��� 2 �� 3: � �������';
+src/pages/MyShelterPetFormPage.tsx:231: return '��� 3 �� 3: ����������';
+src/pages/MyShelterPetFormPage.tsx:352: const pageTitle = isEdit ? '�������������� ������� ������' : '���������� ������� ������';
+src/pages/MyShelterPetFormPage.tsx:364: {t.petForm.step} {step} {t.petForm.of} {totalSteps}: {stepTitle.replace(/^��� \d+ �� \d+: /, '')}
+src/pages/MyShelterPetFormPage.tsx:413: <input value={form.nickname} onChange={(e) => setForm((p) => ({ ...p, nickname: e.target.value }))} className="rounded-lg border border-border bg-background px-
+src/pages/MyShelterPetFormPage.tsx:415: <option value="cat">�����</option>
+src/pages/MyShelterPetFormPage.tsx:416: <option value="dog">������</option>
+src/pages/MyShelterPetFormPage.tsx:417: <option value="other">������</option>
+src/pages/MyShelterPetFormPage.tsx:419: <input value={form.breed} onChange={(e) => setForm((p) => ({ ...p, breed: e.target.value }))} className="rounded-lg border border-border bg-background px-3 py-2
+src/pages/MyShelterPetFormPage.tsx:421: <option value="unknown">��� ����������</option>
+src/pages/MyShelterPetFormPage.tsx:422: <option value="male">�����</option>
+src/pages/MyShelterPetFormPage.tsx:423: <option value="female">�����</option>
+src/pages/MyShelterPetFormPage.tsx:425: <input value={form.approximateAge} onChange={(e) => setForm((p) => ({ ...p, approximateAge: e.target.value }))} className="rounded-lg border border-border bg-ba
+src/pages/MyShelterPetFormPage.tsx:426: <input value={form.colorsCsv} onChange={(e) => setForm((p) => ({ ...p, colorsCsv: e.target.value }))} className="rounded-lg border border-border bg-background p
+src/pages/MyShelterPetFormPage.tsx:428: <option value="disabled">������������</option>
+src/pages/MyShelterPetFormPage.tsx:429: <option value="treatment">��������� �������</option>
+src/pages/MyShelterPetFormPage.tsx:430: <option value="good">�������</option>
+src/pages/MyShelterPetFormPage.tsx:431: <option value="excellent">��������</option>
+src/pages/MyShelterPetFormPage.tsx:434: <option value="smooth">������� ������</option>
+src/pages/MyShelterPetFormPage.tsx:435: <option value="semi">�����������</option>
+src/pages/MyShelterPetFormPage.tsx:436: <option value="fluffy">��������</option>
+src/pages/MyShelterPetFormPage.tsx:438: <textarea value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} className="min-h-24 rounded-lg border border-border
+src/pages/MyShelterPetFormPage.tsx:443: <h3 className="text-sm font-semibold text-foreground">�������� � �������������</h3>
+src/pages/MyShelterPetFormPage.tsx:445: �������� ������� �������� ��������� ������� ��� ���� ����� �����. ����� ����������.
+src/pages/MyShelterPetFormPage.tsx:448: <TraitScale label="������� ����������" field="energyLevel" value={form.energyLevel} onChange={(v) => setForm((p) => ({ ...p, energyLevel: v }))} />
+src/pages/MyShelterPetFormPage.tsx:449: <TraitScale label="������� � �����" field="friendlinessLevel" value={form.friendlinessLevel} onChange={(v) => setForm((p) => ({ ...p, friendlinessLevel: v }))} 
+src/pages/MyShelterPetFormPage.tsx:450: <TraitScale label="�������������" field="trainingLevel" value={form.trainingLevel} onChange={(v) => setForm((p) => ({ ...p, trainingLevel: v }))} />
+src/pages/MyShelterPetFormPage.tsx:451: <TraitScale label="�����������������" field="independenceLevel" value={form.independenceLevel} onChange={(v) => setForm((p) => ({ ...p, independenceLevel: v }))
+src/pages/MyShelterPetFormPage.tsx:452: <CompatibilitySelect label="����� � ������" value={form.goodWithKids} onChange={(v) => setForm((p) => ({ ...p, goodWithKids: v }))} />
+src/pages/MyShelterPetFormPage.tsx:453: <CompatibilitySelect label="����� � ��������" value={form.goodWithDogs} onChange={(v) => setForm((p) => ({ ...p, goodWithDogs: v }))} />
+src/pages/MyShelterPetFormPage.tsx:454: <CompatibilitySelect label="����� � �������" value={form.goodWithCats} onChange={(v) => setForm((p) => ({ ...p, goodWithCats: v }))} />
+src/pages/MyShelterPetFormPage.tsx:461: <option value="available">���� ���</option>
+src/pages/MyShelterPetFormPage.tsx:462: <option value="reserved">������������</option>
+src/pages/MyShelterPetFormPage.tsx:463: <option value="adopted">���������</option>
+src/pages/MyShelterPetFormPage.tsx:464: <option value="on_treatment">�� �������</option>
+src/pages/MyShelterPetFormPage.tsx:465: <option value="not_for_adoption">�� ��������������</option>
+src/pages/MyShelterPetFormPage.tsx:469: �����������
+src/pages/MyShelterPetFormPage.tsx:477: �����
+src/pages/MyShelterPetFormPage.tsx:481: �����
+src/pages/MyShelterPetFormPage.tsx:485: {saving ? '����������...' : isEdit ? '��������� ���������' : '�������� �������'}

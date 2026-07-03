@@ -237,7 +237,7 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
               {mode === 'register' && (
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-foreground">
-                    {(t.auth as { registerRoleLabel?: string }).registerRoleLabel ?? '����'}
+                    {t.auth.registerRoleLabel}
                   </label>
                   <div className="flex flex-col gap-2 sm:flex-row sm:gap-4">
                     <label className="flex cursor-pointer items-center gap-2 text-sm text-foreground">
@@ -248,7 +248,7 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
                         onChange={() => setSignupRole('user')}
                         className="size-4 accent-primary"
                       />
-                      {(t.auth as { registerAsUser?: string }).registerAsUser ?? '������������'}
+                      {t.auth.registerAsUser}
                     </label>
                     <label className="flex cursor-pointer items-center gap-2 text-sm text-foreground">
                       <input
@@ -258,7 +258,7 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
                         onChange={() => setSignupRole('volunteer')}
                         className="size-4 accent-primary"
                       />
-                      {(t.auth as { registerAsVolunteer?: string }).registerAsVolunteer ?? '�������'}
+                      {t.auth.registerAsVolunteer}
                     </label>
                   </div>
                 </div>

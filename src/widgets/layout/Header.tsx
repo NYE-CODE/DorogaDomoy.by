@@ -1,19 +1,19 @@
 /**
- * ������ ����� �������� � ������������ �� ���� ���������.
- * ������ �� landing/app/components/header.
+ * App shell header — re-exports landing header with app-specific props.
+ * See landing/app/components/header.
  */
 import { Header as LandingHeader } from '../../../landing/app/components/header';
 
 export interface HeaderProps {
-  /** ��������� ����� (�� localStorage) � ����� �������, ����� ���������� ��� ������ ���� ��������� */
+  /** Selected city from localStorage; shown when showCitySelector is true */
   selectedCity?: string;
-  /** ��� ����� �� ����� ������ � ������� ������� �������� (SearchPage/ProfilePage) */
+  /** Opens city picker instead of inline selector (SearchPage/ProfilePage) */
   onCityClick?: () => void;
   onCreateClick?: () => void;
   showCitySelector?: boolean;
 }
 
-/** ����� ��������: �������, ������ ��������, ����� �������, �������/����������� */
+/** App header: logo, nav, city, auth */
 export function Header(props?: HeaderProps) {
   return (
     <LandingHeader
