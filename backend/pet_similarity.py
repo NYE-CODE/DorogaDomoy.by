@@ -1,19 +1,20 @@
-"""Поиск похожих объявлений lost ↔ found (rule-based + опционально CLIP-эмбеддинги)."""
+"""Поиск похожих объявлений lost ↔ found (характеристики автора + опционально CLIP)."""
 from __future__ import annotations
 
 import math
-import re
 from typing import Optional
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from breed_catalog import breed_similarity, color_similarity, normalize_text
 from models import Pet
 
 OPPOSITE_STATUS = {"searching": "found", "found": "searching"}
 
 DEFAULT_RADIUS_KM = 15.0
 MAX_RADIUS_KM = 50.0
+MIN_RELEVANCE_SCORE = 32.0
 
 
 def haversine_km(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
@@ -32,29 +33,6 @@ def _bbox_delta(radius_km: float, lat: float) -> tuple[float, float]:
     return dlat, dlng
 
 
-def _normalize_text(value: Optional[str]) -> str:
-    if not value:
-        return ""
-    return re.sub(r"\s+", " ", value.strip().lower())
-
-
-def _breed_matches(a: Optional[str], b: Optional[str]) -> bool:
-    na, nb = _normalize_text(a), _normalize_text(b)
-    if not na or not nb:
-        return False
-    if na == nb:
-        return True
-    return na in nb or nb in na
-
-
-def _colors_overlap(a: list, b: list) -> bool:
-    sa = {_normalize_text(c) for c in (a or []) if c}
-    sb = {_normalize_text(c) for c in (b or []) if c}
-    if not sa or not sb:
-        return False
-    return bool(sa & sb)
-
-
 def _cosine_similarity(vec_a: list[float], vec_b: list[float]) -> float:
     if not vec_a or not vec_b or len(vec_a) != len(vec_b):
         return 0.0
@@ -66,15 +44,113 @@ def _cosine_similarity(vec_a: list[float], vec_b: list[float]) -> float:
     return max(0.0, min(1.0, dot / (na * nb)))
 
 
+def _gender_match_score(source: Pet, candidate: Pet) -> float:
+    sg = normalize_text(source.gender)
+    cg = normalize_text(candidate.gender)
+    if not sg or not cg or sg == "unknown" or cg == "unknown":
+        return 0.0
+    return 1.0 if sg == cg else -0.6
+
+
+def _age_match_score(source: Pet, candidate: Pet) -> float:
+    sa = normalize_text(source.approximate_age)
+    ca = normalize_text(candidate.approximate_age)
+    if not sa or not ca:
+        return 0.0
+    return 1.0 if sa == ca else 0.0
+
+
+def _is_relevant_match(
+    source: Pet,
+    *,
+    score: float,
+    breed_sim: float,
+    color_sim: float,
+    visual: float,
+    distance_km: Optional[float],
+    reasons: list[str],
+) -> bool:
+    if score < MIN_RELEVANCE_SCORE:
+        return False
+
+    has_breed = bool(normalize_text(source.breed))
+    has_colors = bool(source.colors)
+
+    strong_signal = (
+        breed_sim >= 0.5
+        or color_sim >= 0.34
+        or visual >= 0.58
+        or "visual_similarity" in reasons
+    )
+
+    if has_breed and breed_sim < 0.25:
+        # Порода указана автором — без совпадения породы нужны цвет + близость или визуал
+        strong_signal = (
+            visual >= 0.62
+            or (color_sim >= 0.34 and distance_km is not None and distance_km <= 6.0)
+        )
+
+    if has_breed and has_colors and breed_sim < 0.25 and color_sim < 0.34 and visual < 0.58:
+        return False
+
+    if not has_breed and not has_colors:
+        # Только гео — показываем только очень близких
+        return distance_km is not None and distance_km <= 4.0
+
+    return strong_signal
+
+
 def _score_candidate(
     source: Pet,
     candidate: Pet,
     *,
     radius_km: float,
-) -> tuple[float, Optional[float], list[str]]:
+) -> tuple[float, Optional[float], list[str], float, float, float]:
     reasons: list[str] = []
     score = 0.0
     distance_km: Optional[float] = None
+
+    breed_sim = breed_similarity(source.breed, candidate.breed)
+    color_sim = color_similarity(source.colors or [], candidate.colors or [])
+
+    if breed_sim >= 0.95:
+        score += 55.0
+        reasons.append("same_breed")
+    elif breed_sim >= 0.5:
+        score += 35.0
+        reasons.append("similar_breed")
+    elif breed_sim > 0:
+        score += 18.0
+        reasons.append("related_breed")
+    elif normalize_text(source.breed) and normalize_text(candidate.breed):
+        score -= 28.0
+
+    if color_sim >= 0.67:
+        score += 28.0
+        reasons.append("same_color")
+    elif color_sim >= 0.34:
+        score += 16.0
+        reasons.append("similar_color")
+
+    gender_delta = _gender_match_score(source, candidate)
+    if gender_delta > 0:
+        score += 10.0
+        reasons.append("same_gender")
+    elif gender_delta < 0:
+        score -= 8.0
+
+    if _age_match_score(source, candidate) > 0:
+        score += 8.0
+        reasons.append("same_age")
+
+    visual = 0.0
+    src_emb = getattr(source, "photo_embedding", None) or []
+    cand_emb = getattr(candidate, "photo_embedding", None) or []
+    if src_emb and cand_emb:
+        visual = _cosine_similarity(src_emb, cand_emb)
+        if visual >= 0.55:
+            score += 30.0 * visual
+            reasons.append("visual_similarity")
 
     if source.location_lat and source.location_lng and candidate.location_lat and candidate.location_lng:
         distance_km = haversine_km(
@@ -85,38 +161,22 @@ def _score_candidate(
         )
         if distance_km <= radius_km:
             proximity = max(0.0, 1.0 - distance_km / radius_km)
-            score += 30.0 * proximity
-            if distance_km <= 3:
+            # Гео — дополнительный фактор, не главный
+            score += 18.0 * proximity
+            if distance_km <= 2:
                 reasons.append("very_nearby")
-            elif distance_km <= 8:
+            elif distance_km <= 6:
                 reasons.append("nearby")
             else:
                 reasons.append("same_area")
-        elif _normalize_text(source.city) and _normalize_text(source.city) == _normalize_text(candidate.city):
-            score += 12.0
+        elif normalize_text(source.city) and normalize_text(source.city) == normalize_text(candidate.city):
+            score += 6.0
             reasons.append("same_city")
-    elif _normalize_text(source.city) and _normalize_text(source.city) == _normalize_text(candidate.city):
-        score += 18.0
+    elif normalize_text(source.city) and normalize_text(source.city) == normalize_text(candidate.city):
+        score += 8.0
         reasons.append("same_city")
 
-    if _breed_matches(source.breed, candidate.breed):
-        score += 15.0
-        reasons.append("same_breed")
-
-    if _colors_overlap(source.colors or [], candidate.colors or []):
-        score += 12.0
-        reasons.append("same_color")
-
-    src_emb = getattr(source, "photo_embedding", None) or []
-    cand_emb = getattr(candidate, "photo_embedding", None) or []
-    if src_emb and cand_emb:
-        visual = _cosine_similarity(src_emb, cand_emb)
-        if visual >= 0.55:
-            score += 25.0 * visual
-            reasons.append("visual_similarity")
-
-    score += 25.0  # базовый вес: противоположный статус + тот же тип
-    return score, distance_km, reasons
+    return score, distance_km, reasons, breed_sim, color_sim, visual
 
 
 def find_similar_pets(
@@ -156,10 +216,22 @@ def find_similar_pets(
     candidates = db.scalars(stmt).all()
     ranked: list[dict] = []
     for cand in candidates:
-        item_score, dist, reasons = _score_candidate(source_pet, cand, radius_km=radius_km)
+        item_score, dist, reasons, breed_sim, color_sim, visual = _score_candidate(
+            source_pet, cand, radius_km=radius_km
+        )
         if dist is not None and dist > radius_km:
-            if not (_normalize_text(source_pet.city) and _normalize_text(source_pet.city) == _normalize_text(cand.city)):
+            if not (normalize_text(source_pet.city) and normalize_text(source_pet.city) == normalize_text(cand.city)):
                 continue
+        if not _is_relevant_match(
+            source_pet,
+            score=item_score,
+            breed_sim=breed_sim,
+            color_sim=color_sim,
+            visual=visual,
+            distance_km=dist,
+            reasons=reasons,
+        ):
+            continue
         ranked.append(
             {
                 "pet": cand,

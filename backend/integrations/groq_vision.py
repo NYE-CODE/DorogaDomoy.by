@@ -12,6 +12,8 @@ from typing import Any, Optional
 
 import httpx
 
+from breed_catalog import match_breed_to_catalog, normalize_color_list
+
 logger = logging.getLogger(__name__)
 
 UPLOADS_DIR = Path(__file__).resolve().parent.parent / "uploads"
@@ -20,14 +22,21 @@ GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 DEFAULT_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
 
 PROMPT = """Ты помощник сервиса поиска пропавших животных в Беларуси.
-По фото определи только то, что видно. Ответь СТРОГО одним JSON-объектом без markdown:
+По фото определи породу, окрас и пол. Ответь СТРОГО одним JSON-объектом без markdown и без пояснений вне JSON:
 {
   "animal_type": "cat" | "dog" | "other",
-  "breed": "кратко на русском или null",
-  "colors": ["основные окрасы на русском"],
-  "notes": "1 короткое предложение или null"
+  "breed": "конкретная порода на русском (например Немецкая овчарка, Лабрадор-ретривер, Сибирская лайка) или null если не уверен",
+  "colors": ["основной окрас", "дополнительный"],
+  "gender": "male" | "female" | "unknown",
+  "notes": null
 }
-Если не уверен в породе — breed: null. colors — не больше 3 элементов."""
+
+Правила:
+- breed: укажи породу максимально конкретно; не пиши общие описания вместо породы («крупная собака», «пушистый кот» — запрещено).
+- colors: 1–3 окраса на русском (чёрный, белый, рыжий, серый, коричневый, пегий, трёхцветный).
+- gender: male/female если видно, иначе unknown.
+- notes: всегда null (описания не нужны).
+- Если порода неочевидна — breed: null, не выдумывай."""
 
 
 def _groq_api_key() -> Optional[str]:
@@ -101,6 +110,17 @@ def _normalize_image_input(image: str) -> Optional[str]:
     return None
 
 
+def _normalize_gender(value: Any) -> Optional[str]:
+    if not isinstance(value, str):
+        return None
+    v = value.strip().lower()
+    if v in {"male", "m", "самец", "самец.", "кобель"}:
+        return "male"
+    if v in {"female", "f", "самка", "сука"}:
+        return "female"
+    return None
+
+
 def _normalize_animal_type(value: Any) -> Optional[str]:
     if not isinstance(value, str):
         return None
@@ -138,8 +158,8 @@ def analyze_pet_photo(image_data_url: str) -> dict[str, Any]:
 
     payload = {
         "model": _groq_model(),
-        "temperature": 0.1,
-        "max_tokens": 300,
+        "temperature": 0.05,
+        "max_tokens": 400,
         "messages": [
             {
                 "role": "user",
@@ -169,18 +189,21 @@ def analyze_pet_photo(image_data_url: str) -> dict[str, Any]:
         if not isinstance(colors, list):
             colors = []
         colors = [str(c).strip() for c in colors if str(c).strip()][:3]
-        breed = parsed.get("breed")
-        breed_str = str(breed).strip() if breed else None
+        color_keys = normalize_color_list(colors)
+        breed_raw = parsed.get("breed")
+        breed_str = str(breed_raw).strip() if breed_raw else None
         if breed_str and breed_str.lower() in {"null", "none", "неизвестно", "unknown"}:
             breed_str = None
-        notes = parsed.get("notes")
-        notes_str = str(notes).strip() if notes else None
+        animal_type = _normalize_animal_type(parsed.get("animal_type"))
+        breed_matched = match_breed_to_catalog(breed_str, animal_type) if breed_str else None
+        gender = _normalize_gender(parsed.get("gender"))
         return {
             "ai_available": True,
-            "animal_type": _normalize_animal_type(parsed.get("animal_type")),
-            "breed": breed_str,
-            "colors": colors,
-            "notes": notes_str,
+            "animal_type": animal_type,
+            "breed": breed_matched or breed_str,
+            "colors": color_keys or colors,
+            "gender": gender,
+            "notes": None,
         }
     except Exception as e:
         logger.warning("Groq vision analyze failed: %s", e)
