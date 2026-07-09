@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -17,6 +18,8 @@ interface ConfirmDialogProps {
   confirmText?: string;
   cancelText?: string;
   confirmClass?: string;
+  /** Доп. контент между описанием и кнопками (чекбоксы и т.п.) */
+  extra?: ReactNode;
 }
 
 export function ConfirmDialog({
@@ -28,6 +31,7 @@ export function ConfirmDialog({
   confirmText = 'Подтвердить',
   cancelText = 'Отмена',
   confirmClass = 'bg-primary hover:bg-primary/90 text-primary-foreground',
+  extra,
 }: ConfirmDialogProps) {
   const handleConfirm = () => {
     onConfirm();
@@ -45,6 +49,7 @@ export function ConfirmDialog({
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
+        {extra ? <div className="px-1">{extra}</div> : null}
         <DialogFooter>
           <Button variant="outline" onClick={handleCancel}>
             {cancelText}

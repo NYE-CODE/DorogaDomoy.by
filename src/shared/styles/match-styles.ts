@@ -2,18 +2,11 @@
 export const matchOrangeFabClass =
   'bg-primary text-primary-foreground shadow-lg shadow-primary/30 hover:bg-primary-hover transition-[background-color] duration-150 ease-in-out';
 
-/** Активная страница /match — лёгкое кольцо вокруг FAB. */
-export const matchOrangeFabActiveClass =
-  'ring-2 ring-primary/45 ring-offset-2 ring-offset-background';
-
 export const matchScoreBadgeClass =
   'shrink-0 rounded-full bg-primary px-2.5 py-1 text-xs font-bold text-primary-foreground shadow-md sm:px-3 sm:py-1.5 sm:text-sm';
 
 export const matchReasonChipClass =
   'inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary-emphasis dark:bg-primary/18 dark:text-primary-soft';
-
-export const matchLinkClass =
-  'inline-block text-sm font-medium text-primary transition-colors duration-150 ease-in-out hover:text-primary-hover hover:underline';
 
 export const matchChoiceActiveClass =
   'border-primary bg-primary/10 text-foreground';
@@ -31,12 +24,6 @@ export const matchActionsBarClass =
 
 export const matchActionsBarInnerClass =
   'mx-auto grid max-w-[22rem] grid-cols-[1fr_auto_1fr] items-center gap-4 sm:max-w-md lg:max-w-lg lg:gap-12';
-
-/** @deprecated Используйте matchActionsBarClass */
-export const matchMobileActionsClass = matchActionsBarClass;
-
-/** @deprecated Используйте matchActionsBarInnerClass */
-export const matchMobileActionsInnerClass = matchActionsBarInnerClass;
 
 export const matchPassButtonClass =
   'mx-auto flex size-14 shrink-0 items-center justify-center rounded-full border-2 border-rose-200 bg-card text-rose-500 shadow-sm transition-transform duration-150 ease-in-out active:scale-95 disabled:opacity-50 dark:border-rose-500/35 lg:size-16';

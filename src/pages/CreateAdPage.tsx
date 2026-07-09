@@ -18,6 +18,8 @@ import { RouteProgress } from '@/shared/ui/molecules';
 import { profilePetToListCard, type ProfilePetListCard } from '../../utils/profile-pet-display';
 import { PageLoader } from '@/shared/ui/page-loader';
 
+const MIN_DESCRIPTION = 20;
+
 type FlowStep = 'scenario' | 'lost-role' | 'select-pet' | 'form';
 type Scenario = 'lost' | 'found' | null;
 type LostSubflow = 'owner' | 'helping' | null;
@@ -193,6 +195,9 @@ export default function CreateAdPage() {
         colors: formData.colors,
         gender: formData.gender,
         approximateAge: formData.approximateAge,
+        ...(formData.approximateAgeRaw?.trim()
+          ? { approximateAgeRaw: formData.approximateAgeRaw.trim() }
+          : {}),
         status: formData.status,
         description: formData.description,
         city: formData.city,
@@ -207,6 +212,7 @@ export default function CreateAdPage() {
         ...(authorName && { author_name: authorName }),
         registrationAuthority: formData.registrationAuthority,
         registrationTokenNumber: formData.registrationTokenNumber,
+        ...(selectedProfilePetId ? { profilePetId: selectedProfilePetId } : {}),
       });
       if (newPet.moderationStatus === 'approved') {
         toast.success(t.app.adPublished);
@@ -483,16 +489,27 @@ export default function CreateAdPage() {
                   <PageLoader />
                 </div>
               ) : (
-                <PetForm
-                  key={`${selectedProfilePetId ?? 'create'}-${scenario}`}
-                  variant="page"
-                  renderStepHeaderExternally
-                  onStepChange={setStepInfo}
-                  onClose={handleCloseForm}
-                  onSubmit={handleSubmit}
-                  prefillPartial={profilePrefill}
-                  initialStatus={scenario === 'found' ? 'found' : 'searching'}
-                />
+                <>
+                  {profilePrefill &&
+                    (profilePrefill.description?.trim().length ?? 0) < MIN_DESCRIPTION && (
+                      <div
+                        role="status"
+                        className="mb-4 rounded-lg border border-amber-300/80 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-100"
+                      >
+                        {t.petForm.descriptionTooShortSearchHint}
+                      </div>
+                    )}
+                  <PetForm
+                    key={`${selectedProfilePetId ?? 'create'}-${scenario}`}
+                    variant="page"
+                    renderStepHeaderExternally
+                    onStepChange={setStepInfo}
+                    onClose={handleCloseForm}
+                    onSubmit={handleSubmit}
+                    prefillPartial={profilePrefill}
+                    initialStatus={scenario === 'found' ? 'found' : 'searching'}
+                  />
+                </>
               )}
             </div>
           )}

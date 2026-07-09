@@ -11,7 +11,7 @@ from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session, selectinload
 
 from database import get_db
-from models import Pet, PointsTransaction, Report, Shelter, ShelterMembership, User
+from models import Pet, PointsTransaction, ProfilePet, Report, Shelter, ShelterMembership, User
 from schemas import (
     ARCHIVE_HAPPY_KEYWORDS,
     PaginatedPetListResponse,
@@ -27,6 +27,7 @@ from schemas import (
     SightingCreateNested,
     SightingResponse,
     _is_happy_archive,
+    _trim_optional_str,
 )
 from pet_similarity import OPPOSITE_STATUS, find_similar_pets
 from integrations.groq_vision import analyze_pet_photo
@@ -46,6 +47,11 @@ from listing_lifecycle import (
 )
 from time_utils import utc_now
 from upload_utils import delete_upload_url, save_data_image
+from search_normalization import normalize_search_query, resolve_animal_type_from_search
+from pet_create_trace import (
+    collect_empty_pet_create_fields,
+    format_pet_created_from_profile_log,
+)
 from rate_limit import limiter
 from ttl_cache import statistics_cache_get, statistics_cache_set
 
@@ -176,6 +182,7 @@ def pet_to_response(p: Pet) -> PetResponse:
         colors=p.colors or [],
         gender=p.gender,
         approximate_age=p.approximate_age,
+        approximate_age_raw=getattr(p, "approximate_age_raw", None),
         status=p.status,
         description=p.description,
         city=p.city,
@@ -206,6 +213,7 @@ def pet_to_response(p: Pet) -> PetResponse:
         nickname=_shelter_pet_nickname(p),
         registration_authority=getattr(p, "registration_authority", None),
         registration_token_number=getattr(p, "registration_token_number", None),
+        profile_pet_id=getattr(p, "profile_pet_id", None),
     )
 
 
@@ -291,6 +299,7 @@ def _apply_pet_list_filters(
         and author_id is not None
         and author_id == user.id
     )
+    # Публичная выдача: только approved. pending/rejected не утекают без admin / своих объявлений.
     if is_admin:
         if moderation_status:
             stmt = stmt.where(Pet.moderation_status == moderation_status)
@@ -316,11 +325,25 @@ def _apply_pet_list_filters(
             Shelter.moderation_status == "approved",
         )
     if search:
-        stmt = stmt.where(
-            (Pet.description.ilike(f"%{search}%"))
-            | (Pet.breed.ilike(f"%{search}%"))
-            | (Pet.city.ilike(f"%{search}%"))
+        q = normalize_search_query(search) or search.strip()
+        text_match = (
+            (Pet.description.ilike(f"%{q}%"))
+            | (Pet.breed.ilike(f"%{q}%"))
+            | (Pet.city.ilike(f"%{q}%"))
         )
+        # Исходная строка (до lower) — на случай точного регистра в ILIKE-совместимых БД
+        raw = search.strip()
+        if raw and raw != q:
+            text_match = text_match | (
+                (Pet.description.ilike(f"%{raw}%"))
+                | (Pet.breed.ilike(f"%{raw}%"))
+                | (Pet.city.ilike(f"%{raw}%"))
+            )
+        animal_from_search = resolve_animal_type_from_search(search)
+        if animal_from_search:
+            stmt = stmt.where(text_match | (Pet.animal_type == animal_from_search))
+        else:
+            stmt = stmt.where(text_match)
     if author_id:
         stmt = stmt.where(Pet.author_id == author_id)
     if not pet_scope and not shelter_id and not ids:
@@ -558,6 +581,7 @@ def get_similar_pets(
             SimilarPetItem(
                 pet=pet_to_response(item["pet"]),
                 score=item["score"],
+                match_percent=item["match_percent"],
                 distance_km=item["distance_km"],
                 reasons=item["reasons"],
             )
@@ -610,8 +634,7 @@ async def create_pet(
     limit = _max_photos(db)
     if len(data.photos) > limit:
         raise HTTPException(status_code=400, detail=f"Максимум {limit} фото")
-    if data.description and len(data.description) > 500:
-        raise HTTPException(status_code=400, detail="Описание не может быть длиннее 500 символов")
+    # Длина description уже проверена в PetCreate (PET_DESCRIPTION_MIN/MAX_LENGTH).
 
     reward_mode, reward_amount_byn, reward_points = _normalize_reward(
         db=db,
@@ -635,6 +658,14 @@ async def create_pet(
         skip_moderation = True
     initial_status = "approved" if skip_moderation else "pending"
 
+    profile_pet_id = (data.profile_pet_id or "").strip() or None
+    if profile_pet_id:
+        profile = db.scalar(select(ProfilePet).where(ProfilePet.id == profile_pet_id))
+        if not profile:
+            raise HTTPException(status_code=404, detail="Карточка питомца не найдена")
+        if profile.owner_id != user.id and user.role != "admin":
+            raise HTTPException(status_code=403, detail="Нельзя привязать чужую карточку питомца")
+
     pet_id = "pet-" + str(uuid.uuid4())[:8]
     author_name = (data.author_name and data.author_name.strip()) or user.name or "Пользователь"
     now = utc_now()
@@ -651,6 +682,7 @@ async def create_pet(
             colors=data.colors,
             gender=data.gender,
             approximate_age=data.approximate_age,
+            approximate_age_raw=_trim_optional_str(getattr(data, "approximate_age_raw", None)),
             status=data.status,
             description=data.description,
             city=data.city,
@@ -673,11 +705,20 @@ async def create_pet(
             updated_by_user_id=user.id,
             registration_authority=data.registration_authority,
             registration_token_number=data.registration_token_number,
+            profile_pet_id=profile_pet_id,
         )
         db.add(pet)
         db.commit()
         db.refresh(pet)
         committed = True
+        if profile_pet_id:
+            logging.info(
+                format_pet_created_from_profile_log(
+                    profile_pet_id=profile_pet_id,
+                    pet_id=pet.id,
+                    empty_fields=collect_empty_pet_create_fields(data),
+                )
+            )
     except OperationalError as e:
         db.rollback()
         logging.exception("Ошибка при создании объявления: %s", e)
@@ -750,7 +791,7 @@ async def update_pet(
 
     COMMON_FIELDS = {
         "photos", "animal_type", "breed", "colors", "gender",
-        "approximate_age", "status", "description", "city",
+        "approximate_age", "approximate_age_raw", "status", "description", "city",
         "location", "contacts", "is_archived", "archive_reason",
         "reward_mode", "reward_amount_byn", "reward_points", "reward_helper_code",
         "registration_authority", "registration_token_number",
@@ -779,8 +820,9 @@ async def update_pet(
             if len(d["photos"]) > limit:
                 raise HTTPException(status_code=400, detail=f"Максимум {limit} фото")
             d["photos"], new_uploads = _persist_photo_list(d["photos"])
-        if "description" in d and d["description"] and len(d["description"]) > 500:
-            raise HTTPException(status_code=400, detail="Описание не может быть длиннее 500 символов")
+        if "description" in d and d["description"] is not None:
+            # Длина уже проверена в PetUpdate (PET_DESCRIPTION_MIN/MAX_LENGTH).
+            pass
         if "location" in d and d["location"]:
             d["location_lat"] = d["location"]["lat"]
             d["location_lng"] = d["location"]["lng"]

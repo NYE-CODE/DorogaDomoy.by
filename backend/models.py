@@ -59,7 +59,8 @@ class Pet(Base):
     breed = Column(String, nullable=True)
     colors = Column(JSON, default=list)  # list of color strings
     gender = Column(String, default="unknown")  # male, female, unknown
-    approximate_age = Column(String, nullable=True)
+    approximate_age = Column(String, nullable=True)  # категория: менее/более 2 года
+    approximate_age_raw = Column(String, nullable=True)  # исходная строка возраста (для отображения)
     status = Column(String, default="searching")  # searching, found
     description = Column(Text, nullable=False)
     city = Column(String, nullable=False)
@@ -92,8 +93,16 @@ class Pet(Base):
     registration_authority = Column(String, nullable=True)
     registration_token_number = Column(String, nullable=True)
     photo_embedding = Column(JSON, nullable=True)  # CLIP vector for visual similarity
+    # Опциональная связь с карточкой питомца (адресник); при удалении профиля — SET NULL
+    profile_pet_id = Column(
+        String,
+        ForeignKey("profile_pets.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
 
     author = relationship("User", back_populates="pets", foreign_keys=[author_id])
+    profile_pet = relationship("ProfilePet", foreign_keys=[profile_pet_id])
     reports = relationship(
         "Report",
         back_populates="pet",

@@ -64,17 +64,6 @@ def _wait_container_ready(container_id: str, access_token: str) -> None:
     raise InstagramPublishError(f"Media container not ready: {last_status}")
 
 
-def build_feed_caption(*, pet_id: str, city: str | None, status: str | None, site_url: str) -> str:
-    status_text = "Пропал питомец" if status == "searching" else "Найден питомец"
-    city_text = (city or "").strip()
-    location_line = f"\n📍 {city_text}" if city_text else ""
-    return (
-        f"{status_text}{location_line}\n\n"
-        f"Подробнее: {site_url.rstrip('/')}/pet/{pet_id}\n"
-        "#dorogadomoy #питомцы #поискпитомца"
-    )
-
-
 def publish_image(
     *,
     instagram_business_id: str,

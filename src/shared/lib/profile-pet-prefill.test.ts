@@ -54,8 +54,11 @@ describe('profile-pet-prefill', () => {
     const unknownAge = buildPrefillFromProfilePet(createProfilePet({ age: 'щенок' }), labels);
 
     expect(youngPet.approximateAge).toBe('менее 2 года');
+    expect(youngPet.approximateAgeRaw).toBe('1.5');
     expect(adultPet.approximateAge).toBe('более 2 года');
+    expect(adultPet.approximateAgeRaw).toBe('5 лет');
     expect(unknownAge.approximateAge).toBe('');
+    expect(unknownAge.approximateAgeRaw).toBe('щенок');
   });
 
   it('includes key profile details in generated description', () => {
@@ -72,7 +75,24 @@ describe('profile-pet-prefill', () => {
 
     expect(prefill.description).toContain('Кличка: Луна');
     expect(prefill.description).toContain('Белое пятно на лапе');
-    expect(prefill.description).toContain('Номер чипа: 12345');
+    expect(prefill.description).toContain('Чипирован: Да');
+    expect(prefill.description).not.toContain('12345');
     expect(prefill.description).toContain('Медицинская информация: Нужны таблетки');
+    expect(prefill.pendingChipNumber).toBe('12345');
+    expect(prefill.includeChipInDescription).toBe(false);
+  });
+
+  it('reveals chip number in description only when opted in', () => {
+    const prefill = buildPrefillFromProfilePet(
+      createProfilePet({
+        name: 'Луна',
+        is_chipped: true,
+        chip_number: '12345',
+      }),
+      labels,
+      { revealChipNumber: true },
+    );
+    expect(prefill.description).toContain('Номер чипа: 12345');
+    expect(prefill.includeChipInDescription).toBe(true);
   });
 });

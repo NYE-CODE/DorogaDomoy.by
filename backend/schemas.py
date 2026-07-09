@@ -1,7 +1,7 @@
 """Pydantic schemas for API request/response."""
 import re
 from datetime import datetime
-from typing import Optional
+from typing import Literal, Optional
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from belarus_phone import format_belarus_phone_storage
@@ -10,6 +10,35 @@ from profile_pet_photo_slots import (
     PROFILE_PET_PHOTOS_FIELD_DESCRIPTION,
     validate_profile_pet_photos_raw,
 )
+
+# Минимальная длина описания lost/found объявления (после strip).
+PET_DESCRIPTION_MIN_LENGTH = 20
+PET_DESCRIPTION_MAX_LENGTH = 500
+
+
+def _validate_pet_description(v, *, required: bool) -> Optional[str]:
+    if v is None:
+        if required:
+            raise ValueError(
+                f"Описание обязательно (минимум {PET_DESCRIPTION_MIN_LENGTH} символов)"
+            )
+        return None
+    s = str(v).strip()
+    if not s:
+        if required:
+            raise ValueError(
+                f"Описание обязательно (минимум {PET_DESCRIPTION_MIN_LENGTH} символов)"
+            )
+        return None
+    if len(s) < PET_DESCRIPTION_MIN_LENGTH:
+        raise ValueError(
+            f"Описание должно быть не короче {PET_DESCRIPTION_MIN_LENGTH} символов"
+        )
+    if len(s) > PET_DESCRIPTION_MAX_LENGTH:
+        raise ValueError(
+            f"Описание не может быть длиннее {PET_DESCRIPTION_MAX_LENGTH} символов"
+        )
+    return s
 
 
 # --- User ---
@@ -165,6 +194,7 @@ class PetBase(BaseModel):
     colors: list[str] = []
     gender: str = "unknown"
     approximate_age: Optional[str] = None
+    approximate_age_raw: Optional[str] = Field(None, max_length=40)
     status: str = "searching"
     description: str
     city: str
@@ -190,10 +220,17 @@ class PetBase(BaseModel):
     def trim_registration_fields(cls, v):
         return _trim_optional_str(v)
 
+    @field_validator("description")
+    @classmethod
+    def validate_description(cls, v):
+        return _validate_pet_description(v, required=True)
+
 
 class PetCreate(PetBase):
     author_name: Optional[str] = None  # для отображения в объявлении при «другие контакты»
     contacts: UserContactsStrict = Field(default_factory=UserContactsStrict)
+    # Опциональная связь с карточкой питомца (prefill-флоу); старые клиенты не передают
+    profile_pet_id: Optional[str] = Field(None, max_length=64)
 
 
 class PetUpdate(BaseModel):
@@ -203,6 +240,7 @@ class PetUpdate(BaseModel):
     colors: Optional[list[str]] = None
     gender: Optional[str] = None
     approximate_age: Optional[str] = None
+    approximate_age_raw: Optional[str] = Field(None, max_length=40)
     status: Optional[str] = None
     description: Optional[str] = None
     city: Optional[str] = None
@@ -232,6 +270,11 @@ class PetUpdate(BaseModel):
     @classmethod
     def trim_registration_update(cls, v):
         return _trim_optional_str(v)
+
+    @field_validator("description")
+    @classmethod
+    def validate_description_update(cls, v):
+        return _validate_pet_description(v, required=False)
 
 
 class ShelterPetBase(BaseModel):
@@ -353,6 +396,7 @@ class PetResponse(PetBase):
     reward_points_awarded_at: Optional[datetime] = None
     published_by_user_id: Optional[str] = None
     updated_by_user_id: Optional[str] = None
+    profile_pet_id: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -368,6 +412,7 @@ class PaginatedPetListResponse(BaseModel):
 class SimilarPetItem(BaseModel):
     pet: PetResponse
     score: float
+    match_percent: int = Field(ge=0, le=100)
     distance_km: Optional[float] = None
     reasons: list[str] = []
 
@@ -854,9 +899,12 @@ class HelpVolunteerUrlUpdate(BaseModel):
 
 
 # --- Profile Pets (адресник / QR) ---
+ProfilePetSpecies = Literal["dog", "cat", "other"]
+
+
 class ProfilePetCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=80)
-    species: str  # dog, cat, other
+    species: ProfilePetSpecies
     breed: Optional[str] = Field(None, max_length=80)
     gender: str = "male"
     age: Optional[str] = Field(None, max_length=20)
@@ -896,7 +944,7 @@ class ProfilePetCreate(BaseModel):
 
 class ProfilePetUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=80)
-    species: Optional[str] = None
+    species: Optional[ProfilePetSpecies] = None
     breed: Optional[str] = Field(None, max_length=80)
     gender: Optional[str] = None
     age: Optional[str] = Field(None, max_length=20)

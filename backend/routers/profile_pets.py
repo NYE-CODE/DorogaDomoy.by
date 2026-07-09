@@ -12,7 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
 
 from database import get_db
-from models import ProfilePet, ProfilePetScanSignal, NotificationSettings, User
+from models import Pet, ProfilePet, ProfilePetScanSignal, NotificationSettings, User
 from schemas import (
     ProfilePetCreate,
     ProfilePetUpdate,
@@ -350,6 +350,10 @@ def send_found_signal(
 @router.delete("/{pet_id}", status_code=204)
 def delete_profile_pet(
     pet_id: str,
+    archive_linked_ads: bool = Query(
+        False,
+        description="Если true — архивировать активные объявления, привязанные через profile_pet_id",
+    ),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user_required),
 ):
@@ -358,5 +362,63 @@ def delete_profile_pet(
         raise HTTPException(status_code=404, detail="Профиль питомца не найден")
     if pet.owner_id != user.id and user.role != "admin":
         raise HTTPException(status_code=403, detail="Доступ запрещён")
+
+    linked_active = db.scalars(
+        select(Pet).where(
+            Pet.profile_pet_id == pet.id,
+            Pet.is_archived.is_(False),
+            Pet.pet_scope == "lost_found",
+        )
+    ).all()
+
+    if archive_linked_ads and linked_active:
+        now = utc_now()
+        for ad in linked_active:
+            ad.is_archived = True
+            ad.archive_reason = "Профиль питомца удалён"
+            ad.updated_at = now
+            ad.updated_by_user_id = user.id
+        logging.info(
+            "Archived %s linked ads for profile_pet_id=%s by user=%s",
+            len(linked_active),
+            pet.id,
+            user.id,
+        )
+    elif linked_active:
+        logging.warning(
+            "Deleting profile_pet_id=%s while %s active linked ads remain (archive_linked_ads=false)",
+            pet.id,
+            len(linked_active),
+        )
+    else:
+        # Эвристика до массового заполнения profile_pet_id: похожие активные объявления автора
+        species = (pet.species or "").strip().lower()
+        if species in {"dog", "cat", "other"}:
+            heuristic = db.scalars(
+                select(Pet).where(
+                    Pet.author_id == pet.owner_id,
+                    Pet.profile_pet_id.is_(None),
+                    Pet.is_archived.is_(False),
+                    Pet.pet_scope == "lost_found",
+                    Pet.animal_type == species,
+                )
+            ).all()
+            name = (pet.name or "").strip()
+            if name and heuristic:
+                matched = [
+                    ad
+                    for ad in heuristic
+                    if name.lower() in (ad.description or "").lower()
+                ]
+                if matched:
+                    logging.warning(
+                        "Deleting profile_pet_id=%s name=%r: %s active ads by same owner "
+                        "look related (no profile_pet_id link)",
+                        pet.id,
+                        name,
+                        len(matched),
+                    )
+
     db.delete(pet)
     db.commit()
+    return None

@@ -1,16 +1,13 @@
 ﻿import { Link } from "react-router";
 import { Home, Map, Plus } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { Button } from "./ui/button";
 import { useI18n } from "../../../context/I18nContext";
 import { trackYmGoal } from "../../../utils/ym";
 import {
   landingCell,
   landingContainerWide,
   landingHeroY,
-  landingOutlineHeroCtaClass,
   landingPathAccentBorder,
-  landingPrimaryCtaClass,
 } from "./landing-section-styles";
 import { typoH1, typoLead } from "@/shared/styles/typography-classes";
 import { cn } from "./ui/utils";
@@ -51,29 +48,6 @@ export function Hero() {
               <p className={cn(typoLead, "mx-auto max-w-lg text-balance lg:mx-0")}>
                 {hero.subtitle}
               </p>
-            </div>
-
-            <div className="flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
-              <Button asChild>
-                <Link
-                  to="/search"
-                  className={landingPrimaryCtaClass}
-                  onClick={() => trackHeroCtaClick("map")}
-                >
-                  <Map className="size-5 shrink-0" aria-hidden />
-                  {hero.primaryCta}
-                </Link>
-              </Button>
-              <Button asChild variant="outline">
-                <Link
-                  to="/create"
-                  className={landingOutlineHeroCtaClass}
-                  onClick={() => trackHeroCtaClick("create")}
-                >
-                  <Plus className="size-5 shrink-0" aria-hidden />
-                  {hero.secondaryCta}
-                </Link>
-              </Button>
             </div>
 
             <nav className="mx-auto w-full max-w-xl lg:mx-0" aria-labelledby="landing-hero-heading">

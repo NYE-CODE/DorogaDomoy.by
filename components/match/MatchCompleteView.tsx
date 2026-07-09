@@ -5,7 +5,7 @@ import { useI18n } from '../../context/I18nContext';
 import type { RankedPet } from '../../utils/pet-match';
 import { buildShelterPetUrl } from '../../utils/shelter-pet-browse';
 import { appOutlineCtaClass, appPrimaryCtaClass } from '../../styles/cta-classes';
-import { matchScoreBadgeClass } from '../../styles/match-styles';
+import { matchScoreBadgeClass } from '@/shared/styles/match-styles';
 import { cn } from '../ui/utils';
 import { typoH3, typoH4 } from '@/shared/styles/typography-classes';
 

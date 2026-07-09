@@ -153,13 +153,27 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(SlowAPIMiddleware)
 
 
+def _public_validation_detail(errors: list) -> list[dict]:
+    """Поле + сообщение без внутренних деталей Pydantic (input/ctx/url)."""
+    out: list[dict] = []
+    for err in errors:
+        loc = [str(part) for part in err.get("loc", ()) if part != "body"]
+        field = ".".join(loc) if loc else "body"
+        msg = str(err.get("msg") or "Неверное значение")
+        if msg.startswith("Value error, "):
+            msg = msg[len("Value error, ") :]
+        out.append({"field": field, "msg": msg})
+    return out
+
+
 @app.exception_handler(RequestValidationError)
 async def request_validation_exception_handler(request: Request, exc: RequestValidationError):
-    """В production по умолчанию не отдаём полную структуру ошибок Pydantic (разведка API)."""
+    """Отдаём field+msg; полный dump Pydantic — только при API_EXPOSE_VALIDATION_DETAILS."""
+    errors = exc.errors()
+    logger.warning("422 validation: path=%s errors=%s", request.url.path, errors)
     if os.getenv("API_EXPOSE_VALIDATION_DETAILS", "false").lower() in {"1", "true", "yes"}:
-        return JSONResponse(status_code=422, content={"detail": exc.errors()})
-    logger.warning("422 validation: path=%s errors=%s", request.url.path, exc.errors())
-    return JSONResponse(status_code=422, content={"detail": "Неверные входные данные"})
+        return JSONResponse(status_code=422, content={"detail": errors})
+    return JSONResponse(status_code=422, content={"detail": _public_validation_detail(errors)})
 
 
 @app.middleware("http")
