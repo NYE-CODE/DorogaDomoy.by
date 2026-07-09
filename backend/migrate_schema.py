@@ -72,6 +72,10 @@ PET_PROFILE_LINK_COLUMNS_TO_ADD = [
     ("profile_pet_id", "VARCHAR"),
 ]
 
+PET_AGE_RAW_COLUMNS_TO_ADD = [
+    ("approximate_age_raw", "VARCHAR"),
+]
+
 SHELTER_PET_DETAILS_COLUMNS_TO_ADD = [
     ("nickname", "VARCHAR"),
     ("health_status", "VARCHAR"),
@@ -428,7 +432,8 @@ def migrate(conn):
             + PET_REGISTRATION_COLUMNS_TO_ADD
             + PET_LISTING_EXPIRY_COLUMNS_TO_ADD
             + PET_PHOTO_EMBEDDING_COLUMNS_TO_ADD
-            + PET_PROFILE_LINK_COLUMNS_TO_ADD,
+            + PET_PROFILE_LINK_COLUMNS_TO_ADD
+            + PET_AGE_RAW_COLUMNS_TO_ADD,
         ),
         ("users", USER_COLUMNS_TO_ADD),
         ("profile_pets", PROFILE_PET_COLUMNS_TO_ADD),

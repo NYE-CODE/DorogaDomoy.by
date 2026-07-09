@@ -195,6 +195,9 @@ export default function CreateAdPage() {
         colors: formData.colors,
         gender: formData.gender,
         approximateAge: formData.approximateAge,
+        ...(formData.approximateAgeRaw?.trim()
+          ? { approximateAgeRaw: formData.approximateAgeRaw.trim() }
+          : {}),
         status: formData.status,
         description: formData.description,
         city: formData.city,

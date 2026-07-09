@@ -111,6 +111,7 @@ export function buildPrefillFromProfilePet(
     colors: profileColorsToPetColors(p.colors ?? []),
     gender,
     approximateAge: normalizeApproximateAge(p.age),
+    approximateAgeRaw: (p.age ?? '').trim(),
     description,
     useProfileContacts: true,
     registrationAuthority: p.registration_authority?.trim() ?? '',

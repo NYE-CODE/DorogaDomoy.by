@@ -54,8 +54,11 @@ describe('profile-pet-prefill', () => {
     const unknownAge = buildPrefillFromProfilePet(createProfilePet({ age: 'щенок' }), labels);
 
     expect(youngPet.approximateAge).toBe('менее 2 года');
+    expect(youngPet.approximateAgeRaw).toBe('1.5');
     expect(adultPet.approximateAge).toBe('более 2 года');
+    expect(adultPet.approximateAgeRaw).toBe('5 лет');
     expect(unknownAge.approximateAge).toBe('');
+    expect(unknownAge.approximateAgeRaw).toBe('щенок');
   });
 
   it('includes key profile details in generated description', () => {

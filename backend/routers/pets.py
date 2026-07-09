@@ -27,6 +27,7 @@ from schemas import (
     SightingCreateNested,
     SightingResponse,
     _is_happy_archive,
+    _trim_optional_str,
 )
 from pet_similarity import OPPOSITE_STATUS, find_similar_pets
 from integrations.groq_vision import analyze_pet_photo
@@ -177,6 +178,7 @@ def pet_to_response(p: Pet) -> PetResponse:
         colors=p.colors or [],
         gender=p.gender,
         approximate_age=p.approximate_age,
+        approximate_age_raw=getattr(p, "approximate_age_raw", None),
         status=p.status,
         description=p.description,
         city=p.city,
@@ -676,6 +678,7 @@ async def create_pet(
             colors=data.colors,
             gender=data.gender,
             approximate_age=data.approximate_age,
+            approximate_age_raw=_trim_optional_str(getattr(data, "approximate_age_raw", None)),
             status=data.status,
             description=data.description,
             city=data.city,
@@ -776,7 +779,7 @@ async def update_pet(
 
     COMMON_FIELDS = {
         "photos", "animal_type", "breed", "colors", "gender",
-        "approximate_age", "status", "description", "city",
+        "approximate_age", "approximate_age_raw", "status", "description", "city",
         "location", "contacts", "is_archived", "archive_reason",
         "reward_mode", "reward_amount_byn", "reward_points", "reward_helper_code",
         "registration_authority", "registration_token_number",

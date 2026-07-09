@@ -59,7 +59,8 @@ class Pet(Base):
     breed = Column(String, nullable=True)
     colors = Column(JSON, default=list)  # list of color strings
     gender = Column(String, default="unknown")  # male, female, unknown
-    approximate_age = Column(String, nullable=True)
+    approximate_age = Column(String, nullable=True)  # категория: менее/более 2 года
+    approximate_age_raw = Column(String, nullable=True)  # исходная строка возраста (для отображения)
     status = Column(String, default="searching")  # searching, found
     description = Column(Text, nullable=False)
     city = Column(String, nullable=False)

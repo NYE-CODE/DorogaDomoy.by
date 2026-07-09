@@ -194,6 +194,7 @@ class PetBase(BaseModel):
     colors: list[str] = []
     gender: str = "unknown"
     approximate_age: Optional[str] = None
+    approximate_age_raw: Optional[str] = Field(None, max_length=40)
     status: str = "searching"
     description: str
     city: str
@@ -239,6 +240,7 @@ class PetUpdate(BaseModel):
     colors: Optional[list[str]] = None
     gender: Optional[str] = None
     approximate_age: Optional[str] = None
+    approximate_age_raw: Optional[str] = Field(None, max_length=40)
     status: Optional[str] = None
     description: Optional[str] = None
     city: Optional[str] = None

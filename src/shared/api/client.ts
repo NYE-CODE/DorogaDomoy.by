@@ -244,6 +244,7 @@ interface PetResponse {
   colors: string[];
   gender: string;
   approximate_age?: string;
+  approximate_age_raw?: string | null;
   status: string;
   description: string;
   city: string;
@@ -343,6 +344,7 @@ function toPet(p: PetResponse): Pet {
     colors: (p.colors ?? []) as Pet['colors'],
     gender: p.gender as Pet['gender'],
     approximateAge: p.approximate_age,
+    approximateAgeRaw: p.approximate_age_raw ?? undefined,
     status: p.status as Pet['status'],
     description: p.description,
     city: p.city,
@@ -431,6 +433,8 @@ export interface PetCreateInput {
   colors: string[];
   gender: string;
   approximateAge?: string;
+  /** Исходный возраст из профиля (не категория) */
+  approximateAgeRaw?: string;
   status: string;
   description: string;
   city: string;
@@ -543,6 +547,7 @@ export const petsApi = {
       colors: data.colors,
       gender: data.gender,
       approximate_age: data.approximateAge,
+      approximate_age_raw: data.approximateAgeRaw,
       status: data.status,
       description: data.description,
       city: data.city,

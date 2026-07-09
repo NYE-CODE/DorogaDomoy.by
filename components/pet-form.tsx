@@ -84,6 +84,8 @@ export interface PetFormData {
   colors: PetColor[];
   gender: Gender;
   approximateAge: string;
+  /** Исходная строка возраста из профиля (для отображения; категория — approximateAge) */
+  approximateAgeRaw?: string;
   status: PetStatus;
   description: string;
   city: string;
@@ -142,6 +144,7 @@ const defaultFormData: PetFormData = {
   colors: [],
   gender: 'unknown',
   approximateAge: '',
+  approximateAgeRaw: '',
   status: 'searching',
   description: '',
   city: DEFAULT_CITY.name,
@@ -165,6 +168,7 @@ function formDataFromPet(pet: Pet): PetFormData {
     colors: pet.colors ?? [],
     gender: pet.gender || 'unknown',
     approximateAge: pet.approximateAge || '',
+    approximateAgeRaw: pet.approximateAgeRaw || '',
     status: pet.status,
     description: pet.description,
     city: pet.city ?? DEFAULT_CITY.name,

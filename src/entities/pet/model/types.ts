@@ -30,6 +30,8 @@ export interface Pet {
   colors: PetColor[];
   gender: Gender;
   approximateAge?: string;
+  /** Исходная строка возраста (до нормализации в less_2/more_2) */
+  approximateAgeRaw?: string | null;
   status: PetStatus;
   description: string;
   city: string;
