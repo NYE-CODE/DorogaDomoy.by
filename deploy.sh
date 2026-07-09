@@ -30,11 +30,16 @@ echo "    FRONTEND_DIR=$FRONTEND_DIR"
 echo "    PYTHON=$PYTHON"
 echo ""
 
+# Ветка деплоя (по умолчанию main)
+DEPLOY_BRANCH="${DEPLOY_BRANCH:-main}"
+
 cd "$REPO_DIR"
 
-# 1. Подтянуть изменения
-echo "==> 1. git pull"
-git pull origin main
+# 1. Синхронизация с GitHub (сервер = точная копия origin, без merge-конфликтов)
+echo "==> 1. git fetch + reset (ветка: $DEPLOY_BRANCH)"
+git fetch origin "$DEPLOY_BRANCH"
+git checkout "$DEPLOY_BRANCH"
+git reset --hard "origin/$DEPLOY_BRANCH"
 
 # 2. Обновить зависимости
 echo "==> 2. npm install"
