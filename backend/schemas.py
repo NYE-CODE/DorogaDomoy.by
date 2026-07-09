@@ -1,7 +1,7 @@
 """Pydantic schemas for API request/response."""
 import re
 from datetime import datetime
-from typing import Optional
+from typing import Literal, Optional
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from belarus_phone import format_belarus_phone_storage
@@ -899,9 +899,12 @@ class HelpVolunteerUrlUpdate(BaseModel):
 
 
 # --- Profile Pets (адресник / QR) ---
+ProfilePetSpecies = Literal["dog", "cat", "other"]
+
+
 class ProfilePetCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=80)
-    species: str  # dog, cat, other
+    species: ProfilePetSpecies
     breed: Optional[str] = Field(None, max_length=80)
     gender: str = "male"
     age: Optional[str] = Field(None, max_length=20)
@@ -941,7 +944,7 @@ class ProfilePetCreate(BaseModel):
 
 class ProfilePetUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=80)
-    species: Optional[str] = None
+    species: Optional[ProfilePetSpecies] = None
     breed: Optional[str] = Field(None, max_length=80)
     gender: Optional[str] = None
     age: Optional[str] = Field(None, max_length=20)
