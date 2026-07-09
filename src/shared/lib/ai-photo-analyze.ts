@@ -42,6 +42,7 @@ export type AiFilledAdFields = {
   gender?: boolean;
   approximateAge?: boolean;
   description?: boolean;
+  distinctiveMarks?: boolean;
 };
 
 export function mapAiColorsToPetColors(texts: string[]): PetColor[] {
@@ -125,6 +126,7 @@ export interface AdFormAiSlice {
   gender: Gender;
   approximateAge: string;
   description: string;
+  distinctiveMarks: string[];
 }
 
 export function applyPhotoAnalyzeToAdForm(
@@ -168,6 +170,10 @@ export function applyPhotoAnalyzeToAdForm(
     next.description = aiDesc.slice(0, maxDescription);
     filled.description = true;
     descriptionFilled = true;
+  }
+  if (result.distinctive_marks?.length) {
+    next.distinctiveMarks = result.distinctive_marks;
+    filled.distinctiveMarks = true;
   }
   return { next, filled, descriptionFilled };
 }

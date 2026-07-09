@@ -14,6 +14,7 @@ import {
   reunionConfidence,
   reunionConfidenceBadgeClass,
 } from '@/shared/lib/reunion-display';
+import { overlapDistinctiveMarks } from '@/shared/lib/distinctive-marks';
 import { ImageCarousel } from '@/pages/pet-detail/pet-detail-image-carousel';
 
 export type ReunionMatchData = {
@@ -109,6 +110,10 @@ export function ReunionMatchView({
     notSpecified: t.pet.notSpecified,
   });
 
+  const sourceMarks = sourcePet.distinctiveMarks ?? [];
+  const matchMarks = matchPet.distinctiveMarks ?? [];
+  const sharedMarks = overlapDistinctiveMarks(sourceMarks, matchMarks);
+
   const sourceStatusClass =
     sourcePet.status === 'searching'
       ? 'bg-amber-500/15 text-amber-800 dark:text-amber-300'
@@ -185,6 +190,83 @@ export function ReunionMatchView({
           <p className="text-sm text-muted-foreground">{t.similarPets.matchTooltipEmpty}</p>
         )}
       </section>
+
+      {(sourceMarks.length > 0 || matchMarks.length > 0) && (
+        <section className="rounded-xl border border-border bg-card p-6 shadow-sm">
+          <h2 className={cn(typoH3, 'mb-4')}>{t.reunion.distinctiveMarksTitle}</h2>
+          {sharedMarks.length > 0 && (
+            <div className="mb-4 rounded-lg bg-emerald-500/10 px-4 py-3">
+              <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">
+                {t.reunion.sharedMarksTitle}
+              </p>
+              <ul className="mt-2 flex flex-wrap gap-2">
+                {sharedMarks.map((mark) => (
+                  <li
+                    key={mark}
+                    className="rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-medium text-emerald-800 dark:text-emerald-300"
+                  >
+                    {mark}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {sourceLabel ?? t.reunion.yourListing}
+              </p>
+              <ul className="flex flex-wrap gap-2">
+                {sourceMarks.length ? (
+                  sourceMarks.map((mark) => (
+                    <li
+                      key={mark}
+                      className={cn(
+                        'rounded-full px-3 py-1 text-xs ring-1 ring-inset',
+                        sharedMarks.includes(mark)
+                          ? 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 ring-emerald-500/25'
+                          : 'bg-muted text-foreground ring-border',
+                      )}
+                    >
+                      {mark}
+                    </li>
+                  ))
+                ) : (
+                  <li className="text-sm text-muted-foreground">{t.pet.notSpecified}</li>
+                )}
+              </ul>
+            </div>
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {matchLabel ?? t.reunion.candidateListing}
+              </p>
+              <ul className="flex flex-wrap gap-2">
+                {matchMarks.length ? (
+                  matchMarks.map((mark) => (
+                    <li
+                      key={mark}
+                      className={cn(
+                        'rounded-full px-3 py-1 text-xs ring-1 ring-inset',
+                        sharedMarks.some(
+                          (shared) =>
+                            shared === mark ||
+                            overlapDistinctiveMarks([shared], [mark]).length > 0,
+                        )
+                          ? 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 ring-emerald-500/25'
+                          : 'bg-muted text-foreground ring-border',
+                      )}
+                    >
+                      {mark}
+                    </li>
+                  ))
+                ) : (
+                  <li className="text-sm text-muted-foreground">{t.pet.notSpecified}</li>
+                )}
+              </ul>
+            </div>
+          </div>
+        </section>
+      )}
 
       <section className="rounded-xl border border-border bg-card p-6 shadow-sm">
         <h2 className={cn(typoH3, 'mb-4')}>{t.reunion.attributesTitle}</h2>

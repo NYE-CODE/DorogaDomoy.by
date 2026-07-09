@@ -33,6 +33,8 @@ export const reunionLocales = {
     disclaimer:
       'Совпадение рассчитывает ИИ и правила платформы. Перед встречей убедитесь, что это тот же питомец.',
     compareCta: 'Сравнить',
+    distinctiveMarksTitle: 'Отличительные приметы',
+    sharedMarksTitle: 'Совпадающие приметы',
     topMatchBanner: 'Лучшее совпадение — {percent}%. Сравните объявления рядом.',
     topMatchAction: 'Открыть сравнение',
   },
@@ -69,6 +71,8 @@ export const reunionLocales = {
     disclaimer:
       'Супадзенне разлічвае ШІ і правілы платформы. Перад сустрэчай пераканайцеся, што гэта той жа гадаванец.',
     compareCta: 'Параўнаць',
+    distinctiveMarksTitle: 'Адметныя прыкметы',
+    sharedMarksTitle: 'Супадаючыя прыкметы',
     topMatchBanner: 'Лепшае супадзенне — {percent}%. Параўнайце аб\'явы побач.',
     topMatchAction: 'Адкрыць параўнанне',
   },
@@ -105,6 +109,8 @@ export const reunionLocales = {
     disclaimer:
       'Match score uses AI and platform rules. Confirm it is the same pet before meeting.',
     compareCta: 'Compare',
+    distinctiveMarksTitle: 'Distinctive marks',
+    sharedMarksTitle: 'Matching marks',
     topMatchBanner: 'Best match — {percent}%. Compare listings side by side.',
     topMatchAction: 'Open comparison',
   },

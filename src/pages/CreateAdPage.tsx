@@ -200,6 +200,7 @@ export default function CreateAdPage() {
           : {}),
         status: formData.status,
         description: formData.description,
+        distinctiveMarks: formData.distinctiveMarks,
         city: formData.city,
         location: formData.location,
         contacts,

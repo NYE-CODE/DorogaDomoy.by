@@ -9,6 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from breed_catalog import breed_similarity, color_similarity, normalize_text
+from distinctive_marks import marks_overlap_score
 from models import Pet
 
 OPPOSITE_STATUS = {"searching": "found", "found": "searching"}
@@ -166,6 +167,14 @@ def _score_candidate(
         score += 12.0 * desc_overlap
         reasons.append("similar_description")
 
+    marks_sim, _matched_marks = marks_overlap_score(
+        getattr(source, "distinctive_marks", None),
+        getattr(candidate, "distinctive_marks", None),
+    )
+    if marks_sim >= 0.34:
+        score += 16.0 * marks_sim
+        reasons.append("matching_marks")
+
     visual = 0.0
     src_emb = getattr(source, "photo_embedding", None)
     cand_emb = getattr(candidate, "photo_embedding", None)
@@ -212,6 +221,7 @@ def _compute_match_percent(
     distance_km: Optional[float],
     radius_km: float,
     desc_overlap: float,
+    marks_overlap: float = 0.0,
 ) -> int:
     """Взвешенный процент совпадения 38–97.
 
@@ -240,6 +250,11 @@ def _compute_match_percent(
 
     if (source.description or "").strip() and (candidate.description or "").strip() and desc_overlap > 0:
         parts.append((6.0, desc_overlap))
+
+    src_marks = getattr(source, "distinctive_marks", None) or []
+    cand_marks = getattr(candidate, "distinctive_marks", None) or []
+    if src_marks and cand_marks and marks_overlap > 0:
+        parts.append((8.0, marks_overlap))
 
     sg = normalize_text(source.gender)
     cg = normalize_text(candidate.gender)
@@ -313,6 +328,10 @@ def find_similar_pets(
         ):
             continue
         desc_overlap = _description_overlap_score(source_pet, cand)
+        marks_sim, _ = marks_overlap_score(
+            getattr(source_pet, "distinctive_marks", None),
+            getattr(cand, "distinctive_marks", None),
+        )
         match_percent = _compute_match_percent(
             source_pet,
             cand,
@@ -322,6 +341,7 @@ def find_similar_pets(
             distance_km=dist,
             radius_km=radius_km,
             desc_overlap=desc_overlap,
+            marks_overlap=marks_sim,
         )
         ranked.append(
             {

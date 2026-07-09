@@ -3,6 +3,25 @@ from integrations.photo_analyze_batch import merge_analyze_results
 from integrations.photo_embedding_utils import max_visual_similarity, parse_photo_embeddings
 
 
+def test_merge_analyze_collects_distinctive_marks():
+    merged = merge_analyze_results(
+        [
+            {
+                "ai_available": True,
+                "animal_type": "dog",
+                "distinctive_marks": ["белая грудка"],
+            },
+            {
+                "ai_available": True,
+                "animal_type": "dog",
+                "distinctive_marks": ["белая грудка", "хромает"],
+            },
+        ]
+    )
+    assert "белая грудка" in merged["distinctive_marks"]
+    assert "хромает" in merged["distinctive_marks"]
+
+
 def test_merge_analyze_majority_animal_type():
     merged = merge_analyze_results(
         [

@@ -31,6 +31,7 @@ export interface PetFormData {
   approximateAgeRaw?: string;
   status: PetStatus;
   description: string;
+  distinctiveMarks: string[];
   city: string;
   location: {
     lat: number;

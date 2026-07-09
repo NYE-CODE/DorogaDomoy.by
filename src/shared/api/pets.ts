@@ -13,6 +13,7 @@ export interface PetResponse {
   approximate_age_raw?: string | null;
   status: string;
   description: string;
+  distinctive_marks?: string[];
   city: string;
   location: { lat: number; lng: number };
   published_at: string;
@@ -98,6 +99,7 @@ export function toPet(p: PetResponse): Pet {
     approximateAgeRaw: p.approximate_age_raw ?? undefined,
     status: p.status as Pet['status'],
     description: p.description,
+    distinctiveMarks: p.distinctive_marks ?? [],
     city: p.city,
     location: p.location,
     publishedAt: parseApiDate(p.published_at),
@@ -203,6 +205,7 @@ export interface PetCreateInput {
   registrationTokenNumber?: string;
   /** ID карточки питомца при создании из профиля */
   profilePetId?: string;
+  distinctiveMarks?: string[];
 }
 
 export interface ShelterPetInput {
@@ -301,6 +304,7 @@ export const petsApi = {
       approximate_age_raw: data.approximateAgeRaw,
       status: data.status,
       description: data.description,
+      distinctive_marks: data.distinctiveMarks ?? [],
       city: data.city,
       location: data.location,
       contacts: data.contacts,
@@ -348,6 +352,7 @@ export const petsApi = {
     if (data.approximateAge != null) body.approximate_age = data.approximateAge;
     if (data.status != null) body.status = data.status;
     if (data.description != null) body.description = data.description;
+    if (data.distinctiveMarks != null) body.distinctive_marks = data.distinctiveMarks;
     if (data.city != null) body.city = data.city;
     if (data.location != null) body.location = data.location;
     if (data.contacts != null) body.contacts = data.contacts;
@@ -461,6 +466,7 @@ export interface PhotoAnalyzeResponse {
   age_years_estimate?: number | null;
   description?: string | null;
   notes?: string | null;
+  distinctive_marks?: string[];
   error?: string | null;
 }
 

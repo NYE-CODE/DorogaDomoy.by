@@ -63,6 +63,7 @@ class Pet(Base):
     approximate_age_raw = Column(String, nullable=True)  # исходная строка возраста (для отображения)
     status = Column(String, default="searching")  # searching, found
     description = Column(Text, nullable=False)
+    distinctive_marks = Column(JSON, default=list)  # list[str] — видимые приметы (ИИ / автор)
     city = Column(String, nullable=False)
     location_lat = Column(Float, nullable=False)
     location_lng = Column(Float, nullable=False)

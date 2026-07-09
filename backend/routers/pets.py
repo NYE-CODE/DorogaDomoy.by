@@ -186,6 +186,7 @@ def pet_to_response(p: Pet) -> PetResponse:
         approximate_age_raw=getattr(p, "approximate_age_raw", None),
         status=p.status,
         description=p.description,
+        distinctive_marks=getattr(p, "distinctive_marks", None) or [],
         city=p.city,
         location={"lat": p.location_lat, "lng": p.location_lng},
         published_at=p.published_at,
@@ -331,6 +332,7 @@ def _apply_pet_list_filters(
             (Pet.description.ilike(f"%{q}%"))
             | (Pet.breed.ilike(f"%{q}%"))
             | (Pet.city.ilike(f"%{q}%"))
+            | (Pet.distinctive_marks.ilike(f"%{q}%"))
         )
         # Исходная строка (до lower) — на случай точного регистра в ILIKE-совместимых БД
         raw = search.strip()
@@ -339,6 +341,7 @@ def _apply_pet_list_filters(
                 (Pet.description.ilike(f"%{raw}%"))
                 | (Pet.breed.ilike(f"%{raw}%"))
                 | (Pet.city.ilike(f"%{raw}%"))
+                | (Pet.distinctive_marks.ilike(f"%{raw}%"))
             )
         animal_from_search = resolve_animal_type_from_search(search)
         if animal_from_search:
@@ -698,6 +701,7 @@ async def create_pet(
             approximate_age_raw=_trim_optional_str(getattr(data, "approximate_age_raw", None)),
             status=data.status,
             description=data.description,
+            distinctive_marks=data.distinctive_marks or [],
             city=data.city,
             location_lat=data.location.lat,
             location_lng=data.location.lng,
@@ -804,7 +808,7 @@ async def update_pet(
 
     COMMON_FIELDS = {
         "photos", "animal_type", "breed", "colors", "gender",
-        "approximate_age", "approximate_age_raw", "status", "description", "city",
+        "approximate_age", "approximate_age_raw", "status", "description", "distinctive_marks", "city",
         "location", "contacts", "is_archived", "archive_reason",
         "reward_mode", "reward_amount_byn", "reward_points", "reward_helper_code",
         "registration_authority", "registration_token_number",

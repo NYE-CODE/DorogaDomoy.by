@@ -70,6 +70,26 @@ export function PetFormStepDescription({
           </p>
         )}
 
+      {formData.distinctiveMarks.length > 0 && (
+        <div className="mt-4 rounded-lg border border-primary/20 bg-primary/5 p-4">
+          <p className="text-sm font-semibold text-foreground">
+            {t.petForm.distinctiveMarksTitle}
+            <AiFieldBadge show={aiFilledFields.distinctiveMarks} label={t.petForm.aiFieldBadge} />
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">{t.petForm.distinctiveMarksHint}</p>
+          <ul className="mt-3 flex flex-wrap gap-2">
+            {formData.distinctiveMarks.map((mark) => (
+              <li
+                key={mark}
+                className="rounded-full bg-background px-3 py-1 text-xs font-medium text-foreground ring-1 ring-inset ring-primary/25"
+              >
+                {mark}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {!!formData.pendingChipNumber?.trim() && (
         <label className="mt-4 flex cursor-pointer items-start gap-2 text-sm text-foreground">
           <input

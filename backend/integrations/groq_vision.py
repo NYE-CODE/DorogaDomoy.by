@@ -13,6 +13,7 @@ from typing import Any, Optional
 import httpx
 
 from breed_catalog import match_breed_to_catalog, normalize_color_list
+from distinctive_marks import normalize_distinctive_marks
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +34,8 @@ PROMPT = """Ты помощник сервиса поиска пропавших
   "gender": "male" | "female" | "unknown" | null,
   "approximate_age": "less_2" | "more_2" | "unknown" | null,
   "age_years_estimate": число 0–30 или null,
-  "description": "1–3 предложения на русском или null"
+  "description": "1–3 предложения на русском или null",
+  "distinctive_marks": ["короткая видимая примета", ...]
 }
 
 Правила:
@@ -46,6 +48,7 @@ PROMPT = """Ты помощник сервиса поиска пропавших
 - colors: 1–3 окраса на русском.
 - approximate_age: less_2 если явно щенок/котёнок или возраст до ~2 лет; more_2 если взрослый; unknown если неясно.
 - age_years_estimate: примерный возраст в годах, если можно оценить по фото.
+- distinctive_marks: 0–6 коротких фраз (до 6 слов) только о видимых деталях: «белая грудка», «хромает на левую лапу», «одно ухо загнуто». Не повторяй породу и общий окрас из colors.
 - Если порода неочевидна — breed: null."""
 
 
@@ -225,7 +228,7 @@ def analyze_pet_photo(image_data_url: str) -> dict[str, Any]:
     payload = {
         "model": _groq_model(),
         "temperature": 0.05,
-        "max_tokens": 400,
+        "max_tokens": 500,
         "messages": [
             {
                 "role": "user",
@@ -277,6 +280,7 @@ def analyze_pet_photo(image_data_url: str) -> dict[str, Any]:
         description_str = str(desc_raw).strip() if desc_raw else None
         if description_str and description_str.lower() in {"null", "none", "неизвестно", "unknown"}:
             description_str = None
+        distinctive_marks = normalize_distinctive_marks(parsed.get("distinctive_marks"))
         return {
             "ai_available": True,
             "animal_type": animal_type,
@@ -287,6 +291,7 @@ def analyze_pet_photo(image_data_url: str) -> dict[str, Any]:
             "age_years_estimate": age_years_estimate,
             "description": description_str,
             "notes": description_str,
+            "distinctive_marks": distinctive_marks,
         }
     except Exception as e:
         logger.warning("Groq vision analyze failed: %s", e)

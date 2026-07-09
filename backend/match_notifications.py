@@ -34,6 +34,7 @@ REASON_LABELS: dict[str, str] = {
     "same_gender": "пол",
     "same_age": "возраст",
     "similar_description": "описание",
+    "matching_marks": "общие приметы",
     "visual_similarity": "похоже на фото",
     "very_nearby": "очень близко",
     "nearby": "рядом",

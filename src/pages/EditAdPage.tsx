@@ -66,6 +66,7 @@ export default function EditAdPage() {
         approximateAge: formData.approximateAge,
         status: formData.status,
         description: formData.description,
+        distinctiveMarks: formData.distinctiveMarks,
         city: formData.city,
         location: formData.location,
         contacts,

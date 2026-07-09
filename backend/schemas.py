@@ -197,6 +197,7 @@ class PetBase(BaseModel):
     approximate_age_raw: Optional[str] = Field(None, max_length=40)
     status: str = "searching"
     description: str
+    distinctive_marks: list[str] = Field(default_factory=list, max_length=8)
     city: str
     location: PetLocation
     contacts: UserContacts = Field(default_factory=UserContacts)
@@ -225,6 +226,13 @@ class PetBase(BaseModel):
     def validate_description(cls, v):
         return _validate_pet_description(v, required=True)
 
+    @field_validator("distinctive_marks", mode="before")
+    @classmethod
+    def normalize_distinctive_marks_field(cls, v):
+        from distinctive_marks import normalize_distinctive_marks
+
+        return normalize_distinctive_marks(v)
+
 
 class PetCreate(PetBase):
     author_name: Optional[str] = None  # для отображения в объявлении при «другие контакты»
@@ -243,6 +251,7 @@ class PetUpdate(BaseModel):
     approximate_age_raw: Optional[str] = Field(None, max_length=40)
     status: Optional[str] = None
     description: Optional[str] = None
+    distinctive_marks: Optional[list[str]] = Field(None, max_length=8)
     city: Optional[str] = None
     location: Optional[PetLocation] = None
     contacts: Optional[UserContactsStrict] = None
@@ -275,6 +284,15 @@ class PetUpdate(BaseModel):
     @classmethod
     def validate_description_update(cls, v):
         return _validate_pet_description(v, required=False)
+
+    @field_validator("distinctive_marks", mode="before")
+    @classmethod
+    def normalize_distinctive_marks_update(cls, v):
+        if v is None:
+            return None
+        from distinctive_marks import normalize_distinctive_marks
+
+        return normalize_distinctive_marks(v)
 
 
 class ShelterPetBase(BaseModel):
@@ -438,6 +456,7 @@ class PhotoAnalyzeResponse(BaseModel):
     age_years_estimate: Optional[int] = None
     description: Optional[str] = None
     notes: Optional[str] = None
+    distinctive_marks: list[str] = []
     error: Optional[str] = None
 
 

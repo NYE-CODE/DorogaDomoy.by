@@ -243,6 +243,7 @@ export function PetFormShell({
             gender: prev.gender,
             approximateAge: prev.approximateAge,
             description: prev.description,
+            distinctiveMarks: prev.distinctiveMarks ?? [],
           },
           result,
           MAX_DESCRIPTION,

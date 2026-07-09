@@ -5,6 +5,7 @@ from collections import Counter
 from typing import Any
 
 from integrations.groq_vision import analyze_pet_photo
+from distinctive_marks import normalize_distinctive_marks
 
 MAX_ANALYZE_PHOTOS = 3
 
@@ -71,6 +72,19 @@ def _pick_breed(rows: list[dict[str, Any]], animal_type: str | None) -> str | No
     return Counter(breeds).most_common(1)[0][0]
 
 
+def _merge_distinctive_marks(rows: list[dict[str, Any]]) -> list[str]:
+    seen: set[str] = set()
+    merged: list[str] = []
+    for row in rows:
+        for mark in normalize_distinctive_marks(row.get("distinctive_marks")):
+            key = mark.lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            merged.append(mark)
+    return merged[:8]
+
+
 def merge_analyze_results(results: list[dict[str, Any]]) -> dict[str, Any]:
     """Сливает до MAX_ANALYZE_PHOTOS ответов analyze_pet_photo."""
     if not results:
@@ -105,6 +119,7 @@ def merge_analyze_results(results: list[dict[str, Any]]) -> dict[str, Any]:
         "age_years_estimate": age_years_estimate,
         "description": description,
         "notes": description,
+        "distinctive_marks": _merge_distinctive_marks(ok),
     }
 
 
