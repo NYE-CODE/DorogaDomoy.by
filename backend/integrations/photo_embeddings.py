@@ -14,10 +14,6 @@ BACKEND_DIR = Path(__file__).resolve().parent.parent
 UPLOADS_DIR = BACKEND_DIR / "uploads"
 
 
-def embeddings_enabled() -> bool:
-    return not _model_failed
-
-
 def _get_model():
     global _model, _model_failed
     if _model_failed:

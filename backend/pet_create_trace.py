@@ -40,7 +40,3 @@ def format_pet_created_from_profile_log(
         f"profile_pet_id={profile_pet_id} pet_id={pet_id} empty_fields={fields}"
     )
 
-
-def empty_fields_from_mapping(payload: dict[str, Any]) -> list[str]:
-    """Удобно для unit-тестов без полной сборки PetCreate."""
-    return collect_empty_pet_create_fields(PetCreate(**payload))

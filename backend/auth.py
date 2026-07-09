@@ -150,8 +150,3 @@ def _require_volunteer_or_admin_user(user: User) -> User:
 
 def require_volunteer_or_admin(user: User = Depends(get_current_user_required)) -> User:
     return _require_volunteer_or_admin_user(user)
-
-
-def require_shelter_or_admin(user: User = Depends(get_current_user_required)) -> User:
-    """Устаревшее имя dependency — то же, что require_volunteer_or_admin."""
-    return _require_volunteer_or_admin_user(user)
