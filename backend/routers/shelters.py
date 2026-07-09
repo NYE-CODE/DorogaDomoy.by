@@ -289,9 +289,6 @@ def create_shelter(
         created_at=now,
         updated_at=now,
     )
-    db.add(row)
-    db.commit()
-    db.refresh(row)
     owner_membership = ShelterMembership(
         id=f"shm-{uuid.uuid4().hex[:10]}",
         shelter_id=row.id,
@@ -303,8 +300,10 @@ def create_shelter(
         created_at=now,
         updated_at=now,
     )
+    db.add(row)
     db.add(owner_membership)
     db.commit()
+    db.refresh(row)
     return _to_response(row)
 
 

@@ -10,14 +10,17 @@ from cryptography.fernet import Fernet, InvalidToken
 ENC_PREFIX = "enc:v1:"
 
 
+def _encryption_seed() -> str:
+    seed = (os.getenv("INSTAGRAM_TOKEN_ENCRYPTION_KEY") or os.getenv("SECRET_KEY") or "").strip()
+    if not seed:
+        raise RuntimeError(
+            "Для шифрования токенов задайте INSTAGRAM_TOKEN_ENCRYPTION_KEY или SECRET_KEY в backend/.env"
+        )
+    return seed
+
+
 def _build_fernet() -> Fernet:
-    # Dedicated key has priority; fallback keeps environments working with existing SECRET_KEY.
-    seed = (
-        os.getenv("INSTAGRAM_TOKEN_ENCRYPTION_KEY")
-        or os.getenv("SECRET_KEY")
-        or "dorogadomoy-instagram-token-fallback"
-    )
-    key = base64.urlsafe_b64encode(hashlib.sha256(seed.encode("utf-8")).digest())
+    key = base64.urlsafe_b64encode(hashlib.sha256(_encryption_seed().encode("utf-8")).digest())
     return Fernet(key)
 
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router';
 import { X, Search, ChevronLeft, Upload, Sparkles } from 'lucide-react';
 import { AnimalType, PetStatus, PetColor, Gender, Pet } from '../types/pet';
@@ -23,11 +23,15 @@ import {
 } from '../utils/belarus-phone';
 import { petScenarioFormToggleActiveClass } from '@/shared/lib/pet-helpers';
 import { clearPetFormDraft, loadPetFormDraft, savePetFormDraft } from '@/shared/lib/pet-form-draft';
+import {
+  APPROXIMATE_AGE_LESS_2,
+  APPROXIMATE_AGE_MORE_2,
+  applyPhotoAnalyzeToAdForm,
+  pickBestPhotoForAi,
+  type AiFilledAdFields,
+} from '@/shared/lib/ai-photo-analyze';
 import { RouteProgress } from '@/shared/ui/molecules';
 
-/** API/DB age preset values — keep in sync with profile-pet-prefill and filters */
-const APPROXIMATE_AGE_LESS_2 = 'менее 2 года' as const;
-const APPROXIMATE_AGE_MORE_2 = 'более 2 года' as const;
 const APPROXIMATE_AGE_PRESET_VALUES = [
   '',
   APPROXIMATE_AGE_LESS_2,
@@ -36,32 +40,14 @@ const APPROXIMATE_AGE_PRESET_VALUES = [
 
 const MAX_DESCRIPTION = 500;
 
-const PET_COLOR_KEYS: PetColor[] = ['black', 'white', 'gray', 'brown', 'red', 'mixed', 'spotted', 'striped'];
-
-function mapAiColorsToForm(texts: string[]): PetColor[] {
-  const rules: [RegExp, PetColor][] = [
-    [/черн|чёрн|black/i, 'black'],
-    [/бел|white/i, 'white'],
-    [/сер|сіры|gray|grey/i, 'gray'],
-    [/коричн|brown/i, 'brown'],
-    [/рыж|рыж|ginger|red/i, 'red'],
-    [/пёстр|пестр|spot/i, 'spotted'],
-    [/полос|strip|tabby/i, 'striped'],
-    [/трёх|трех|триколор|mixed|разно/i, 'mixed'],
-  ];
-  const found = new Set<PetColor>();
-  for (const text of texts) {
-    const key = text.trim().toLowerCase() as PetColor;
-    if (PET_COLOR_KEYS.includes(key)) {
-      found.add(key);
-      continue;
-    }
-    for (const [re, color] of rules) {
-      if (re.test(text)) found.add(color);
-    }
-  }
-  if (found.size === 0 && texts.length > 0) found.add('mixed');
-  return [...found];
+function AiFieldBadge({ show, label }: { show?: boolean; label: string }) {
+  if (!show) return null;
+  return (
+    <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium normal-case text-primary">
+      <Sparkles className="h-3 w-3" aria-hidden />
+      {label}
+    </span>
+  );
 }
 
 export interface PetFormStepInfo {
@@ -214,10 +200,10 @@ const agePresetValues = APPROXIMATE_AGE_PRESET_VALUES;
 const TOTAL_STEPS_CREATE = 5;
 const TOTAL_STEPS_EDIT = 5;
 
-/** Старый порядок шагов: 2=фото, 3=место, 4=описание → новый: 2=описание, 3=фото, 4=место */
+/** Миграция номера шага: прежний порядок 1=инфо, 2=описание, 3=фото → 1=фото, 2=инфо, 3=описание */
 function migratePetFormDraftStep(step: number): number {
-  if (step <= 1 || step >= 5) return step;
-  const legacyToCurrent: Record<number, number> = { 2: 3, 3: 4, 4: 2 };
+  if (step >= 5) return step;
+  const legacyToCurrent: Record<number, number> = { 1: 2, 2: 3, 3: 1, 4: 4 };
   return legacyToCurrent[step] ?? step;
 }
 
@@ -265,7 +251,20 @@ export function PetForm({
   const [draftPhotoCount, setDraftPhotoCount] = useState(0);
   const [draftRestored, setDraftRestored] = useState(false);
   const [aiAnalyzing, setAiAnalyzing] = useState(false);
+  const [aiFilledFields, setAiFilledFields] = useState<AiFilledAdFields>({});
+  const [aiDescriptionBanner, setAiDescriptionBanner] = useState(false);
   const draftLoadedRef = useRef(false);
+  const autoAiTriggeredRef = useRef(false);
+  const prevPhotoCountRef = useRef(0);
+  const photosRef = useRef(formData.photos);
+  const aiRequestRef = useRef(0);
+  photosRef.current = formData.photos;
+
+  useEffect(() => {
+    return () => {
+      aiRequestRef.current += 1;
+    };
+  }, []);
 
   useEffect(() => {
     if (isEditing || initialData || draftLoadedRef.current || !user?.id) return;
@@ -336,8 +335,11 @@ export function PetForm({
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
+    const fileList = Array.from(files);
+    e.target.value = '';
 
-    for (const file of Array.from(files)) {
+    const toProcess: File[] = [];
+    for (const file of fileList) {
       if (!file.type.startsWith('image/')) {
         toast.error(t.petForm.onlyImages);
         continue;
@@ -346,20 +348,119 @@ export function PetForm({
         toast.error(t.petForm.maxSize);
         continue;
       }
-      try {
-        const compressed = await compressImageFileToDataUrl(file);
-        setFormData(prev => {
-          if (prev.photos.length >= maxPhotos) {
-            toast.warning(t.common.toasts.maxPhotos.replace('{n}', String(maxPhotos)));
-            return prev;
-          }
-          return { ...prev, photos: [...prev.photos, compressed] };
-        });
-      } catch {
-        toast.error(t.common.toasts.imageProcessError);
-      }
+      toProcess.push(file);
     }
-    e.target.value = '';
+    if (toProcess.length === 0) return;
+
+    const results = await Promise.all(
+      toProcess.map(async (file) => {
+        try {
+          return await compressImageFileToDataUrl(file);
+        } catch {
+          return null;
+        }
+      }),
+    );
+
+    const compressed = results.filter((item): item is string => item !== null);
+    if (compressed.length < results.length) {
+      toast.error(t.common.toasts.imageProcessError);
+    }
+    if (compressed.length === 0) return;
+
+    setFormData((prev) => {
+      const room = maxPhotos - prev.photos.length;
+      if (room <= 0) {
+        toast.warning(t.common.toasts.maxPhotos.replace('{n}', String(maxPhotos)));
+        return prev;
+      }
+      const adding = compressed.slice(0, room);
+      if (adding.length < compressed.length) {
+        toast.warning(t.common.toasts.maxPhotos.replace('{n}', String(maxPhotos)));
+      }
+      return { ...prev, photos: [...prev.photos, ...adding] };
+    });
+  };
+
+  const runAiAnalyze = useCallback(async (opts?: { autoAdvance?: boolean; isAuto?: boolean }) => {
+    const image = pickBestPhotoForAi(photosRef.current);
+    if (!image) return;
+    const reqId = ++aiRequestRef.current;
+    setAiAnalyzing(true);
+    try {
+      const result = await petsApi.analyzePhoto(image);
+      if (reqId !== aiRequestRef.current) return;
+      if (!result.ai_available) {
+        if (result.error === 'invalid_image') {
+          toast.message(t.petForm.aiInvalidImage);
+        } else if (result.error === 'not_animal') {
+          toast.error(t.petForm.aiNotAnimal);
+        } else if (result.error === 'photo_unclear') {
+          toast.message(t.petForm.aiPhotoUnclear);
+        } else if (result.error === 'analyze_failed') {
+          toast.error(t.petForm.aiFailed);
+        } else if (!result.error) {
+          toast.message(t.petForm.aiUnavailable);
+        } else {
+          toast.message(t.petForm.aiFailed);
+        }
+        return;
+      }
+      let descriptionFilled = false;
+      setFormData((prev) => {
+        const { next, filled, descriptionFilled: descFilled } = applyPhotoAnalyzeToAdForm(
+          {
+            animalType: prev.animalType,
+            breed: prev.breed,
+            colors: prev.colors,
+            gender: prev.gender,
+            approximateAge: prev.approximateAge,
+            description: prev.description,
+          },
+          result,
+          MAX_DESCRIPTION,
+        );
+        descriptionFilled = descFilled;
+        setAiFilledFields((current) => ({ ...current, ...filled }));
+        return { ...prev, ...next };
+      });
+      autoAiTriggeredRef.current = true;
+      setAiDescriptionBanner(descriptionFilled);
+      toast.success(opts?.isAuto ? t.petForm.aiAppliedAuto : t.petForm.aiApplied);
+      setTried(false);
+      if (opts?.autoAdvance !== false) setStep(2);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '';
+      if (msg.includes('429') || /rate limit/i.test(msg)) {
+        toast.error(t.petForm.aiRateLimited);
+      } else {
+        toast.error(t.petForm.aiFailed);
+      }
+    } finally {
+      if (reqId === aiRequestRef.current) setAiAnalyzing(false);
+    }
+  }, [t]);
+
+  useEffect(() => {
+    const count = formData.photos.length;
+    if (count === 0) {
+      autoAiTriggeredRef.current = false;
+      prevPhotoCountRef.current = 0;
+      return;
+    }
+    const firstPhotoAdded = prevPhotoCountRef.current === 0 && count > 0;
+    prevPhotoCountRef.current = count;
+    if (!firstPhotoAdded || autoAiTriggeredRef.current || aiAnalyzing) return;
+    const timer = window.setTimeout(() => {
+      if (!autoAiTriggeredRef.current && photosRef.current.length > 0) {
+        void runAiAnalyze({ autoAdvance: true, isAuto: true });
+      }
+    }, 900);
+    return () => window.clearTimeout(timer);
+  }, [formData.photos.length, aiAnalyzing, runAiAnalyze]);
+
+  const handleAiAnalyzePhoto = () => {
+    void runAiAnalyze({ autoAdvance: true, isAuto: false });
   };
 
   const toggleColor = (color: PetColor) => {
@@ -367,61 +468,24 @@ export function PetForm({
       ? formData.colors.filter(c => c !== color)
       : [...formData.colors, color];
     setFormData({ ...formData, colors: newColors });
-  };
-
-  const handleAiAnalyzePhoto = async () => {
-    const image =
-      formData.photos.find((photo) => photo.startsWith('data:image')) ?? formData.photos[0];
-    if (!image || aiAnalyzing) return;
-    setAiAnalyzing(true);
-    try {
-      const result = await petsApi.analyzePhoto(image);
-      if (!result.ai_available) {
-        if (result.error === 'invalid_image') {
-          toast.message(t.petForm.aiInvalidImage);
-        } else if (result.error === 'analyze_failed') {
-          toast.error(t.petForm.aiFailed);
-        } else {
-          toast.message(t.petForm.aiUnavailable);
-        }
-        return;
-      }
-      setFormData((prev) => {
-        const next = { ...prev };
-        if (result.animal_type === 'cat' || result.animal_type === 'dog' || result.animal_type === 'other') {
-          if (next.animalType !== result.animal_type) {
-            next.animalType = result.animal_type;
-            next.breed = '';
-          }
-        }
-        if (result.breed?.trim()) next.breed = result.breed.trim();
-        if (result.gender === 'male' || result.gender === 'female') {
-          next.gender = result.gender;
-        }
-        if (result.colors?.length) {
-          const mapped = mapAiColorsToForm(result.colors);
-          if (mapped.length) next.colors = mapped;
-        }
-        return next;
-      });
-      toast.success(t.petForm.aiApplied);
-      setTried(false);
-      setStep(1);
-    } catch {
-      toast.error(t.petForm.aiFailed);
-    } finally {
-      setAiAnalyzing(false);
-    }
+    setAiFilledFields((prev) => ({ ...prev, colors: false }));
   };
 
   const step1Errors = () => {
     const errs: Record<string, string> = {};
-    if (!formData.animalType) errs.animalType = t.petForm.selectAnimalType;
-    if (formData.colors.length === 0) errs.colors = t.petForm.selectColor;
+    if (formData.photos.length === 0) errs.photos = t.petForm.uploadPhoto;
     return errs;
   };
 
   const step2Errors = () => {
+    const errs: Record<string, string> = {};
+    if (!formData.animalType) errs.animalType = t.petForm.selectAnimalType;
+    if (!formData.breed?.trim()) errs.breed = t.petForm.breedRequired;
+    if (formData.colors.length === 0) errs.colors = t.petForm.selectColor;
+    return errs;
+  };
+
+  const step3Errors = () => {
     const errs: Record<string, string> = {};
     if (!formData.description?.trim()) errs.description = t.petForm.enterDescription;
     else if (formData.description.length > MAX_DESCRIPTION) {
@@ -437,12 +501,6 @@ export function PetForm({
     const rtLen = (formData.registrationTokenNumber ?? '').trim().length;
     if (raLen > 300) errs.registrationAuthority = t.petForm.registrationAuthorityTooLong;
     if (rtLen > 80) errs.registrationTokenNumber = t.petForm.registrationTokenTooLong;
-    return errs;
-  };
-
-  const step3Errors = () => {
-    const errs: Record<string, string> = {};
-    if (formData.photos.length === 0) errs.photos = t.petForm.uploadPhoto;
     return errs;
   };
 
@@ -635,50 +693,35 @@ export function PetForm({
             </div>
           ) : null}
           {/* stepDesc for steps 2–5 below the title, same as modal */}
-          {variant === 'page' && step >= 2 && currentStepDesc && (
+          {variant === 'page' && step >= 1 && currentStepDesc && (
             <p className="text-muted-foreground mb-6">{currentStepDesc}</p>
           )}
-          {/* Step 1: type, breed, color, gender */}
-          {step === 1 && (
+          {/* Step 2: type, breed, color, gender */}
+          {step === 2 && (
             <div className="space-y-6">
-              {!isEditing && !initialStatus && (
-                <div className="mb-8 pb-6 border-b border-border">
-                  <label className="block text-sm font-semibold text-muted-foreground uppercase mb-3">
-                    {t.petForm.whatHappened}
-                  </label>
-                  <div className="flex gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, status: 'searching' })}
-                      className={`flex-1 rounded-lg px-6 py-3 font-medium transition-colors ${
-                        formData.status === 'searching'
-                          ? petScenarioFormToggleActiveClass.lost
-                          : 'bg-muted text-muted-foreground hover:bg-muted dark:bg-secondary dark:text-secondary-foreground dark:hover:bg-secondary/80'
-                      }`}
-                    >
-                      {t.petForm.statusToggleLost}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, status: 'found' })}
-                      className={`flex-1 rounded-lg px-6 py-3 font-medium transition-colors ${
-                        formData.status === 'found'
-                          ? petScenarioFormToggleActiveClass.found
-                          : 'bg-muted text-muted-foreground hover:bg-muted dark:bg-secondary dark:text-secondary-foreground dark:hover:bg-secondary/80'
-                      }`}
-                    >
-                      {t.petForm.statusToggleFound}
-                    </button>
-                  </div>
+              {aiDescriptionBanner && formData.description?.trim() ? (
+                <div
+                  role="status"
+                  className="rounded-lg border border-primary/25 bg-primary/5 px-4 py-3 text-sm text-foreground"
+                >
+                  <p className="font-medium">{t.petForm.aiDescriptionBannerTitle}</p>
+                  <p className="mt-1 text-muted-foreground line-clamp-2">{formData.description}</p>
+                  <button
+                    type="button"
+                    onClick={() => setStep(3)}
+                    className="mt-2 text-sm font-medium text-primary hover:underline"
+                  >
+                    {t.petForm.aiDescriptionBannerAction}
+                  </button>
                 </div>
-              )}
-              {!isEditing && (
-                <p className="text-muted-foreground mb-6">{t.petForm.step1Desc}</p>
-              )}
+              ) : null}
               {/* Animal type + Breed */}
               <div className="flex flex-col sm:flex-row sm:items-end gap-3">
                 <div className="shrink-0">
-                  <label className="block text-sm font-semibold text-muted-foreground uppercase mb-3">{t.petForm.whoIsThis}</label>
+                  <label className="block text-sm font-semibold text-muted-foreground uppercase mb-3">
+                    {t.petForm.whoIsThis}
+                    <AiFieldBadge show={aiFilledFields.animalType} label={t.petForm.aiFieldBadge} />
+                  </label>
                   <div className={`flex gap-3 ${variant === 'page' ? '' : 'bg-muted rounded-lg p-0.5'}`}>
                     {animalTypeOptions.map((opt) => (
                       <button
@@ -705,13 +748,19 @@ export function PetForm({
                   {errors.animalType && <p className="text-xs text-red-500 mt-1">{errors.animalType}</p>}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <span className="text-xs font-medium text-muted-foreground/80 uppercase tracking-wide">{t.petForm.breedLabel}</span>
+                  <span className="text-xs font-medium text-muted-foreground/80 uppercase tracking-wide">
+                    {t.petForm.breedLabel} <span className="text-red-500">*</span>
+                    <AiFieldBadge show={aiFilledFields.breed} label={t.petForm.aiFieldBadge} />
+                  </span>
                   <div className="mt-1.5">
                     {formData.animalType === 'other' ? (
                       <input
                         type="text"
                         value={formData.breed}
-                        onChange={(e) => setFormData({ ...formData, breed: e.target.value.slice(0, 80) })}
+                        onChange={(e) => {
+                          setFormData({ ...formData, breed: e.target.value.slice(0, 80) });
+                          setAiFilledFields((prev) => ({ ...prev, breed: false }));
+                        }}
                         placeholder={t.petForm.otherBreedPlaceholder}
                         maxLength={80}
                         className={variant === 'page' ? 'w-full px-4 py-3 border border-black/10 dark:border-border rounded-lg bg-input-background dark:bg-input-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent' : 'w-full px-4 py-3 border border-border dark:border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent'}
@@ -720,18 +769,25 @@ export function PetForm({
                       <BreedCombobox
                         breeds={formData.animalType === 'cat' ? CAT_BREEDS : DOG_BREEDS}
                         value={formData.breed}
-                        onChange={(breed) => setFormData({ ...formData, breed })}
+                        onChange={(breed) => {
+                          setFormData({ ...formData, breed });
+                          setAiFilledFields((prev) => ({ ...prev, breed: false }));
+                        }}
                         placeholder={t.petForm.selectOrEnterBreed}
                         className={variant === 'page' ? 'bg-input-background dark:bg-input-background border-black/10 dark:border-border' : undefined}
                       />
                     )}
                   </div>
+                  {errors.breed && <p className="text-xs text-red-500 mt-1">{errors.breed}</p>}
                 </div>
               </div>
 
               {/* Colors */}
               <div>
-                <label className="block text-sm font-semibold text-muted-foreground uppercase mb-3">{t.petForm.colorLabel}</label>
+                <label className="block text-sm font-semibold text-muted-foreground uppercase mb-3">
+                  {t.petForm.colorLabel}
+                  <AiFieldBadge show={aiFilledFields.colors} label={t.petForm.aiFieldBadge} />
+                </label>
                 <div className={`flex flex-wrap gap-2 mt-1.5 ${errors.colors ? 'ring-2 ring-red-300 bg-red-50/50 dark:bg-red-900/20 p-2 rounded-md' : ''}`}>
                   {(Object.keys(t.pet.color) as PetColor[]).map((color) => (
                     <button
@@ -758,7 +814,10 @@ export function PetForm({
               {/* Gender + Age */}
               <div className="flex flex-col gap-6">
                 <div>
-                  <label className="block text-sm font-semibold text-muted-foreground uppercase mb-3">{t.petForm.genderLabel}</label>
+                  <label className="block text-sm font-semibold text-muted-foreground uppercase mb-3">
+                    {t.petForm.genderLabel}
+                    <AiFieldBadge show={aiFilledFields.gender} label={t.petForm.aiFieldBadge} />
+                  </label>
                   <div className={`flex gap-3 ${variant === 'page' ? '' : 'bg-muted rounded-lg p-0.5 w-fit'}`}>
                     {genderOptions.map((opt) => (
                       <button
@@ -783,7 +842,10 @@ export function PetForm({
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-muted-foreground uppercase mb-3">{t.petForm.ageLabel}</label>
+                  <label className="block text-sm font-semibold text-muted-foreground uppercase mb-3">
+                    {t.petForm.ageLabel}
+                    <AiFieldBadge show={aiFilledFields.approximateAge} label={t.petForm.aiFieldBadge} />
+                  </label>
                   {variant === 'page' ? (
                     <div className="flex gap-3">
                       {agePresetValues.map((value) => (
@@ -815,11 +877,14 @@ export function PetForm({
             </div>
           )}
 
-          {/* Step 2: description and registration */}
-          {step === 2 && (
+          {/* Step 3: description and registration */}
+          {step === 3 && (
             <div>
               <div className="flex justify-between items-center mb-3">
-                <label className="text-sm font-semibold text-muted-foreground uppercase">{t.petForm.descriptionLabel}</label>
+                <label className="text-sm font-semibold text-muted-foreground uppercase">
+                  {t.petForm.descriptionLabel}
+                  <AiFieldBadge show={aiFilledFields.description} label={t.petForm.aiFieldBadge} />
+                </label>
                 <span className={`text-sm ${formData.description.length > MAX_DESCRIPTION ? 'text-red-500 font-medium' : 'text-muted-foreground dark:text-muted-foreground'}`}>
                   {formData.description.length} / {MAX_DESCRIPTION}
                 </span>
@@ -829,6 +894,8 @@ export function PetForm({
                 onChange={(e) => {
                   if (e.target.value.length <= MAX_DESCRIPTION) {
                     setFormData({ ...formData, description: e.target.value });
+                    setAiFilledFields((prev) => ({ ...prev, description: false }));
+                    setAiDescriptionBanner(false);
                   }
                 }}
                 placeholder={t.petForm.descriptionPlaceholder}
@@ -968,9 +1035,40 @@ export function PetForm({
             </div>
           )}
 
-          {/* Step 3: photos */}
-          {step === 3 && (
+          {/* Step 1: photos */}
+          {step === 1 && (
             <div>
+              {!isEditing && !initialStatus && (
+                <div className="mb-6 pb-6 border-b border-border">
+                  <label className="block text-sm font-semibold text-muted-foreground uppercase mb-3">
+                    {t.petForm.whatHappened}
+                  </label>
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, status: 'searching' })}
+                      className={`flex-1 rounded-lg px-6 py-3 font-medium transition-colors ${
+                        formData.status === 'searching'
+                          ? petScenarioFormToggleActiveClass.lost
+                          : 'bg-muted text-muted-foreground hover:bg-muted dark:bg-secondary dark:text-secondary-foreground dark:hover:bg-secondary/80'
+                      }`}
+                    >
+                      {t.petForm.statusToggleLost}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, status: 'found' })}
+                      className={`flex-1 rounded-lg px-6 py-3 font-medium transition-colors ${
+                        formData.status === 'found'
+                          ? petScenarioFormToggleActiveClass.found
+                          : 'bg-muted text-muted-foreground hover:bg-muted dark:bg-secondary dark:text-secondary-foreground dark:hover:bg-secondary/80'
+                      }`}
+                    >
+                      {t.petForm.statusToggleFound}
+                    </button>
+                  </div>
+                </div>
+              )}
               <div className="text-right text-sm text-muted-foreground mb-4">
                 {t.petForm.photosUploadedCount.replace('{current}', String(formData.photos.length)).replace('{max}', String(maxPhotos))}
               </div>
@@ -1016,6 +1114,9 @@ export function PetForm({
               )}
               {formData.photos.length >= maxPhotos && (
                 <p className="text-sm text-muted-foreground text-center py-1">{t.petForm.maxPhotosReached}</p>
+              )}
+              {formData.photos.length > 0 && (
+                <p className="mb-3 text-center text-xs text-muted-foreground">{t.petForm.aiAutoHint}</p>
               )}
               {formData.photos.length > 0 && (
                 <button

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import math
+import re
 from typing import Optional
 
 from sqlalchemy import select
@@ -58,6 +59,31 @@ def _age_match_score(source: Pet, candidate: Pet) -> float:
     if not sa or not ca:
         return 0.0
     return 1.0 if sa == ca else 0.0
+
+
+_DESC_STOP = frozenset(
+    {
+        "это", "или", "для", "при", "был", "была", "было", "были", "очень", "есть",
+        "the", "and", "with", "that", "this", "from", "have", "been",
+    }
+)
+
+
+def _description_tokens(text: str) -> set[str]:
+    normalized = normalize_text(text)
+    if not normalized:
+        return set()
+    words = re.findall(r"[a-zа-яё0-9]{4,}", normalized)
+    return {w for w in words if w not in _DESC_STOP}
+
+
+def _description_overlap_score(source: Pet, candidate: Pet) -> float:
+    a = _description_tokens(source.description or "")
+    b = _description_tokens(candidate.description or "")
+    if not a or not b:
+        return 0.0
+    overlap = len(a & b) / max(len(a), len(b))
+    return max(0.0, min(1.0, overlap))
 
 
 def _is_relevant_match(
@@ -142,6 +168,11 @@ def _score_candidate(
     if _age_match_score(source, candidate) > 0:
         score += 8.0
         reasons.append("same_age")
+
+    desc_overlap = _description_overlap_score(source, candidate)
+    if desc_overlap >= 0.2:
+        score += 12.0 * desc_overlap
+        reasons.append("similar_description")
 
     visual = 0.0
     src_emb = getattr(source, "photo_embedding", None) or []

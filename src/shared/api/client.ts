@@ -676,6 +676,9 @@ export interface PhotoAnalyzeResponse {
   breed?: string | null;
   colors?: string[];
   gender?: string | null;
+  approximate_age?: string | null;
+  age_years_estimate?: number | null;
+  description?: string | null;
   notes?: string | null;
   error?: string | null;
 }

@@ -7,11 +7,19 @@ import { useI18n } from '@/app/providers/I18nContext';
 import { cn } from './ui/utils';
 import { typoH3 } from '@/shared/styles/typography-classes';
 
+function sleep(ms: number) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
 interface SimilarPetsSectionProps {
   petId: string;
   className?: string;
   limit?: number;
   showTitle?: boolean;
+  /** Задержка перед первым запросом (дать время посчитать CLIP embedding). */
+  initialDelayMs?: number;
+  /** Повторные запросы, если ещё нет visual_similarity. */
+  retryDelaysMs?: number[];
 }
 
 export function SimilarPetsSection({
@@ -19,6 +27,8 @@ export function SimilarPetsSection({
   className,
   limit = 6,
   showTitle = true,
+  initialDelayMs = 0,
+  retryDelaysMs = [],
 }: SimilarPetsSectionProps) {
   const { t } = useI18n();
   const navigate = useNavigate();
@@ -28,19 +38,37 @@ export function SimilarPetsSection({
 
   useEffect(() => {
     const ac = new AbortController();
-    setLoading(true);
-    setError(false);
-    petsApi
-      .similar(petId, { limit }, { signal: ac.signal })
-      .then((res) => setItems(res.items))
-      .catch(() => {
-        if (!ac.signal.aborted) setError(true);
-      })
-      .finally(() => {
-        if (!ac.signal.aborted) setLoading(false);
-      });
+    const delays = [initialDelayMs, ...retryDelaysMs];
+
+    async function load() {
+      setLoading(true);
+      setError(false);
+      let lastItems: Awaited<ReturnType<typeof petsApi.similar>>['items'] = [];
+
+      for (let i = 0; i < delays.length; i += 1) {
+        if (ac.signal.aborted) return;
+        if (delays[i] > 0) await sleep(delays[i]);
+        try {
+          const res = await petsApi.similar(petId, { limit }, { signal: ac.signal });
+          lastItems = res.items;
+          if (!ac.signal.aborted) setItems(res.items);
+          const hasVisual = res.items.some((item) => item.reasons.includes('visual_similarity'));
+          if (hasVisual || i === delays.length - 1) break;
+        } catch {
+          if (!ac.signal.aborted) setError(true);
+          break;
+        }
+      }
+
+      if (!ac.signal.aborted) {
+        if (lastItems.length) setItems(lastItems);
+        setLoading(false);
+      }
+    }
+
+    void load();
     return () => ac.abort();
-  }, [petId, limit]);
+  }, [petId, limit, initialDelayMs, retryDelaysMs.join(',')]);
 
   if (loading) {
     return (

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Sparkles } from "lucide-react";
 import {
   countFilledProfilePetPhotoSlots,
   emptyStoredProfilePetPhotos,
@@ -10,6 +10,13 @@ import {
 import { toast } from "sonner";
 import { useI18n } from "../context/I18nContext";
 import { profilePetsApi, type ProfilePetResponse } from "../api/client";
+import { petsApi } from "@/shared/api/client";
+import {
+  mapAiAgeYearsEstimate,
+  mapAiApproximateAge,
+  mapAiColorsToOptionLabels,
+  pickBestPhotoForAi,
+} from "@/shared/lib/ai-photo-analyze";
 import { resolveProfilePetSpecies } from "../utils/profile-pet-display";
 import { compressImageBlobForShare } from "../utils/web-share-image";
 import { Button } from "./ui/button";
@@ -129,8 +136,15 @@ export function AddEditPetContent() {
   const [isUploadingPhotos, setIsUploadingPhotos] = useState(false);
   const [uploadingSlotIndex, setUploadingSlotIndex] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [aiAnalyzing, setAiAnalyzing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pendingSlotRef = useRef(0);
+  const autoAiTriggeredRef = useRef(false);
+  const loadRequestRef = useRef(0);
+  const autoAiTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const profileAiRequestRef = useRef(0);
+  const formPhotosRef = useRef(formData.photos);
+  formPhotosRef.current = formData.photos;
 
   const loadProfilePet = useCallback(async () => {
     if (!isEditMode || !id) {
@@ -138,37 +152,41 @@ export function AddEditPetContent() {
       setLoadError(null);
       return;
     }
+    const reqId = ++loadRequestRef.current;
     setIsLoadingProfile(true);
     setLoadError(null);
     setCurrentStep(1);
     try {
       const pet = await profilePetsApi.get(id);
+      if (reqId !== loadRequestRef.current) return;
       setFormData(profilePetToForm(pet));
+      setLoadError(null);
     } catch (error) {
+      if (reqId !== loadRequestRef.current) return;
       setLoadError(error instanceof Error ? error.message : mp.loadErrorDesc);
     } finally {
-      setIsLoadingProfile(false);
+      if (reqId === loadRequestRef.current) setIsLoadingProfile(false);
     }
   }, [id, isEditMode, mp.loadErrorDesc]);
 
   useEffect(() => {
     if (!isEditMode) {
+      loadRequestRef.current += 1;
       setIsLoadingProfile(false);
       setLoadError(null);
       setFormData(emptyForm());
       return;
     }
-    profilePetsApi
-      .get(id!)
-      .then((p) => {
-        setFormData(profilePetToForm(p));
-        setLoadError(null);
-      })
-      .catch((error) => {
-        setLoadError(error instanceof Error ? error.message : mp.loadErrorDesc);
-      })
-      .finally(() => setIsLoadingProfile(false));
-  }, [id, isEditMode, mp.loadErrorDesc]);
+    void loadProfilePet();
+  }, [isEditMode, id, loadProfilePet]);
+
+  useEffect(() => {
+    return () => {
+      if (autoAiTimerRef.current) clearTimeout(autoAiTimerRef.current);
+      profileAiRequestRef.current += 1;
+      loadRequestRef.current += 1;
+    };
+  }, []);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -216,6 +234,16 @@ export function AddEditPetContent() {
         return { ...prev, photos: storedPhotosFromSlots(slotsFromStoredPhotos(next)) };
       });
       toast.success(f.toastPhotoAdded);
+      if (slotIndex === 0) {
+        autoAiTriggeredRef.current = false;
+        if (autoAiTimerRef.current) clearTimeout(autoAiTimerRef.current);
+        const uploadedUrl = url;
+        autoAiTimerRef.current = window.setTimeout(() => {
+          autoAiTimerRef.current = null;
+          if (formPhotosRef.current[0] !== uploadedUrl) return;
+          void runProfileAiAnalyze(uploadedUrl, { isAuto: true });
+        }, 600);
+      }
     } catch (error) {
       if (error instanceof PhotoPrepareError) {
         toast.error(
@@ -253,20 +281,85 @@ export function AddEditPetContent() {
     void uploadPhotoToSlot(slotIndex, file);
   };
 
-  const handleNext = () => {
-    if (currentStep === 1) {
-      if (!formData.name.trim() || !formData.breed.trim() || !formData.age.trim()) {
-        toast.error(f.toastFillRequired);
+  const runProfileAiAnalyze = async (
+    imageOverride?: string,
+    opts?: { isAuto?: boolean; advanceStep?: boolean },
+  ) => {
+    const image = imageOverride ?? pickBestPhotoForAi(formPhotosRef.current);
+    if (!image || aiAnalyzing || isUploadingPhotos) return;
+    const reqId = ++profileAiRequestRef.current;
+    setAiAnalyzing(true);
+    try {
+      const result = await petsApi.analyzePhoto(image);
+      if (reqId !== profileAiRequestRef.current) return;
+      if (!result.ai_available) {
+        if (result.error === "invalid_image") toast.message(t.petForm.aiInvalidImage);
+        else if (result.error === "not_animal") toast.error(t.petForm.aiNotAnimal);
+        else if (result.error === "photo_unclear") toast.message(t.petForm.aiPhotoUnclear);
+        else if (result.error === "analyze_failed") toast.error(t.petForm.aiFailed);
+        else if (!result.error) toast.message(t.petForm.aiUnavailable);
+        else toast.message(t.petForm.aiFailed);
         return;
       }
+      setFormData((prev) => {
+        const next = { ...prev };
+        if (result.animal_type === "cat" || result.animal_type === "dog" || result.animal_type === "other") {
+          if (next.species !== result.animal_type) {
+            next.species = result.animal_type;
+            next.breed = "";
+          }
+        }
+        if (result.breed?.trim()) next.breed = result.breed.trim();
+        if (result.gender === "male" || result.gender === "female") next.gender = result.gender;
+        if (result.colors?.length) {
+          const mapped = mapAiColorsToOptionLabels(result.colors, f.colorOptions);
+          if (mapped.length) next.colors = mapped;
+        }
+        if (!next.age.trim()) {
+          const years = mapAiAgeYearsEstimate(result.age_years_estimate ?? undefined);
+          if (years) next.age = years;
+          else {
+            const preset = mapAiApproximateAge(result.approximate_age ?? undefined);
+            if (preset.includes("менее")) next.age = "1";
+            else if (preset.includes("более")) next.age = "3";
+          }
+        }
+        const aiDesc = result.description?.trim() || result.notes?.trim();
+        if (aiDesc && !next.specialMarks.trim()) {
+          next.specialMarks = aiDesc.slice(0, 500);
+        }
+        return next;
+      });
+      autoAiTriggeredRef.current = true;
+      toast.success(opts?.isAuto ? t.petForm.aiAppliedAuto : t.petForm.aiApplied);
+      if (opts?.advanceStep !== false && currentStep === 1) setCurrentStep(2);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "";
+      if (msg.includes("429") || /rate limit/i.test(msg)) toast.error(t.petForm.aiRateLimited);
+      else toast.error(t.petForm.aiFailed);
+    } finally {
+      if (reqId === profileAiRequestRef.current) setAiAnalyzing(false);
     }
-    if (currentStep === 2) {
+  };
+
+  const handleProfileAiAnalyze = () => {
+    void runProfileAiAnalyze(undefined, { isAuto: false });
+  };
+
+  const handleNext = () => {
+    if (currentStep === 1) {
       if (isUploadingPhotos) {
         toast.error(t.common.toasts.photoUploadWait);
         return;
       }
       if (!countFilledProfilePetPhotoSlots(formData.photos)) {
         toast.error(f.toastAddPhoto);
+        return;
+      }
+    }
+    if (currentStep === 2) {
+      if (!formData.name.trim() || !formData.breed.trim() || !formData.age.trim()) {
+        toast.error(f.toastFillRequired);
         return;
       }
     }
@@ -413,18 +506,18 @@ export function AddEditPetContent() {
         <div className="bg-white dark:bg-card rounded-lg shadow-sm border border-border p-8">
           <div className="mb-6 space-y-2">
             <p className="text-muted-foreground">{currentMeta.subtitle}</p>
-            {currentStep === 2 ? (
+            {currentStep === 1 ? (
               <p className="text-sm text-muted-foreground">
-                {f.step2InstagramGuidePrefix}
+                {f.step1InstagramGuidePrefix}
                 <a
                   href={PROFILE_PET_PHOTO_GUIDE_INSTAGRAM_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="font-medium text-primary hover:text-primary-hover hover:underline dark:text-primary-soft dark:hover:text-primary-soft-hover"
                 >
-                  {f.step2InstagramGuideLink}
+                  {f.step1InstagramGuideLink}
                 </a>
-                {f.step2InstagramGuideSuffix}
+                {f.step1InstagramGuideSuffix}
               </p>
             ) : null}
           </div>
@@ -438,6 +531,51 @@ export function AddEditPetContent() {
           />
 
           {currentStep === 1 && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">{f.step1PhotoHint}</p>
+              <div className="text-right text-sm text-muted-foreground">
+                {f.photosCount.replace(
+                  "{n}",
+                  String(countFilledProfilePetPhotoSlots(formData.photos)),
+                )}
+              </div>
+
+              <ProfilePetPhotoSlotPicker
+                photos={storedPhotosFromSlots(slotsFromStoredPhotos(formData.photos))}
+                labels={f.photoSlots}
+                addLabel={f.photoSlotAdd}
+                replaceLabel={f.photoSlotReplace}
+                optionalLabel={f.photoSlotOptional}
+                recommendedLabel={f.photoSlotRecommended}
+                photoAlt={(n) => f.photoAlt.replace("{n}", String(n))}
+                disabled={isUploadingPhotos}
+                uploadingSlotIndex={uploadingSlotIndex}
+                onPickSlot={handlePickSlot}
+                onRemoveSlot={handleRemovePhoto}
+                onFileDrop={handleSlotFileDrop}
+              />
+
+              {isUploadingPhotos && (
+                <p className="text-sm text-muted-foreground">{t.common.toasts.photoUploading}</p>
+              )}
+              {countFilledProfilePetPhotoSlots(formData.photos) > 0 && (
+                <>
+                  <p className="text-center text-xs text-muted-foreground">{t.petForm.aiAutoHint}</p>
+                  <button
+                    type="button"
+                    onClick={handleProfileAiAnalyze}
+                    disabled={aiAnalyzing || isUploadingPhotos}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-sm font-medium text-primary transition-colors hover:bg-primary/10 disabled:opacity-60"
+                  >
+                    <Sparkles className="h-4 w-4 shrink-0" aria-hidden />
+                    {aiAnalyzing ? t.petForm.aiAnalyzing : t.petForm.aiSuggestFromPhoto}
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+
+          {currentStep === 2 && (
             <div className="space-y-6">
               <div>
                 <label htmlFor="name" className="block text-sm font-semibold text-muted-foreground uppercase mb-3">
@@ -595,37 +733,6 @@ export function AddEditPetContent() {
                   ))}
                 </div>
               </div>
-            </div>
-          )}
-
-          {currentStep === 2 && (
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">{f.step2PhotoHint}</p>
-              <div className="text-right text-sm text-muted-foreground">
-                {f.photosCount.replace(
-                  "{n}",
-                  String(countFilledProfilePetPhotoSlots(formData.photos)),
-                )}
-              </div>
-
-              <ProfilePetPhotoSlotPicker
-                photos={storedPhotosFromSlots(slotsFromStoredPhotos(formData.photos))}
-                labels={f.photoSlots}
-                addLabel={f.photoSlotAdd}
-                replaceLabel={f.photoSlotReplace}
-                optionalLabel={f.photoSlotOptional}
-                recommendedLabel={f.photoSlotRecommended}
-                photoAlt={(n) => f.photoAlt.replace("{n}", String(n))}
-                disabled={isUploadingPhotos}
-                uploadingSlotIndex={uploadingSlotIndex}
-                onPickSlot={handlePickSlot}
-                onRemoveSlot={handleRemovePhoto}
-                onFileDrop={handleSlotFileDrop}
-              />
-
-              {isUploadingPhotos && (
-                <p className="text-sm text-muted-foreground">{t.common.toasts.photoUploading}</p>
-              )}
             </div>
           )}
 

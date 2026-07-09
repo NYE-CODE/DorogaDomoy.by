@@ -388,6 +388,9 @@ class PhotoAnalyzeResponse(BaseModel):
     breed: Optional[str] = None
     colors: list[str] = []
     gender: Optional[str] = None
+    approximate_age: Optional[str] = None
+    age_years_estimate: Optional[int] = None
+    description: Optional[str] = None
     notes: Optional[str] = None
     error: Optional[str] = None
 

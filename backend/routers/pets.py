@@ -45,7 +45,7 @@ from listing_lifecycle import (
     compute_listing_expires_at,
 )
 from time_utils import utc_now
-from upload_utils import save_data_image
+from upload_utils import delete_upload_url, save_data_image
 from rate_limit import limiter
 from ttl_cache import statistics_cache_get, statistics_cache_set
 
@@ -96,6 +96,30 @@ def save_base64_photo(data_url: str) -> str:
     if not data_url.startswith("data:"):
         return data_url
     return save_data_image(data_url, UPLOADS_DIR)
+
+
+def _persist_photo_list(photos: list[str]) -> tuple[list[str], list[str]]:
+    """Save base64 photos to disk. Returns (urls, newly_created_urls_for_cleanup)."""
+    urls: list[str] = []
+    new_uploads: list[str] = []
+    try:
+        for photo in photos:
+            if photo.startswith("data:"):
+                url = save_base64_photo(photo)
+                urls.append(url)
+                new_uploads.append(url)
+            else:
+                urls.append(photo)
+        return urls, new_uploads
+    except Exception:
+        for url in new_uploads:
+            delete_upload_url(url, UPLOADS_DIR)
+        raise
+
+
+def _cleanup_new_uploads(urls: list[str]) -> None:
+    for url in urls:
+        delete_upload_url(url, UPLOADS_DIR)
 
 
 def _normalize_reward(
@@ -492,14 +516,14 @@ def create_pet_sighting(
 
 
 @router.post("/analyze-photo", response_model=PhotoAnalyzeResponse)
-@limiter.limit("20/minute")
+@limiter.limit("6/minute;30/hour")
 def analyze_photo(
     request: Request,
     data: PhotoAnalyzeRequest,
     user: User = Depends(get_current_user_required),
 ):
-    """AI-подсказка породы/окраса по фото (Groq, опционально)."""
-    del user  # auth required
+    """AI-подсказка по фото (Groq). Лимит: 6/мин и 30/час на IP."""
+    del user  # auth required; лимит по IP (см. rate_limit.get_client_ip)
     result = analyze_pet_photo(data.image)
     return PhotoAnalyzeResponse(**result)
 
@@ -589,7 +613,6 @@ async def create_pet(
     if data.description and len(data.description) > 500:
         raise HTTPException(status_code=400, detail="Описание не может быть длиннее 500 символов")
 
-    photo_urls = [save_base64_photo(p) for p in data.photos]
     reward_mode, reward_amount_byn, reward_points = _normalize_reward(
         db=db,
         reward_mode=data.reward_mode,
@@ -615,41 +638,46 @@ async def create_pet(
     pet_id = "pet-" + str(uuid.uuid4())[:8]
     author_name = (data.author_name and data.author_name.strip()) or user.name or "Пользователь"
     now = utc_now()
-    pet = Pet(
-        id=pet_id,
-        photos=photo_urls,
-        animal_type=data.animal_type,
-        breed=data.breed,
-        colors=data.colors,
-        gender=data.gender,
-        approximate_age=data.approximate_age,
-        status=data.status,
-        description=data.description,
-        city=data.city,
-        location_lat=data.location.lat,
-        location_lng=data.location.lng,
-        author_id=user.id,
-        author_name=author_name,
-        contacts=_contacts_to_dict(data.contacts),
-        moderation_status=initial_status,
-        published_at=now,
-        expires_at=compute_listing_expires_at(db, now) if initial_status == "approved" else None,
-        reward_mode=reward_mode,
-        reward_amount_byn=reward_amount_byn,
-        reward_points=reward_points,
-        pet_scope=pet_scope,
-        shelter_id=shelter_id,
-        adoption_status=data.adoption_status,
-        is_published=bool(data.is_published),
-        published_by_user_id=user.id,
-        updated_by_user_id=user.id,
-        registration_authority=data.registration_authority,
-        registration_token_number=data.registration_token_number,
-    )
+
+    new_uploads: list[str] = []
+    committed = False
     try:
+        photo_urls, new_uploads = _persist_photo_list(data.photos)
+        pet = Pet(
+            id=pet_id,
+            photos=photo_urls,
+            animal_type=data.animal_type,
+            breed=data.breed,
+            colors=data.colors,
+            gender=data.gender,
+            approximate_age=data.approximate_age,
+            status=data.status,
+            description=data.description,
+            city=data.city,
+            location_lat=data.location.lat,
+            location_lng=data.location.lng,
+            author_id=user.id,
+            author_name=author_name,
+            contacts=_contacts_to_dict(data.contacts),
+            moderation_status=initial_status,
+            published_at=now,
+            expires_at=compute_listing_expires_at(db, now) if initial_status == "approved" else None,
+            reward_mode=reward_mode,
+            reward_amount_byn=reward_amount_byn,
+            reward_points=reward_points,
+            pet_scope=pet_scope,
+            shelter_id=shelter_id,
+            adoption_status=data.adoption_status,
+            is_published=bool(data.is_published),
+            published_by_user_id=user.id,
+            updated_by_user_id=user.id,
+            registration_authority=data.registration_authority,
+            registration_token_number=data.registration_token_number,
+        )
         db.add(pet)
         db.commit()
         db.refresh(pet)
+        committed = True
     except OperationalError as e:
         db.rollback()
         logging.exception("Ошибка при создании объявления: %s", e)
@@ -657,6 +685,8 @@ async def create_pet(
             status_code=500,
             detail="Не удалось создать объявление. Попробуйте позже.",
         ) from e
+    except HTTPException:
+        raise
     except Exception as e:
         db.rollback()
         logging.exception("Ошибка при создании объявления: %s", e)
@@ -664,6 +694,9 @@ async def create_pet(
             status_code=500,
             detail="Не удалось создать объявление. Попробуйте позже.",
         ) from e
+    finally:
+        if not committed:
+            _cleanup_new_uploads(new_uploads)
 
     if initial_status == "approved":
         background_tasks.add_task(_send_notifications_bg, pet.id)
@@ -731,104 +764,110 @@ async def update_pet(
         "is_published",
     }
     d = data.model_dump(exclude_unset=True)
+    photos_changed = "photos" in d and d["photos"] is not None
     if "reward_points" in d and user.role != "admin":
         raise HTTPException(status_code=403, detail="Только администратор может изменять количество очков")
     allowed_fields = set(COMMON_FIELDS)
     if user.role == "admin":
         allowed_fields.update(ADMIN_ONLY_FIELDS)
     d = {k: v for k, v in d.items() if k in allowed_fields}
-    if "photos" in d and d["photos"] is not None:
-        limit = _max_photos(db)
-        if len(d["photos"]) > limit:
-            raise HTTPException(status_code=400, detail=f"Максимум {limit} фото")
-        d["photos"] = [save_base64_photo(p) for p in d["photos"]]
-    if "description" in d and d["description"] and len(d["description"]) > 500:
-        raise HTTPException(status_code=400, detail="Описание не может быть длиннее 500 символов")
-    if "location" in d and d["location"]:
-        d["location_lat"] = d["location"]["lat"]
-        d["location_lng"] = d["location"]["lng"]
-        del d["location"]
-    if "contacts" in d and d["contacts"] is not None:
-        if hasattr(d["contacts"], "model_dump"):
-            d["contacts"] = d["contacts"].model_dump()
-        elif not isinstance(d["contacts"], dict):
-            d["contacts"] = dict(d["contacts"])
-    helper_code = d.pop("reward_helper_code", None)
-    if (
-        "reward_mode" in d
-        or "reward_amount_byn" in d
-        or "reward_points" in d
-    ):
-        reward_mode_input = d.get("reward_mode", pet.reward_mode)
-        reward_amount_input = d.get("reward_amount_byn", pet.reward_amount_byn)
-        reward_points_input = d.get("reward_points", pet.reward_points)
-        reward_mode, reward_amount_byn, reward_points = _normalize_reward(
-            db=db,
-            reward_mode=reward_mode_input,
-            reward_amount_byn=reward_amount_input,
-            reward_points=reward_points_input,
-        )
-        d["reward_mode"] = reward_mode
-        d["reward_amount_byn"] = reward_amount_byn
-        d["reward_points"] = reward_points
-    helper_user = None
-    award_points_now = False
-    if helper_code:
-        if pet.reward_points_awarded_at:
-            raise HTTPException(status_code=400, detail="Очки за это объявление уже начислены")
-        normalized_code = helper_code.strip().upper()
-        helper_user = db.scalar(select(User).where(User.helper_code == normalized_code))
-        if not helper_user:
-            raise HTTPException(status_code=404, detail="Пользователь с таким ID помощника не найден")
-        if helper_user.id == pet.author_id:
-            raise HTTPException(status_code=400, detail="Нельзя начислить очки самому себе")
-        new_archive_reason = d.get("archive_reason", pet.archive_reason)
-        new_archived = d.get("is_archived", pet.is_archived)
-        new_reward_mode = d.get("reward_mode", pet.reward_mode) or "points"
-        if not new_archived or not _is_happy_archive(new_archive_reason):
-            raise HTTPException(
-                status_code=400,
-                detail="Очки можно начислить только при архивировании с успешной причиной",
-            )
-        if new_reward_mode != "points":
-            raise HTTPException(status_code=400, detail="Очки доступны только в режиме награды «очки»")
-        award_points_now = True
-    for k, v in d.items():
-        setattr(pet, k, v)
-    pet.updated_by_user_id = user.id
-    if award_points_now and helper_user is not None:
-        points = pet.reward_points or 50
-        pet.reward_recipient_user_id = helper_user.id
-        pet.reward_points_awarded_at = utc_now()
-        helper_user.helper_confirmed_count = (helper_user.helper_confirmed_count or 0) + 1
-        helper_user.points_balance = (helper_user.points_balance or 0) + points
-        helper_user.points_earned_total = (helper_user.points_earned_total or 0) + points
-        db.add(
-            PointsTransaction(
-                id=f"ptx-{uuid.uuid4().hex[:16]}",
-                user_id=helper_user.id,
-                pet_id=pet.id,
-                amount=points,
-                kind="helper_reward",
-                note=f"Помощь с объявлением {pet.id}",
-                created_at=utc_now(),
-            )
-        )
-    pet.updated_at = utc_now()
-    moderation_updated = any(field in d for field in ADMIN_ONLY_FIELDS)
-    if moderation_updated:
-        pet.moderated_at = utc_now()
-        pet.moderated_by = user.id
-    elif pet.author_id == user.id:
-        if _moderation_required(db) and user.role != "admin" and (pet.pet_scope or "lost_found") != "shelter_pet":
-            pet.moderation_status = "pending"
-            pet.moderation_reason = None
-            pet.moderated_at = None
-            pet.moderated_by = None
-    if old_moderation_status != "approved" and pet.moderation_status == "approved" and not pet.expires_at:
-        pet.expires_at = compute_listing_expires_at(db)
+    new_uploads: list[str] = []
+    committed = False
     try:
+        if "photos" in d and d["photos"] is not None:
+            limit = _max_photos(db)
+            if len(d["photos"]) > limit:
+                raise HTTPException(status_code=400, detail=f"Максимум {limit} фото")
+            d["photos"], new_uploads = _persist_photo_list(d["photos"])
+        if "description" in d and d["description"] and len(d["description"]) > 500:
+            raise HTTPException(status_code=400, detail="Описание не может быть длиннее 500 символов")
+        if "location" in d and d["location"]:
+            d["location_lat"] = d["location"]["lat"]
+            d["location_lng"] = d["location"]["lng"]
+            del d["location"]
+        if "contacts" in d and d["contacts"] is not None:
+            if hasattr(d["contacts"], "model_dump"):
+                d["contacts"] = d["contacts"].model_dump()
+            elif not isinstance(d["contacts"], dict):
+                d["contacts"] = dict(d["contacts"])
+        helper_code = d.pop("reward_helper_code", None)
+        if (
+            "reward_mode" in d
+            or "reward_amount_byn" in d
+            or "reward_points" in d
+        ):
+            reward_mode_input = d.get("reward_mode", pet.reward_mode)
+            reward_amount_input = d.get("reward_amount_byn", pet.reward_amount_byn)
+            reward_points_input = d.get("reward_points", pet.reward_points)
+            reward_mode, reward_amount_byn, reward_points = _normalize_reward(
+                db=db,
+                reward_mode=reward_mode_input,
+                reward_amount_byn=reward_amount_input,
+                reward_points=reward_points_input,
+            )
+            d["reward_mode"] = reward_mode
+            d["reward_amount_byn"] = reward_amount_byn
+            d["reward_points"] = reward_points
+        helper_user = None
+        award_points_now = False
+        if helper_code:
+            if pet.reward_points_awarded_at:
+                raise HTTPException(status_code=400, detail="Очки за это объявление уже начислены")
+            normalized_code = helper_code.strip().upper()
+            helper_user = db.scalar(select(User).where(User.helper_code == normalized_code))
+            if not helper_user:
+                raise HTTPException(status_code=404, detail="Пользователь с таким ID помощника не найден")
+            if helper_user.id == pet.author_id:
+                raise HTTPException(status_code=400, detail="Нельзя начислить очки самому себе")
+            new_archive_reason = d.get("archive_reason", pet.archive_reason)
+            new_archived = d.get("is_archived", pet.is_archived)
+            new_reward_mode = d.get("reward_mode", pet.reward_mode) or "points"
+            if not new_archived or not _is_happy_archive(new_archive_reason):
+                raise HTTPException(
+                    status_code=400,
+                    detail="Очки можно начислить только при архивировании с успешной причиной",
+                )
+            if new_reward_mode != "points":
+                raise HTTPException(status_code=400, detail="Очки доступны только в режиме награды «очки»")
+            award_points_now = True
+        for k, v in d.items():
+            setattr(pet, k, v)
+        pet.updated_by_user_id = user.id
+        if award_points_now and helper_user is not None:
+            points = pet.reward_points or 50
+            pet.reward_recipient_user_id = helper_user.id
+            pet.reward_points_awarded_at = utc_now()
+            helper_user.helper_confirmed_count = (helper_user.helper_confirmed_count or 0) + 1
+            helper_user.points_balance = (helper_user.points_balance or 0) + points
+            helper_user.points_earned_total = (helper_user.points_earned_total or 0) + points
+            db.add(
+                PointsTransaction(
+                    id=f"ptx-{uuid.uuid4().hex[:16]}",
+                    user_id=helper_user.id,
+                    pet_id=pet.id,
+                    amount=points,
+                    kind="helper_reward",
+                    note=f"Помощь с объявлением {pet.id}",
+                    created_at=utc_now(),
+                )
+            )
+        pet.updated_at = utc_now()
+        moderation_updated = any(field in d for field in ADMIN_ONLY_FIELDS)
+        if moderation_updated:
+            pet.moderated_at = utc_now()
+            pet.moderated_by = user.id
+        elif pet.author_id == user.id:
+            if _moderation_required(db) and user.role != "admin" and (pet.pet_scope or "lost_found") != "shelter_pet":
+                pet.moderation_status = "pending"
+                pet.moderation_reason = None
+                pet.moderated_at = None
+                pet.moderated_by = None
+        if old_moderation_status != "approved" and pet.moderation_status == "approved" and not pet.expires_at:
+            pet.expires_at = compute_listing_expires_at(db)
         db.commit()
+        committed = True
+    except HTTPException:
+        raise
     except Exception as e:
         db.rollback()
         logging.exception("Ошибка при обновлении объявления %s: %s", pet_id, e)
@@ -836,6 +875,9 @@ async def update_pet(
             status_code=500,
             detail="Не удалось обновить объявление. Попробуйте позже.",
         ) from e
+    finally:
+        if not committed:
+            _cleanup_new_uploads(new_uploads)
 
     pet = db.scalar(
         select(Pet).options(selectinload(Pet.shelter_details)).where(Pet.id == pet_id)
@@ -850,6 +892,8 @@ async def update_pet(
             enqueue_autopublish_for_pet(db, pet=pet, initiated_by=user.id)
         except Exception as e:
             logging.exception("Instagram autopublish enqueue failed for pet %s: %s", pet.id, e)
+    elif photos_changed and pet.moderation_status == "approved":
+        _enqueue_photo_embedding(background_tasks, pet.id)
 
     return pet_to_response(pet)
 

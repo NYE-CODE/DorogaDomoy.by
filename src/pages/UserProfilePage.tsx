@@ -69,6 +69,7 @@ export default function UserProfilePage() {
 
   useEffect(() => {
     if (!id) return;
+    let cancelled = false;
     setLoading(true);
     setError(false);
     setUser(null);
@@ -78,20 +79,35 @@ export default function UserProfilePage() {
       petsApi.list({ author_id: id, limit: 500 }).catch(() => []),
     ])
       .then(([userData, petsData]) => {
+        if (cancelled) return;
         setUser(userData);
         setAllPets(petsData);
         if (!userData) setError(true);
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   useEffect(() => {
     if (!id) return;
+    let cancelled = false;
     const form = t.myPets.form;
     profilePetsApi
       .list({ owner_id: id })
-      .then((arr) => setProfilePets(arr.map((pet) => profilePetToListCard(pet, form))))
-      .catch(() => setProfilePets([]));
+      .then((arr) => {
+        if (!cancelled) setProfilePets(arr.map((pet) => profilePetToListCard(pet, form)));
+      })
+      .catch(() => {
+        if (!cancelled) setProfilePets([]);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [id, locale]);
 
   const stats = useMemo(() => {

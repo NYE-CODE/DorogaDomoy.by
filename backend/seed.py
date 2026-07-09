@@ -1,4 +1,7 @@
 """Seed database with initial admin user and sample data."""
+import os
+import secrets
+
 from sqlalchemy import func, select
 
 from database import init_db, SessionLocal
@@ -8,21 +11,36 @@ from auth import get_password_hash
 init_db()
 db = SessionLocal()
 
+
+def _resolve_seed_admin_password() -> str:
+    """Пароль только из env или одноразовая генерация — без захардкоженных значений в репозитории."""
+    explicit = (os.getenv("SEED_ADMIN_PASSWORD") or "").strip()
+    if explicit:
+        return explicit
+    generated = secrets.token_urlsafe(18)
+    print(
+        "SEED_ADMIN_PASSWORD не задан — сгенерирован одноразовый пароль админа (сохраните сейчас):",
+        generated,
+    )
+    return generated
+
+
 # Create admin user if not exists
 admin = db.scalar(select(User).where(User.email == "admin@dorogadomoy.by"))
 if not admin:
+    admin_password = _resolve_seed_admin_password()
     admin = User(
         id="user-admin",
         email="admin@dorogadomoy.by",
         name="Администратор",
-        password_hash=get_password_hash("admin123"),
+        password_hash=get_password_hash(admin_password),
         avatar="https://api.dicebear.com/7.x/avataaars/svg?seed=admin",
         role="admin",
-        contacts={"phone": "+375291234567", "telegram": "@admin"},
+        contacts={"telegram": "@admin"},
     )
     db.add(admin)
     db.commit()
-    print("Admin created: admin@dorogadomoy.by / admin123")
+    print("Admin created: admin@dorogadomoy.by (пароль — см. выше или SEED_ADMIN_PASSWORD)")
 
 # Add sample pets if empty
 if db.scalar(select(func.count()).select_from(Pet)) == 0:
@@ -42,7 +60,7 @@ if db.scalar(select(func.count()).select_from(Pet)) == 0:
             location_lng=27.5590,
             author_id="user-admin",
             author_name="Администратор",
-            contacts={"telegram": "@admin", "phone": "+375291234567"},
+            contacts={"telegram": "@admin"},
             moderation_status="approved",
         ),
     ]
