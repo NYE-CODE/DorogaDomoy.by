@@ -48,6 +48,10 @@ from listing_lifecycle import (
 from time_utils import utc_now
 from upload_utils import delete_upload_url, save_data_image
 from search_normalization import normalize_search_query, resolve_animal_type_from_search
+from pet_create_trace import (
+    collect_empty_pet_create_fields,
+    format_pet_created_from_profile_log,
+)
 from rate_limit import limiter
 from ttl_cache import statistics_cache_get, statistics_cache_set
 
@@ -707,6 +711,14 @@ async def create_pet(
         db.commit()
         db.refresh(pet)
         committed = True
+        if profile_pet_id:
+            logging.info(
+                format_pet_created_from_profile_log(
+                    profile_pet_id=profile_pet_id,
+                    pet_id=pet.id,
+                    empty_fields=collect_empty_pet_create_fields(data),
+                )
+            )
     except OperationalError as e:
         db.rollback()
         logging.exception("Ошибка при создании объявления: %s", e)
