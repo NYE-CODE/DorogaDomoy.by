@@ -28,6 +28,7 @@ export interface ProfileNotificationsTabProps {
   onCopyCode: () => void;
   onCancelLinking: () => void;
   onToggleNotifications: (enabled: boolean) => void;
+  onToggleSimilarMatches: (enabled: boolean) => void;
   onSaveNotifSettings: () => void;
 }
 
@@ -51,6 +52,7 @@ export function ProfileNotificationsTab({
   onCopyCode,
   onCancelLinking,
   onToggleNotifications,
+  onToggleSimilarMatches,
   onSaveNotifSettings,
 }: ProfileNotificationsTabProps) {
   return (
@@ -137,6 +139,32 @@ export function ProfileNotificationsTab({
                   <input type="checkbox" checked={!!notifSettings?.notifications_enabled} onChange={() => void onToggleNotifications(!notifSettings?.notifications_enabled)} disabled={notifSaving} className="sr-only peer" />
                   <div className={`w-11 h-6 rounded-full transition-colors duration-200 ${notifSettings?.notifications_enabled ? 'bg-[#FF9800]' : 'bg-gray-300 dark:bg-gray-600'}`}>
                     <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${notifSettings?.notifications_enabled ? 'translate-x-5' : 'translate-x-0'}`} />
+                  </div>
+                </div>
+              </label>
+            </div>
+            <div className="mb-6">
+              <label
+                className={`flex items-center justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg transition-colors ${
+                  notifSettings?.notifications_enabled
+                    ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800'
+                    : 'opacity-60 cursor-not-allowed'
+                }`}
+              >
+                <div>
+                  <div className="font-medium text-black dark:text-white">{t.notifications.similarMatches}</div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">{t.notifications.aboutSimilarMatches}</div>
+                </div>
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    checked={notifSettings?.notify_similar_matches !== false}
+                    onChange={() => void onToggleSimilarMatches(!notifSettings?.notify_similar_matches)}
+                    disabled={notifSaving || !notifSettings?.notifications_enabled}
+                    className="sr-only peer"
+                  />
+                  <div className={`w-11 h-6 rounded-full transition-colors duration-200 ${notifSettings?.notify_similar_matches !== false && notifSettings?.notifications_enabled ? 'bg-[#FF9800]' : 'bg-gray-300 dark:bg-gray-600'}`}>
+                    <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${notifSettings?.notify_similar_matches !== false && notifSettings?.notifications_enabled ? 'translate-x-5' : 'translate-x-0'}`} />
                   </div>
                 </div>
               </label>

@@ -117,6 +117,8 @@ def _send_similar_match_notifications(pet: Pet, db: Session) -> None:
         ns = db.scalar(select(NotificationSettings).where(NotificationSettings.user_id == owner_id))
         if ns and not ns.notifications_enabled:
             continue
+        if ns and getattr(ns, "notify_similar_matches", True) is False:
+            continue
         if ns and ns.notify_animal_types and pet.animal_type not in ns.notify_animal_types:
             continue
 

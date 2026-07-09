@@ -105,6 +105,7 @@ export default function ProfilePage() {
                       p.setIsLinking(false);
                     }}
                     onToggleNotifications={(enabled) => void p.handleToggleNotifications(enabled)}
+                    onToggleSimilarMatches={(enabled) => void p.handleToggleSimilarMatches(enabled)}
                     onSaveNotifSettings={() => void p.handleSaveNotifSettings()}
                   />
                 ) : null}

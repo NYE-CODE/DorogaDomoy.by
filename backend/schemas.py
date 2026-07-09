@@ -586,6 +586,7 @@ class TelegramLinkStatusResponse(BaseModel):
 class NotificationSettingsResponse(BaseModel):
     notifications_enabled: bool = True
     notification_radius_km: float = 1.0
+    notify_similar_matches: bool = True
 
     class Config:
         from_attributes = True
@@ -594,6 +595,7 @@ class NotificationSettingsResponse(BaseModel):
 class NotificationSettingsUpdate(BaseModel):
     notifications_enabled: Optional[bool] = None
     notification_radius_km: Optional[float] = Field(None, ge=1.0, le=10.0)
+    notify_similar_matches: Optional[bool] = None
 
 
 # --- Platform settings (админ PATCH /settings) ---

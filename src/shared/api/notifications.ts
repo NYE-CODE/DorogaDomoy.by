@@ -3,6 +3,7 @@ import { api } from '@/shared/api/http';
 export interface NotificationSettingsData {
   notifications_enabled: boolean;
   notification_radius_km: number;
+  notify_similar_matches: boolean;
 }
 
 export interface NotificationItem {

@@ -242,6 +242,7 @@ class NotificationSettings(Base):
     user_id = Column(String, ForeignKey("users.id"), unique=True, nullable=False)
     notifications_enabled = Column(Boolean, default=True)
     notification_radius_km = Column(Float, default=1.0)
+    notify_similar_matches = Column(Boolean, default=True)
     notify_animal_types = Column(JSON, default=lambda: ["dog", "cat", "other"])
     home_lat = Column(Float, nullable=True)
     home_lng = Column(Float, nullable=True)

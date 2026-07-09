@@ -59,6 +59,7 @@ def get_notification_settings(
     return NotificationSettingsResponse(
         notifications_enabled=ns.notifications_enabled,
         notification_radius_km=ns.notification_radius_km,
+        notify_similar_matches=getattr(ns, "notify_similar_matches", True),
     )
 
 
@@ -83,6 +84,9 @@ def update_notification_settings(
     if data.notification_radius_km is not None:
         ns.notification_radius_km = data.notification_radius_km
 
+    if data.notify_similar_matches is not None:
+        ns.notify_similar_matches = data.notify_similar_matches
+
     ns.updated_at = utc_now()
 
     try:
@@ -96,6 +100,7 @@ def update_notification_settings(
     return NotificationSettingsResponse(
         notifications_enabled=ns.notifications_enabled,
         notification_radius_km=ns.notification_radius_km,
+        notify_similar_matches=getattr(ns, "notify_similar_matches", True),
     )
 
 

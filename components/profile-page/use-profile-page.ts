@@ -368,6 +368,21 @@ export function useProfilePage() {
     finally { setNotifSaving(false); }
   };
 
+  const handleToggleSimilarMatches = async (enabled: boolean) => {
+    setNotifSaving(true);
+    try {
+      const updated = await notificationsApi.updateSettings({ notify_similar_matches: enabled });
+      setNotifSettings(updated);
+      toast.success(
+        enabled ? t.notifications.similarMatchesEnabled : t.notifications.similarMatchesDisabled,
+      );
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : t.common.error;
+      toast.error(message || t.common.error);
+    }
+    finally { setNotifSaving(false); }
+  };
+
   const handleSaveNotifSettings = async () => {
     setNotifSaving(true);
     try {
@@ -448,6 +463,7 @@ export function useProfilePage() {
     handleCopyCode,
     handleCopyHelperCode,
     handleToggleNotifications,
+    handleToggleSimilarMatches,
     handleSaveNotifSettings,
     cleanupLinking,
     setLinkCode,
