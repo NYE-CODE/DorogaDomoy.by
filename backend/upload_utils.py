@@ -1,9 +1,12 @@
 """Shared helpers for saving uploaded images into /uploads."""
 import base64
+import logging
 import uuid
 from pathlib import Path
 
 from fastapi import HTTPException
+
+logger = logging.getLogger(__name__)
 
 MIME_TO_EXT = {
     "image/jpeg": ".jpg",
@@ -33,3 +36,16 @@ def save_data_image(data_url: str, uploads_dir: Path) -> str:
     filename = f"{uuid.uuid4().hex}{ext}"
     (uploads_dir / filename).write_bytes(raw)
     return f"/uploads/{filename}"
+
+
+def delete_upload_url(url: str, uploads_dir: Path) -> None:
+    """Remove a file previously saved under /uploads/…"""
+    if not url.startswith("/uploads/"):
+        return
+    rel = url.removeprefix("/uploads/").lstrip("/").replace("\\", "/")
+    if not rel or ".." in rel.split("/"):
+        return
+    try:
+        (uploads_dir / rel).unlink(missing_ok=True)
+    except OSError:
+        logger.warning("Failed to delete upload %s", url, exc_info=True)

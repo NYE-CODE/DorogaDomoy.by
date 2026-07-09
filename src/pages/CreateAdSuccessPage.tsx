@@ -23,10 +23,18 @@ export default function CreateAdSuccessPage() {
       navigate('/my-ads', { replace: true });
       return;
     }
+    let cancelled = false;
     petsApi
       .get(id)
-      .then(setPet)
-      .catch(() => navigate('/my-ads', { replace: true }));
+      .then((pet) => {
+        if (!cancelled) setPet(pet);
+      })
+      .catch(() => {
+        if (!cancelled) navigate('/my-ads', { replace: true });
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [id, navigate]);
 
   return (
@@ -50,7 +58,15 @@ export default function CreateAdSuccessPage() {
           )}
         </div>
 
-        {id && <SimilarPetsSection petId={id} className="mb-8" limit={6} />}
+        {id && (
+          <SimilarPetsSection
+            petId={id}
+            className="mb-8"
+            limit={6}
+            initialDelayMs={2000}
+            retryDelaysMs={[3000]}
+          />
+        )}
 
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
           <Button asChild>

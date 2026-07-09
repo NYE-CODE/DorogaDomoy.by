@@ -44,6 +44,9 @@ export function createApiError({ status, statusText, body }: ApiErrorContext): E
   if (status === 413) {
     return new Error('Слишком большой размер данных. Уменьшите фото и попробуйте снова.');
   }
+  if (status === 429) {
+    return new Error(formatApiErrorBody(body, 'Слишком много запросов. Подождите и попробуйте снова.'));
+  }
   const fallback =
     status === 422
       ? 'Проверьте введённые данные'

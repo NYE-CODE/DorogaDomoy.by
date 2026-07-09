@@ -18,3 +18,12 @@ def test_breed_catalog_german_shepherd():
 def test_color_overlap():
     assert color_similarity(["black", "brown"], ["black"]) > 0.3
     assert color_similarity(["black"], ["white"]) == 0.0
+
+
+def test_description_overlap():
+    from types import SimpleNamespace
+    from pet_similarity import _description_overlap_score
+
+    a = SimpleNamespace(description="рыжий кот с белой грудкой и пятном на ухе")
+    b = SimpleNamespace(description="белое пятно на ухе рыжий окрас")
+    assert _description_overlap_score(a, b) > 0.15

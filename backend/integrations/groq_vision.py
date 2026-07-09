@@ -22,21 +22,31 @@ GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 DEFAULT_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
 
 PROMPT = """Ты помощник сервиса поиска пропавших животных в Беларуси.
-По фото определи породу, окрас и пол. Ответь СТРОГО одним JSON-объектом без markdown и без пояснений вне JSON:
+Сначала определи, подходит ли фото для объявления о питомце.
+Ответь СТРОГО одним JSON-объектом без markdown:
 {
-  "animal_type": "cat" | "dog" | "other",
-  "breed": "конкретная порода на русском (например Немецкая овчарка, Лабрадор-ретривер, Сибирская лайка) или null если не уверен",
-  "colors": ["основной окрас", "дополнительный"],
-  "gender": "male" | "female" | "unknown",
-  "notes": null
+  "is_animal": true | false,
+  "reject_reason": null | "not_animal" | "unclear" | "too_far",
+  "animal_type": "cat" | "dog" | "other" | null,
+  "breed": "конкретная порода на русском или null",
+  "colors": ["основной окрас"],
+  "gender": "male" | "female" | "unknown" | null,
+  "approximate_age": "less_2" | "more_2" | "unknown" | null,
+  "age_years_estimate": число 0–30 или null,
+  "description": "1–3 предложения на русском или null"
 }
 
 Правила:
-- breed: укажи породу максимально конкретно; не пиши общие описания вместо породы («крупная собака», «пушистый кот» — запрещено).
-- colors: 1–3 окраса на русском (чёрный, белый, рыжий, серый, коричневый, пегий, трёхцветный).
-- gender: male/female если видно, иначе unknown.
-- notes: всегда null (описания не нужны).
-- Если порода неочевидна — breed: null, не выдумывай."""
+- is_animal=false если на фото НЕТ животного (люди, предметы, еда, пейзаж, текст, скриншот, мем).
+- reject_reason=not_animal — животного нет.
+- reject_reason=unclear — животное есть, но не разобрать (темно, размыто, закрыто, виден лишь фрагмент).
+- reject_reason=too_far — животное слишком далеко / занимает малую часть кадра.
+- При is_animal=false: reject_reason обязателен, остальные поля null.
+- При is_animal=true: breed конкретно; не пиши «крупная собака» вместо породы.
+- colors: 1–3 окраса на русском.
+- approximate_age: less_2 если явно щенок/котёнок или возраст до ~2 лет; more_2 если взрослый; unknown если неясно.
+- age_years_estimate: примерный возраст в годах, если можно оценить по фото.
+- Если порода неочевидна — breed: null."""
 
 
 def _groq_api_key() -> Optional[str]:
@@ -110,6 +120,39 @@ def _normalize_image_input(image: str) -> Optional[str]:
     return None
 
 
+def _normalize_approximate_age(value: Any) -> Optional[str]:
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        if isinstance(value, (int, float)):
+            return "менее 2 года" if value < 2 else "более 2 года"
+        return None
+    v = value.strip().lower()
+    if v in {"", "null", "none", "unknown", "неизвестно"}:
+        return None
+    if v in {"less_2", "young", "puppy", "kitten", "менее 2", "менее 2 года", "до 2"}:
+        return "менее 2 года"
+    if v in {"more_2", "adult", "senior", "более 2", "более 2 года", "взрослый"}:
+        return "более 2 года"
+    if "менее" in v or "щен" in v or "котён" in v or "котен" in v:
+        return "менее 2 года"
+    if "более" in v or "взросл" in v:
+        return "более 2 года"
+    return None
+
+
+def _normalize_age_years_estimate(value: Any) -> Optional[int]:
+    if value is None:
+        return None
+    try:
+        years = int(round(float(value)))
+    except (TypeError, ValueError):
+        return None
+    if years < 0 or years > 30:
+        return None
+    return years
+
+
 def _normalize_gender(value: Any) -> Optional[str]:
     if not isinstance(value, str):
         return None
@@ -122,9 +165,13 @@ def _normalize_gender(value: Any) -> Optional[str]:
 
 
 def _normalize_animal_type(value: Any) -> Optional[str]:
+    if value is None:
+        return None
     if not isinstance(value, str):
         return None
     v = value.strip().lower()
+    if v in {"", "null", "none", "unknown"}:
+        return None
     if v in {"cat", "dog", "other"}:
         return v
     if "кош" in v or "cat" in v:
@@ -132,6 +179,25 @@ def _normalize_animal_type(value: Any) -> Optional[str]:
     if "соб" in v or "dog" in v:
         return "dog"
     return "other"
+
+
+def _photo_reject_error(parsed: dict[str, Any]) -> Optional[str]:
+    """Код ошибки, если фото не подходит для AI-подсказки."""
+    is_animal = parsed.get("is_animal")
+    if is_animal is False:
+        reason = str(parsed.get("reject_reason") or "not_animal").strip().lower()
+        if reason in {"unclear", "too_far", "blurry", "dark", "multiple_animals"}:
+            return "photo_unclear"
+        return "not_animal"
+    if is_animal is True:
+        return None
+    # Совместимость: модель могла не вернуть is_animal
+    reason = str(parsed.get("reject_reason") or "").strip().lower()
+    if reason in {"not_animal", "no_animal"}:
+        return "not_animal"
+    if reason in {"unclear", "too_far", "blurry", "dark"}:
+        return "photo_unclear"
+    return None
 
 
 def analyze_pet_photo(image_data_url: str) -> dict[str, Any]:
@@ -185,6 +251,10 @@ def analyze_pet_photo(image_data_url: str) -> dict[str, Any]:
             data = resp.json()
         content = data["choices"][0]["message"]["content"]
         parsed = _extract_json(content)
+        reject_error = _photo_reject_error(parsed)
+        if reject_error:
+            return {"ai_available": False, "colors": [], "error": reject_error}
+
         colors = parsed.get("colors") or []
         if not isinstance(colors, list):
             colors = []
@@ -195,15 +265,28 @@ def analyze_pet_photo(image_data_url: str) -> dict[str, Any]:
         if breed_str and breed_str.lower() in {"null", "none", "неизвестно", "unknown"}:
             breed_str = None
         animal_type = _normalize_animal_type(parsed.get("animal_type"))
+        if not animal_type:
+            return {"ai_available": False, "colors": [], "error": "photo_unclear"}
         breed_matched = match_breed_to_catalog(breed_str, animal_type) if breed_str else None
         gender = _normalize_gender(parsed.get("gender"))
+        approximate_age = _normalize_approximate_age(parsed.get("approximate_age"))
+        age_years_estimate = _normalize_age_years_estimate(parsed.get("age_years_estimate"))
+        if not approximate_age and age_years_estimate is not None:
+            approximate_age = "менее 2 года" if age_years_estimate < 2 else "более 2 года"
+        desc_raw = parsed.get("description") or parsed.get("notes")
+        description_str = str(desc_raw).strip() if desc_raw else None
+        if description_str and description_str.lower() in {"null", "none", "неизвестно", "unknown"}:
+            description_str = None
         return {
             "ai_available": True,
             "animal_type": animal_type,
             "breed": breed_matched or breed_str,
             "colors": color_keys or colors,
             "gender": gender,
-            "notes": None,
+            "approximate_age": approximate_age,
+            "age_years_estimate": age_years_estimate,
+            "description": description_str,
+            "notes": description_str,
         }
     except Exception as e:
         logger.warning("Groq vision analyze failed: %s", e)

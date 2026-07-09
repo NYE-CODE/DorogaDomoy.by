@@ -9,8 +9,8 @@
 
 set -e
 
-REPO_DIR="${REPO_DIR:-/home/dorogado/DorogaDomoy.by}"
-FRONTEND_DIR="${FRONTEND_DIR:-/home/dorogado/DorogaDomoy.by/frontend}"
+REPO_DIR="${REPO_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
+FRONTEND_DIR="${FRONTEND_DIR:-$REPO_DIR/frontend}"
 DB_DIR="/var/lib/dorogadomoy"
 SERVICE_USER="${SERVICE_USER:-dorogado}"
 # Origin бэкенда без /api/v1 (клиент добавляет /api/v1 к JSON; /uploads — от корня origin)
