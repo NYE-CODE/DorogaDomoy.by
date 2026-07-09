@@ -1,11 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { MapPin, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import { PetCard } from './pet-card';
 import { petsApi } from '@/shared/api/client';
 import { useI18n } from '@/app/providers/I18nContext';
 import { cn } from './ui/utils';
 import { typoH3 } from '@/shared/styles/typography-classes';
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
+import {
+  buildSimilarPetTooltipLines,
+  fallbackMatchPercent,
+  matchPercentBadgeClass,
+} from '@/shared/lib/similar-pet-display';
 
 function sleep(ms: number) {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
@@ -16,6 +22,8 @@ interface SimilarPetsSectionProps {
   className?: string;
   limit?: number;
   showTitle?: boolean;
+  /** Открывать карточку объявления в новой вкладке. */
+  openInNewTab?: boolean;
   /** Задержка перед первым запросом (дать время посчитать CLIP embedding). */
   initialDelayMs?: number;
   /** Повторные запросы, если ещё нет visual_similarity. */
@@ -27,6 +35,7 @@ export function SimilarPetsSection({
   className,
   limit = 6,
   showTitle = true,
+  openInNewTab = false,
   initialDelayMs = 0,
   retryDelaysMs = [],
 }: SimilarPetsSectionProps) {
@@ -98,32 +107,66 @@ export function SimilarPetsSection({
         <p className="p-6 text-sm text-muted-foreground">{t.similarPets.empty}</p>
       ) : (
         <div className="grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-3">
-          {items.map((item) => (
-            <div key={item.pet.id} className="space-y-2">
-              <PetCard
-                pet={item.pet}
-                compact
-                showFavoriteToggle
-                onClick={() => navigate(`/pet/${item.pet.id}`)}
-              />
-              <div className="flex flex-wrap gap-1.5 px-1">
-                {item.distanceKm != null && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                    <MapPin className="h-3 w-3" aria-hidden />
-                    {t.similarPets.distanceKm.replace('{km}', String(item.distanceKm))}
-                  </span>
-                )}
-                {item.reasons.slice(0, 3).map((r) => (
-                  <span
-                    key={r}
-                    className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary"
-                  >
-                    {(t.similarPets.reasons as Record<string, string>)[r] ?? r}
-                  </span>
-                ))}
+          {items.map((item) => {
+            const percent = item.matchPercent ?? fallbackMatchPercent(item.score);
+            const tooltipLines = buildSimilarPetTooltipLines(item, {
+              reasons: t.similarPets.reasons as Record<string, string>,
+              distanceKm: t.similarPets.distanceKm,
+            });
+
+            return (
+              <div key={item.pet.id} className="space-y-2">
+                <PetCard
+                  pet={item.pet}
+                  compact
+                  showFavoriteToggle
+                  onClick={() => {
+                    const url = `/pet/${item.pet.id}`;
+                    if (openInNewTab) {
+                      window.open(url, '_blank', 'noopener,noreferrer');
+                    } else {
+                      navigate(url);
+                    }
+                  }}
+                />
+                <div className="px-1">
+                  <Tooltip delayDuration={200}>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        className={cn(
+                          'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset',
+                          matchPercentBadgeClass(percent),
+                        )}
+                        aria-label={t.similarPets.matchTooltipTitle}
+                      >
+                        <span className="tabular-nums">{percent}%</span>
+                        <span className="font-medium opacity-90">{t.similarPets.matchLabel}</span>
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent
+                      side="top"
+                      sideOffset={6}
+                      className="max-w-[240px] space-y-1 px-3 py-2 text-left"
+                    >
+                      <p className="text-[11px] font-semibold uppercase tracking-wide opacity-90">
+                        {t.similarPets.matchTooltipTitle}
+                      </p>
+                      {tooltipLines.length > 0 ? (
+                        <ul className="list-inside list-disc space-y-0.5 text-xs leading-snug">
+                          {tooltipLines.map((line) => (
+                            <li key={line}>{line}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-xs leading-snug opacity-90">{t.similarPets.matchTooltipEmpty}</p>
+                      )}
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </section>

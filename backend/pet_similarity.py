@@ -210,6 +210,63 @@ def _score_candidate(
     return score, distance_km, reasons, breed_sim, color_sim, visual
 
 
+def _compute_match_percent(
+    source: Pet,
+    candidate: Pet,
+    *,
+    breed_sim: float,
+    color_sim: float,
+    visual: float,
+    distance_km: Optional[float],
+    radius_km: float,
+    desc_overlap: float,
+) -> int:
+    """Взвешенный процент совпадения 38–97.
+
+    Порода и визуал весят больше, чем окрас в одиночку. Учитываются только факторы,
+    для которых есть данные у обоих объявлений; веса перенормируются.
+    """
+    parts: list[tuple[float, float]] = []
+
+    if normalize_text(source.breed) and normalize_text(candidate.breed):
+        parts.append((32.0, max(0.0, min(1.0, breed_sim))))
+
+    if visual > 0:
+        parts.append((26.0, visual))
+
+    if source.colors and candidate.colors:
+        parts.append((18.0, max(0.0, min(1.0, color_sim))))
+
+    if distance_km is not None:
+        proximity = max(0.0, 1.0 - distance_km / radius_km)
+        parts.append((14.0, proximity))
+    elif (
+        normalize_text(source.city)
+        and normalize_text(source.city) == normalize_text(candidate.city)
+    ):
+        parts.append((10.0, 0.5))
+
+    if (source.description or "").strip() and (candidate.description or "").strip() and desc_overlap > 0:
+        parts.append((6.0, desc_overlap))
+
+    sg = normalize_text(source.gender)
+    cg = normalize_text(candidate.gender)
+    if sg and cg and sg not in {"unknown", ""} and cg not in {"unknown", ""}:
+        parts.append((2.0, 1.0 if sg == cg else 0.0))
+
+    sa = normalize_text(source.approximate_age)
+    ca = normalize_text(candidate.approximate_age)
+    if sa and ca:
+        parts.append((2.0, 1.0 if sa == ca else 0.0))
+
+    if not parts:
+        return 40
+
+    total_weight = sum(weight for weight, _ in parts)
+    blended = sum(weight * value for weight, value in parts) / total_weight
+    return int(round(max(38, min(97, 38 + blended * 59))))
+
+
 def find_similar_pets(
     db: Session,
     source_pet: Pet,
@@ -217,7 +274,7 @@ def find_similar_pets(
     limit: int = 10,
     radius_km: float = DEFAULT_RADIUS_KM,
 ) -> list[dict]:
-    """Возвращает список {pet, score, distance_km, reasons}."""
+    """Возвращает список {pet, score, match_percent, distance_km, reasons}."""
     if (source_pet.pet_scope or "lost_found") != "lost_found":
         return []
 
@@ -263,14 +320,32 @@ def find_similar_pets(
             reasons=reasons,
         ):
             continue
+        desc_overlap = _description_overlap_score(source_pet, cand)
+        match_percent = _compute_match_percent(
+            source_pet,
+            cand,
+            breed_sim=breed_sim,
+            color_sim=color_sim,
+            visual=visual,
+            distance_km=dist,
+            radius_km=radius_km,
+            desc_overlap=desc_overlap,
+        )
         ranked.append(
             {
                 "pet": cand,
                 "score": round(item_score, 2),
+                "match_percent": match_percent,
                 "distance_km": round(dist, 2) if dist is not None else None,
                 "reasons": reasons,
             }
         )
 
-    ranked.sort(key=lambda x: (-x["score"], x["distance_km"] if x["distance_km"] is not None else 9999))
+    ranked.sort(
+        key=lambda x: (
+            -x["match_percent"],
+            -x["score"],
+            x["distance_km"] if x["distance_km"] is not None else 9999,
+        )
+    )
     return ranked[: max(1, min(limit, 30))]

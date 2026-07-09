@@ -1,0 +1,51 @@
+/** createAd strings (ru / be / en). */
+export const createAdLocales = {
+  ru: {
+    title: 'Уведомления',
+    description: 'Уведомления приходят, когда рядом с одним из ваших объявлений появляется новое',
+    telegramNotLinked: 'Telegram не привязан',
+    telegramNotLinkedHint: 'Привяжите Telegram в разделе «Контакты для связи», чтобы получать уведомления.',
+    telegramNotifications: 'Уведомления в Telegram',
+    aboutNearby: 'О новых объявлениях рядом с вашими',
+    radius: 'Радиус уведомлений',
+    radiusHint: 'Радиус считается от каждого вашего активного объявления',
+    saveSettings: 'Сохранить настройки уведомлений',
+    settingsSaved: 'Настройки уведомлений сохранены',
+    enabled: 'Уведомления включены',
+    disabled: 'Уведомления выключены',
+    km: 'км',
+  
+  },
+  be: {
+    title: 'Апавяшчэнні',
+    description: 'Апавяшчэнні прыходзяць, калі побач з адной з вашых аб\'яў з\'яўляецца новая',
+    telegramNotLinked: 'Telegram не прывязаны',
+    telegramNotLinkedHint: 'Прывяжыце Telegram у раздзеле «Кантакты для сувязі», каб атрымліваць апавяшчэнні.',
+    telegramNotifications: 'Апавяшчэнні ў Telegram',
+    aboutNearby: 'Аб новых аб\'явах побач з вашымі',
+    radius: 'Радыус апавяшчэнняў',
+    radiusHint: 'Радыус лічыцца ад кожнай вашай актыўнай аб\'явы',
+    saveSettings: 'Захаваць налады апавяшчэнняў',
+    settingsSaved: 'Налады апавяшчэнняў захаваны',
+    enabled: 'Апавяшчэнні ўключаны',
+    disabled: 'Апавяшчэнні выключаны',
+    km: 'км',
+  
+  },
+  en: {
+    title: 'Notifications',
+    description: 'You get notified when a new ad appears near one of yours',
+    telegramNotLinked: 'Telegram not linked',
+    telegramNotLinkedHint: 'Link Telegram in "Contact info" to receive notifications.',
+    telegramNotifications: 'Telegram notifications',
+    aboutNearby: 'About new ads near yours',
+    radius: 'Notification radius',
+    radiusHint: 'Radius is calculated from each of your active ads',
+    saveSettings: 'Save notification settings',
+    settingsSaved: 'Notification settings saved',
+    enabled: 'Notifications enabled',
+    disabled: 'Notifications disabled',
+    km: 'km',
+  
+  },
+} as const;

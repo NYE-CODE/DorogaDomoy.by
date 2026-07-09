@@ -1,0 +1,25 @@
+import type { Pet } from '../types/pet';
+import { CheckCircle, Clock, XCircle } from 'lucide-react';
+import type { ModerationStatus } from '../types/pet';
+
+export const MY_ADS_STATUS_TABS: {
+  value: ModerationStatus;
+  icon: typeof CheckCircle;
+  labelKey: keyof { approved: string; onReview: string; rejected: string };
+}[] = [
+  { value: 'approved', icon: CheckCircle, labelKey: 'approved' },
+  { value: 'pending', icon: Clock, labelKey: 'onReview' },
+  { value: 'rejected', icon: XCircle, labelKey: 'rejected' },
+];
+
+export interface MyAdsPageProps {
+  pets: Pet[];
+  onBack: () => void;
+  onCreateClick: () => void;
+  onEditPet: (pet: Pet) => void;
+  onDeletePet: (pet: Pet) => void;
+  onBoostPet: (pet: Pet) => void;
+  onRenewPet?: (pet: Pet) => void;
+  /** Зависит от ff_instagram_boost_stories в профиле */
+  instagramBoostEnabled?: boolean;
+}

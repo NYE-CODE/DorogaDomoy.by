@@ -63,6 +63,7 @@ export default function CreateAdSuccessPage() {
             petId={id}
             className="mb-8"
             limit={6}
+            openInNewTab
             initialDelayMs={2000}
             retryDelaysMs={[3000]}
           />
