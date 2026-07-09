@@ -558,6 +558,7 @@ def get_similar_pets(
             SimilarPetItem(
                 pet=pet_to_response(item["pet"]),
                 score=item["score"],
+                match_percent=item["match_percent"],
                 distance_km=item["distance_km"],
                 reasons=item["reasons"],
             )
@@ -610,8 +611,7 @@ async def create_pet(
     limit = _max_photos(db)
     if len(data.photos) > limit:
         raise HTTPException(status_code=400, detail=f"Максимум {limit} фото")
-    if data.description and len(data.description) > 500:
-        raise HTTPException(status_code=400, detail="Описание не может быть длиннее 500 символов")
+    # Длина description уже проверена в PetCreate (PET_DESCRIPTION_MIN/MAX_LENGTH).
 
     reward_mode, reward_amount_byn, reward_points = _normalize_reward(
         db=db,
@@ -779,8 +779,9 @@ async def update_pet(
             if len(d["photos"]) > limit:
                 raise HTTPException(status_code=400, detail=f"Максимум {limit} фото")
             d["photos"], new_uploads = _persist_photo_list(d["photos"])
-        if "description" in d and d["description"] and len(d["description"]) > 500:
-            raise HTTPException(status_code=400, detail="Описание не может быть длиннее 500 символов")
+        if "description" in d and d["description"] is not None:
+            # Длина уже проверена в PetUpdate (PET_DESCRIPTION_MIN/MAX_LENGTH).
+            pass
         if "location" in d and d["location"]:
             d["location_lat"] = d["location"]["lat"]
             d["location_lng"] = d["location"]["lng"]

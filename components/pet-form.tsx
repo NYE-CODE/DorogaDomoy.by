@@ -39,6 +39,7 @@ const APPROXIMATE_AGE_PRESET_VALUES = [
 ] as const;
 
 const MAX_DESCRIPTION = 500;
+const MIN_DESCRIPTION = 20;
 
 function AiFieldBadge({ show, label }: { show?: boolean; label: string }) {
   if (!show) return null;
@@ -428,7 +429,7 @@ export function PetForm({
       setAiDescriptionBanner(descriptionFilled);
       toast.success(opts?.isAuto ? t.petForm.aiAppliedAuto : t.petForm.aiApplied);
       setTried(false);
-      if (opts?.autoAdvance !== false) setStep(2);
+      if (opts?.autoAdvance) setStep(2);
     } catch (err) {
       const msg = err instanceof Error ? err.message : '';
       if (msg.includes('429') || /rate limit/i.test(msg)) {
@@ -453,14 +454,14 @@ export function PetForm({
     if (!firstPhotoAdded || autoAiTriggeredRef.current || aiAnalyzing) return;
     const timer = window.setTimeout(() => {
       if (!autoAiTriggeredRef.current && photosRef.current.length > 0) {
-        void runAiAnalyze({ autoAdvance: true, isAuto: true });
+        void runAiAnalyze({ isAuto: true });
       }
     }, 900);
     return () => window.clearTimeout(timer);
   }, [formData.photos.length, aiAnalyzing, runAiAnalyze]);
 
   const handleAiAnalyzePhoto = () => {
-    void runAiAnalyze({ autoAdvance: true, isAuto: false });
+    void runAiAnalyze({ isAuto: false });
   };
 
   const toggleColor = (color: PetColor) => {
@@ -487,8 +488,11 @@ export function PetForm({
 
   const step3Errors = () => {
     const errs: Record<string, string> = {};
-    if (!formData.description?.trim()) errs.description = t.petForm.enterDescription;
-    else if (formData.description.length > MAX_DESCRIPTION) {
+    const desc = formData.description?.trim() ?? '';
+    if (!desc) errs.description = t.petForm.enterDescription;
+    else if (desc.length < MIN_DESCRIPTION) {
+      errs.description = t.petForm.descriptionTooShort.replace('{min}', String(MIN_DESCRIPTION));
+    } else if (formData.description.length > MAX_DESCRIPTION) {
       errs.description = t.petForm.descriptionTooLong.replace('{max}', String(MAX_DESCRIPTION));
     }
     if (formData.status === 'searching' && formData.rewardMode === 'money') {
@@ -885,8 +889,23 @@ export function PetForm({
                   {t.petForm.descriptionLabel}
                   <AiFieldBadge show={aiFilledFields.description} label={t.petForm.aiFieldBadge} />
                 </label>
-                <span className={`text-sm ${formData.description.length > MAX_DESCRIPTION ? 'text-red-500 font-medium' : 'text-muted-foreground dark:text-muted-foreground'}`}>
+                <span
+                  className={`text-sm ${
+                    formData.description.trim().length > 0 &&
+                    formData.description.trim().length < MIN_DESCRIPTION
+                      ? 'text-amber-600 dark:text-amber-400 font-medium'
+                      : formData.description.length > MAX_DESCRIPTION
+                        ? 'text-red-500 font-medium'
+                        : 'text-muted-foreground dark:text-muted-foreground'
+                  }`}
+                >
                   {formData.description.length} / {MAX_DESCRIPTION}
+                  {formData.description.trim().length > 0 &&
+                    formData.description.trim().length < MIN_DESCRIPTION && (
+                      <span className="ml-1">
+                        ({t.petForm.descriptionMinHint.replace('{min}', String(MIN_DESCRIPTION))})
+                      </span>
+                    )}
                 </span>
               </div>
               <textarea
@@ -905,6 +924,13 @@ export function PetForm({
                 required
               />
               {errors.description && <p className="text-xs text-red-500 mt-1">{errors.description}</p>}
+              {!errors.description &&
+                formData.description.trim().length > 0 &&
+                formData.description.trim().length < MIN_DESCRIPTION && (
+                  <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">
+                    {t.petForm.descriptionTooShortSearchHint}
+                  </p>
+                )}
 
               <div className="mt-8 border-t border-border pt-6">
                 <p className="text-sm font-semibold text-muted-foreground uppercase mb-1">

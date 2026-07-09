@@ -11,6 +11,35 @@ from profile_pet_photo_slots import (
     validate_profile_pet_photos_raw,
 )
 
+# Минимальная длина описания lost/found объявления (после strip).
+PET_DESCRIPTION_MIN_LENGTH = 20
+PET_DESCRIPTION_MAX_LENGTH = 500
+
+
+def _validate_pet_description(v, *, required: bool) -> Optional[str]:
+    if v is None:
+        if required:
+            raise ValueError(
+                f"Описание обязательно (минимум {PET_DESCRIPTION_MIN_LENGTH} символов)"
+            )
+        return None
+    s = str(v).strip()
+    if not s:
+        if required:
+            raise ValueError(
+                f"Описание обязательно (минимум {PET_DESCRIPTION_MIN_LENGTH} символов)"
+            )
+        return None
+    if len(s) < PET_DESCRIPTION_MIN_LENGTH:
+        raise ValueError(
+            f"Описание должно быть не короче {PET_DESCRIPTION_MIN_LENGTH} символов"
+        )
+    if len(s) > PET_DESCRIPTION_MAX_LENGTH:
+        raise ValueError(
+            f"Описание не может быть длиннее {PET_DESCRIPTION_MAX_LENGTH} символов"
+        )
+    return s
+
 
 # --- User ---
 class UserContacts(BaseModel):
@@ -190,6 +219,11 @@ class PetBase(BaseModel):
     def trim_registration_fields(cls, v):
         return _trim_optional_str(v)
 
+    @field_validator("description")
+    @classmethod
+    def validate_description(cls, v):
+        return _validate_pet_description(v, required=True)
+
 
 class PetCreate(PetBase):
     author_name: Optional[str] = None  # для отображения в объявлении при «другие контакты»
@@ -232,6 +266,11 @@ class PetUpdate(BaseModel):
     @classmethod
     def trim_registration_update(cls, v):
         return _trim_optional_str(v)
+
+    @field_validator("description")
+    @classmethod
+    def validate_description_update(cls, v):
+        return _validate_pet_description(v, required=False)
 
 
 class ShelterPetBase(BaseModel):
@@ -368,6 +407,7 @@ class PaginatedPetListResponse(BaseModel):
 class SimilarPetItem(BaseModel):
     pet: PetResponse
     score: float
+    match_percent: int = Field(ge=0, le=100)
     distance_km: Optional[float] = None
     reasons: list[str] = []
 

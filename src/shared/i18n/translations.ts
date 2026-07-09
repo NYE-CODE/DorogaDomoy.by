@@ -591,6 +591,10 @@ export const translations = {
       createAd: 'Создать объявление',
       selectStatus: 'Выберите статус',
       enterDescription: 'Введите описание',
+      descriptionTooShort: 'Минимум {min} символов',
+      descriptionMinHint: 'мин. {min}',
+      descriptionTooShortSearchHint:
+        'Описание слишком короткое — добавьте детали, иначе объявление будет плохо находиться в поиске',
       uploadPhoto: 'Загрузите хотя бы одно фото',
       specifyAddress: 'Укажите адрес',
       selectAnimalType: 'Выберите тип животного',
@@ -645,6 +649,9 @@ export const translations = {
       subtitle: 'Похожие объявления с противоположным статусом рядом с вами',
       empty: 'Пока нет совпадений по породе, окрасу и району. Список обновится, когда появятся более похожие объявления.',
       distanceKm: '{km} км',
+      matchLabel: 'совпадение',
+      matchTooltipTitle: 'Почему похоже',
+      matchTooltipEmpty: 'Совпадение по нескольким признакам',
       reasons: {
         very_nearby: 'Очень близко',
         nearby: 'Рядом',
@@ -2458,6 +2465,10 @@ export const translations = {
       createAd: 'Стварыць аб\'яву',
       selectStatus: 'Выберыце статус',
       enterDescription: 'Увядзіце апісанне',
+      descriptionTooShort: 'Мінімум {min} сімвалаў',
+      descriptionMinHint: 'мін. {min}',
+      descriptionTooShortSearchHint:
+        'Апісанне занадта кароткае — дадайце дэталі, інакш аб\'яву будзе цяжка знайсці ў пошуку',
       uploadPhoto: 'Загрузіце хаця б адно фота',
       specifyAddress: 'Пакажыце адрас',
       selectAnimalType: 'Выберыце тып жывёлы',
@@ -2527,6 +2538,9 @@ export const translations = {
       subtitle: 'Падобныя аб\'явы з супрацьлеглым статусам побач з вамі',
       empty: 'Пакуль няма падобных аб\'яў у гэтай зоне. Паведамім у Telegram, калі з\'явяцца.',
       distanceKm: '{km} км',
+      matchLabel: 'супадзенне',
+      matchTooltipTitle: 'Чаму падобна',
+      matchTooltipEmpty: 'Супадзенне па некалькіх прызнаках',
       reasons: {
         very_nearby: 'Вельмі блізка',
         nearby: 'Побач',
@@ -4337,6 +4351,10 @@ export const translations = {
       createAd: 'Create ad',
       selectStatus: 'Select status',
       enterDescription: 'Enter description',
+      descriptionTooShort: 'At least {min} characters',
+      descriptionMinHint: 'min. {min}',
+      descriptionTooShortSearchHint:
+        'Description is too short — add details, otherwise the ad will be hard to find in search',
       uploadPhoto: 'Upload at least one photo',
       specifyAddress: 'Specify address',
       selectAnimalType: 'Select animal type',
@@ -4406,6 +4424,9 @@ export const translations = {
       subtitle: 'Similar listings with the opposite status near you',
       empty: 'No similar listings in this area yet. We will notify you on Telegram when they appear.',
       distanceKm: '{km} km',
+      matchLabel: 'match',
+      matchTooltipTitle: 'Why it matches',
+      matchTooltipEmpty: 'Match based on several factors',
       reasons: {
         very_nearby: 'Very close',
         nearby: 'Nearby',
