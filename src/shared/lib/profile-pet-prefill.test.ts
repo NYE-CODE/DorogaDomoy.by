@@ -75,7 +75,24 @@ describe('profile-pet-prefill', () => {
 
     expect(prefill.description).toContain('Кличка: Луна');
     expect(prefill.description).toContain('Белое пятно на лапе');
-    expect(prefill.description).toContain('Номер чипа: 12345');
+    expect(prefill.description).toContain('Чипирован: Да');
+    expect(prefill.description).not.toContain('12345');
     expect(prefill.description).toContain('Медицинская информация: Нужны таблетки');
+    expect(prefill.pendingChipNumber).toBe('12345');
+    expect(prefill.includeChipInDescription).toBe(false);
+  });
+
+  it('reveals chip number in description only when opted in', () => {
+    const prefill = buildPrefillFromProfilePet(
+      createProfilePet({
+        name: 'Луна',
+        is_chipped: true,
+        chip_number: '12345',
+      }),
+      labels,
+      { revealChipNumber: true },
+    );
+    expect(prefill.description).toContain('Номер чипа: 12345');
+    expect(prefill.includeChipInDescription).toBe(true);
   });
 });

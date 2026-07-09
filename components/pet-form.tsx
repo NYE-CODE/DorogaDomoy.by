@@ -113,6 +113,10 @@ export interface PetFormData {
   registrationAuthority?: string;
   /** See PetFormProps */
   registrationTokenNumber?: string;
+  /** Показывать номер чипа в публичном описании (по умолчанию нет) */
+  includeChipInDescription?: boolean;
+  /** Номер чипа из профиля — не уходит отдельным полем API, только в description при согласии */
+  pendingChipNumber?: string;
 }
 
 /** See PetFormProps */
@@ -158,6 +162,8 @@ const defaultFormData: PetFormData = {
   rewardAmountByn: undefined,
   registrationAuthority: '',
   registrationTokenNumber: '',
+  includeChipInDescription: false,
+  pendingChipNumber: '',
 };
 
 function formDataFromPet(pet: Pet): PetFormData {
@@ -185,6 +191,8 @@ function formDataFromPet(pet: Pet): PetFormData {
     rewardAmountByn: pet.rewardAmountByn,
     registrationAuthority: pet.registrationAuthority ?? '',
     registrationTokenNumber: pet.registrationTokenNumber ?? '',
+    includeChipInDescription: false,
+    pendingChipNumber: '',
   };
 }
 
@@ -935,6 +943,41 @@ export function PetForm({
                     {t.petForm.descriptionTooShortSearchHint}
                   </p>
                 )}
+
+              {!!formData.pendingChipNumber?.trim() && (
+                <label className="mt-4 flex cursor-pointer items-start gap-2 text-sm text-foreground">
+                  <input
+                    type="checkbox"
+                    className="mt-1 size-4 shrink-0 rounded border-border"
+                    checked={!!formData.includeChipInDescription}
+                    onChange={(e) => {
+                      const reveal = e.target.checked;
+                      const chip = formData.pendingChipNumber!.trim();
+                      const chipLine = `${t.myPets.form.labelChipNumber}: ${chip}`;
+                      const chippedLine = `${t.myPets.form.labelChipped}: ${t.myPets.form.yes}`;
+                      let desc = formData.description;
+                      desc = desc
+                        .split(/\n\n+/)
+                        .filter((block) => {
+                          const b = block.trim();
+                          if (!b) return false;
+                          if (b.startsWith(`${t.myPets.form.labelChipNumber}:`)) return false;
+                          if (b.startsWith(`${t.myPets.form.labelChipped}:`)) return false;
+                          return true;
+                        })
+                        .join('\n\n');
+                      const addition = reveal ? chipLine : chippedLine;
+                      desc = desc ? `${desc}\n\n${addition}` : addition;
+                      setFormData({
+                        ...formData,
+                        includeChipInDescription: reveal,
+                        description: desc.slice(0, MAX_DESCRIPTION),
+                      });
+                    }}
+                  />
+                  <span>{t.petForm.revealChipInDescription}</span>
+                </label>
+              )}
 
               <div className="mt-8 border-t border-border pt-6">
                 <p className="text-sm font-semibold text-muted-foreground uppercase mb-1">

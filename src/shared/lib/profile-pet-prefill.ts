@@ -60,6 +60,13 @@ export type ProfilePetPrefillLabels = {
   labelRegistrationToken: string;
 };
 
+export type PrefillPrivacyOptions = {
+  /** По умолчанию false — номер чипа не попадает в публичное описание */
+  revealChipNumber?: boolean;
+  /** По умолчанию false — номер жетона не попадает в публичное описание */
+  revealRegistrationToken?: boolean;
+};
+
 function normalizeApproximateAge(age: string | null | undefined): PetFormData["approximateAge"] {
   const trimmed = (age ?? '').trim();
   if (!trimmed) return '';
@@ -78,20 +85,28 @@ function normalizeApproximateAge(age: string | null | undefined): PetFormData["a
 export function buildPrefillFromProfilePet(
   p: ProfilePetResponse,
   L: ProfilePetPrefillLabels,
+  privacy: PrefillPrivacyOptions = {},
 ): Partial<PetFormData> {
+  const revealChip = privacy.revealChipNumber === true;
+  const revealToken = privacy.revealRegistrationToken === true;
+
   const species = resolveProfilePetSpecies(p.species, p.breed);
   const animalType: AnimalType =
     species === 'dog' ? 'dog' : species === 'cat' ? 'cat' : 'other';
   const gender: Gender =
     p.gender === 'female' ? 'female' : p.gender === 'male' ? 'male' : 'unknown';
 
+  const chipNumber = p.is_chipped ? (p.chip_number ?? '').trim() : '';
+
   const lines: string[] = [];
   if (p.name?.trim()) lines.push(`${L.labelName}: ${p.name.trim()}`);
   if (p.special_marks?.trim()) lines.push(p.special_marks.trim());
-  if (p.is_chipped && p.chip_number?.trim()) {
-    lines.push(`${L.labelChipNumber}: ${p.chip_number.trim()}`);
-  } else if (p.is_chipped) {
-    lines.push(`${L.labelChipped}: ${L.yes}`);
+  if (p.is_chipped) {
+    if (revealChip && chipNumber) {
+      lines.push(`${L.labelChipNumber}: ${chipNumber}`);
+    } else {
+      lines.push(`${L.labelChipped}: ${L.yes}`);
+    }
   }
   if (p.medical_info?.trim()) {
     lines.push(`${L.medicalTitle}: ${p.medical_info.trim()}`);
@@ -99,7 +114,7 @@ export function buildPrefillFromProfilePet(
   if (p.registration_authority?.trim()) {
     lines.push(`${L.labelRegistrationAuthority}: ${p.registration_authority.trim()}`);
   }
-  if (p.registration_token_number?.trim()) {
+  if (revealToken && p.registration_token_number?.trim()) {
     lines.push(`${L.labelRegistrationToken}: ${p.registration_token_number.trim()}`);
   }
   const description = lines.join('\n\n').slice(0, 500);
@@ -116,5 +131,7 @@ export function buildPrefillFromProfilePet(
     useProfileContacts: true,
     registrationAuthority: p.registration_authority?.trim() ?? '',
     registrationTokenNumber: p.registration_token_number?.trim() ?? '',
+    includeChipInDescription: revealChip,
+    pendingChipNumber: chipNumber,
   };
 }

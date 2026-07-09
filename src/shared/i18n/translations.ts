@@ -595,6 +595,7 @@ export const translations = {
       descriptionMinHint: 'мин. {min}',
       descriptionTooShortSearchHint:
         'Описание слишком короткое — добавьте детали, иначе объявление будет плохо находиться в поиске',
+      revealChipInDescription: 'Показывать номер чипа в тексте объявления',
       uploadPhoto: 'Загрузите хотя бы одно фото',
       specifyAddress: 'Укажите адрес',
       selectAnimalType: 'Выберите тип животного',
@@ -2472,6 +2473,7 @@ export const translations = {
       descriptionMinHint: 'мін. {min}',
       descriptionTooShortSearchHint:
         'Апісанне занадта кароткае — дадайце дэталі, інакш аб\'яву будзе цяжка знайсці ў пошуку',
+      revealChipInDescription: 'Паказваць нумар чыпа ў тэксце аб\'явы',
       uploadPhoto: 'Загрузіце хаця б адно фота',
       specifyAddress: 'Пакажыце адрас',
       selectAnimalType: 'Выберыце тып жывёлы',
@@ -4361,6 +4363,7 @@ export const translations = {
       descriptionMinHint: 'min. {min}',
       descriptionTooShortSearchHint:
         'Description is too short — add details, otherwise the ad will be hard to find in search',
+      revealChipInDescription: 'Show chip number in the listing description',
       uploadPhoto: 'Upload at least one photo',
       specifyAddress: 'Specify address',
       selectAnimalType: 'Select animal type',
