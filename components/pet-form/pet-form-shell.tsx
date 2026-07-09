@@ -15,7 +15,7 @@ import {
   APPROXIMATE_AGE_LESS_2,
   APPROXIMATE_AGE_MORE_2,
   applyPhotoAnalyzeToAdForm,
-  pickBestPhotoForAi,
+  pickPhotosForAi,
   type AiFilledAdFields,
 } from '@/shared/lib/ai-photo-analyze';
 import { MAX_DESCRIPTION, TOTAL_STEPS_CREATE, TOTAL_STEPS_EDIT } from './pet-form-constants';
@@ -210,12 +210,12 @@ export function PetFormShell({
   };
 
   const runAiAnalyze = useCallback(async (opts?: { autoAdvance?: boolean; isAuto?: boolean }) => {
-    const image = pickBestPhotoForAi(photosRef.current);
-    if (!image) return;
+    const images = pickPhotosForAi(photosRef.current);
+    if (!images.length) return;
     const reqId = ++aiRequestRef.current;
     setAiAnalyzing(true);
     try {
-      const result = await petsApi.analyzePhoto(image);
+      const result = await petsApi.analyzePhotos(images);
       if (reqId !== aiRequestRef.current) return;
       if (!result.ai_available) {
         if (result.error === 'invalid_image') {

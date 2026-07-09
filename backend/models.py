@@ -92,7 +92,7 @@ class Pet(Base):
     # Учёт в РБ: орган (как на жетоне) и номер жетона — необязательно
     registration_authority = Column(String, nullable=True)
     registration_token_number = Column(String, nullable=True)
-    photo_embedding = Column(JSON, nullable=True)  # CLIP vector for visual similarity
+    photo_embedding = Column(JSON, nullable=True)  # CLIP: list of vectors (legacy: single vector)
     # Опциональная связь с карточкой питомца (адресник); при удалении профиля — SET NULL
     profile_pet_id = Column(
         String,

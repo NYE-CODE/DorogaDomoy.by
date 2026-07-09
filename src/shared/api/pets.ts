@@ -407,6 +407,21 @@ export const petsApi = {
       body: JSON.stringify({ image }),
     }),
 
+  /** До 3 кадров — сервер агрегирует ответ Groq (голосование по полям). */
+  analyzePhotos: (images: string[]) => {
+    const batch = images.map((p) => p?.trim()).filter(Boolean).slice(0, 3);
+    if (batch.length === 0) {
+      return Promise.reject(new Error('No images'));
+    }
+    if (batch.length === 1) {
+      return petsApi.analyzePhoto(batch[0]!);
+    }
+    return api<PhotoAnalyzeResponse>('/pets/analyze-photo', {
+      method: 'POST',
+      body: JSON.stringify({ images: batch }),
+    });
+  },
+
   statistics: () => api<StatisticsResponse>('/pets/statistics'),
 };
 

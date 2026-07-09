@@ -5,6 +5,8 @@ import logging
 from pathlib import Path
 from typing import Optional
 
+from integrations.photo_embedding_utils import MAX_EMBEDDING_PHOTOS
+
 logger = logging.getLogger(__name__)
 
 _model = None
@@ -45,24 +47,33 @@ def _resolve_photo_path(photo_url: str) -> Optional[Path]:
     return None
 
 
-def compute_embedding_for_pet_photos(photos: list[str]) -> Optional[list[float]]:
-    """Эмбеддинг первого доступного фото объявления."""
+def compute_embeddings_for_pet_photos(photos: list[str]) -> Optional[list[list[float]]]:
+    """До MAX_EMBEDDING_PHOTOS CLIP-векторов (по одному на читаемое фото)."""
     model = _get_model()
     if model is None:
         return None
-    for photo in photos or []:
+    vectors: list[list[float]] = []
+    for photo in (photos or [])[:MAX_EMBEDDING_PHOTOS]:
         path = _resolve_photo_path(photo)
         if not path:
             continue
         try:
-            vectors = list(model.embed([str(path)]))
-            if not vectors:
+            batch = list(model.embed([str(path)]))
+            if not batch:
                 continue
-            vec = vectors[0]
-            return [float(x) for x in vec.tolist()]
+            vec = batch[0]
+            vectors.append([float(x) for x in vec.tolist()])
         except Exception as e:
             logger.warning("Embedding failed for %s: %s", path, e)
-    return None
+    return vectors or None
+
+
+def compute_embedding_for_pet_photos(photos: list[str]) -> Optional[list[float]]:
+    """Legacy: первый вектор из набора (для обратной совместимости)."""
+    all_vecs = compute_embeddings_for_pet_photos(photos)
+    if not all_vecs:
+        return None
+    return all_vecs[0]
 
 
 def save_pet_embedding(pet_id: str) -> None:
@@ -77,12 +88,12 @@ def save_pet_embedding(pet_id: str) -> None:
         pet = db.scalar(select(Pet).where(Pet.id == pet_id))
         if not pet or not pet.photos:
             return
-        embedding = compute_embedding_for_pet_photos(pet.photos)
-        if embedding is None:
+        embeddings = compute_embeddings_for_pet_photos(pet.photos)
+        if embeddings is None:
             return
-        pet.photo_embedding = embedding
+        pet.photo_embedding = embeddings
         db.commit()
-        logger.info("Saved photo embedding for pet %s", pet_id)
+        logger.info("Saved %s photo embedding(s) for pet %s", len(embeddings), pet_id)
     except Exception as e:
         db.rollback()
         logger.exception("save_pet_embedding failed for %s: %s", pet_id, e)

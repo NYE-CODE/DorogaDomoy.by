@@ -31,6 +31,7 @@ from schemas import (
 )
 from pet_similarity import OPPOSITE_STATUS, find_similar_pets
 from integrations.groq_vision import analyze_pet_photo
+from integrations.photo_analyze_batch import analyze_pet_photos
 from integrations.photo_embeddings import save_pet_embedding
 from routers.sightings import (
     run_create_sighting,
@@ -545,9 +546,21 @@ def analyze_photo(
     data: PhotoAnalyzeRequest,
     user: User = Depends(get_current_user_required),
 ):
-    """AI-подсказка по фото (Groq). Лимит: 6/мин и 30/час на IP."""
+    """AI-подсказка по фото (Groq). До 3 кадров за запрос. Лимит: 6/мин и 30/час на IP."""
     del user  # auth required; лимит по IP (см. rate_limit.get_client_ip)
-    result = analyze_pet_photo(data.image)
+    ordered: list[str] = []
+    seen: set[str] = set()
+    for img in (data.images or []) + ([data.image] if data.image else []):
+        key = (img or "").strip()
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        ordered.append(key)
+        if len(ordered) >= 3:
+            break
+    if not ordered:
+        raise HTTPException(status_code=400, detail="Нужно хотя бы одно фото")
+    result = analyze_pet_photos(ordered) if len(ordered) > 1 else analyze_pet_photo(ordered[0])
     return PhotoAnalyzeResponse(**result)
 
 

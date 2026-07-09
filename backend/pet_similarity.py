@@ -34,15 +34,7 @@ def _bbox_delta(radius_km: float, lat: float) -> tuple[float, float]:
     return dlat, dlng
 
 
-def _cosine_similarity(vec_a: list[float], vec_b: list[float]) -> float:
-    if not vec_a or not vec_b or len(vec_a) != len(vec_b):
-        return 0.0
-    dot = sum(x * y for x, y in zip(vec_a, vec_b))
-    na = math.sqrt(sum(x * x for x in vec_a))
-    nb = math.sqrt(sum(y * y for y in vec_b))
-    if na <= 0 or nb <= 0:
-        return 0.0
-    return max(0.0, min(1.0, dot / (na * nb)))
+from integrations.photo_embedding_utils import max_visual_similarity
 
 
 def _gender_match_score(source: Pet, candidate: Pet) -> float:
@@ -175,10 +167,10 @@ def _score_candidate(
         reasons.append("similar_description")
 
     visual = 0.0
-    src_emb = getattr(source, "photo_embedding", None) or []
-    cand_emb = getattr(candidate, "photo_embedding", None) or []
+    src_emb = getattr(source, "photo_embedding", None)
+    cand_emb = getattr(candidate, "photo_embedding", None)
     if src_emb and cand_emb:
-        visual = _cosine_similarity(src_emb, cand_emb)
+        visual = max_visual_similarity(src_emb, cand_emb)
         if visual >= 0.55:
             score += 30.0 * visual
             reasons.append("visual_similarity")

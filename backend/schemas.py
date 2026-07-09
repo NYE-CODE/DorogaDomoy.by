@@ -424,7 +424,8 @@ class SimilarPetsResponse(BaseModel):
 
 
 class PhotoAnalyzeRequest(BaseModel):
-    image: str = Field(..., min_length=32, description="data:image/...;base64,...")
+    image: Optional[str] = Field(None, min_length=32, description="data:image/...;base64,... (legacy)")
+    images: Optional[list[str]] = Field(None, max_length=3, description="До 3 фото для агрегированного анализа")
 
 
 class PhotoAnalyzeResponse(BaseModel):
