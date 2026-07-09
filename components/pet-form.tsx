@@ -356,13 +356,20 @@ export function PetForm({
   };
 
   const handleAiAnalyzePhoto = async () => {
-    const image = formData.photos[0];
+    const image =
+      formData.photos.find((photo) => photo.startsWith('data:image')) ?? formData.photos[0];
     if (!image || aiAnalyzing) return;
     setAiAnalyzing(true);
     try {
       const result = await petsApi.analyzePhoto(image);
       if (!result.ai_available) {
-        toast.message(t.petForm.aiUnavailable);
+        if (result.error === 'invalid_image') {
+          toast.message(t.petForm.aiInvalidImage);
+        } else if (result.error === 'analyze_failed') {
+          toast.error(t.petForm.aiFailed);
+        } else {
+          toast.message(t.petForm.aiUnavailable);
+        }
         return;
       }
       setFormData((prev) => {

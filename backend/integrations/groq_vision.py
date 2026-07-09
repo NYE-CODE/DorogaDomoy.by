@@ -4,13 +4,17 @@ from __future__ import annotations
 import base64
 import json
 import logging
+import mimetypes
 import os
 import re
+from pathlib import Path
 from typing import Any, Optional
 
 import httpx
 
 logger = logging.getLogger(__name__)
+
+UPLOADS_DIR = Path(__file__).resolve().parent.parent / "uploads"
 
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 DEFAULT_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
@@ -47,6 +51,56 @@ def _extract_json(text: str) -> dict[str, Any]:
     return json.loads(text[start : end + 1])
 
 
+def _extract_uploads_filename(url: str) -> Optional[str]:
+    if url.startswith("/uploads/"):
+        return Path(url).name
+    if "/uploads/" in url:
+        after = url.split("/uploads/", 1)[1]
+        return after.split("?")[0].split("#")[0] if after else None
+    return None
+
+
+def _file_to_data_url(path: Path) -> Optional[str]:
+    if not path.is_file():
+        return None
+    mime = mimetypes.guess_type(path.name)[0] or "image/jpeg"
+    if not mime.startswith("image/"):
+        mime = "image/jpeg"
+    b64 = base64.standard_b64encode(path.read_bytes()).decode("ascii")
+    return f"data:{mime};base64,{b64}"
+
+
+def _normalize_image_input(image: str) -> Optional[str]:
+    """Принимает data URL или путь/URL на /uploads/… и возвращает data URL."""
+    image = (image or "").strip()
+    if not image:
+        return None
+    if image.startswith("data:image"):
+        return image
+
+    uploads_name = _extract_uploads_filename(image)
+    if uploads_name:
+        data_url = _file_to_data_url(UPLOADS_DIR / uploads_name)
+        if data_url:
+            return data_url
+
+    if image.startswith("http://") or image.startswith("https://"):
+        try:
+            with httpx.Client(timeout=20.0, follow_redirects=True) as client:
+                resp = client.get(image)
+                resp.raise_for_status()
+            content_type = (resp.headers.get("content-type") or "image/jpeg").split(";", 1)[0].strip()
+            if not content_type.startswith("image/"):
+                content_type = "image/jpeg"
+            b64 = base64.standard_b64encode(resp.content).decode("ascii")
+            return f"data:{content_type};base64,{b64}"
+        except Exception as e:
+            logger.warning("Failed to fetch image URL for Groq: %s", e)
+            return None
+
+    return None
+
+
 def _normalize_animal_type(value: Any) -> Optional[str]:
     if not isinstance(value, str):
         return None
@@ -69,6 +123,7 @@ def analyze_pet_photo(image_data_url: str) -> dict[str, Any]:
     if not api_key:
         return {"ai_available": False, "colors": []}
 
+    image_data_url = _normalize_image_input(image_data_url) or ""
     if not image_data_url.startswith("data:image"):
         return {"ai_available": False, "colors": [], "error": "invalid_image"}
 
