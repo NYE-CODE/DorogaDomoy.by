@@ -77,7 +77,7 @@ def compute_embedding_for_pet_photos(photos: list[str]) -> Optional[list[float]]
 
 
 def save_pet_embedding(pet_id: str) -> None:
-    """Фоновая задача: посчитать и сохранить embedding для объявления."""
+    """Фоновая задача: посчитать embedding и уведомить о похожих объявлениях."""
     from sqlalchemy import select
 
     from database import SessionLocal
@@ -86,16 +86,18 @@ def save_pet_embedding(pet_id: str) -> None:
     db = SessionLocal()
     try:
         pet = db.scalar(select(Pet).where(Pet.id == pet_id))
-        if not pet or not pet.photos:
-            return
-        embeddings = compute_embeddings_for_pet_photos(pet.photos)
-        if embeddings is None:
-            return
-        pet.photo_embedding = embeddings
-        db.commit()
-        logger.info("Saved %s photo embedding(s) for pet %s", len(embeddings), pet_id)
+        if pet and pet.photos:
+            embeddings = compute_embeddings_for_pet_photos(pet.photos)
+            if embeddings is not None:
+                pet.photo_embedding = embeddings
+                db.commit()
+                logger.info("Saved %s photo embedding(s) for pet %s", len(embeddings), pet_id)
     except Exception as e:
         db.rollback()
         logger.exception("save_pet_embedding failed for %s: %s", pet_id, e)
     finally:
         db.close()
+
+    from match_notifications import send_similar_match_notifications_sync
+
+    send_similar_match_notifications_sync(pet_id)
