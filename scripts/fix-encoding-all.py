@@ -16,7 +16,6 @@ CP1251_FILES = [
     "src/pages/MyPetProfilePage.tsx",
     "src/pages/MyShelterPetCampaignPage.tsx",
     "src/pages/MyShelterPetsListPage.tsx",
-    "src/pages/MyShelterPetsPage.tsx",
     "src/pages/MySheltersPage.tsx",
     "src/pages/MyShelterTeamPage.tsx",
     "src/pages/PublicPetProfilePage.tsx",

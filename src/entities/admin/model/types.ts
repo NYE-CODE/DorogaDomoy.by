@@ -20,15 +20,6 @@ export type ReportReason =
   | 'found'
   | 'other';
 
-export const reportReasonLabels: Record<ReportReason, string> = {
-  spam: 'Спам / Реклама',
-  inappropriate: 'Неприемлемый контент',
-  fake: 'Мошенничество / Фейк',
-  duplicate: 'Дубликат объявления',
-  found: 'Питомец уже найден',
-  other: 'Другая причина'
-};
-
 export interface AdminStats {
   totalPets: number;
   activePets: number;
