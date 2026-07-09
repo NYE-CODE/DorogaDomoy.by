@@ -21,6 +21,8 @@ import { ReportModal } from '../../components/report-modal';
 
 import { SightingForm } from '../../components/SightingForm';
 
+import { SimilarPetsSection } from '../../components/similar-pets-section';
+
 import { ReportReason } from '@/entities/admin/model/types';
 
 import { RewardBadge } from '../../components/reward-badge';
@@ -1846,6 +1848,10 @@ export default function PetDetailPage() {
           </div>
 
         </div>
+
+        {!isShelterPet && !pet.isArchived && pet.moderationStatus === 'approved' && (
+          <SimilarPetsSection petId={pet.id} className="mt-8" limit={6} />
+        )}
 
       </div>
 

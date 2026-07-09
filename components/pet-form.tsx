@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router';
-import { X, Search, ChevronLeft, Upload } from 'lucide-react';
+import { X, Search, ChevronLeft, Upload, Sparkles } from 'lucide-react';
 import { AnimalType, PetStatus, PetColor, Gender, Pet } from '../types/pet';
 import { useScrollLock } from './ui/use-scroll-lock';
 import { BreedCombobox } from './breed-combobox';
@@ -14,6 +14,7 @@ import { DEFAULT_CITY, findCityByName } from '../utils/cities';
 import { geocode } from '../utils/geocode';
 import { toast } from 'sonner';
 import { settingsApi } from '../api/client';
+import { petsApi } from '@/shared/api/client';
 import { compressImageFileToDataUrl } from '../utils/compress-image';
 import {
   BELARUS_MOBILE_PHONE_PLACEHOLDER,
@@ -34,6 +35,27 @@ const APPROXIMATE_AGE_PRESET_VALUES = [
 ] as const;
 
 const MAX_DESCRIPTION = 500;
+
+function mapAiColorsToForm(texts: string[]): PetColor[] {
+  const rules: [RegExp, PetColor][] = [
+    [/черн|чёрн|black/i, 'black'],
+    [/бел|white/i, 'white'],
+    [/сер|сіры|gray|grey/i, 'gray'],
+    [/коричн|brown/i, 'brown'],
+    [/рыж|рыж|ginger|red/i, 'red'],
+    [/пёстр|пестр|spot/i, 'spotted'],
+    [/полос|strip|tabby/i, 'striped'],
+    [/трёх|трех|триколор|mixed|разно/i, 'mixed'],
+  ];
+  const found = new Set<PetColor>();
+  for (const text of texts) {
+    for (const [re, color] of rules) {
+      if (re.test(text)) found.add(color);
+    }
+  }
+  if (found.size === 0 && texts.length > 0) found.add('mixed');
+  return [...found];
+}
 
 export interface PetFormStepInfo {
   step: number;
@@ -228,6 +250,7 @@ export function PetForm({
   const [maxPhotos, setMaxPhotos] = useState(10);
   const [draftPhotoCount, setDraftPhotoCount] = useState(0);
   const [draftRestored, setDraftRestored] = useState(false);
+  const [aiAnalyzing, setAiAnalyzing] = useState(false);
   const draftLoadedRef = useRef(false);
 
   useEffect(() => {
@@ -330,6 +353,40 @@ export function PetForm({
       ? formData.colors.filter(c => c !== color)
       : [...formData.colors, color];
     setFormData({ ...formData, colors: newColors });
+  };
+
+  const handleAiAnalyzePhoto = async () => {
+    const image = formData.photos[0];
+    if (!image || aiAnalyzing) return;
+    setAiAnalyzing(true);
+    try {
+      const result = await petsApi.analyzePhoto(image);
+      if (!result.ai_available) {
+        toast.message(t.petForm.aiUnavailable);
+        return;
+      }
+      setFormData((prev) => {
+        const next = { ...prev };
+        if (result.animal_type === 'cat' || result.animal_type === 'dog' || result.animal_type === 'other') {
+          if (next.animalType !== result.animal_type) {
+            next.animalType = result.animal_type;
+            next.breed = '';
+          }
+        }
+        if (result.breed?.trim()) next.breed = result.breed.trim();
+        if (result.colors?.length) {
+          const mapped = mapAiColorsToForm(result.colors);
+          if (mapped.length) next.colors = mapped;
+        }
+        return next;
+      });
+      toast.success(t.petForm.aiApplied);
+      if (result.notes?.trim()) toast.message(result.notes.trim());
+    } catch {
+      toast.error(t.petForm.aiFailed);
+    } finally {
+      setAiAnalyzing(false);
+    }
   };
 
   const step1Errors = () => {
@@ -781,6 +838,17 @@ export function PetForm({
               )}
               {formData.photos.length >= maxPhotos && (
                 <p className="text-sm text-muted-foreground text-center py-1">{t.petForm.maxPhotosReached}</p>
+              )}
+              {formData.photos.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleAiAnalyzePhoto}
+                  disabled={aiAnalyzing}
+                  className="mb-3 flex w-full items-center justify-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-sm font-medium text-primary transition-colors hover:bg-primary/10 disabled:opacity-60"
+                >
+                  <Sparkles className="h-4 w-4 shrink-0" aria-hidden />
+                  {aiAnalyzing ? t.petForm.aiAnalyzing : t.petForm.aiSuggestFromPhoto}
+                </button>
               )}
               {errors.photos && <p className="text-xs text-red-500 mt-1">{errors.photos}</p>}
             </div>

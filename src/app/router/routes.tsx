@@ -12,6 +12,7 @@ const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 const AdminPage = lazy(() => import('@/pages/AdminPage'));
 const MyAdsPageRoute = lazy(() => import('@/pages/MyAdsPage'));
 const CreateAdPage = lazy(() => import('@/pages/CreateAdPage'));
+const CreateAdSuccessPage = lazy(() => import('@/pages/CreateAdSuccessPage'));
 const EditAdPage = lazy(() => import('@/pages/EditAdPage'));
 const SettingsPageRoute = lazy(() => import('@/pages/SettingsPage'));
 const MyPetsPageRoute = lazy(() => import('@/pages/MyPetsPage'));
@@ -57,6 +58,7 @@ export function AppRoutes() {
       <Route path="/user/:id" element={<UserProfilePage />} />
       <Route path="/my-ads" element={<RequireAuth><MyAdsPageRoute /></RequireAuth>} />
       <Route path="/create" element={<RequireAuth><CreateAdPage /></RequireAuth>} />
+      <Route path="/create/success/:id" element={<RequireAuth><CreateAdSuccessPage /></RequireAuth>} />
       <Route path="/edit/:id" element={<RequireAuth><EditAdPage /></RequireAuth>} />
       <Route path="/settings" element={<RequireAuth><SettingsPageRoute /></RequireAuth>} />
       <Route path="/admin" element={<RequireAdmin><AdminPage /></RequireAdmin>} />
