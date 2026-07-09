@@ -46,6 +46,7 @@ from listing_lifecycle import (
 )
 from time_utils import utc_now
 from upload_utils import delete_upload_url, save_data_image
+from search_normalization import normalize_search_query, resolve_animal_type_from_search
 from rate_limit import limiter
 from ttl_cache import statistics_cache_get, statistics_cache_set
 
@@ -317,11 +318,25 @@ def _apply_pet_list_filters(
             Shelter.moderation_status == "approved",
         )
     if search:
-        stmt = stmt.where(
-            (Pet.description.ilike(f"%{search}%"))
-            | (Pet.breed.ilike(f"%{search}%"))
-            | (Pet.city.ilike(f"%{search}%"))
+        q = normalize_search_query(search) or search.strip()
+        text_match = (
+            (Pet.description.ilike(f"%{q}%"))
+            | (Pet.breed.ilike(f"%{q}%"))
+            | (Pet.city.ilike(f"%{q}%"))
         )
+        # Исходная строка (до lower) — на случай точного регистра в ILIKE-совместимых БД
+        raw = search.strip()
+        if raw and raw != q:
+            text_match = text_match | (
+                (Pet.description.ilike(f"%{raw}%"))
+                | (Pet.breed.ilike(f"%{raw}%"))
+                | (Pet.city.ilike(f"%{raw}%"))
+            )
+        animal_from_search = resolve_animal_type_from_search(search)
+        if animal_from_search:
+            stmt = stmt.where(text_match | (Pet.animal_type == animal_from_search))
+        else:
+            stmt = stmt.where(text_match)
     if author_id:
         stmt = stmt.where(Pet.author_id == author_id)
     if not pet_scope and not shelter_id and not ids:
