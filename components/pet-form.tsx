@@ -36,6 +36,8 @@ const APPROXIMATE_AGE_PRESET_VALUES = [
 
 const MAX_DESCRIPTION = 500;
 
+const PET_COLOR_KEYS: PetColor[] = ['black', 'white', 'gray', 'brown', 'red', 'mixed', 'spotted', 'striped'];
+
 function mapAiColorsToForm(texts: string[]): PetColor[] {
   const rules: [RegExp, PetColor][] = [
     [/черн|чёрн|black/i, 'black'],
@@ -49,6 +51,11 @@ function mapAiColorsToForm(texts: string[]): PetColor[] {
   ];
   const found = new Set<PetColor>();
   for (const text of texts) {
+    const key = text.trim().toLowerCase() as PetColor;
+    if (PET_COLOR_KEYS.includes(key)) {
+      found.add(key);
+      continue;
+    }
     for (const [re, color] of rules) {
       if (re.test(text)) found.add(color);
     }
@@ -207,6 +214,13 @@ const agePresetValues = APPROXIMATE_AGE_PRESET_VALUES;
 const TOTAL_STEPS_CREATE = 5;
 const TOTAL_STEPS_EDIT = 5;
 
+/** Старый порядок шагов: 2=фото, 3=место, 4=описание → новый: 2=описание, 3=фото, 4=место */
+function migratePetFormDraftStep(step: number): number {
+  if (step <= 1 || step >= 5) return step;
+  const legacyToCurrent: Record<number, number> = { 2: 3, 3: 4, 4: 2 };
+  return legacyToCurrent[step] ?? step;
+}
+
 export function PetForm({
   onClose,
   onSubmit,
@@ -260,7 +274,7 @@ export function PetForm({
     if (!draft) return;
     draftLoadedRef.current = true;
     setFormData({ ...draft.formData, photos: [] });
-    setStep(Math.min(Math.max(draft.step, 1), totalSteps));
+    setStep(migratePetFormDraftStep(Math.min(Math.max(draft.step, 1), totalSteps)));
     setDraftPhotoCount(draft.savedPhotoCount);
     setDraftRestored(true);
   }, [isEditing, initialData, user?.id, prefillPartial, totalSteps]);
@@ -381,6 +395,9 @@ export function PetForm({
           }
         }
         if (result.breed?.trim()) next.breed = result.breed.trim();
+        if (result.gender === 'male' || result.gender === 'female') {
+          next.gender = result.gender;
+        }
         if (result.colors?.length) {
           const mapped = mapAiColorsToForm(result.colors);
           if (mapped.length) next.colors = mapped;
@@ -388,7 +405,8 @@ export function PetForm({
         return next;
       });
       toast.success(t.petForm.aiApplied);
-      if (result.notes?.trim()) toast.message(result.notes.trim());
+      setTried(false);
+      setStep(1);
     } catch {
       toast.error(t.petForm.aiFailed);
     } finally {
@@ -405,18 +423,6 @@ export function PetForm({
 
   const step2Errors = () => {
     const errs: Record<string, string> = {};
-    if (formData.photos.length === 0) errs.photos = t.petForm.uploadPhoto;
-    return errs;
-  };
-
-  const step3Errors = () => {
-    const errs: Record<string, string> = {};
-    if (!formData.city?.trim()) errs.city = t.petForm.specifyAddress;
-    return errs;
-  };
-
-  const step4Errors = () => {
-    const errs: Record<string, string> = {};
     if (!formData.description?.trim()) errs.description = t.petForm.enterDescription;
     else if (formData.description.length > MAX_DESCRIPTION) {
       errs.description = t.petForm.descriptionTooLong.replace('{max}', String(MAX_DESCRIPTION));
@@ -431,6 +437,18 @@ export function PetForm({
     const rtLen = (formData.registrationTokenNumber ?? '').trim().length;
     if (raLen > 300) errs.registrationAuthority = t.petForm.registrationAuthorityTooLong;
     if (rtLen > 80) errs.registrationTokenNumber = t.petForm.registrationTokenTooLong;
+    return errs;
+  };
+
+  const step3Errors = () => {
+    const errs: Record<string, string> = {};
+    if (formData.photos.length === 0) errs.photos = t.petForm.uploadPhoto;
+    return errs;
+  };
+
+  const step4Errors = () => {
+    const errs: Record<string, string> = {};
+    if (!formData.city?.trim()) errs.city = t.petForm.specifyAddress;
     return errs;
   };
 
@@ -797,130 +815,8 @@ export function PetForm({
             </div>
           )}
 
-          {/* Step 2: photos */}
+          {/* Step 2: description and registration */}
           {step === 2 && (
-            <div>
-              <div className="text-right text-sm text-muted-foreground mb-4">
-                {t.petForm.photosUploadedCount.replace('{current}', String(formData.photos.length)).replace('{max}', String(maxPhotos))}
-              </div>
-              <div className="grid grid-cols-3 gap-4 mb-4">
-                {formData.photos.map((photo, index) => (
-                  <div key={index} className="relative aspect-square rounded-lg overflow-hidden group">
-                    <img src={photo} alt={t.petForm.photoAltNumber.replace('{n}', String(index + 1))} className="w-full h-full object-cover" />
-                    <button
-                      type="button"
-                      onClick={() => setFormData({ ...formData, photos: formData.photos.filter((_, i) => i !== index) })}
-                      className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
-                    >
-                      <X className="w-6 h-6 text-white" />
-                    </button>
-                  </div>
-                ))}
-                {formData.photos.length < maxPhotos && formData.photos.length > 0 && (
-                  <label className="aspect-square rounded-lg border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary hover:bg-muted/50/50 flex flex-col items-center justify-center transition-colors text-muted-foreground hover:text-primary">
-                    <Upload className="w-6 h-6 mb-2" />
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={handlePhotoUpload}
-                      className="hidden"
-                    />
-                  </label>
-                )}
-              </div>
-              {formData.photos.length === 0 && (
-                <label className={`flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary hover:bg-muted/50/50 transition-colors ${errors.photos ? '!border-destructive bg-red-50/50 dark:bg-red-950/20' : ''}`}>
-                  <Upload size={48} className="text-muted-foreground mb-4" />
-                  <span className="text-muted-foreground dark:text-foreground font-medium">{t.petForm.uploadPhotoHint}</span>
-                  <span className="text-sm text-muted-foreground mt-2">{t.petForm.uploadPhotoDrag}</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={handlePhotoUpload}
-                    className="hidden"
-                  />
-                </label>
-              )}
-              {formData.photos.length >= maxPhotos && (
-                <p className="text-sm text-muted-foreground text-center py-1">{t.petForm.maxPhotosReached}</p>
-              )}
-              {formData.photos.length > 0 && (
-                <button
-                  type="button"
-                  onClick={handleAiAnalyzePhoto}
-                  disabled={aiAnalyzing}
-                  className="mb-3 flex w-full items-center justify-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-sm font-medium text-primary transition-colors hover:bg-primary/10 disabled:opacity-60"
-                >
-                  <Sparkles className="h-4 w-4 shrink-0" aria-hidden />
-                  {aiAnalyzing ? t.petForm.aiAnalyzing : t.petForm.aiSuggestFromPhoto}
-                </button>
-              )}
-              {errors.photos && <p className="text-xs text-red-500 mt-1">{errors.photos}</p>}
-            </div>
-          )}
-
-          {/* Step 3: address and map */}
-          {step === 3 && (
-            <div className="space-y-5">
-              <div>
-                <span className="text-sm font-semibold text-muted-foreground dark:text-muted-foreground uppercase mb-3 block">{t.petForm.addressLabel}</span>
-                <div className="flex gap-2 mt-2">
-                  <input
-                    type="text"
-                    value={formData.city}
-                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                    placeholder={t.petForm.addressExamplePlaceholder}
-                    className={variant === 'page' ? `flex-1 w-full px-4 py-3 border rounded-lg bg-input-background dark:bg-input-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${errors.city ? 'border-destructive' : 'border-black/10 dark:border-border'}` : `flex-1 w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${errors.city ? 'border-destructive' : 'border-border dark:border-border'}`}
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      const addr = formData.city.trim();
-                      if (!addr) return;
-                      const result = await geocode(addr);
-                      if (result) {
-                        setFormData({
-                          ...formData,
-                          city: result.displayName,
-                          location: { lat: result.lat, lng: result.lng },
-                        });
-                      } else {
-                        toast.error(t.common.toasts.addressNotFound);
-                      }
-                    }}
-                    className="px-6 h-12 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-hover transition-colors flex items-center gap-1.5 shrink-0"
-                    title={t.petForm.geocodeOnMapTitle}
-                  >
-                    <Search className="w-4 h-4" />
-                    {t.pet.onMap}
-                  </button>
-                </div>
-                {errors.city
-                  ? <p className="text-xs text-red-500 mt-1">{errors.city}</p>
-                  : <p className="text-xs text-muted-foreground/80 mt-1">{t.petForm.addressMapHint}</p>
-                }
-              </div>
-              <div>
-                <span className="text-xs font-medium text-muted-foreground/80 uppercase tracking-wide">{t.petForm.mapPointLabel}</span>
-                <div className={`mt-2 rounded-md overflow-hidden border ${variant === 'page' ? 'border-black/10 dark:border-border' : 'border-border'}`}>
-                  <LocationPicker
-                    initialLocation={formData.location}
-                    onLocationSelect={(newLocation) => setFormData((prev) => ({ ...prev, location: newLocation }))}
-                    onLocationWithAddress={(location, address) => {
-                      setFormData((prev) => ({ ...prev, location, city: address }));
-                    }}
-                    mapHeight={variant === 'page' ? 'h-96' : 'h-48'}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Step 4: description and registration */}
-          {step === 4 && (
             <div>
               <div className="flex justify-between items-center mb-3">
                 <label className="text-sm font-semibold text-muted-foreground uppercase">{t.petForm.descriptionLabel}</label>
@@ -1069,6 +965,128 @@ export function PetForm({
                 )}
               </div>
               )}
+            </div>
+          )}
+
+          {/* Step 3: photos */}
+          {step === 3 && (
+            <div>
+              <div className="text-right text-sm text-muted-foreground mb-4">
+                {t.petForm.photosUploadedCount.replace('{current}', String(formData.photos.length)).replace('{max}', String(maxPhotos))}
+              </div>
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                {formData.photos.map((photo, index) => (
+                  <div key={index} className="relative aspect-square rounded-lg overflow-hidden group">
+                    <img src={photo} alt={t.petForm.photoAltNumber.replace('{n}', String(index + 1))} className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, photos: formData.photos.filter((_, i) => i !== index) })}
+                      className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+                    >
+                      <X className="w-6 h-6 text-white" />
+                    </button>
+                  </div>
+                ))}
+                {formData.photos.length < maxPhotos && formData.photos.length > 0 && (
+                  <label className="aspect-square rounded-lg border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary hover:bg-muted/50/50 flex flex-col items-center justify-center transition-colors text-muted-foreground hover:text-primary">
+                    <Upload className="w-6 h-6 mb-2" />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handlePhotoUpload}
+                      className="hidden"
+                    />
+                  </label>
+                )}
+              </div>
+              {formData.photos.length === 0 && (
+                <label className={`flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary hover:bg-muted/50/50 transition-colors ${errors.photos ? '!border-destructive bg-red-50/50 dark:bg-red-950/20' : ''}`}>
+                  <Upload size={48} className="text-muted-foreground mb-4" />
+                  <span className="text-muted-foreground dark:text-foreground font-medium">{t.petForm.uploadPhotoHint}</span>
+                  <span className="text-sm text-muted-foreground mt-2">{t.petForm.uploadPhotoDrag}</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handlePhotoUpload}
+                    className="hidden"
+                  />
+                </label>
+              )}
+              {formData.photos.length >= maxPhotos && (
+                <p className="text-sm text-muted-foreground text-center py-1">{t.petForm.maxPhotosReached}</p>
+              )}
+              {formData.photos.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleAiAnalyzePhoto}
+                  disabled={aiAnalyzing}
+                  className="mb-3 flex w-full items-center justify-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-sm font-medium text-primary transition-colors hover:bg-primary/10 disabled:opacity-60"
+                >
+                  <Sparkles className="h-4 w-4 shrink-0" aria-hidden />
+                  {aiAnalyzing ? t.petForm.aiAnalyzing : t.petForm.aiSuggestFromPhoto}
+                </button>
+              )}
+              {errors.photos && <p className="text-xs text-red-500 mt-1">{errors.photos}</p>}
+            </div>
+          )}
+
+          {/* Step 4: address and map */}
+          {step === 4 && (
+            <div className="space-y-5">
+              <div>
+                <span className="text-sm font-semibold text-muted-foreground dark:text-muted-foreground uppercase mb-3 block">{t.petForm.addressLabel}</span>
+                <div className="flex gap-2 mt-2">
+                  <input
+                    type="text"
+                    value={formData.city}
+                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                    placeholder={t.petForm.addressExamplePlaceholder}
+                    className={variant === 'page' ? `flex-1 w-full px-4 py-3 border rounded-lg bg-input-background dark:bg-input-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${errors.city ? 'border-destructive' : 'border-black/10 dark:border-border'}` : `flex-1 w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${errors.city ? 'border-destructive' : 'border-border dark:border-border'}`}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const addr = formData.city.trim();
+                      if (!addr) return;
+                      const result = await geocode(addr);
+                      if (result) {
+                        setFormData({
+                          ...formData,
+                          city: result.displayName,
+                          location: { lat: result.lat, lng: result.lng },
+                        });
+                      } else {
+                        toast.error(t.common.toasts.addressNotFound);
+                      }
+                    }}
+                    className="px-6 h-12 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-hover transition-colors flex items-center gap-1.5 shrink-0"
+                    title={t.petForm.geocodeOnMapTitle}
+                  >
+                    <Search className="w-4 h-4" />
+                    {t.pet.onMap}
+                  </button>
+                </div>
+                {errors.city
+                  ? <p className="text-xs text-red-500 mt-1">{errors.city}</p>
+                  : <p className="text-xs text-muted-foreground/80 mt-1">{t.petForm.addressMapHint}</p>
+                }
+              </div>
+              <div>
+                <span className="text-xs font-medium text-muted-foreground/80 uppercase tracking-wide">{t.petForm.mapPointLabel}</span>
+                <div className={`mt-2 rounded-md overflow-hidden border ${variant === 'page' ? 'border-black/10 dark:border-border' : 'border-border'}`}>
+                  <LocationPicker
+                    initialLocation={formData.location}
+                    onLocationSelect={(newLocation) => setFormData((prev) => ({ ...prev, location: newLocation }))}
+                    onLocationWithAddress={(location, address) => {
+                      setFormData((prev) => ({ ...prev, location, city: address }));
+                    }}
+                    mapHeight={variant === 'page' ? 'h-96' : 'h-48'}
+                  />
+                </div>
+              </div>
             </div>
           )}
 

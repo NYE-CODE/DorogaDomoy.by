@@ -387,6 +387,7 @@ class PhotoAnalyzeResponse(BaseModel):
     animal_type: Optional[str] = None
     breed: Optional[str] = None
     colors: list[str] = []
+    gender: Optional[str] = None
     notes: Optional[str] = None
     error: Optional[str] = None
 

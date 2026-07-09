@@ -675,6 +675,7 @@ export interface PhotoAnalyzeResponse {
   animal_type?: string | null;
   breed?: string | null;
   colors?: string[];
+  gender?: string | null;
   notes?: string | null;
   error?: string | null;
 }
