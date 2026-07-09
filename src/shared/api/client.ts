@@ -1448,7 +1448,10 @@ export const profilePetsApi = {
       { method: 'POST' }
     ),
 
-  delete: (id: string) => api<void>(`/profile-pets/${id}`, { method: 'DELETE' }),
+  delete: (id: string, opts?: { archiveLinkedAds?: boolean }) => {
+    const q = opts?.archiveLinkedAds ? '?archive_linked_ads=true' : '';
+    return api<void>(`/profile-pets/${id}${q}`, { method: 'DELETE' });
+  },
 };
 
 // --- Sightings (видения «видел похожее») ---

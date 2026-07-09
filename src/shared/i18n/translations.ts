@@ -1080,7 +1080,10 @@ export const translations = {
       deletePetMessage:
         'Профиль «{name}», фото и QR-код будут удалены. Восстановить данные будет нельзя.',
       deletePetConfirm: 'Удалить',
+      deletePetArchiveAds:
+        'У вас может быть активное объявление, связанное с этим питомцем — архивировать его тоже',
       toastPetDeleted: 'Питомец удалён',
+      toastPetDeletedWithAds: 'Питомец удалён, связанные объявления архивированы',
       toastPetDeleteError: 'Не удалось удалить питомца',
       createAdPrefillError: 'Не удалось загрузить данные питомца для объявления',
       createAdPrefillForbidden: 'Объявление можно создать только из профиля своего питомца',
@@ -2969,7 +2972,10 @@ export const translations = {
       deletePetMessage:
         'Профіль «{name}», фота і QR-код будуць выдалены. Аднавіць даныя будзе немагчыма.',
       deletePetConfirm: 'Выдаліць',
+      deletePetArchiveAds:
+        'У вас можа быць актыўная аб\'ява, звязаная з гэтай жывёлай — архіваваць яе таксама',
       toastPetDeleted: 'Жывёла выдалена',
+      toastPetDeletedWithAds: 'Жывёла выдалена, звязаныя аб\'явы архіваваны',
       toastPetDeleteError: 'Не ўдалося выдаліць жывёлу',
       createAdPrefillError: 'Не ўдалося загрузіць даныя жывёлы для аб\'явы',
       createAdPrefillForbidden: 'Аб\'яву можна стварыць толькі з профілю сваёй жывёлы',
@@ -4855,7 +4861,10 @@ export const translations = {
       deletePetMessage:
         'The profile “{name}”, photos, and QR code will be removed. This cannot be undone.',
       deletePetConfirm: 'Delete',
+      deletePetArchiveAds:
+        'You may have an active listing linked to this pet — archive it as well',
       toastPetDeleted: 'Pet removed',
+      toastPetDeletedWithAds: 'Pet removed; linked listings archived',
       toastPetDeleteError: 'Could not delete the pet',
       createAdPrefillError: 'Could not load pet data for the ad',
       createAdPrefillForbidden: 'You can only create an ad from your own pet profile',

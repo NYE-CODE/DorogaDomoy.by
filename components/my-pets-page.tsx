@@ -21,6 +21,7 @@ export function MyPetsContent() {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ProfilePetListCard | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [archiveLinkedAds, setArchiveLinkedAds] = useState(false);
 
   const loadPets = useCallback(() => {
     setLoading(true);
@@ -60,10 +61,13 @@ export function MyPetsContent() {
     if (!deleteTarget || deleting) return;
     setDeleting(true);
     try {
-      await profilePetsApi.delete(deleteTarget.id);
+      await profilePetsApi.delete(deleteTarget.id, { archiveLinkedAds });
       setPets((prev) => prev.filter((p) => p.id !== deleteTarget.id));
-      toast.success(mp.toastPetDeleted);
+      toast.success(
+        archiveLinkedAds ? mp.toastPetDeletedWithAds : mp.toastPetDeleted,
+      );
       setDeleteTarget(null);
+      setArchiveLinkedAds(false);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : mp.toastPetDeleteError);
     } finally {
@@ -80,7 +84,10 @@ export function MyPetsContent() {
       <ConfirmDialog
         open={!!deleteTarget}
         onOpenChange={(open) => {
-          if (!open && !deleting) setDeleteTarget(null);
+          if (!open && !deleting) {
+            setDeleteTarget(null);
+            setArchiveLinkedAds(false);
+          }
         }}
         title={mp.deletePetTitle}
         description={deleteTarget ? mp.deletePetMessage.replace("{name}", deleteTarget.name) : ""}
@@ -90,6 +97,18 @@ export function MyPetsContent() {
         cancelText={t.common.cancel}
         confirmText={deleting ? t.common.loading : mp.deletePetConfirm}
         confirmClass="bg-red-600 hover:bg-red-700 text-white disabled:opacity-60"
+        extra={
+          <label className="mt-3 flex cursor-pointer items-start gap-2 text-sm text-foreground">
+            <input
+              type="checkbox"
+              className="mt-1 size-4 shrink-0 rounded border-border"
+              checked={archiveLinkedAds}
+              onChange={(e) => setArchiveLinkedAds(e.target.checked)}
+              disabled={deleting}
+            />
+            <span>{mp.deletePetArchiveAds}</span>
+          </label>
+        }
       />
 
       <div className="page-container">
