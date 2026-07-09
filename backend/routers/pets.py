@@ -291,6 +291,7 @@ def _apply_pet_list_filters(
         and author_id is not None
         and author_id == user.id
     )
+    # Публичная выдача: только approved. pending/rejected не утекают без admin / своих объявлений.
     if is_admin:
         if moderation_status:
             stmt = stmt.where(Pet.moderation_status == moderation_status)
