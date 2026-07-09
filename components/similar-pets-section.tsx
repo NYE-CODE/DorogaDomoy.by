@@ -1,12 +1,13 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router';
-import { Sparkles } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useNavigate } from 'react-router';
+import { ArrowLeftRight, Sparkles } from 'lucide-react';
 import { PetCard } from './pet-card';
 import { petsApi } from '@/shared/api/client';
 import { useI18n } from '@/app/providers/I18nContext';
 import { cn } from './ui/utils';
 import { typoH3 } from '@/shared/styles/typography-classes';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
+import { Button } from '@/shared/ui/button';
 import {
   buildSimilarPetTooltipLines,
   fallbackMatchPercent,
@@ -28,6 +29,8 @@ interface SimilarPetsSectionProps {
   initialDelayMs?: number;
   /** Повторные запросы, если ещё нет visual_similarity. */
   retryDelaysMs?: number[];
+  /** Показать баннер с лучшим совпадением (экран после создания). */
+  highlightTopMatch?: boolean;
 }
 
 export function SimilarPetsSection({
@@ -38,6 +41,7 @@ export function SimilarPetsSection({
   openInNewTab = false,
   initialDelayMs = 0,
   retryDelaysMs = [],
+  highlightTopMatch = false,
 }: SimilarPetsSectionProps) {
   const { t } = useI18n();
   const navigate = useNavigate();
@@ -79,6 +83,11 @@ export function SimilarPetsSection({
     return () => ac.abort();
   }, [petId, limit, initialDelayMs, retryDelaysMs.join(',')]);
 
+  const topMatch = useMemo(() => {
+    if (!items.length) return null;
+    return [...items].sort((a, b) => (b.matchPercent ?? 0) - (a.matchPercent ?? 0))[0] ?? null;
+  }, [items]);
+
   if (loading) {
     return (
       <div className={cn('rounded-lg border border-border bg-card p-6', className)}>
@@ -93,6 +102,19 @@ export function SimilarPetsSection({
 
   return (
     <section className={cn('rounded-lg border border-border bg-card shadow-sm', className)}>
+      {highlightTopMatch && topMatch && (topMatch.matchPercent ?? 0) >= 55 && (
+        <div className="border-b border-primary/20 bg-primary/5 px-6 py-4">
+          <p className="text-sm text-foreground">
+            {t.reunion.topMatchBanner.replace('{percent}', String(topMatch.matchPercent))}
+          </p>
+          <Button asChild size="sm" className="mt-3">
+            <Link to={`/pet/${petId}/reunion/${topMatch.pet.id}`}>
+              <ArrowLeftRight className="mr-2 h-4 w-4" aria-hidden />
+              {t.reunion.topMatchAction}
+            </Link>
+          </Button>
+        </div>
+      )}
       <div className="border-b border-border p-6">
         {showTitle && (
           <div className="mb-2 flex items-center gap-2">
@@ -163,6 +185,12 @@ export function SimilarPetsSection({
                       )}
                     </TooltipContent>
                   </Tooltip>
+                  <Button asChild variant="outline" size="sm" className="mt-2 w-full">
+                    <Link to={`/pet/${petId}/reunion/${item.pet.id}`}>
+                      <ArrowLeftRight className="mr-2 h-3.5 w-3.5" aria-hidden />
+                      {t.reunion.compareCta}
+                    </Link>
+                  </Button>
                 </div>
               </div>
             );

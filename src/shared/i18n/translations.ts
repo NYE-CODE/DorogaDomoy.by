@@ -32,6 +32,7 @@ import { myShelterTeamLocales } from './myShelterTeam';
 import { myAdsLocales } from './myAds';
 import { createAdLocales } from './createAd';
 import { similarPetsLocales } from './similarPets';
+import { reunionLocales } from './reunion';
 import { userProfileLocales } from './userProfile';
 import { profileLocales } from './profile';
 import { authLocales } from './auth';
@@ -63,6 +64,7 @@ export const translations = {
     petCard: petCardLocales.ru,
     petForm: petFormLocales.ru,
     similarPets: similarPetsLocales.ru,
+    reunion: reunionLocales.ru,
     petDetail: petDetailLocales.ru,
     sightings: sightingsLocales.ru,
     locationPicker: locationPickerLocales.ru,
@@ -108,6 +110,7 @@ export const translations = {
     petCard: petCardLocales.be,
     petForm: petFormLocales.be,
     similarPets: similarPetsLocales.be,
+    reunion: reunionLocales.be,
     petDetail: petDetailLocales.be,
     sightings: sightingsLocales.be,
     locationPicker: locationPickerLocales.be,
@@ -153,6 +156,7 @@ export const translations = {
     petCard: petCardLocales.en,
     petForm: petFormLocales.en,
     similarPets: similarPetsLocales.en,
+    reunion: reunionLocales.en,
     petDetail: petDetailLocales.en,
     sightings: sightingsLocales.en,
     locationPicker: locationPickerLocales.en,
