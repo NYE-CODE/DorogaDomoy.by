@@ -209,6 +209,7 @@ export default function CreateAdPage() {
         ...(authorName && { author_name: authorName }),
         registrationAuthority: formData.registrationAuthority,
         registrationTokenNumber: formData.registrationTokenNumber,
+        ...(selectedProfilePetId ? { profilePetId: selectedProfilePetId } : {}),
       });
       if (newPet.moderationStatus === 'approved') {
         toast.success(t.app.adPublished);

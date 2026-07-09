@@ -11,7 +11,7 @@ from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session, selectinload
 
 from database import get_db
-from models import Pet, PointsTransaction, Report, Shelter, ShelterMembership, User
+from models import Pet, PointsTransaction, ProfilePet, Report, Shelter, ShelterMembership, User
 from schemas import (
     ARCHIVE_HAPPY_KEYWORDS,
     PaginatedPetListResponse,
@@ -207,6 +207,7 @@ def pet_to_response(p: Pet) -> PetResponse:
         nickname=_shelter_pet_nickname(p),
         registration_authority=getattr(p, "registration_authority", None),
         registration_token_number=getattr(p, "registration_token_number", None),
+        profile_pet_id=getattr(p, "profile_pet_id", None),
     )
 
 
@@ -651,6 +652,14 @@ async def create_pet(
         skip_moderation = True
     initial_status = "approved" if skip_moderation else "pending"
 
+    profile_pet_id = (data.profile_pet_id or "").strip() or None
+    if profile_pet_id:
+        profile = db.scalar(select(ProfilePet).where(ProfilePet.id == profile_pet_id))
+        if not profile:
+            raise HTTPException(status_code=404, detail="Карточка питомца не найдена")
+        if profile.owner_id != user.id and user.role != "admin":
+            raise HTTPException(status_code=403, detail="Нельзя привязать чужую карточку питомца")
+
     pet_id = "pet-" + str(uuid.uuid4())[:8]
     author_name = (data.author_name and data.author_name.strip()) or user.name or "Пользователь"
     now = utc_now()
@@ -689,6 +698,7 @@ async def create_pet(
             updated_by_user_id=user.id,
             registration_authority=data.registration_authority,
             registration_token_number=data.registration_token_number,
+            profile_pet_id=profile_pet_id,
         )
         db.add(pet)
         db.commit()

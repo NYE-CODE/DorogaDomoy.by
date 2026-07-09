@@ -68,6 +68,10 @@ PET_PHOTO_EMBEDDING_COLUMNS_TO_ADD = [
     ("photo_embedding", "JSON"),
 ]
 
+PET_PROFILE_LINK_COLUMNS_TO_ADD = [
+    ("profile_pet_id", "VARCHAR"),
+]
+
 SHELTER_PET_DETAILS_COLUMNS_TO_ADD = [
     ("nickname", "VARCHAR"),
     ("health_status", "VARCHAR"),
@@ -423,7 +427,8 @@ def migrate(conn):
             + PET_SHELTER_COLUMNS_TO_ADD
             + PET_REGISTRATION_COLUMNS_TO_ADD
             + PET_LISTING_EXPIRY_COLUMNS_TO_ADD
-            + PET_PHOTO_EMBEDDING_COLUMNS_TO_ADD,
+            + PET_PHOTO_EMBEDDING_COLUMNS_TO_ADD
+            + PET_PROFILE_LINK_COLUMNS_TO_ADD,
         ),
         ("users", USER_COLUMNS_TO_ADD),
         ("profile_pets", PROFILE_PET_COLUMNS_TO_ADD),
@@ -542,6 +547,7 @@ PERFORMANCE_INDEXES = [
     "CREATE INDEX IF NOT EXISTS ix_instagram_publications_source_requested ON instagram_publications (source, requested_by_user_id, created_at)",
     "CREATE UNIQUE INDEX IF NOT EXISTS ix_instagram_publications_idempotency_key ON instagram_publications (idempotency_key)",
     "CREATE INDEX IF NOT EXISTS ix_pets_shelter_id ON pets (shelter_id)",
+    "CREATE INDEX IF NOT EXISTS ix_pets_profile_pet_id ON pets (profile_pet_id)",
     "CREATE INDEX IF NOT EXISTS ix_pets_pet_scope ON pets (pet_scope)",
     (
         "CREATE INDEX IF NOT EXISTS ix_pets_shelter_catalog "

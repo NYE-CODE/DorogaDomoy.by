@@ -78,4 +78,6 @@ export interface Pet {
   registrationAuthority?: string | null;
   /** Номер жетона учёта */
   registrationTokenNumber?: string | null;
+  /** Связь с карточкой питомца (адресник), если объявление создано из профиля */
+  profilePetId?: string | null;
 }

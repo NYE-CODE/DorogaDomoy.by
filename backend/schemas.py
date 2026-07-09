@@ -228,6 +228,8 @@ class PetBase(BaseModel):
 class PetCreate(PetBase):
     author_name: Optional[str] = None  # для отображения в объявлении при «другие контакты»
     contacts: UserContactsStrict = Field(default_factory=UserContactsStrict)
+    # Опциональная связь с карточкой питомца (prefill-флоу); старые клиенты не передают
+    profile_pet_id: Optional[str] = Field(None, max_length=64)
 
 
 class PetUpdate(BaseModel):
@@ -392,6 +394,7 @@ class PetResponse(PetBase):
     reward_points_awarded_at: Optional[datetime] = None
     published_by_user_id: Optional[str] = None
     updated_by_user_id: Optional[str] = None
+    profile_pet_id: Optional[str] = None
 
     class Config:
         from_attributes = True

@@ -275,6 +275,7 @@ interface PetResponse {
   nickname?: string | null;
   registration_authority?: string | null;
   registration_token_number?: string | null;
+  profile_pet_id?: string | null;
 }
 
 interface ShelterPetResponse {
@@ -375,6 +376,7 @@ function toPet(p: PetResponse): Pet {
     updatedByUserId: p.updated_by_user_id,
     registrationAuthority: p.registration_authority ?? undefined,
     registrationTokenNumber: p.registration_token_number ?? undefined,
+    profilePetId: p.profile_pet_id ?? undefined,
   };
 }
 
@@ -444,6 +446,8 @@ export interface PetCreateInput {
   isPublished?: boolean;
   registrationAuthority?: string;
   registrationTokenNumber?: string;
+  /** ID карточки питомца при создании из профиля */
+  profilePetId?: string;
 }
 
 export interface ShelterPetInput {
@@ -558,6 +562,9 @@ export const petsApi = {
     if (data.author_name != null && data.author_name.trim() !== '') {
       body.author_name = data.author_name.trim();
     }
+    if (data.profilePetId?.trim()) {
+      body.profile_pet_id = data.profilePetId.trim();
+    }
     return api<PetResponse>('/pets', { method: 'POST', body: JSON.stringify(body) }).then(toPet);
   },
 
@@ -629,6 +636,7 @@ export const petsApi = {
         matchingStatus: res.matching_status,
         items: res.items.map((item) => ({
           score: item.score,
+          matchPercent: item.match_percent,
           distanceKm: item.distance_km ?? null,
           reasons: item.reasons,
           pet: toPet(item.pet),
@@ -649,6 +657,7 @@ export const petsApi = {
 export interface SimilarPetItemResponse {
   pet: PetResponse;
   score: number;
+  match_percent: number;
   distance_km?: number | null;
   reasons: string[];
 }
@@ -665,6 +674,7 @@ export interface SimilarPetsResult {
   items: {
     pet: Pet;
     score: number;
+    matchPercent: number;
     distanceKm: number | null;
     reasons: string[];
   }[];
