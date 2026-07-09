@@ -18,12 +18,19 @@ from schemas import (
     PetCreate,
     PetUpdate,
     PetResponse,
+    PhotoAnalyzeRequest,
+    PhotoAnalyzeResponse,
+    SimilarPetItem,
+    SimilarPetsResponse,
     StatisticsResponse,
     SightingCreate,
     SightingCreateNested,
     SightingResponse,
     _is_happy_archive,
 )
+from pet_similarity import OPPOSITE_STATUS, find_similar_pets
+from integrations.groq_vision import analyze_pet_photo
+from integrations.photo_embeddings import save_pet_embedding
 from routers.sightings import (
     run_create_sighting,
     run_get_sighting_counts,
@@ -484,6 +491,57 @@ def create_pet_sighting(
     return run_create_sighting(request, full, background_tasks, db, user)
 
 
+@router.post("/analyze-photo", response_model=PhotoAnalyzeResponse)
+@limiter.limit("20/minute")
+def analyze_photo(
+    request: Request,
+    data: PhotoAnalyzeRequest,
+    user: User = Depends(get_current_user_required),
+):
+    """AI-подсказка породы/окраса по фото (Groq, опционально)."""
+    del user  # auth required
+    result = analyze_pet_photo(data.image)
+    return PhotoAnalyzeResponse(**result)
+
+
+@router.get("/{pet_id}/similar", response_model=SimilarPetsResponse)
+@limiter.limit("60/minute")
+def get_similar_pets(
+    request: Request,
+    pet_id: str,
+    limit: int = Query(10, ge=1, le=30),
+    radius_km: float = Query(15.0, ge=1.0, le=50.0),
+    db: Session = Depends(get_db),
+    user: Optional[User] = Depends(get_current_user),
+):
+    """Похожие объявления с противоположным статусом (lost ↔ found)."""
+    del request, user
+    source = db.scalar(select(Pet).where(Pet.id == pet_id))
+    if not source:
+        raise HTTPException(status_code=404, detail="Объявление не найдено")
+    if (source.pet_scope or "lost_found") != "lost_found":
+        raise HTTPException(status_code=400, detail="Похожие доступны только для объявлений lost/found")
+
+    matching_status = OPPOSITE_STATUS.get(source.status or "")
+    if not matching_status:
+        raise HTTPException(status_code=400, detail="Неподдерживаемый статус объявления")
+
+    ranked = find_similar_pets(db, source, limit=limit, radius_km=radius_km)
+    return SimilarPetsResponse(
+        source_pet_id=source.id,
+        matching_status=matching_status,
+        items=[
+            SimilarPetItem(
+                pet=pet_to_response(item["pet"]),
+                score=item["score"],
+                distance_km=item["distance_km"],
+                reasons=item["reasons"],
+            )
+            for item in ranked
+        ],
+    )
+
+
 @router.get("/{pet_id}", response_model=PetResponse)
 def get_pet(
     pet_id: str,
@@ -609,6 +667,7 @@ async def create_pet(
 
     if initial_status == "approved":
         background_tasks.add_task(_send_notifications_bg, pet.id)
+        _enqueue_photo_embedding(background_tasks, pet.id)
         try:
             enqueue_autopublish_for_pet(db, pet=pet, initiated_by=user.id)
         except Exception as e:
@@ -631,6 +690,10 @@ async def _send_notifications_bg(pet_id: str):
         logging.exception("Background notification error for pet %s: %s", pet_id, e)
     finally:
         db.close()
+
+
+def _enqueue_photo_embedding(background_tasks: BackgroundTasks, pet_id: str) -> None:
+    background_tasks.add_task(save_pet_embedding, pet_id)
 
 
 @router.patch("/{pet_id}", response_model=PetResponse)
@@ -782,6 +845,7 @@ async def update_pet(
 
     if old_moderation_status != "approved" and pet.moderation_status == "approved":
         background_tasks.add_task(_send_notifications_bg, pet.id)
+        _enqueue_photo_embedding(background_tasks, pet.id)
         try:
             enqueue_autopublish_for_pet(db, pet=pet, initiated_by=user.id)
         except Exception as e:

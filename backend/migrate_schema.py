@@ -64,6 +64,10 @@ PET_LISTING_EXPIRY_COLUMNS_TO_ADD = [
     ("expires_at", "DATETIME"),
 ]
 
+PET_PHOTO_EMBEDDING_COLUMNS_TO_ADD = [
+    ("photo_embedding", "JSON"),
+]
+
 SHELTER_PET_DETAILS_COLUMNS_TO_ADD = [
     ("nickname", "VARCHAR"),
     ("health_status", "VARCHAR"),
@@ -418,7 +422,8 @@ def migrate(conn):
             + PET_BOUNTY_COLUMNS_TO_ADD
             + PET_SHELTER_COLUMNS_TO_ADD
             + PET_REGISTRATION_COLUMNS_TO_ADD
-            + PET_LISTING_EXPIRY_COLUMNS_TO_ADD,
+            + PET_LISTING_EXPIRY_COLUMNS_TO_ADD
+            + PET_PHOTO_EMBEDDING_COLUMNS_TO_ADD,
         ),
         ("users", USER_COLUMNS_TO_ADD),
         ("profile_pets", PROFILE_PET_COLUMNS_TO_ADD),

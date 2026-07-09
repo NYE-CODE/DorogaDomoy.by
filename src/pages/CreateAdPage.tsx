@@ -213,8 +213,9 @@ export default function CreateAdPage() {
       } else {
         toast.success(t.app.adSentModeration, { description: t.common.toasts.moderationPendingDesc });
       }
+      const mod = newPet.moderationStatus === 'approved' ? 'approved' : 'pending';
       requestAnimationFrame(() => {
-        navigate('/my-ads', { replace: true, state: { fromCreate: true } });
+        navigate(`/create/success/${newPet.id}?moderation=${mod}`, { replace: true });
       });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t.common.error);

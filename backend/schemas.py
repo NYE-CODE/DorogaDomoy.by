@@ -365,6 +365,32 @@ class PaginatedPetListResponse(BaseModel):
     offset: int
 
 
+class SimilarPetItem(BaseModel):
+    pet: PetResponse
+    score: float
+    distance_km: Optional[float] = None
+    reasons: list[str] = []
+
+
+class SimilarPetsResponse(BaseModel):
+    source_pet_id: str
+    matching_status: str
+    items: list[SimilarPetItem]
+
+
+class PhotoAnalyzeRequest(BaseModel):
+    image: str = Field(..., min_length=32, description="data:image/...;base64,...")
+
+
+class PhotoAnalyzeResponse(BaseModel):
+    ai_available: bool = False
+    animal_type: Optional[str] = None
+    breed: Optional[str] = None
+    colors: list[str] = []
+    notes: Optional[str] = None
+    error: Optional[str] = None
+
+
 class ShelterPetResponse(BaseModel):
     id: str
     photos: list[str] = []

@@ -618,8 +618,66 @@ export const petsApi = {
   renew: (id: string) =>
     api<PetResponse>(`/pets/${id}/renew`, { method: 'POST' }).then(toPet),
 
+  similar: (id: string, params?: { limit?: number; radius_km?: number }, options: RequestInit = {}) => {
+    const q = new URLSearchParams();
+    if (params?.limit != null) q.set('limit', String(params.limit));
+    if (params?.radius_km != null) q.set('radius_km', String(params.radius_km));
+    const qs = q.toString();
+    return api<SimilarPetsApiResponse>(`/pets/${id}/similar${qs ? `?${qs}` : ''}`, options).then(
+      (res) => ({
+        sourcePetId: res.source_pet_id,
+        matchingStatus: res.matching_status,
+        items: res.items.map((item) => ({
+          score: item.score,
+          distanceKm: item.distance_km ?? null,
+          reasons: item.reasons,
+          pet: toPet(item.pet),
+        })),
+      }),
+    );
+  },
+
+  analyzePhoto: (image: string) =>
+    api<PhotoAnalyzeResponse>('/pets/analyze-photo', {
+      method: 'POST',
+      body: JSON.stringify({ image }),
+    }),
+
   statistics: () => api<StatisticsResponse>('/pets/statistics'),
 };
+
+export interface SimilarPetItemResponse {
+  pet: PetResponse;
+  score: number;
+  distance_km?: number | null;
+  reasons: string[];
+}
+
+export interface SimilarPetsApiResponse {
+  source_pet_id: string;
+  matching_status: string;
+  items: SimilarPetItemResponse[];
+}
+
+export interface SimilarPetsResult {
+  sourcePetId: string;
+  matchingStatus: string;
+  items: {
+    pet: Pet;
+    score: number;
+    distanceKm: number | null;
+    reasons: string[];
+  }[];
+}
+
+export interface PhotoAnalyzeResponse {
+  ai_available: boolean;
+  animal_type?: string | null;
+  breed?: string | null;
+  colors?: string[];
+  notes?: string | null;
+  error?: string | null;
+}
 
 export interface FavoriteIdsResponse {
   ids: string[];
