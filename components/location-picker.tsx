@@ -160,8 +160,14 @@ export function LocationPicker({
       circleRef.current.setStyle(baseStyle);
     }
 
-    circleRef.current.bringToBack();
-    markerRef.current?.bringToFront();
+    if (typeof circleRef.current.bringToBack === 'function') {
+      circleRef.current.bringToBack();
+    }
+    const marker = markerRef.current;
+    if (marker) {
+      marker.remove();
+      marker.addTo(map);
+    }
 
     const radiusChanged = prevRadiusKmRef.current !== radiusKm;
     const prevCenter = prevCenterRef.current;
