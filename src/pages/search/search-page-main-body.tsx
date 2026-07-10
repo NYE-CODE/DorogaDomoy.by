@@ -18,6 +18,7 @@ export interface SearchPageMainBodyProps {
   view: SearchView;
   isMobile: boolean;
   layoutMode: SearchLayoutMode;
+  selectedCity: string;
   listDisplayPets: Pet[];
   mapDisplayPets: Pet[];
   mapCenter: [number, number];
@@ -33,6 +34,7 @@ export function SearchPageMainBody({
   view,
   isMobile,
   layoutMode,
+  selectedCity,
   listDisplayPets,
   mapDisplayPets,
   mapCenter,

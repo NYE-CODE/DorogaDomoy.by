@@ -10,6 +10,7 @@ export interface PetFormNavigationProps {
   formData: PetFormData;
   t: PetFormT;
   canProceed: boolean;
+  submitting?: boolean;
   onBack: () => void;
   onNext: () => void;
   onTryProceed: () => void;
@@ -23,6 +24,7 @@ export function PetFormNavigation({
   formData,
   t,
   canProceed,
+  submitting = false,
   onBack,
   onNext,
   onTryProceed,
@@ -60,10 +62,10 @@ export function PetFormNavigation({
       ) : (
         <button
           type="submit"
-          disabled={!isEditing && !formData.agreeToPrivacy}
+          disabled={submitting || (!isEditing && !formData.agreeToPrivacy)}
           className="w-full h-12 bg-primary hover:bg-primary-hover text-white text-lg font-medium rounded-lg disabled:bg-muted dark:disabled:bg-muted/80 disabled:cursor-not-allowed transition-colors"
         >
-          {isEditing ? t.common.save : t.petForm.createAd}
+          {submitting ? t.common.loading : isEditing ? t.common.save : t.petForm.createAd}
         </button>
       )}
     </div>
