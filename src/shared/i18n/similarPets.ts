@@ -22,6 +22,7 @@ export const similarPetsLocales = {
       same_age: 'Похожий возраст',
       visual_similarity: 'Похожее фото',
       similar_description: 'Похожее описание',
+      matching_marks: 'Общие приметы',
     },
   
   },
@@ -47,6 +48,7 @@ export const similarPetsLocales = {
       same_age: 'Падобны ўзрост',
       visual_similarity: 'Падобнае фота',
       similar_description: 'Падобнае апісанне',
+      matching_marks: 'Агульныя прыкметы',
     },
   
   },
@@ -72,6 +74,7 @@ export const similarPetsLocales = {
       same_age: 'Similar age',
       visual_similarity: 'Similar photo',
       similar_description: 'Similar description',
+      matching_marks: 'Shared distinctive marks',
     },
   
   },

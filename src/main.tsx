@@ -11,6 +11,15 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   </React.StrictMode>,
 );
 
+let swReloadPending = false;
+if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (swReloadPending) return;
+    swReloadPending = true;
+    window.location.reload();
+  });
+}
+
 registerSW({
   immediate: true,
   onRegistered(registration) {

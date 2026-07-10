@@ -31,6 +31,7 @@ from schemas import (
 )
 from pet_similarity import OPPOSITE_STATUS, find_similar_pets
 from integrations.groq_vision import analyze_pet_photo
+from integrations.photo_analyze_batch import analyze_pet_photos
 from integrations.photo_embeddings import save_pet_embedding
 from routers.sightings import (
     run_create_sighting,
@@ -185,6 +186,7 @@ def pet_to_response(p: Pet) -> PetResponse:
         approximate_age_raw=getattr(p, "approximate_age_raw", None),
         status=p.status,
         description=p.description,
+        distinctive_marks=getattr(p, "distinctive_marks", None) or [],
         city=p.city,
         location={"lat": p.location_lat, "lng": p.location_lng},
         published_at=p.published_at,
@@ -330,6 +332,7 @@ def _apply_pet_list_filters(
             (Pet.description.ilike(f"%{q}%"))
             | (Pet.breed.ilike(f"%{q}%"))
             | (Pet.city.ilike(f"%{q}%"))
+            | (Pet.distinctive_marks.ilike(f"%{q}%"))
         )
         # Исходная строка (до lower) — на случай точного регистра в ILIKE-совместимых БД
         raw = search.strip()
@@ -338,6 +341,7 @@ def _apply_pet_list_filters(
                 (Pet.description.ilike(f"%{raw}%"))
                 | (Pet.breed.ilike(f"%{raw}%"))
                 | (Pet.city.ilike(f"%{raw}%"))
+                | (Pet.distinctive_marks.ilike(f"%{raw}%"))
             )
         animal_from_search = resolve_animal_type_from_search(search)
         if animal_from_search:
@@ -545,9 +549,21 @@ def analyze_photo(
     data: PhotoAnalyzeRequest,
     user: User = Depends(get_current_user_required),
 ):
-    """AI-подсказка по фото (Groq). Лимит: 6/мин и 30/час на IP."""
+    """AI-подсказка по фото (Groq). До 3 кадров за запрос. Лимит: 6/мин и 30/час на IP."""
     del user  # auth required; лимит по IP (см. rate_limit.get_client_ip)
-    result = analyze_pet_photo(data.image)
+    ordered: list[str] = []
+    seen: set[str] = set()
+    for img in (data.images or []) + ([data.image] if data.image else []):
+        key = (img or "").strip()
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        ordered.append(key)
+        if len(ordered) >= 3:
+            break
+    if not ordered:
+        raise HTTPException(status_code=400, detail="Нужно хотя бы одно фото")
+    result = analyze_pet_photos(ordered) if len(ordered) > 1 else analyze_pet_photo(ordered[0])
     return PhotoAnalyzeResponse(**result)
 
 
@@ -685,6 +701,7 @@ async def create_pet(
             approximate_age_raw=_trim_optional_str(getattr(data, "approximate_age_raw", None)),
             status=data.status,
             description=data.description,
+            distinctive_marks=data.distinctive_marks or [],
             city=data.city,
             location_lat=data.location.lat,
             location_lng=data.location.lng,
@@ -791,7 +808,7 @@ async def update_pet(
 
     COMMON_FIELDS = {
         "photos", "animal_type", "breed", "colors", "gender",
-        "approximate_age", "approximate_age_raw", "status", "description", "city",
+        "approximate_age", "approximate_age_raw", "status", "description", "distinctive_marks", "city",
         "location", "contacts", "is_archived", "archive_reason",
         "reward_mode", "reward_amount_byn", "reward_points", "reward_helper_code",
         "registration_authority", "registration_token_number",

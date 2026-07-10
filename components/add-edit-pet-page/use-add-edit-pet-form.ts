@@ -14,7 +14,7 @@ import {
   mapAiAgeYearsEstimate,
   mapAiApproximateAge,
   mapAiColorsToOptionLabels,
-  pickBestPhotoForAi,
+  pickPhotosForAi,
 } from '@/shared/lib/ai-photo-analyze';
 import {
   ADD_EDIT_PET_TOTAL_STEPS,
@@ -124,12 +124,12 @@ export function useAddEditPetForm() {
     imageOverride?: string,
     opts?: { isAuto?: boolean; advanceStep?: boolean },
   ) => {
-    const image = imageOverride ?? pickBestPhotoForAi(formPhotosRef.current);
-    if (!image || aiAnalyzing || isUploadingPhotos) return;
+    const images = imageOverride ? [imageOverride] : pickPhotosForAi(formPhotosRef.current);
+    if (!images.length || aiAnalyzing || isUploadingPhotos) return;
     const reqId = ++profileAiRequestRef.current;
     setAiAnalyzing(true);
     try {
-      const result = await petsApi.analyzePhoto(image);
+      const result = await petsApi.analyzePhotos(images);
       if (reqId !== profileAiRequestRef.current) return;
       if (!result.ai_available) {
         if (result.error === 'invalid_image') toast.message(t.petForm.aiInvalidImage);

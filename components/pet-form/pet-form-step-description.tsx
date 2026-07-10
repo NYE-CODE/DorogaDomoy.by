@@ -1,7 +1,14 @@
-import type { Dispatch, SetStateAction } from 'react';
+import { useState, type Dispatch, type SetStateAction } from 'react';
+import { Plus, X } from 'lucide-react';
 import type { AiFilledAdFields } from '@/shared/lib/ai-photo-analyze';
 import { AiFieldBadge } from './pet-form-ai-field-badge';
-import { MAX_DESCRIPTION, MIN_DESCRIPTION } from './pet-form-constants';
+import {
+  MAX_DESCRIPTION,
+  MAX_DISTINCTIVE_MARKS,
+  MAX_DISTINCTIVE_MARK_LEN,
+  MIN_DESCRIPTION,
+  MIN_DISTINCTIVE_MARK_LEN,
+} from './pet-form-constants';
 import type { PetFormStepBaseProps } from './pet-form-validation';
 
 export interface PetFormStepDescriptionProps extends PetFormStepBaseProps {
@@ -20,6 +27,38 @@ export function PetFormStepDescription({
   setAiFilledFields,
   onDescriptionChange,
 }: PetFormStepDescriptionProps) {
+  const [markDraft, setMarkDraft] = useState('');
+
+  const addDistinctiveMark = () => {
+    const text = markDraft.replace(/\s+/g, ' ').trim();
+    if (text.length < MIN_DISTINCTIVE_MARK_LEN || text.length > MAX_DISTINCTIVE_MARK_LEN) return;
+    if (formData.distinctiveMarks.length >= MAX_DISTINCTIVE_MARKS) return;
+    const key = text.toLowerCase();
+    if (formData.distinctiveMarks.some((m) => m.toLowerCase() === key)) {
+      setMarkDraft('');
+      return;
+    }
+    setFormData({
+      ...formData,
+      distinctiveMarks: [...formData.distinctiveMarks, text],
+    });
+    setAiFilledFields((prev) => ({ ...prev, distinctiveMarks: false }));
+    setMarkDraft('');
+  };
+
+  const removeDistinctiveMark = (mark: string) => {
+    setFormData({
+      ...formData,
+      distinctiveMarks: formData.distinctiveMarks.filter((m) => m !== mark),
+    });
+    setAiFilledFields((prev) => ({ ...prev, distinctiveMarks: false }));
+  };
+
+  const canAddMark =
+    markDraft.trim().length >= MIN_DISTINCTIVE_MARK_LEN &&
+    markDraft.trim().length <= MAX_DISTINCTIVE_MARK_LEN &&
+    formData.distinctiveMarks.length < MAX_DISTINCTIVE_MARKS;
+
   return (
     <div>
       <div className="flex justify-between items-center mb-3">
@@ -69,6 +108,67 @@ export function PetFormStepDescription({
             {t.petForm.descriptionTooShortSearchHint}
           </p>
         )}
+
+      <div className="mt-4 rounded-lg border border-primary/20 bg-primary/5 p-4">
+        <p className="text-sm font-semibold text-foreground">
+          {t.petForm.distinctiveMarksTitle}
+          <AiFieldBadge show={aiFilledFields.distinctiveMarks} label={t.petForm.aiFieldBadge} />
+        </p>
+        <p className="mt-1 text-xs text-muted-foreground">{t.petForm.distinctiveMarksHint}</p>
+        {formData.distinctiveMarks.length > 0 && (
+          <ul className="mt-3 flex flex-wrap gap-2">
+            {formData.distinctiveMarks.map((mark) => (
+              <li key={mark}>
+                <span className="inline-flex items-center gap-1 rounded-full bg-background px-3 py-1 text-xs font-medium text-foreground ring-1 ring-inset ring-primary/25">
+                  {mark}
+                  <button
+                    type="button"
+                    onClick={() => removeDistinctiveMark(mark)}
+                    className="rounded-full p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                    aria-label={`${t.petForm.distinctiveMarksRemove}: ${mark}`}
+                  >
+                    <X className="size-3.5" aria-hidden />
+                  </button>
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+        {formData.distinctiveMarks.length < MAX_DISTINCTIVE_MARKS && (
+          <div className="mt-3 flex gap-2">
+            <input
+              type="text"
+              value={markDraft}
+              onChange={(e) => setMarkDraft(e.target.value.slice(0, MAX_DISTINCTIVE_MARK_LEN))}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  addDistinctiveMark();
+                }
+              }}
+              placeholder={t.petForm.distinctiveMarksAddPlaceholder}
+              maxLength={MAX_DISTINCTIVE_MARK_LEN}
+              className={
+                variant === 'page'
+                  ? 'min-w-0 flex-1 rounded-lg border border-border bg-input-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary'
+                  : 'min-w-0 flex-1 rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:border-border'
+              }
+            />
+            <button
+              type="button"
+              onClick={addDistinctiveMark}
+              disabled={!canAddMark}
+              className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Plus className="size-4" aria-hidden />
+              {t.petForm.distinctiveMarksAdd}
+            </button>
+          </div>
+        )}
+        <p className="mt-2 text-xs text-muted-foreground">
+          {formData.distinctiveMarks.length} / {MAX_DISTINCTIVE_MARKS}
+        </p>
+      </div>
 
       {!!formData.pendingChipNumber?.trim() && (
         <label className="mt-4 flex cursor-pointer items-start gap-2 text-sm text-foreground">

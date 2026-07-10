@@ -95,6 +95,12 @@ export default function ProfilePage() {
                     notifSaving={p.notifSaving}
                     localRadius={p.localRadius}
                     setLocalRadius={p.setLocalRadius}
+                    localWatchEnabled={p.localWatchEnabled}
+                    setLocalWatchEnabled={p.setLocalWatchEnabled}
+                    localWatchRadius={p.localWatchRadius}
+                    setLocalWatchRadius={p.setLocalWatchRadius}
+                    localWatchLocation={p.localWatchLocation}
+                    setLocalWatchLocation={p.setLocalWatchLocation}
                     formatTime={p.formatTime}
                     onRequestLink={(e) => void p.handleRequestLink(e)}
                     onUnlink={() => void p.handleUnlink()}
@@ -105,6 +111,7 @@ export default function ProfilePage() {
                       p.setIsLinking(false);
                     }}
                     onToggleNotifications={(enabled) => void p.handleToggleNotifications(enabled)}
+                    onToggleSimilarMatches={(enabled) => void p.handleToggleSimilarMatches(enabled)}
                     onSaveNotifSettings={() => void p.handleSaveNotifSettings()}
                   />
                 ) : null}

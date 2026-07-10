@@ -197,6 +197,7 @@ class PetBase(BaseModel):
     approximate_age_raw: Optional[str] = Field(None, max_length=40)
     status: str = "searching"
     description: str
+    distinctive_marks: list[str] = Field(default_factory=list, max_length=8)
     city: str
     location: PetLocation
     contacts: UserContacts = Field(default_factory=UserContacts)
@@ -225,6 +226,13 @@ class PetBase(BaseModel):
     def validate_description(cls, v):
         return _validate_pet_description(v, required=True)
 
+    @field_validator("distinctive_marks", mode="before")
+    @classmethod
+    def normalize_distinctive_marks_field(cls, v):
+        from distinctive_marks import normalize_distinctive_marks
+
+        return normalize_distinctive_marks(v)
+
 
 class PetCreate(PetBase):
     author_name: Optional[str] = None  # для отображения в объявлении при «другие контакты»
@@ -243,6 +251,7 @@ class PetUpdate(BaseModel):
     approximate_age_raw: Optional[str] = Field(None, max_length=40)
     status: Optional[str] = None
     description: Optional[str] = None
+    distinctive_marks: Optional[list[str]] = Field(None, max_length=8)
     city: Optional[str] = None
     location: Optional[PetLocation] = None
     contacts: Optional[UserContactsStrict] = None
@@ -275,6 +284,15 @@ class PetUpdate(BaseModel):
     @classmethod
     def validate_description_update(cls, v):
         return _validate_pet_description(v, required=False)
+
+    @field_validator("distinctive_marks", mode="before")
+    @classmethod
+    def normalize_distinctive_marks_update(cls, v):
+        if v is None:
+            return None
+        from distinctive_marks import normalize_distinctive_marks
+
+        return normalize_distinctive_marks(v)
 
 
 class ShelterPetBase(BaseModel):
@@ -424,7 +442,8 @@ class SimilarPetsResponse(BaseModel):
 
 
 class PhotoAnalyzeRequest(BaseModel):
-    image: str = Field(..., min_length=32, description="data:image/...;base64,...")
+    image: Optional[str] = Field(None, min_length=32, description="data:image/...;base64,... (legacy)")
+    images: Optional[list[str]] = Field(None, max_length=3, description="До 3 фото для агрегированного анализа")
 
 
 class PhotoAnalyzeResponse(BaseModel):
@@ -437,6 +456,7 @@ class PhotoAnalyzeResponse(BaseModel):
     age_years_estimate: Optional[int] = None
     description: Optional[str] = None
     notes: Optional[str] = None
+    distinctive_marks: list[str] = []
     error: Optional[str] = None
 
 
@@ -585,6 +605,11 @@ class TelegramLinkStatusResponse(BaseModel):
 class NotificationSettingsResponse(BaseModel):
     notifications_enabled: bool = True
     notification_radius_km: float = 1.0
+    notify_similar_matches: bool = True
+    watch_zone_enabled: bool = False
+    watch_radius_km: float = 5.0
+    home_lat: Optional[float] = None
+    home_lng: Optional[float] = None
 
     class Config:
         from_attributes = True
@@ -593,6 +618,11 @@ class NotificationSettingsResponse(BaseModel):
 class NotificationSettingsUpdate(BaseModel):
     notifications_enabled: Optional[bool] = None
     notification_radius_km: Optional[float] = Field(None, ge=1.0, le=10.0)
+    notify_similar_matches: Optional[bool] = None
+    watch_zone_enabled: Optional[bool] = None
+    watch_radius_km: Optional[float] = Field(None, ge=1.0, le=20.0)
+    home_lat: Optional[float] = Field(None, ge=-90.0, le=90.0)
+    home_lng: Optional[float] = Field(None, ge=-180.0, le=180.0)
 
 
 # --- Platform settings (админ PATCH /settings) ---

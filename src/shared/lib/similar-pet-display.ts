@@ -14,6 +14,7 @@ const REASON_PRIORITY: Record<string, number> = {
   same_gender: 110,
   same_age: 120,
   similar_description: 130,
+  matching_marks: 35,
 };
 
 const GEO_REASONS = new Set(['very_nearby', 'nearby', 'same_area', 'same_city']);

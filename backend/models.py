@@ -63,6 +63,7 @@ class Pet(Base):
     approximate_age_raw = Column(String, nullable=True)  # исходная строка возраста (для отображения)
     status = Column(String, default="searching")  # searching, found
     description = Column(Text, nullable=False)
+    distinctive_marks = Column(JSON, default=list)  # list[str] — видимые приметы (ИИ / автор)
     city = Column(String, nullable=False)
     location_lat = Column(Float, nullable=False)
     location_lng = Column(Float, nullable=False)
@@ -92,7 +93,7 @@ class Pet(Base):
     # Учёт в РБ: орган (как на жетоне) и номер жетона — необязательно
     registration_authority = Column(String, nullable=True)
     registration_token_number = Column(String, nullable=True)
-    photo_embedding = Column(JSON, nullable=True)  # CLIP vector for visual similarity
+    photo_embedding = Column(JSON, nullable=True)  # CLIP: list of vectors (legacy: single vector)
     # Опциональная связь с карточкой питомца (адресник); при удалении профиля — SET NULL
     profile_pet_id = Column(
         String,
@@ -242,6 +243,9 @@ class NotificationSettings(Base):
     user_id = Column(String, ForeignKey("users.id"), unique=True, nullable=False)
     notifications_enabled = Column(Boolean, default=True)
     notification_radius_km = Column(Float, default=1.0)
+    notify_similar_matches = Column(Boolean, default=True)
+    watch_zone_enabled = Column(Boolean, default=False)
+    watch_radius_km = Column(Float, default=5.0)
     notify_animal_types = Column(JSON, default=lambda: ["dog", "cat", "other"])
     home_lat = Column(Float, nullable=True)
     home_lng = Column(Float, nullable=True)

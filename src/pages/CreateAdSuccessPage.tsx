@@ -66,6 +66,7 @@ export default function CreateAdSuccessPage() {
             openInNewTab
             initialDelayMs={2000}
             retryDelaysMs={[3000]}
+            highlightTopMatch
           />
         )}
 

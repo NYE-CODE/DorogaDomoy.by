@@ -33,6 +33,7 @@ export const defaultFormData: PetFormData = {
   approximateAgeRaw: '',
   status: 'searching',
   description: '',
+  distinctiveMarks: [],
   city: DEFAULT_CITY.name,
   location: { lat: DEFAULT_CITY.coordinates[0], lng: DEFAULT_CITY.coordinates[1] },
   contacts: {},
@@ -59,6 +60,7 @@ export function formDataFromPet(pet: Pet): PetFormData {
     approximateAgeRaw: pet.approximateAgeRaw || '',
     status: pet.status,
     description: pet.description,
+    distinctiveMarks: pet.distinctiveMarks ?? [],
     city: pet.city ?? DEFAULT_CITY.name,
     location: pet.location ?? {
       lat: DEFAULT_CITY.coordinates[0],

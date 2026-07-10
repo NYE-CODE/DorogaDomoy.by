@@ -76,6 +76,10 @@ PET_AGE_RAW_COLUMNS_TO_ADD = [
     ("approximate_age_raw", "VARCHAR"),
 ]
 
+PET_DISTINCTIVE_MARKS_COLUMNS_TO_ADD = [
+    ("distinctive_marks", "JSON DEFAULT '[]'"),
+]
+
 SHELTER_PET_DETAILS_COLUMNS_TO_ADD = [
     ("nickname", "VARCHAR"),
     ("health_status", "VARCHAR"),
@@ -119,6 +123,12 @@ PARTNER_COLUMNS_TO_ADD = [
     ("is_medallion_partner", "INTEGER DEFAULT 0"),
 ]
 
+NOTIFICATION_SETTINGS_COLUMNS_TO_ADD = [
+    ("notify_similar_matches", "INTEGER DEFAULT 1"),
+    ("watch_zone_enabled", "INTEGER DEFAULT 0"),
+    ("watch_radius_km", "REAL DEFAULT 5.0"),
+]
+
 NEW_TABLES = {
     "telegram_link_codes": """
         CREATE TABLE telegram_link_codes (
@@ -146,6 +156,9 @@ NEW_TABLES = {
             user_id VARCHAR UNIQUE NOT NULL REFERENCES users(id),
             notifications_enabled INTEGER DEFAULT 1,
             notification_radius_km REAL DEFAULT 1.0,
+            notify_similar_matches INTEGER DEFAULT 1,
+            watch_zone_enabled INTEGER DEFAULT 0,
+            watch_radius_km REAL DEFAULT 5.0,
             notify_animal_types JSON DEFAULT '["dog","cat","other"]',
             home_lat REAL,
             home_lng REAL,
@@ -433,13 +446,15 @@ def migrate(conn):
             + PET_LISTING_EXPIRY_COLUMNS_TO_ADD
             + PET_PHOTO_EMBEDDING_COLUMNS_TO_ADD
             + PET_PROFILE_LINK_COLUMNS_TO_ADD
-            + PET_AGE_RAW_COLUMNS_TO_ADD,
+            + PET_AGE_RAW_COLUMNS_TO_ADD
+            + PET_DISTINCTIVE_MARKS_COLUMNS_TO_ADD,
         ),
         ("users", USER_COLUMNS_TO_ADD),
         ("profile_pets", PROFILE_PET_COLUMNS_TO_ADD),
         ("instagram_publications", INSTAGRAM_PUBLICATION_COLUMNS_TO_ADD),
         ("partners", PARTNER_COLUMNS_TO_ADD),
         ("shelter_pet_details", SHELTER_PET_DETAILS_COLUMNS_TO_ADD),
+        ("notification_settings", NOTIFICATION_SETTINGS_COLUMNS_TO_ADD),
     ]:
         try:
             existing = get_existing_columns(conn, table)

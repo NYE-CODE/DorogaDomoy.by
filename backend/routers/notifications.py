@@ -14,6 +14,7 @@ from schemas import (
     NotificationSettingsUpdate,
     NotificationResponse,
 )
+from notification_settings_utils import notification_settings_to_response
 from auth import get_current_user_required
 from rate_limit import limiter
 from time_utils import utc_now
@@ -56,10 +57,7 @@ def get_notification_settings(
     db: Session = Depends(get_db),
 ):
     ns = _get_or_create_settings(user, db)
-    return NotificationSettingsResponse(
-        notifications_enabled=ns.notifications_enabled,
-        notification_radius_km=ns.notification_radius_km,
-    )
+    return notification_settings_to_response(ns)
 
 
 @router.patch("/settings", response_model=NotificationSettingsResponse)
@@ -83,6 +81,27 @@ def update_notification_settings(
     if data.notification_radius_km is not None:
         ns.notification_radius_km = data.notification_radius_km
 
+    if data.notify_similar_matches is not None:
+        ns.notify_similar_matches = data.notify_similar_matches
+
+    if data.watch_zone_enabled is not None:
+        ns.watch_zone_enabled = data.watch_zone_enabled
+
+    if data.watch_radius_km is not None:
+        ns.watch_radius_km = data.watch_radius_km
+
+    if data.home_lat is not None:
+        ns.home_lat = data.home_lat
+
+    if data.home_lng is not None:
+        ns.home_lng = data.home_lng
+
+    if ns.watch_zone_enabled and (ns.home_lat is None or ns.home_lng is None):
+        raise HTTPException(
+            status_code=400,
+            detail="Укажите точку на карте для зоны наблюдения",
+        )
+
     ns.updated_at = utc_now()
 
     try:
@@ -93,10 +112,7 @@ def update_notification_settings(
         logger.exception("Failed to update notification settings: %s", e)
         raise HTTPException(status_code=500, detail="Ошибка при сохранении настроек")
 
-    return NotificationSettingsResponse(
-        notifications_enabled=ns.notifications_enabled,
-        notification_radius_km=ns.notification_radius_km,
-    )
+    return notification_settings_to_response(ns)
 
 
 @router.get("", response_model=list[NotificationResponse])

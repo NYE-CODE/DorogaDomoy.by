@@ -12,6 +12,9 @@ export const APPROXIMATE_AGE_PRESET_VALUES = [
 
 export const MAX_DESCRIPTION = 500;
 export const MIN_DESCRIPTION = 20;
+export const MAX_DISTINCTIVE_MARKS = 8;
+export const MAX_DISTINCTIVE_MARK_LEN = 80;
+export const MIN_DISTINCTIVE_MARK_LEN = 3;
 
 export const TOTAL_STEPS_CREATE = 5;
 export const TOTAL_STEPS_EDIT = 5;

@@ -4,7 +4,36 @@ import type { AnimalType, Gender, PetColor } from '@/entities/pet/model/types';
 export const APPROXIMATE_AGE_LESS_2 = 'менее 2 года' as const;
 export const APPROXIMATE_AGE_MORE_2 = 'более 2 года' as const;
 
+/** Сколько кадров отправляем в Groq / CLIP (сервер обрабатывает до этого же лимита). */
+export const AI_PHOTO_ANALYZE_LIMIT = 3;
+
 const PET_COLOR_KEYS: PetColor[] = ['black', 'white', 'gray', 'brown', 'red', 'mixed', 'spotted', 'striped'];
+
+/** Ранжирует фото для AI: data URL в приоритете, затем по размеру payload. */
+export function pickPhotosForAi(photos: string[], limit = AI_PHOTO_ANALYZE_LIMIT): string[] {
+  const candidates = photos.map((p) => p?.trim()).filter(Boolean) as string[];
+  if (!candidates.length) return [];
+  const sorted = [...candidates].sort((a, b) => {
+    const aData = a.startsWith('data:image') ? 1 : 0;
+    const bData = b.startsWith('data:image') ? 1 : 0;
+    if (bData !== aData) return bData - aData;
+    return b.length - a.length;
+  });
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const photo of sorted) {
+    if (seen.has(photo)) continue;
+    seen.add(photo);
+    out.push(photo);
+    if (out.length >= limit) break;
+  }
+  return out;
+}
+
+/** Выбирает наиболее подходящее фото для AI (предпочтительно data URL, затем самый крупный payload). */
+export function pickBestPhotoForAi(photos: string[]): string | null {
+  return pickPhotosForAi(photos, 1)[0] ?? null;
+}
 
 export type AiFilledAdFields = {
   animalType?: boolean;
@@ -13,18 +42,8 @@ export type AiFilledAdFields = {
   gender?: boolean;
   approximateAge?: boolean;
   description?: boolean;
+  distinctiveMarks?: boolean;
 };
-
-/** Выбирает наиболее подходящее фото для AI (предпочтительно data URL, затем самый крупный payload). */
-export function pickBestPhotoForAi(photos: string[]): string | null {
-  const candidates = photos.map((p) => p?.trim()).filter(Boolean) as string[];
-  if (!candidates.length) return null;
-  let best = candidates.find((p) => p.startsWith('data:image')) ?? candidates[0];
-  for (const photo of candidates) {
-    if (photo.length > best.length) best = photo;
-  }
-  return best;
-}
 
 export function mapAiColorsToPetColors(texts: string[]): PetColor[] {
   const rules: [RegExp, PetColor][] = [
@@ -107,6 +126,7 @@ export interface AdFormAiSlice {
   gender: Gender;
   approximateAge: string;
   description: string;
+  distinctiveMarks: string[];
 }
 
 export function applyPhotoAnalyzeToAdForm(
@@ -150,6 +170,10 @@ export function applyPhotoAnalyzeToAdForm(
     next.description = aiDesc.slice(0, maxDescription);
     filled.description = true;
     descriptionFilled = true;
+  }
+  if (result.distinctive_marks?.length) {
+    next.distinctiveMarks = result.distinctive_marks;
+    filled.distinctiveMarks = true;
   }
   return { next, filled, descriptionFilled };
 }
