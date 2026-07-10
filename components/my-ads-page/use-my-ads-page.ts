@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useI18n } from '../../context/I18nContext';
 import { sightingsApi } from '../../api/client';
 import { LISTING_EXPIRED_ARCHIVE_REASON } from '@/shared/lib/listing-expiry';
-import type { ModerationStatus, Pet } from '../types/pet';
+import type { ModerationStatus, Pet } from '@/entities/pet/model/types';
 import type { MyAdsPageProps } from './my-ads-types';
 import { myAdsDateLocale } from './my-ads-helpers';
 

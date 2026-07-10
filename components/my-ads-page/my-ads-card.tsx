@@ -8,7 +8,7 @@ import {
   Rocket,
   Trash2,
 } from 'lucide-react';
-import type { Pet } from '../types/pet';
+import type { Pet } from '@/entities/pet/model/types';
 import { RewardBadge } from '../reward-badge';
 import { Button } from '../ui/button';
 import { cn } from '../ui/utils';

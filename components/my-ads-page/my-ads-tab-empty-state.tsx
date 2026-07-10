@@ -1,5 +1,5 @@
 import { CheckCircle, Clock, Plus, XCircle } from 'lucide-react';
-import type { ModerationStatus } from '../types/pet';
+import type { ModerationStatus } from '@/entities/pet/model/types';
 import { Button } from '../ui/button';
 import { EmptyState } from '../ui/empty-state';
 import { appPrimaryCtaClass } from '../../styles/cta-classes';
