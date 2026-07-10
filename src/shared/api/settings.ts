@@ -3,6 +3,7 @@ import { api } from '@/shared/api/http';
 export interface PlatformSettings {
   require_moderation: string;
   auto_archive_days: string;
+  listing_reminder_days?: string;
   max_photos: string;
   reward_default_points?: string;
   /** @username канала / супергруппы или -100… — куда слать анонсы блога */

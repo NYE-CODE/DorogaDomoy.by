@@ -324,6 +324,26 @@ class Partner(Base):
     is_medallion_partner = Column(Boolean, default=False, nullable=False)
 
 
+class PartnerAd(Base):
+    """Рекламные баннеры партнёров с привязкой к слотам размещения."""
+    __tablename__ = "partner_ads"
+
+    id = Column(String, primary_key=True, index=True)
+    partner_id = Column(String, ForeignKey("partners.id"), nullable=True, index=True)
+    title = Column(String, nullable=False)  # внутреннее имя для админки
+    sponsor_label = Column(String, nullable=True)  # подпись «Реклама · …»
+    image_desktop = Column(String, nullable=False)
+    image_mobile = Column(String, nullable=True)
+    link_url = Column(String, nullable=False)
+    alt_text = Column(String, nullable=True)
+    placements = Column(JSON, default=list, nullable=False)  # list[str]
+    priority = Column(Integer, default=0, nullable=False)
+    starts_at = Column(DateTime, nullable=True)
+    ends_at = Column(DateTime, nullable=True)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 class HelpDonationTier(Base):
     """Варианты суммы поддержки проекта для секции «Как нам помочь» на лендинге."""
 

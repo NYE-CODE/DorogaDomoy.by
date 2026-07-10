@@ -12,10 +12,16 @@ type MyAdsPageState = ReturnType<typeof useMyAdsPage>;
 export interface MyAdsListPanelProps {
   state: MyAdsPageState;
   instagramBoostEnabled: boolean;
+  renewPromptWithinDays?: number;
   onCreateClick: () => void;
 }
 
-export function MyAdsListPanel({ state, instagramBoostEnabled, onCreateClick }: MyAdsListPanelProps) {
+export function MyAdsListPanel({
+  state,
+  instagramBoostEnabled,
+  renewPromptWithinDays = 3,
+  onCreateClick,
+}: MyAdsListPanelProps) {
   const {
     t,
     dateLocale,
@@ -67,6 +73,7 @@ export function MyAdsListPanel({ state, instagramBoostEnabled, onCreateClick }: 
                 openMenuId={openMenuId}
                 hoveredTooltipId={hoveredTooltipId}
                 instagramBoostEnabled={instagramBoostEnabled}
+                renewPromptWithinDays={renewPromptWithinDays}
                 onRenewPet={onRenewPet}
                 onToggleMenu={(petId) => setOpenMenuId(openMenuId === petId ? null : petId)}
                 onCloseMenu={() => setOpenMenuId(null)}

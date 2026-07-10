@@ -3,6 +3,8 @@ import type {
   FaqItem,
   MediaArticle,
   Partner,
+  PartnerAd,
+  PartnerAdCreatePayload,
   ProfilePetResponse,
 } from '../../api/client';
 import type { User } from '../../context/AuthContext';
@@ -15,6 +17,7 @@ export interface AdminPanelProps {
   reports: Report[];
   mediaArticles: MediaArticle[];
   partners: Partner[];
+  partnerAds: PartnerAd[];
   profilePets: ProfilePetResponse[];
   onBack: () => void;
   onUpdatePet: (pet: Pet) => void;
@@ -45,6 +48,9 @@ export interface AdminPanelProps {
     data: Partial<{ logo_url: string; name: string; link: string; is_medallion_partner: boolean }>,
   ) => void;
   onPartnerDelete: (id: string) => void;
+  onPartnerAdCreate: (data: PartnerAdCreatePayload) => void;
+  onPartnerAdUpdate: (id: string, data: Partial<PartnerAdCreatePayload>) => void;
+  onPartnerAdDelete: (id: string) => void;
   onDeleteProfilePet: (id: string) => void;
   blogPosts: BlogPostAdmin[];
   onBlogCreate: (data: {

@@ -33,6 +33,7 @@ class FeatureFlagsUpdate(BaseModel):
     ff_instagram_boost_stories: bool | None = None
     ff_reward_enabled: bool | None = None
     ff_reward_money_enabled: bool | None = None
+    ff_partner_ads_enabled: bool | None = None
 
 
 @router.patch("")

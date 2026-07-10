@@ -32,6 +32,7 @@ import {
   SelectValue,
 } from '@/shared/ui/select';
 import { ShelterPetCard } from '../../components/shelter-pet-card';
+import { PartnerAdSlot } from '@/features/partner-ads/PartnerAdSlot';
 
 export default function SheltersPage() {
   const navigate = useNavigate();
@@ -207,6 +208,8 @@ export default function SheltersPage() {
             {s.tabPets}
           </button>
         </div>
+
+        <PartnerAdSlot placement="shelters-top" className="mb-8" />
 
         {activeTab === 'orgs' ? (
         <>

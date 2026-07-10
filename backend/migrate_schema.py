@@ -211,6 +211,24 @@ NEW_TABLES = {
             is_medallion_partner INTEGER DEFAULT 0
         )
     """,
+    "partner_ads": """
+        CREATE TABLE partner_ads (
+            id VARCHAR PRIMARY KEY,
+            partner_id VARCHAR REFERENCES partners(id),
+            title VARCHAR NOT NULL,
+            sponsor_label VARCHAR,
+            image_desktop VARCHAR NOT NULL,
+            image_mobile VARCHAR,
+            link_url VARCHAR NOT NULL,
+            alt_text VARCHAR,
+            placements JSON NOT NULL DEFAULT '[]',
+            priority INTEGER NOT NULL DEFAULT 0,
+            starts_at DATETIME,
+            ends_at DATETIME,
+            is_active INTEGER NOT NULL DEFAULT 1,
+            created_at DATETIME
+        )
+    """,
     "faq_items": """
         CREATE TABLE faq_items (
             id VARCHAR PRIMARY KEY,

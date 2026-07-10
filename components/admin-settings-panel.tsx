@@ -12,6 +12,7 @@ export function AdminSettingsPanel() {
   const [settings, setSettings] = useState({
     requireModeration: true,
     autoArchiveDays: 90,
+    listingReminderDays: '3,1',
     maxPhotos: 5,
     rewardDefaultPoints: 50,
   });
@@ -26,6 +27,7 @@ export function AdminSettingsPanel() {
         setSettings({
           requireModeration: s.require_moderation === 'true',
           autoArchiveDays: parseInt(s.auto_archive_days, 10) || 90,
+          listingReminderDays: s.listing_reminder_days?.trim() || '3,1',
           maxPhotos: parseInt(s.max_photos, 10) || 5,
           rewardDefaultPoints: parseInt(s.reward_default_points ?? '50', 10) || 50,
         });
@@ -44,6 +46,7 @@ export function AdminSettingsPanel() {
       .update({
         require_moderation: settings.requireModeration ? 'true' : 'false',
         auto_archive_days: String(settings.autoArchiveDays),
+        listing_reminder_days: settings.listingReminderDays.trim() || '3,1',
         max_photos: String(settings.maxPhotos),
         reward_default_points: String(settings.rewardDefaultPoints),
       })
@@ -101,6 +104,25 @@ export function AdminSettingsPanel() {
               }
               className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-foreground/90 mb-2">
+              {ap.settings.reminderDaysLabel}
+            </label>
+            <input
+              type="text"
+              value={settings.listingReminderDays}
+              onChange={(e) =>
+                setSettings((s) => ({
+                  ...s,
+                  listingReminderDays: e.target.value,
+                }))
+              }
+              placeholder="7,3,1"
+              className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg"
+            />
+            <p className="mt-1.5 text-xs text-muted-foreground">{ap.settings.reminderDaysHint}</p>
           </div>
 
           <div>

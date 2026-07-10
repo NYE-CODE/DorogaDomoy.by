@@ -633,6 +633,7 @@ class PlatformSettingsUpdate(BaseModel):
 
     require_moderation: Optional[bool] = None
     auto_archive_days: Optional[int] = Field(None, ge=1, le=3650)
+    listing_reminder_days: Optional[str] = Field(None, max_length=64)
     max_photos: Optional[int] = Field(None, ge=1, le=50)
     reward_default_points: Optional[int] = Field(None, ge=0, le=1_000_000)
     telegram_blog_chat_id: Optional[str] = Field(None, max_length=64)
@@ -671,6 +672,19 @@ class PlatformSettingsUpdate(BaseModel):
             if s in ("false", "0", "no", "off", ""):
                 return False
         raise ValueError("Ожидается логическое значение")
+
+    @field_validator("listing_reminder_days", mode="before")
+    @classmethod
+    def normalize_listing_reminder_days(cls, v):
+        if v is None:
+            return None
+        from listing_lifecycle import parse_listing_reminder_days
+
+        raw = str(v).strip()
+        if not raw:
+            return None
+        days = parse_listing_reminder_days(raw)
+        return ",".join(str(d) for d in days)
 
     @field_validator("auto_archive_days", "max_photos", "reward_default_points", mode="before")
     @classmethod
@@ -834,6 +848,88 @@ class PartnerResponse(BaseModel):
     name: str
     link: Optional[str] = None
     is_medallion_partner: bool = False
+
+    class Config:
+        from_attributes = True
+
+
+# --- Partner ads (реклама партнёров) ---
+PARTNER_AD_PLACEMENTS = frozenset({
+    "search-feed",
+    "pet-detail-sidebar",
+    "pet-detail-bottom",
+    "blog-list",
+    "blog-article",
+    "favorites-grid",
+    "landing-strip",
+    "shelters-top",
+})
+
+
+class PartnerAdCreate(BaseModel):
+    partner_id: Optional[str] = None
+    title: str = Field(..., min_length=1, max_length=120)
+    sponsor_label: Optional[str] = Field(None, max_length=120)
+    image_desktop: str = Field(..., min_length=1)
+    image_mobile: Optional[str] = None
+    link_url: str = Field(..., min_length=1)
+    alt_text: Optional[str] = Field(None, max_length=200)
+    placements: list[str] = Field(..., min_length=1)
+    priority: int = 0
+    starts_at: Optional[datetime] = None
+    ends_at: Optional[datetime] = None
+    is_active: bool = True
+
+    @field_validator("placements")
+    @classmethod
+    def validate_placements(cls, v: list[str]) -> list[str]:
+        invalid = [p for p in v if p not in PARTNER_AD_PLACEMENTS]
+        if invalid:
+            raise ValueError(f"Unknown placements: {', '.join(invalid)}")
+        return list(dict.fromkeys(v))
+
+
+class PartnerAdUpdate(BaseModel):
+    partner_id: Optional[str] = None
+    title: Optional[str] = Field(None, min_length=1, max_length=120)
+    sponsor_label: Optional[str] = Field(None, max_length=120)
+    image_desktop: Optional[str] = None
+    image_mobile: Optional[str] = None
+    link_url: Optional[str] = None
+    alt_text: Optional[str] = Field(None, max_length=200)
+    placements: Optional[list[str]] = None
+    priority: Optional[int] = None
+    starts_at: Optional[datetime] = None
+    ends_at: Optional[datetime] = None
+    is_active: Optional[bool] = None
+
+    @field_validator("placements")
+    @classmethod
+    def validate_placements(cls, v: Optional[list[str]]) -> Optional[list[str]]:
+        if v is None:
+            return v
+        invalid = [p for p in v if p not in PARTNER_AD_PLACEMENTS]
+        if invalid:
+            raise ValueError(f"Unknown placements: {', '.join(invalid)}")
+        return list(dict.fromkeys(v))
+
+
+class PartnerAdResponse(BaseModel):
+    id: str
+    partner_id: Optional[str] = None
+    partner_name: Optional[str] = None
+    title: str
+    sponsor_label: Optional[str] = None
+    image_desktop: str
+    image_mobile: Optional[str] = None
+    link_url: str
+    alt_text: Optional[str] = None
+    placements: list[str]
+    priority: int
+    starts_at: Optional[datetime] = None
+    ends_at: Optional[datetime] = None
+    is_active: bool
+    created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True

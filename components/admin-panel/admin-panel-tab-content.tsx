@@ -8,6 +8,7 @@ import { AdminHelpSectionPanel } from '../admin-help-section-panel';
 import { AdminInstagramPanel } from '../admin-instagram-panel';
 import { AdminMediaPanel } from '../admin-media-panel';
 import { AdminPartnersPanel } from '../admin-partners-panel';
+import { AdminPartnerAdsPanel } from '../admin-partner-ads-panel';
 import { AdminReportsPanel } from '../admin-reports-panel';
 import { AdminRewardsPanel } from '../admin-rewards-panel';
 import { AdminSettingsPanel } from '../admin-settings-panel';
@@ -31,6 +32,7 @@ type AdminPanelTabContentProps = Pick<
   | 'reports'
   | 'mediaArticles'
   | 'partners'
+  | 'partnerAds'
   | 'profilePets'
   | 'blogPosts'
   | 'faqItems'
@@ -46,6 +48,9 @@ type AdminPanelTabContentProps = Pick<
   | 'onPartnerCreate'
   | 'onPartnerUpdate'
   | 'onPartnerDelete'
+  | 'onPartnerAdCreate'
+  | 'onPartnerAdUpdate'
+  | 'onPartnerAdDelete'
   | 'onDeleteProfilePet'
   | 'onBlogCreate'
   | 'onBlogUpdate'
@@ -72,6 +77,7 @@ export function AdminPanelTabContent({
   reports,
   mediaArticles,
   partners,
+  partnerAds,
   profilePets,
   blogPosts,
   faqItems,
@@ -89,6 +95,9 @@ export function AdminPanelTabContent({
   onPartnerCreate,
   onPartnerUpdate,
   onPartnerDelete,
+  onPartnerAdCreate,
+  onPartnerAdUpdate,
+  onPartnerAdDelete,
   onDeleteProfilePet,
   onBlogCreate,
   onBlogUpdate,
@@ -198,6 +207,15 @@ export function AdminPanelTabContent({
           onPartnerCreate={onPartnerCreate}
           onPartnerUpdate={onPartnerUpdate}
           onPartnerDelete={onPartnerDelete}
+        />
+      )}
+      {activeTab === 'partnerAds' && (
+        <AdminPartnerAdsPanel
+          partnerAds={partnerAds}
+          partners={partners}
+          onCreate={onPartnerAdCreate}
+          onUpdate={onPartnerAdUpdate}
+          onDelete={onPartnerAdDelete}
         />
       )}
       {activeTab === 'faq' && (

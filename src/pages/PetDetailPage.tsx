@@ -37,6 +37,7 @@ import { PetDetailLocationSection } from './pet-detail/pet-detail-location-secti
 import { PetDetailShareMenu } from './pet-detail/pet-detail-share-menu';
 import { PetDetailSidebar } from './pet-detail/pet-detail-sidebar';
 import { PetDetailStatusBanners } from './pet-detail/pet-detail-status-banners';
+import { PartnerAdSlot } from '@/features/partner-ads/PartnerAdSlot';
 import { usePetDetailShare } from './pet-detail/use-pet-detail-share';
 
 export default function PetDetailPage() {
@@ -322,6 +323,8 @@ function PetDetailPageContent({
               onReport={handleReportPet}
             />
           </div>
+
+          <PartnerAdSlot placement="pet-detail-bottom" className="mt-8" />
 
           {!isShelterPet && !pet.isArchived && pet.moderationStatus === 'approved' && (
             <SimilarPetsSection petId={pet.id} className="mt-8" limit={6} />

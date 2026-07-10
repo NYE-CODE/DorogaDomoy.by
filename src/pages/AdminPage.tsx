@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuth } from '@/app/providers/AuthContext';
 import { AdminPanel } from '../../components/admin-panel';
-import { petsApi, usersApi, reportsApi, mediaApi, partnersApi, profilePetsApi, blogApi, faqApi } from '@/shared/api/client';
-import type { BlogPostAdmin, FaqItem, MediaArticle, Partner, ProfilePetResponse } from '@/shared/api/client';
+import { petsApi, usersApi, reportsApi, mediaApi, partnersApi, partnerAdsApi, profilePetsApi, blogApi, faqApi } from '@/shared/api/client';
+import type { BlogPostAdmin, FaqItem, MediaArticle, Partner, PartnerAd, PartnerAdCreatePayload, ProfilePetResponse } from '@/shared/api/client';
 import { Pet } from '@/entities/pet/model/types';
 import { User } from '@/app/providers/AuthContext';
 import { Report } from '@/entities/admin/model/types';
@@ -22,6 +22,7 @@ export default function AdminPage() {
   const [reports, setReports] = useState<Report[]>([]);
   const [mediaArticles, setMediaArticles] = useState<MediaArticle[]>([]);
   const [partners, setPartners] = useState<Partner[]>([]);
+  const [partnerAds, setPartnerAds] = useState<PartnerAd[]>([]);
   const [profilePets, setProfilePets] = useState<ProfilePetResponse[]>([]);
   const [blogPosts, setBlogPosts] = useState<BlogPostAdmin[]>([]);
   const [faqItems, setFaqItems] = useState<FaqItem[]>([]);
@@ -41,12 +42,13 @@ export default function AdminPage() {
     (async () => {
       setDataLoading(true);
       try {
-        const [p, u, r, m, partnersList, pp, blogs, faqList] = await Promise.all([
+        const [p, u, r, m, partnersList, adsList, pp, blogs, faqList] = await Promise.all([
           petsApi.list({ limit: 500 }).catch(() => [] as Pet[]),
           usersApi.list().catch(() => [] as User[]),
           reportsApi.list().catch(() => [] as Report[]),
           mediaApi.list().catch(() => [] as MediaArticle[]),
           partnersApi.list().catch(() => [] as Partner[]),
+          partnerAdsApi.listAdmin().catch(() => [] as PartnerAd[]),
           profilePetsApi.list().catch(() => [] as ProfilePetResponse[]),
           blogApi.adminList().catch(() => [] as BlogPostAdmin[]),
           faqApi.list().catch(() => [] as FaqItem[]),
@@ -57,6 +59,7 @@ export default function AdminPage() {
         setReports(r);
         setMediaArticles(m);
         setPartners(partnersList);
+        setPartnerAds(adsList);
         setProfilePets(pp);
         setBlogPosts(blogs);
         setFaqItems(faqList);
@@ -256,6 +259,36 @@ export default function AdminPage() {
     }
   };
 
+  const handlePartnerAdCreate = async (data: PartnerAdCreatePayload) => {
+    try {
+      const ad = await partnerAdsApi.create(data);
+      setPartnerAds((prev) => [ad, ...prev]);
+      toast.success(ap.toasts.partnerAdSaved);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : ap.toasts.genericError);
+    }
+  };
+
+  const handlePartnerAdUpdate = async (id: string, data: Partial<PartnerAdCreatePayload>) => {
+    try {
+      const ad = await partnerAdsApi.update(id, data);
+      setPartnerAds((prev) => prev.map((x) => (x.id === ad.id ? ad : x)));
+      toast.success(ap.toasts.partnerAdUpdated);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : ap.toasts.genericError);
+    }
+  };
+
+  const handlePartnerAdDelete = async (id: string) => {
+    try {
+      await partnerAdsApi.delete(id);
+      setPartnerAds((prev) => prev.filter((a) => a.id !== id));
+      toast.success(ap.toasts.partnerAdDeleted);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : ap.toasts.genericError);
+    }
+  };
+
   const handleDeleteProfilePet = async (id: string) => {
     try {
       await profilePetsApi.delete(id);
@@ -344,6 +377,7 @@ export default function AdminPage() {
         reports={reports}
         mediaArticles={mediaArticles}
         partners={partners}
+        partnerAds={partnerAds}
         profilePets={profilePets}
         onBack={() => navigate(getHomePath())}
         onUpdatePet={handleUpdatePet}
@@ -358,6 +392,15 @@ export default function AdminPage() {
         onPartnerCreate={handlePartnerCreate}
         onPartnerUpdate={handlePartnerUpdate}
         onPartnerDelete={handlePartnerDelete}
+        onPartnerAdCreate={(data) => {
+          void handlePartnerAdCreate(data);
+        }}
+        onPartnerAdUpdate={(id, data) => {
+          void handlePartnerAdUpdate(id, data);
+        }}
+        onPartnerAdDelete={(id) => {
+          void handlePartnerAdDelete(id);
+        }}
         onDeleteProfilePet={handleDeleteProfilePet}
         blogPosts={blogPosts}
         onBlogCreate={(data) => {

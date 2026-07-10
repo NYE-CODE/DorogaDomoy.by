@@ -2,6 +2,8 @@ import { Suspense } from 'react';
 import { BrowserRouter, Routes } from 'react-router';
 import { ThemeProvider } from '@/app/providers/ThemeContext';
 import { I18nProvider } from '@/app/providers/I18nContext';
+import { FeatureFlagsProvider } from '@/app/providers/FeatureFlagsContext';
+import { PartnerAdsProvider } from '@/features/partner-ads/PartnerAdsContext';
 import { AuthProvider } from '@/app/providers/AuthContext';
 import { FavoritesProvider } from '@/app/providers/FavoritesContext';
 import { CityProvider } from '@/app/providers/CityContext';
@@ -25,31 +27,35 @@ export function App() {
   return (
     <ThemeProvider>
       <I18nProvider>
-        <BrowserRouter>
-          <SkipToContent />
-          <MainContentLandmark />
-          <SeoRouteSync />
-          <ScrollToTopOnRouteChange />
-          <MetrikaTracker />
-          <RouteHistoryTracker />
-          <GlobalToaster />
-          <AuthProvider>
-            <FavoritesProvider>
-              <CityProvider>
-                <ShelterPetBrowseProvider>
-                  <AuthModalGlobal />
-                  <Suspense fallback={<RouteLoader />}>
-                    <ErrorBoundary>
-                      <Routes>{AppRoutes()}</Routes>
-                    </ErrorBoundary>
-                  </Suspense>
-                  <MobileBottomNav />
-                  <CookieConsentBanner />
-                </ShelterPetBrowseProvider>
-              </CityProvider>
-            </FavoritesProvider>
-          </AuthProvider>
-        </BrowserRouter>
+        <FeatureFlagsProvider>
+          <PartnerAdsProvider>
+            <BrowserRouter>
+              <SkipToContent />
+              <MainContentLandmark />
+              <SeoRouteSync />
+              <ScrollToTopOnRouteChange />
+              <MetrikaTracker />
+              <RouteHistoryTracker />
+              <GlobalToaster />
+              <AuthProvider>
+                <FavoritesProvider>
+                  <CityProvider>
+                    <ShelterPetBrowseProvider>
+                      <AuthModalGlobal />
+                      <Suspense fallback={<RouteLoader />}>
+                        <ErrorBoundary>
+                          <Routes>{AppRoutes()}</Routes>
+                        </ErrorBoundary>
+                      </Suspense>
+                      <MobileBottomNav />
+                      <CookieConsentBanner />
+                    </ShelterPetBrowseProvider>
+                  </CityProvider>
+                </FavoritesProvider>
+              </AuthProvider>
+            </BrowserRouter>
+          </PartnerAdsProvider>
+        </FeatureFlagsProvider>
       </I18nProvider>
     </ThemeProvider>
   );

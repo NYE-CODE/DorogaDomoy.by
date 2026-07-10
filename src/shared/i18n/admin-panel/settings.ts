@@ -8,6 +8,9 @@ export const adminPanelSettingsLocales = {
     moderationYes: 'Да, требуется проверка',
     moderationNo: 'Нет, публиковать сразу',
     archiveLabel: 'Автоматическая архивация после (дней)',
+    reminderDaysLabel: 'Напоминания о продлении (дни до истечения)',
+    reminderDaysHint:
+      'Через запятую, например: 7,3,1. В Telegram уйдёт напоминание, если у пользователя подключён бот.',
     maxPhotosLabel: 'Максимум фото на объявление',
     citiesTitle: 'Управление городами',
     citiesHint: 'Список городов настраивается в файле /utils/cities.ts',
@@ -23,6 +26,9 @@ export const adminPanelSettingsLocales = {
     moderationYes: 'Так, патрабуецца праверка',
     moderationNo: 'Не, публікаваць адразу',
     archiveLabel: 'Аўтаматычная архівацыя праз (дзён)',
+    reminderDaysLabel: 'Напаміны пра прадленне (дні да заканчэння)',
+    reminderDaysHint:
+      'Праз коску, напрыклад: 7,3,1. У Telegram прыйдзе напамін, калі ў карыстальніка падключаны бот.',
     maxPhotosLabel: 'Максімум фота на аб\'яву',
     citiesTitle: 'Кіраванне гарадамі',
     citiesHint: 'Спіс гарадоў наладжваецца ў файле /utils/cities.ts',
@@ -38,6 +44,9 @@ export const adminPanelSettingsLocales = {
     moderationYes: 'Yes, require review',
     moderationNo: 'No, publish immediately',
     archiveLabel: 'Auto-archive after (days)',
+    reminderDaysLabel: 'Renewal reminders (days before expiry)',
+    reminderDaysHint:
+      'Comma-separated, e.g. 7,3,1. Sent via Telegram when the user has the bot linked.',
     maxPhotosLabel: 'Max photos per ad',
     citiesTitle: 'City list',
     citiesHint: 'Cities are configured in /utils/cities.ts',

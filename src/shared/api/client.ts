@@ -22,6 +22,7 @@ export * from '@/shared/api/media';
 export * from '@/shared/api/blog';
 export * from '@/shared/api/guides';
 export * from '@/shared/api/partners';
+export * from '@/shared/api/partner-ads';
 export * from '@/shared/api/faq';
 export * from '@/shared/api/help';
 export * from '@/shared/api/profile-pets';

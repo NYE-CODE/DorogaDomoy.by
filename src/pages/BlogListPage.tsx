@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Fragment } from 'react';
 import { Link } from 'react-router';
 import { Header } from '@/widgets/layout/Header';
 import { Footer } from '@/widgets/layout/Footer';
@@ -12,6 +12,8 @@ import {
   SEO_ROBOTS_PUBLIC,
   truncateMetaDescription,
 } from '@/shared/lib/seo';
+import { PartnerAdSlot } from '@/features/partner-ads/PartnerAdSlot';
+import { PARTNER_AD_BLOG_LIST_INTERVAL } from '@/shared/lib/partner-ad-placements';
 
 function coverSrc(url?: string | null): string | undefined {
   if (!url) return undefined;
@@ -99,14 +101,15 @@ export default function BlogListPage() {
           <p className="text-muted-foreground">{b.empty}</p>
         ) : (
           <ul className="space-y-8">
-            {posts.map((post) => {
+            {posts.map((post, index) => {
               const img = coverSrc(post.cover_image_url);
               const date = new Date(post.published_at).toLocaleDateString(
                 typeof navigator !== 'undefined' ? navigator.language : 'ru',
                 { year: 'numeric', month: 'long', day: 'numeric' },
               );
               return (
-                <li key={post.id}>
+                <Fragment key={post.id}>
+                <li>
                   <article className="rounded-md border border-border bg-card overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                     <Link to={`/blog/${post.slug}`} className="flex flex-col sm:flex-row sm:min-h-[200px] group">
                       {img ? (
@@ -147,6 +150,12 @@ export default function BlogListPage() {
                     </Link>
                   </article>
                 </li>
+                {(index + 1) % PARTNER_AD_BLOG_LIST_INTERVAL === 0 ? (
+                  <li>
+                    <PartnerAdSlot placement="blog-list" />
+                  </li>
+                ) : null}
+                </Fragment>
               );
             })}
           </ul>

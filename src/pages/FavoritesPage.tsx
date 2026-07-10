@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, Fragment } from 'react';
 import { useNavigate } from 'react-router';
 import { Clock, Heart, MapPin, Search } from 'lucide-react';
 import { favoritesApi, petsApi } from '@/shared/api/client';
@@ -25,6 +25,8 @@ import {
 import { getHomePath } from '@/shared/lib/home-route';
 import { formatRelativeTime, petStatusPhotoPillClass } from '@/shared/lib/pet-helpers';
 import { appPrimaryCtaClass } from '@/shared/styles/cta-classes';
+import { PartnerAdSlot } from '@/features/partner-ads/PartnerAdSlot';
+import { PARTNER_AD_FAVORITES_GRID_INTERVAL } from '@/shared/lib/partner-ad-placements';
 
 export default function FavoritesPage() {
   const { t } = useI18n();
@@ -185,9 +187,9 @@ export default function FavoritesPage() {
           />
         ) : activeTab === 'search' ? (
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {searchPets.map((pet) => (
+            {searchPets.map((pet, index) => (
+              <Fragment key={pet.id}>
               <div
-                key={pet.id}
                 onClick={() => window.open(`/pet/${pet.id}`, '_blank')}
                 className="group relative cursor-pointer overflow-hidden rounded-lg border border-border/80 bg-card shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-xl"
               >
@@ -234,17 +236,30 @@ export default function FavoritesPage() {
                   </div>
                 </div>
               </div>
+              {(index + 1) % PARTNER_AD_FAVORITES_GRID_INTERVAL === 0 ? (
+                <div className="sm:col-span-2 lg:col-span-3">
+                  <PartnerAdSlot placement="favorites-grid" />
+                </div>
+              ) : null}
+              </Fragment>
             ))}
           </div>
         ) : (
           <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-5">
-            {shelterPets.map((pet) => (
-              <li key={pet.id} className="h-full">
+            {shelterPets.map((pet, index) => (
+              <Fragment key={pet.id}>
+              <li className="h-full">
                 <ShelterPetCard
                   pet={pet}
                   onClick={() => window.open(`/shelter-pet/${pet.id}`, '_blank')}
                 />
               </li>
+              {(index + 1) % PARTNER_AD_FAVORITES_GRID_INTERVAL === 0 ? (
+                <li className="col-span-full">
+                  <PartnerAdSlot placement="favorites-grid" />
+                </li>
+              ) : null}
+              </Fragment>
             ))}
           </ul>
         )}

@@ -6,8 +6,9 @@ import { MyAdsPage as MyAdsList } from '../../components/my-ads-page';
 import { DeleteReasonModal } from '../../components/delete-reason-modal';
 import { ContactRequiredModal } from '../../components/contact-required-modal';
 import { AuthModal } from '../../components/auth/AuthModal';
-import { featureFlagsApi, instagramApi, petsApi } from '@/shared/api/client';
+import { featureFlagsApi, instagramApi, petsApi, settingsApi } from '@/shared/api/client';
 import { Pet } from '@/entities/pet/model/types';
+import { maxListingReminderDays } from '@/shared/lib/listing-expiry';
 import { toast } from 'sonner';
 import { getHomePath } from '@/shared/lib/home-route';
 
@@ -22,6 +23,16 @@ export default function MyAdsPageRoute() {
   const [deletingPet, setDeletingPet] = useState<Pet | null>(null);
   const [showContactRequiredModal, setShowContactRequiredModal] = useState(false);
   const [instagramBoostEnabled, setInstagramBoostEnabled] = useState(true);
+  const [renewPromptWithinDays, setRenewPromptWithinDays] = useState(3);
+
+  useEffect(() => {
+    settingsApi
+      .get()
+      .then((s) => setRenewPromptWithinDays(maxListingReminderDays(s.listing_reminder_days)))
+      .catch((e) => {
+        console.warn('[settings] my-ads reminder days', e);
+      });
+  }, []);
 
   useEffect(() => {
     featureFlagsApi
@@ -188,6 +199,7 @@ export default function MyAdsPageRoute() {
         onEditPet={(pet) => navigate(`/edit/${pet.id}`)}
         onDeletePet={setDeletingPet}
         instagramBoostEnabled={instagramBoostEnabled}
+        renewPromptWithinDays={renewPromptWithinDays}
         onBoostPet={(pet) => {
           void handleBoostPet(pet);
         }}

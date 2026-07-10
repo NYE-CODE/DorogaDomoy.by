@@ -7,6 +7,7 @@ import { appMessengerCtaSizingClass, appOutlineCtaClass } from '@/shared/styles/
 import { Button } from '@/shared/ui/button';
 import { RewardBadge } from '../../../components/reward-badge';
 import { RevealPhoneButton } from '../../../components/reveal-phone-button';
+import { PartnerAdSlot } from '@/features/partner-ads/PartnerAdSlot';
 import { type ArchiveBadgeStyle } from './pet-detail-archive-badge';
 import type { PetDetailT } from './pet-detail-archive-badge';
 
@@ -167,6 +168,8 @@ export function PetDetailSidebar({ pet, t, archiveBadge, onReport }: PetDetailSi
           </div>
         </div>
       )}
+
+      <PartnerAdSlot placement="pet-detail-sidebar" compact />
 
       <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
         <Button
