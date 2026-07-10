@@ -244,6 +244,8 @@ class NotificationSettings(Base):
     notifications_enabled = Column(Boolean, default=True)
     notification_radius_km = Column(Float, default=1.0)
     notify_similar_matches = Column(Boolean, default=True)
+    watch_zone_enabled = Column(Boolean, default=False)
+    watch_radius_km = Column(Float, default=5.0)
     notify_animal_types = Column(JSON, default=lambda: ["dog", "cat", "other"])
     home_lat = Column(Float, nullable=True)
     home_lng = Column(Float, nullable=True)

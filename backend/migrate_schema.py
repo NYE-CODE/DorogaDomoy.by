@@ -125,6 +125,8 @@ PARTNER_COLUMNS_TO_ADD = [
 
 NOTIFICATION_SETTINGS_COLUMNS_TO_ADD = [
     ("notify_similar_matches", "INTEGER DEFAULT 1"),
+    ("watch_zone_enabled", "INTEGER DEFAULT 0"),
+    ("watch_radius_km", "REAL DEFAULT 5.0"),
 ]
 
 NEW_TABLES = {
@@ -155,6 +157,8 @@ NEW_TABLES = {
             notifications_enabled INTEGER DEFAULT 1,
             notification_radius_km REAL DEFAULT 1.0,
             notify_similar_matches INTEGER DEFAULT 1,
+            watch_zone_enabled INTEGER DEFAULT 0,
+            watch_radius_km REAL DEFAULT 5.0,
             notify_animal_types JSON DEFAULT '["dog","cat","other"]',
             home_lat REAL,
             home_lng REAL,

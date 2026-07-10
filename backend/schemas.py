@@ -606,6 +606,10 @@ class NotificationSettingsResponse(BaseModel):
     notifications_enabled: bool = True
     notification_radius_km: float = 1.0
     notify_similar_matches: bool = True
+    watch_zone_enabled: bool = False
+    watch_radius_km: float = 5.0
+    home_lat: Optional[float] = None
+    home_lng: Optional[float] = None
 
     class Config:
         from_attributes = True
@@ -615,6 +619,10 @@ class NotificationSettingsUpdate(BaseModel):
     notifications_enabled: Optional[bool] = None
     notification_radius_km: Optional[float] = Field(None, ge=1.0, le=10.0)
     notify_similar_matches: Optional[bool] = None
+    watch_zone_enabled: Optional[bool] = None
+    watch_radius_km: Optional[float] = Field(None, ge=1.0, le=20.0)
+    home_lat: Optional[float] = Field(None, ge=-90.0, le=90.0)
+    home_lng: Optional[float] = Field(None, ge=-180.0, le=180.0)
 
 
 # --- Platform settings (админ PATCH /settings) ---

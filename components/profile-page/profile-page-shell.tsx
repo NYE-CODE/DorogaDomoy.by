@@ -95,6 +95,12 @@ export default function ProfilePage() {
                     notifSaving={p.notifSaving}
                     localRadius={p.localRadius}
                     setLocalRadius={p.setLocalRadius}
+                    localWatchEnabled={p.localWatchEnabled}
+                    setLocalWatchEnabled={p.setLocalWatchEnabled}
+                    localWatchRadius={p.localWatchRadius}
+                    setLocalWatchRadius={p.setLocalWatchRadius}
+                    localWatchLocation={p.localWatchLocation}
+                    setLocalWatchLocation={p.setLocalWatchLocation}
                     formatTime={p.formatTime}
                     onRequestLink={(e) => void p.handleRequestLink(e)}
                     onUnlink={() => void p.handleUnlink()}

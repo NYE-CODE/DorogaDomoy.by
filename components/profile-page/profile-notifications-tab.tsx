@@ -1,4 +1,5 @@
-import { Bell, BellOff, Check, Copy, ExternalLink, Link2, Save, Send, X } from 'lucide-react';
+import { Bell, BellOff, Check, Copy, ExternalLink, Link2, MapPin, Save, Send, X } from 'lucide-react';
+import { LocationPicker } from '../location-picker';
 import type { NotificationSettingsData } from '../../api/client';
 import type { useAuth } from '../../context/AuthContext';
 
@@ -22,6 +23,12 @@ export interface ProfileNotificationsTabProps {
   notifSaving: boolean;
   localRadius: number;
   setLocalRadius: (v: number) => void;
+  localWatchEnabled: boolean;
+  setLocalWatchEnabled: (v: boolean) => void;
+  localWatchRadius: number;
+  setLocalWatchRadius: (v: number) => void;
+  localWatchLocation: { lat: number; lng: number };
+  setLocalWatchLocation: (v: { lat: number; lng: number }) => void;
   formatTime: (sec: number) => string;
   onRequestLink: (e?: React.MouseEvent) => void;
   onUnlink: () => void;
@@ -46,6 +53,12 @@ export function ProfileNotificationsTab({
   notifSaving,
   localRadius,
   setLocalRadius,
+  localWatchEnabled,
+  setLocalWatchEnabled,
+  localWatchRadius,
+  setLocalWatchRadius,
+  localWatchLocation,
+  setLocalWatchLocation,
   formatTime,
   onRequestLink,
   onUnlink,
@@ -181,6 +194,70 @@ export function ProfileNotificationsTab({
                 <span>10 {t.notifications.km}</span>
               </div>
               <p className="text-sm text-muted-foreground mt-3">{t.notifications.radiusHint}</p>
+            </div>
+
+            <div className="mt-8 border-t border-gray-200 dark:border-gray-600 pt-6">
+              <div className="mb-4 flex items-start gap-3">
+                <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-[#FF9800]" aria-hidden />
+                <div>
+                  <h4 className="font-medium text-black dark:text-white">{t.notifications.watchZoneTitle}</h4>
+                  <p className="mt-1 text-sm text-muted-foreground">{t.notifications.watchZoneHint}</p>
+                </div>
+              </div>
+              <label
+                className={`mb-4 flex items-center justify-between rounded-lg border border-gray-200 p-4 dark:border-gray-600 ${
+                  notifSettings?.notifications_enabled
+                    ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800'
+                    : 'cursor-not-allowed opacity-60'
+                }`}
+              >
+                <span className="font-medium text-black dark:text-white">{t.notifications.watchZoneTitle}</span>
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    checked={localWatchEnabled}
+                    onChange={() => setLocalWatchEnabled(!localWatchEnabled)}
+                    disabled={notifSaving || !notifSettings?.notifications_enabled}
+                    className="sr-only peer"
+                  />
+                  <div className={`h-6 w-11 rounded-full transition-colors duration-200 ${localWatchEnabled && notifSettings?.notifications_enabled ? 'bg-[#FF9800]' : 'bg-gray-300 dark:bg-gray-600'}`}>
+                    <div className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 ${localWatchEnabled && notifSettings?.notifications_enabled ? 'translate-x-5' : 'translate-x-0'}`} />
+                  </div>
+                </div>
+              </label>
+              {localWatchEnabled && notifSettings?.notifications_enabled && (
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">{t.notifications.watchZoneMapHint}</p>
+                  <LocationPicker
+                    initialLocation={localWatchLocation}
+                    onLocationSelect={setLocalWatchLocation}
+                    mapHeight="h-56"
+                  />
+                  <div>
+                    <div className="mb-3 flex items-center justify-between">
+                      <label className="font-medium text-black dark:text-white">{t.notifications.watchZoneRadius}</label>
+                      <span className="font-bold text-[#FF9800]">{localWatchRadius} {t.notifications.km}</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={1}
+                      max={20}
+                      step={0.5}
+                      value={localWatchRadius}
+                      onChange={(e) => {
+                        const v = parseFloat(e.target.value);
+                        setLocalWatchRadius(Number.isFinite(v) ? v : 5);
+                      }}
+                      className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200 accent-[#FF9800] dark:bg-gray-600"
+                    />
+                    <div className="mt-2 flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                      <span>1 {t.notifications.km}</span>
+                      <span>10 {t.notifications.km}</span>
+                      <span>20 {t.notifications.km}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
             <button type="button" onClick={() => void onSaveNotifSettings()} disabled={notifSaving} className="w-full mt-6 flex items-center justify-center gap-2 h-12 bg-[#FF9800] text-white rounded-lg hover:bg-[#F57C00] transition-colors font-medium text-lg disabled:opacity-70">
               {notifSaving ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <><Save className="w-5 h-5" /> {t.notifications.saveSettings}</>}

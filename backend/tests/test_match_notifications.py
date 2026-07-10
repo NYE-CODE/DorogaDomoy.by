@@ -120,6 +120,32 @@ def test_skips_when_similar_matches_disabled():
                 mock_send.assert_not_called()
 
 
+def test_skips_when_outside_watch_zone():
+    pet = _make_pet(location_lat=54.5, location_lng=28.0)
+    owner_pet = _make_pet(id="pet-old", author_id="owner-1", status="searching")
+    owner = SimpleNamespace(id="owner-1", telegram_id=12345, is_blocked=False)
+    settings = SimpleNamespace(
+        notifications_enabled=True,
+        notify_similar_matches=True,
+        notify_animal_types=["dog", "cat", "other"],
+        watch_zone_enabled=True,
+        home_lat=53.9,
+        home_lng=27.5,
+        watch_radius_km=3.0,
+    )
+    db = MagicMock()
+    db.scalar.side_effect = [None, owner, settings]
+
+    with patch("match_notifications.find_similar_pets") as mock_find:
+        mock_find.return_value = [
+            {"pet": owner_pet, "match_percent": 80, "distance_km": 1.0, "reasons": ["nearby"]},
+        ]
+        with patch("match_notifications.BOT_TOKEN", "test-token"):
+            with patch("match_notifications._send_telegram_message_sync") as mock_send:
+                _send_similar_match_notifications(pet, db)
+                mock_send.assert_not_called()
+
+
 def test_sync_entry_loads_pet_and_runs():
     pet = _make_pet()
     db = MagicMock()

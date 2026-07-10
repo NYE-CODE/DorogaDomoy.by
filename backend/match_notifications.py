@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from database import SessionLocal
 from models import Notification, NotificationSettings, Pet, User
 from pet_similarity import DEFAULT_RADIUS_KM, find_similar_pets
+from watch_zone import passes_watch_zone
 from telegram_bot import (
     ANIMAL_TYPE_LABELS,
     BOT_TOKEN,
@@ -121,6 +122,8 @@ def _send_similar_match_notifications(pet: Pet, db: Session) -> None:
         if ns and getattr(ns, "notify_similar_matches", True) is False:
             continue
         if ns and ns.notify_animal_types and pet.animal_type not in ns.notify_animal_types:
+            continue
+        if not passes_watch_zone(ns, pet):
             continue
 
         own_status_label = STATUS_LABELS.get(candidate.status, candidate.status)

@@ -13,6 +13,8 @@ import { toast } from 'sonner';
 import { formatProfileCountdown, sanitizeTelegramBotUrl, saveUserLocation } from './profile-page-helpers';
 import type { ProfileRoleDraft, ProfileTab, ProfileTranslations } from './profile-page-types';
 
+const DEFAULT_WATCH_LOCATION = { lat: 53.9045, lng: 27.5615 };
+
 export function useProfilePage() {
   const [searchParams] = useSearchParams();
   const { user, updateContacts, updateProfile, changePassword, setPassword, uploadAvatar, refreshUser } = useAuth();
@@ -53,6 +55,9 @@ export function useProfilePage() {
   const [notifLoading, setNotifLoading] = useState(false);
   const [notifSaving, setNotifSaving] = useState(false);
   const [localRadius, setLocalRadius] = useState(1);
+  const [localWatchEnabled, setLocalWatchEnabled] = useState(false);
+  const [localWatchRadius, setLocalWatchRadius] = useState(5);
+  const [localWatchLocation, setLocalWatchLocation] = useState(DEFAULT_WATCH_LOCATION);
 
   const { selectedCity, saveCity, clearCity } = useCity();
   const [showCityModal, setShowCityModal] = useState(false);
@@ -110,6 +115,24 @@ export function useProfilePage() {
           setLocalRadius(
             Number.isFinite(r) ? Math.min(10, Math.max(1, r)) : 5,
           );
+          setLocalWatchEnabled(!!s.watch_zone_enabled);
+          const wr = Number(s.watch_radius_km);
+          setLocalWatchRadius(Number.isFinite(wr) ? Math.min(20, Math.max(1, wr)) : 5);
+          if (s.home_lat != null && s.home_lng != null) {
+            setLocalWatchLocation({ lat: s.home_lat, lng: s.home_lng });
+          } else {
+            try {
+              const raw = localStorage.getItem('pet_finder_user_location');
+              if (raw) {
+                const data = JSON.parse(raw) as { lat?: number; lng?: number };
+                if (typeof data.lat === 'number' && typeof data.lng === 'number') {
+                  setLocalWatchLocation({ lat: data.lat, lng: data.lng });
+                }
+              }
+            } catch {
+              /* ignore */
+            }
+          }
         })
         .catch((err: unknown) => {
           console.warn('[ProfilePage] notification settings load failed', err);
@@ -389,7 +412,16 @@ export function useProfilePage() {
       const radius = Number.isFinite(localRadius)
         ? Math.min(10, Math.max(1, localRadius))
         : 5;
-      const updated = await notificationsApi.updateSettings({ notification_radius_km: radius });
+      const watchRadius = Number.isFinite(localWatchRadius)
+        ? Math.min(20, Math.max(1, localWatchRadius))
+        : 5;
+      const updated = await notificationsApi.updateSettings({
+        notification_radius_km: radius,
+        watch_zone_enabled: localWatchEnabled,
+        watch_radius_km: watchRadius,
+        home_lat: localWatchEnabled ? localWatchLocation.lat : undefined,
+        home_lng: localWatchEnabled ? localWatchLocation.lng : undefined,
+      });
       setNotifSettings(updated);
       toast.success(t.notifications.settingsSaved);
     } catch (e: unknown) {
@@ -451,6 +483,12 @@ export function useProfilePage() {
     notifSaving,
     localRadius,
     setLocalRadius,
+    localWatchEnabled,
+    setLocalWatchEnabled,
+    localWatchRadius,
+    setLocalWatchRadius,
+    localWatchLocation,
+    setLocalWatchLocation,
     hasAnyContact,
     handleSaveProfile,
     handleSavePassword,
