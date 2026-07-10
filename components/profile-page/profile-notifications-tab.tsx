@@ -231,7 +231,9 @@ export function ProfileNotificationsTab({
                   <LocationPicker
                     initialLocation={localWatchLocation}
                     onLocationSelect={setLocalWatchLocation}
-                    mapHeight="h-56"
+                    mapHeight="h-64"
+                    radiusKm={localWatchRadius}
+                    radiusBadge={`${localWatchRadius} ${t.notifications.km}`}
                   />
                   <div>
                     <div className="mb-3 flex items-center justify-between">
@@ -248,7 +250,10 @@ export function ProfileNotificationsTab({
                         const v = parseFloat(e.target.value);
                         setLocalWatchRadius(Number.isFinite(v) ? v : 5);
                       }}
-                      className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200 accent-[#FF9800] dark:bg-gray-600"
+                      className="h-2 w-full cursor-pointer appearance-none rounded-lg accent-[#FF9800] dark:bg-gray-600"
+                      style={{
+                        background: `linear-gradient(to right, rgb(255, 152, 0) 0%, rgb(255, 152, 0) ${((Number.isFinite(localWatchRadius) ? localWatchRadius : 5) - 1) / 19 * 100}%, rgb(229, 231, 235) ${((Number.isFinite(localWatchRadius) ? localWatchRadius : 5) - 1) / 19 * 100}%, rgb(229, 231, 235) 100%)`,
+                      }}
                     />
                     <div className="mt-2 flex justify-between text-xs text-gray-500 dark:text-gray-400">
                       <span>1 {t.notifications.km}</span>

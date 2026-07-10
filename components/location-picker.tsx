@@ -19,6 +19,10 @@ interface LocationPickerProps {
   ) => void;
   /** Высота карты (по умолчанию h-48) */
   mapHeight?: string;
+  /** Радиус зоны на карте в км (круг вокруг маркера). */
+  radiusKm?: number;
+  /** Подпись радиуса поверх карты. */
+  radiusBadge?: string;
 }
 
 export function LocationPicker({
@@ -28,12 +32,17 @@ export function LocationPicker({
   onLocationWithAddress,
   onLocationPlaceSync,
   mapHeight = 'h-48',
+  radiusKm,
+  radiusBadge,
 }: LocationPickerProps) {
   const { t } = useI18n();
   const lp = t.locationPicker;
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
+  const circleRef = useRef<L.Circle | null>(null);
+  const prevRadiusKmRef = useRef<number | undefined>(undefined);
+  const prevCenterRef = useRef<{ lat: number; lng: number } | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [locating, setLocating] = useState(false);
   const onLocationSelectRef = useRef(onLocationSelect);
@@ -104,6 +113,10 @@ export function LocationPicker({
     });
 
     return () => {
+      if (circleRef.current && mapInstanceRef.current) {
+        mapInstanceRef.current.removeLayer(circleRef.current);
+      }
+      circleRef.current = null;
       map.remove();
       mapInstanceRef.current = null;
       markerRef.current = null;
@@ -112,11 +125,66 @@ export function LocationPicker({
 
   useEffect(() => {
     if (!mapInstanceRef.current || !isReady) return;
-    mapInstanceRef.current.flyTo([initialLocation.lat, initialLocation.lng], 14, { duration: 0.3 });
+
+    const map = mapInstanceRef.current;
+    const { lat, lng } = initialLocation;
+
     if (markerRef.current) {
-      markerRef.current.setLatLng([initialLocation.lat, initialLocation.lng]);
+      markerRef.current.setLatLng([lat, lng]);
     }
-  }, [initialLocation.lat, initialLocation.lng, isReady]);
+
+    if (radiusKm == null || radiusKm <= 0) {
+      if (circleRef.current) {
+        map.removeLayer(circleRef.current);
+        circleRef.current = null;
+      }
+      prevRadiusKmRef.current = radiusKm;
+      map.flyTo([lat, lng], 14, { duration: 0.3 });
+      return;
+    }
+
+    const radiusM = radiusKm * 1000;
+    const baseStyle: L.PathOptions = {
+      color: tokens.colors.primary,
+      fillColor: tokens.colors.primary,
+      fillOpacity: 0.16,
+      weight: 2.5,
+      opacity: 0.9,
+    };
+
+    if (!circleRef.current) {
+      circleRef.current = L.circle([lat, lng], { radius: radiusM, ...baseStyle }).addTo(map);
+    } else {
+      circleRef.current.setLatLng([lat, lng]);
+      circleRef.current.setRadius(radiusM);
+      circleRef.current.setStyle(baseStyle);
+    }
+
+    circleRef.current.bringToBack();
+    markerRef.current?.bringToFront();
+
+    const radiusChanged = prevRadiusKmRef.current !== radiusKm;
+    const prevCenter = prevCenterRef.current;
+    const centerMoved =
+      prevCenter != null &&
+      (Math.abs(prevCenter.lat - lat) > 0.00001 || Math.abs(prevCenter.lng - lng) > 0.00001);
+    prevRadiusKmRef.current = radiusKm;
+    prevCenterRef.current = { lat, lng };
+
+    if (radiusChanged) {
+      circleRef.current.setStyle({ fillOpacity: 0.32, weight: 3.5 });
+      window.setTimeout(() => {
+        circleRef.current?.setStyle(baseStyle);
+      }, 500);
+      map.flyToBounds(circleRef.current.getBounds(), {
+        padding: [32, 32],
+        maxZoom: 15,
+        duration: 0.45,
+      });
+    } else if (centerMoved) {
+      map.panTo([lat, lng], { animate: true, duration: 0.3 });
+    }
+  }, [initialLocation.lat, initialLocation.lng, radiusKm, isReady]);
 
   const handleMyLocation = () => {
     if (!navigator.geolocation) {
@@ -146,7 +214,17 @@ export function LocationPicker({
       }
       setLocating(false);
       if (mapInstanceRef.current) {
-        mapInstanceRef.current.flyTo([lat, lng], 18, { duration: 0.5 });
+        if (circleRef.current && radiusKm != null && radiusKm > 0) {
+          circleRef.current.setLatLng([lat, lng]);
+          markerRef.current?.setLatLng([lat, lng]);
+          mapInstanceRef.current.flyToBounds(circleRef.current.getBounds(), {
+            padding: [32, 32],
+            maxZoom: 15,
+            duration: 0.5,
+          });
+        } else {
+          mapInstanceRef.current.flyTo([lat, lng], 18, { duration: 0.5 });
+        }
       }
       if (accuracy > 100) {
         toast.info(lp.approximatePosition, { duration: 5000 });
@@ -209,7 +287,17 @@ export function LocationPicker({
           {locating ? lp.locating : lp.myLocation}
         </button>
       </div>
-      <div ref={mapContainerRef} className={`${mapHeight} w-full rounded-lg border border-border overflow-hidden z-0`} />
+      <div className="relative">
+        <div ref={mapContainerRef} className={`${mapHeight} w-full rounded-lg border border-border overflow-hidden z-0`} />
+        {radiusKm != null && radiusKm > 0 && radiusBadge ? (
+          <div
+            className="pointer-events-none absolute bottom-2 left-2 z-[400] rounded-md border border-primary/35 bg-background/95 px-2.5 py-1 text-xs font-semibold text-primary shadow-sm backdrop-blur-sm"
+            aria-live="polite"
+          >
+            {radiusBadge}
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }
