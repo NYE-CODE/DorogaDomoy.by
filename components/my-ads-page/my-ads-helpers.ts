@@ -52,17 +52,19 @@ export function getMyAdExpiryLabel(
   }
   const days = daysUntilListingExpires(pet.expiresAt);
   if (days === null) return null;
-  if (days <= 0) return labels.expiresToday;
-  if (days === 1) return labels.expiresTomorrow;
-  if (days <= 3) return labels.expiresInDays.replace('{n}', String(days));
+  if (days <= 0) return labels.expiresToday ?? null;
+  if (days === 1) return labels.expiresTomorrow ?? null;
+  if (days <= 3) return labels.expiresInDays?.replace('{n}', String(days)) ?? null;
   if (pet.expiresAt) {
-    return labels.expiresOn.replace(
-      '{date}',
-      pet.expiresAt.toLocaleDateString(dateLocale, {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-      }),
+    return (
+      labels.expiresOn?.replace(
+        '{date}',
+        pet.expiresAt.toLocaleDateString(dateLocale, {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        }),
+      ) ?? null
     );
   }
   return null;

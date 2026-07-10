@@ -177,15 +177,20 @@ export default function CreateAdPage() {
 
   const handleSubmit = async (formData: PetFormData) => {
     if (!user) return;
-    const hasContacts = user.contacts?.phone || user.contacts?.telegram || user.contacts?.viber;
-    if (!hasContacts) {
-      setShowContactRequired(true);
-      toast.error(t.profile.atLeastOneContact);
-      return;
-    }
+
     const contacts = formData.useProfileContacts
       ? { ...user.contacts }
       : { phone: formData.contactPhone || '' };
+
+    const hasContacts = Boolean(
+      contacts.phone?.trim() || contacts.telegram?.trim() || contacts.viber?.trim(),
+    );
+    if (!hasContacts) {
+      setShowContactRequired(true);
+      toast.error(t.profile.atLeastOneContact);
+      throw new Error(t.profile.atLeastOneContact);
+    }
+
     const authorName = !formData.useProfileContacts && formData.contactName ? formData.contactName : undefined;
     try {
       const newPet = await petsApi.create({
@@ -221,11 +226,10 @@ export default function CreateAdPage() {
         toast.success(t.app.adSentModeration, { description: t.common.toasts.moderationPendingDesc });
       }
       const mod = newPet.moderationStatus === 'approved' ? 'approved' : 'pending';
-      requestAnimationFrame(() => {
-        navigate(`/create/success/${newPet.id}?moderation=${mod}`, { replace: true });
-      });
+      navigate(`/create/success/${newPet.id}?moderation=${mod}`, { replace: true });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t.common.error);
+      throw err;
     }
   };
 
@@ -504,6 +508,7 @@ export default function CreateAdPage() {
                     key={`${selectedProfilePetId ?? 'create'}-${scenario}`}
                     variant="page"
                     renderStepHeaderExternally
+                    closeOnSubmit={false}
                     onStepChange={setStepInfo}
                     onClose={handleCloseForm}
                     onSubmit={handleSubmit}

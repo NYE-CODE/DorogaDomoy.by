@@ -216,6 +216,7 @@ export default function SearchPage() {
           view={view}
           isMobile={isMobile}
           layoutMode={layoutMode}
+          selectedCity={selectedCity}
           listDisplayPets={listDisplayPets}
           mapDisplayPets={mapDisplayPets}
           mapCenter={city.mapCenter}

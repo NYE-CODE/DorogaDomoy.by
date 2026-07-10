@@ -45,6 +45,7 @@ export function PetFormShell({
   renderStepHeaderExternally = false,
   onStepChange,
   prefillPartial = null,
+  closeOnSubmit = true,
 }: PetFormProps) {
   const { user } = useAuth();
   const { selectedCity } = useCity();
@@ -75,6 +76,7 @@ export function PetFormShell({
 
   const [step, setStep] = useState(1);
   const [tried, setTried] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [maxPhotos, setMaxPhotos] = useState(10);
   const [draftPhotoCount, setDraftPhotoCount] = useState(0);
   const [draftRestored, setDraftRestored] = useState(false);
@@ -323,12 +325,15 @@ export function PetFormShell({
       };
       dataToSubmit.contactName = formData.contactName?.trim();
     }
+    setSubmitting(true);
     try {
       await Promise.resolve(onSubmit(dataToSubmit));
       if (!isEditing && user?.id) clearPetFormDraft(user.id);
-      onClose();
+      if (closeOnSubmit) onClose();
     } catch {
-      // (see i18n)
+      // ошибку показывает родитель (onSubmit)
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -451,6 +456,7 @@ export function PetFormShell({
           formData={formData}
           t={t}
           canProceed={canProceed()}
+          submitting={submitting}
           onBack={() => setStep(step - 1)}
           onNext={() => { setTried(false); setStep(step + 1); }}
           onTryProceed={() => setTried(true)}

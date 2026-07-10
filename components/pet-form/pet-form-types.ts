@@ -11,7 +11,7 @@ export interface PetFormStepInfo {
 
 export interface PetFormProps {
   onClose: () => void;
-  onSubmit: (data: PetFormData) => void;
+  onSubmit: (data: PetFormData) => void | Promise<void>;
   initialData?: Pet;
   isEditing?: boolean;
   initialStatus?: PetStatus;
@@ -19,6 +19,8 @@ export interface PetFormProps {
   renderStepHeaderExternally?: boolean;
   onStepChange?: (info: PetFormStepInfo) => void;
   prefillPartial?: Partial<PetFormData> | null;
+  /** После успешного onSubmit вызвать onClose (по умолчанию true). Для /create — false, редирект в onSubmit. */
+  closeOnSubmit?: boolean;
 }
 
 export interface PetFormData {
