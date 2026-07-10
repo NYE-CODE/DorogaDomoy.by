@@ -12,6 +12,7 @@ const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 const AdminPage = lazy(() => import('@/pages/AdminPage'));
 const MyAdsPageRoute = lazy(() => import('@/pages/MyAdsPage'));
 const CreateAdPage = lazy(() => import('@/pages/CreateAdPage'));
+const CreateAdSuccessPage = lazy(() => import('@/pages/CreateAdSuccessPage'));
 const ReunionMatchPage = lazy(() => import('@/pages/ReunionMatchPage'));
 const EditAdPage = lazy(() => import('@/pages/EditAdPage'));
 const SettingsPageRoute = lazy(() => import('@/pages/SettingsPage'));

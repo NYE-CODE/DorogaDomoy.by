@@ -1,4 +1,4 @@
-import type { Pet } from '../types/pet';
+import type { Pet } from '@/entities/pet/model/types';
 import { daysUntilListingExpires, LISTING_EXPIRED_ARCHIVE_REASON } from '@/shared/lib/listing-expiry';
 
 export function myAdsDateLocale(locale: string): string {

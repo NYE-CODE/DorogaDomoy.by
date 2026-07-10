@@ -1,4 +1,4 @@
-import type { ModerationStatus } from '../types/pet';
+import type { ModerationStatus } from '@/entities/pet/model/types';
 import { cn } from '../ui/utils';
 import { MY_ADS_STATUS_TABS } from './my-ads-types';
 

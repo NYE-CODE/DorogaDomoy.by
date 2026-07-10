@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
-import type { TelegramAuthPayload } from '../api/client';
+import type { TelegramAuthPayload } from '@/shared/api/client';
 
 declare global {
   interface Window {

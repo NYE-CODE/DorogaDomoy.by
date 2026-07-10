@@ -1,6 +1,5 @@
-import type { Pet } from '../types/pet';
+import type { ModerationStatus, Pet } from '@/entities/pet/model/types';
 import { CheckCircle, Clock, XCircle } from 'lucide-react';
-import type { ModerationStatus } from '../types/pet';
 
 export const MY_ADS_STATUS_TABS: {
   value: ModerationStatus;
