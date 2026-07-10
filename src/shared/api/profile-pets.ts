@@ -1,4 +1,5 @@
 import { api, uploadMultipart } from '@/shared/api/http';
+import { resolvePhotoUrl } from '@/shared/api/api-utils';
 
 export interface ProfilePetResponse {
   id: string;
