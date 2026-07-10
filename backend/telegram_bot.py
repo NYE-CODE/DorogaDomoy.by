@@ -35,6 +35,34 @@ STATUS_LABELS = {"searching": "Потерян", "found": "Найден"}
 OPPOSITE_STATUS = {"searching": "found", "found": "searching"}
 
 
+def linked_user_menu_keyboard() -> dict:
+    """Кнопки быстрого доступа к разделам сайта для привязанного аккаунта."""
+    return {
+        "inline_keyboard": [
+            [
+                {"text": "📋 Мои объявления", "url": f"{SITE_URL}/my-ads"},
+            ],
+            [
+                {"text": "⭐ Избранное", "url": f"{SITE_URL}/favorites"},
+                {"text": "🐾 Мои питомцы", "url": f"{SITE_URL}/my-pets"},
+            ],
+        ]
+    }
+
+
+def _get_user_by_telegram_id(db: Session, telegram_id: int) -> Optional[User]:
+    return db.scalar(
+        select(User).where(
+            User.telegram_id == telegram_id,
+            User.is_blocked.is_(False),
+        )
+    )
+
+
+def _is_linked_telegram_user(db: Session, telegram_id: int) -> bool:
+    return _get_user_by_telegram_id(db, telegram_id) is not None
+
+
 def _send_telegram_message_sync(
     chat_id: int,
     text: str,
@@ -138,7 +166,8 @@ def handle_link_command(telegram_id: int, telegram_username: Optional[str], code
         return (
             "✅ Аккаунт успешно привязан!\n\n"
             "Теперь вы можете получать уведомления о новых объявлениях рядом с вами.\n\n"
-            f"Настроить уведомления: {SITE_URL}"
+            "Ниже — быстрые ссылки на ваши объявления, избранное и питомцев.\n"
+            f"Настроить уведомления: {SITE_URL}/profile"
         )
     except Exception as e:
         db.rollback()
@@ -160,14 +189,47 @@ def send_password_reset_sync(telegram_id: int, reset_url: str) -> bool:
     return _send_telegram_message_sync(telegram_id, text, reply_markup=keyboard)
 
 
-def handle_start_command() -> str:
-    return (
-        "Привет! Я бот платформы ДорогаДомой.by 🐾\n\n"
-        "Я помогу вам получать уведомления о потерянных и найденных питомцах рядом с вами.\n\n"
-        "Чтобы привязать аккаунт, отправьте мне код с сайта командой:\n"
-        "/link ВАШ_КОД\n\n"
-        f"Сайт: {SITE_URL}"
-    )
+def handle_start_command(telegram_id: int) -> tuple[str, Optional[dict]]:
+    db: Session = SessionLocal()
+    try:
+        user = _get_user_by_telegram_id(db, telegram_id)
+        if user:
+            name = (user.name or "").strip() or "друг"
+            text = (
+                f"Привет, {html.escape(name)}! 🐾\n\n"
+                "Ваш аккаунт на ДорогаДомой.by привязан к этому Telegram.\n\n"
+                "Используйте кнопки ниже, чтобы открыть объявления, избранное или питомцев.\n"
+                "Команда /menu — показать меню снова."
+            )
+            return text, linked_user_menu_keyboard()
+
+        return (
+            "Привет! Я бот платформы ДорогаДомой.by 🐾\n\n"
+            "Я помогу вам получать уведомления о потерянных и найденных питомцах рядом с вами.\n\n"
+            "Чтобы привязать аккаунт, отправьте мне код с сайта командой:\n"
+            "/link ВАШ_КОД\n\n"
+            f"Сайт: {SITE_URL}"
+        ), None
+    finally:
+        db.close()
+
+
+def handle_menu_command(telegram_id: int) -> tuple[str, Optional[dict]]:
+    db: Session = SessionLocal()
+    try:
+        user = _get_user_by_telegram_id(db, telegram_id)
+        if not user:
+            return (
+                "Сначала привяжите аккаунт на сайте командой:\n"
+                "/link ВАШ_КОД\n\n"
+                f"Код можно получить в профиле: {SITE_URL}/profile"
+            ), None
+        return (
+            "📂 <b>Ваш раздел на DorogaDomoy.by</b>\n\n"
+            "Выберите, что открыть:"
+        ), linked_user_menu_keyboard()
+    finally:
+        db.close()
 
 
 def _haversine_km(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
@@ -501,19 +563,40 @@ async def process_telegram_update(update: dict):
     telegram_id = from_user.get("id", chat_id)
     username = from_user.get("username")
 
+    reply_markup: Optional[dict] = None
+
     if text.startswith("/start"):
-        reply = handle_start_command()
+        reply, reply_markup = handle_start_command(telegram_id)
+    elif text.startswith("/menu"):
+        reply, reply_markup = handle_menu_command(telegram_id)
     elif text.startswith("/link"):
         parts = text.split(maxsplit=1)
         if len(parts) < 2 or not parts[1].strip():
             reply = "Укажите код после команды, например: /link A7X3K9"
         else:
             reply = handle_link_command(telegram_id, username, parts[1].strip())
+            if reply.startswith("✅"):
+                reply_markup = linked_user_menu_keyboard()
     else:
-        reply = (
-            "Я понимаю команды:\n"
-            "/start — информация о боте\n"
-            "/link КОД — привязать аккаунт"
-        )
+        db: Session = SessionLocal()
+        try:
+            linked = _is_linked_telegram_user(db, telegram_id)
+        finally:
+            db.close()
+        if linked:
+            reply = (
+                "Используйте /menu для быстрого доступа к объявлениям, избранному и питомцам.\n\n"
+                "Другие команды:\n"
+                "/start — информация о боте\n"
+                "/link КОД — привязать другой аккаунт"
+            )
+            reply_markup = linked_user_menu_keyboard()
+        else:
+            reply = (
+                "Я понимаю команды:\n"
+                "/start — информация о боте\n"
+                "/link КОД — привязать аккаунт\n"
+                "/menu — ваши разделы (после привязки)"
+            )
 
-    await send_telegram_message(chat_id, reply)
+    await send_telegram_message(chat_id, reply, reply_markup=reply_markup)

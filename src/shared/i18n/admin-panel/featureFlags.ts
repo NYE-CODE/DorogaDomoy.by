@@ -19,6 +19,8 @@ export const adminPanelFeatureFlagsLocales = {
     ffRewardEnabledDesc: 'Отключение скрывает и блокирует начисления наград.',
     ffRewardMoneyEnabled: 'Разрешить денежную награду',
     ffRewardMoneyEnabledDesc: 'Если выключено, остаётся только режим очков.',
+    ffPartnerAds: 'Реклама партнёров на сайте',
+    ffPartnerAdsDesc: 'Показывать баннеры спонсоров в слотах (поиск, лендинг и др.). Кампании настраиваются в разделе «Реклама партнёров».',
     siteEmpty: 'Дополнительные флаги основного приложения можно добавить сюда позже.',
   },
   be: {
@@ -40,6 +42,8 @@ export const adminPanelFeatureFlagsLocales = {
     ffRewardEnabledDesc: 'Адключэнне хавае і блакуе налічэнне узнагарод.',
     ffRewardMoneyEnabled: 'Дазволіць грашовую ўзнагароду',
     ffRewardMoneyEnabledDesc: 'Калі выключана, застаецца толькі рэжым балаў.',
+    ffPartnerAds: 'Рэклама партнёраў на сайце',
+    ffPartnerAdsDesc: 'Паказваць банеры спонсараў у слотах. Кампаніі — у раздзеле «Рэклама партнёраў».',
     siteEmpty: 'Дадатковыя флагі асноўнага дадатку можна будзе дадаць сюды пазней.',
   },
   en: {
@@ -61,6 +65,8 @@ export const adminPanelFeatureFlagsLocales = {
     ffRewardEnabledDesc: 'When off, rewards are hidden and granting is blocked.',
     ffRewardMoneyEnabled: 'Allow money rewards',
     ffRewardMoneyEnabledDesc: 'When off, only points mode is available.',
+    ffPartnerAds: 'Partner ads on site',
+    ffPartnerAdsDesc: 'Show sponsor banners in ad slots. Manage campaigns under “Partner ads”.',
     siteEmpty: 'More flags for the main app can be added here later.',
   },
 } as const;

@@ -16,6 +16,7 @@ import { adminPanelCategoriesLocales } from './admin-panel/categories';
 import { adminPanelTelegramLocales } from './admin-panel/telegram';
 import { adminPanelMediaLocales } from './admin-panel/media';
 import { adminPanelPartnersLocales } from './admin-panel/partners';
+import { adminPanelPartnerAdsLocales } from './admin-panel/partnerAds';
 import { adminPanelFaqLocales } from './admin-panel/faq';
 import { adminPanelHelpSectionLocales } from './admin-panel/helpSection';
 import { adminPanelGuidesSectionLocales } from './admin-panel/guidesSection';
@@ -43,6 +44,7 @@ export const adminPanelLocales = {
     telegram: adminPanelTelegramLocales.ru,
     media: adminPanelMediaLocales.ru,
     partners: adminPanelPartnersLocales.ru,
+    partnerAds: adminPanelPartnerAdsLocales.ru,
     faq: adminPanelFaqLocales.ru,
     helpSection: adminPanelHelpSectionLocales.ru,
     guidesSection: adminPanelGuidesSectionLocales.ru,
@@ -69,6 +71,7 @@ export const adminPanelLocales = {
     telegram: adminPanelTelegramLocales.be,
     media: adminPanelMediaLocales.be,
     partners: adminPanelPartnersLocales.be,
+    partnerAds: adminPanelPartnerAdsLocales.be,
     faq: adminPanelFaqLocales.be,
     helpSection: adminPanelHelpSectionLocales.be,
     guidesSection: adminPanelGuidesSectionLocales.be,
@@ -95,6 +98,7 @@ export const adminPanelLocales = {
     telegram: adminPanelTelegramLocales.en,
     media: adminPanelMediaLocales.en,
     partners: adminPanelPartnersLocales.en,
+    partnerAds: adminPanelPartnerAdsLocales.en,
     faq: adminPanelFaqLocales.en,
     helpSection: adminPanelHelpSectionLocales.en,
     guidesSection: adminPanelGuidesSectionLocales.en,

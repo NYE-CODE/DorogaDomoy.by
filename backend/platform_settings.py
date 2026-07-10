@@ -8,6 +8,8 @@ from ttl_cache import settings_cache_get, settings_cache_set
 PLATFORM_SETTINGS_DEFAULTS = {
     "require_moderation": "true",
     "auto_archive_days": "90",
+    # За сколько дней до истечения слать напоминания в Telegram (через запятую, напр. "7,3,1")
+    "listing_reminder_days": "3,1",
     "max_photos": "10",
     "reward_default_points": "50",
     # Блог: куда слать анонсы (можно задать в админке; .env — запасной вариант)
@@ -31,6 +33,8 @@ FEATURE_FLAG_DEFAULTS = {
     # Награды за помощь в поиске
     "ff_reward_enabled": "true",
     "ff_reward_money_enabled": "true",
+    # Рекламные баннеры партнёров на сайте
+    "ff_partner_ads_enabled": "false",
 }
 
 ALL_PLATFORM_SETTINGS_DEFAULTS = {

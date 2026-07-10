@@ -22,5 +22,5 @@ def listing_lifecycle_cron(
     _: None = Depends(_verify_cron_secret),
     db: Session = Depends(get_db),
 ):
-    """Напоминания за 3 и 1 день до истечения + автоархивация объявлений."""
+    """Напоминания за N дней до истечения (из настроек) + автоархивация объявлений."""
     return run_listing_lifecycle(db)

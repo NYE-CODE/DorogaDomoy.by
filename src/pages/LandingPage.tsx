@@ -1,6 +1,5 @@
 import LandingApp from '../../landing/app/App';
 import { useTheme } from '@/app/providers/ThemeContext';
-import { FeatureFlagsProvider } from '@/app/providers/FeatureFlagsContext';
 import '../../landing/styles/theme-scoped.css';
 
 /**
@@ -13,9 +12,7 @@ export default function LandingPage() {
 
   return (
     <div className={`landing-theme min-h-screen ${theme === 'dark' ? 'dark' : ''}`}>
-      <FeatureFlagsProvider>
-        <LandingApp />
-      </FeatureFlagsProvider>
+      <LandingApp />
     </div>
   );
 }

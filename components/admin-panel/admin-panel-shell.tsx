@@ -12,6 +12,7 @@ export function AdminPanel(props: AdminPanelProps) {
     reports,
     mediaArticles,
     partners,
+    partnerAds,
     profilePets,
     blogPosts,
     faqItems,
@@ -27,6 +28,9 @@ export function AdminPanel(props: AdminPanelProps) {
     onPartnerCreate,
     onPartnerUpdate,
     onPartnerDelete,
+    onPartnerAdCreate,
+    onPartnerAdUpdate,
+    onPartnerAdDelete,
     onDeleteProfilePet,
     onBlogCreate,
     onBlogUpdate,
@@ -67,6 +71,7 @@ export function AdminPanel(props: AdminPanelProps) {
         reports={reports}
         mediaArticles={mediaArticles}
         partners={partners}
+        partnerAds={partnerAds}
         profilePets={profilePets}
         blogPosts={blogPosts}
         faqItems={faqItems}
@@ -84,6 +89,9 @@ export function AdminPanel(props: AdminPanelProps) {
         onPartnerCreate={onPartnerCreate}
         onPartnerUpdate={onPartnerUpdate}
         onPartnerDelete={onPartnerDelete}
+        onPartnerAdCreate={onPartnerAdCreate}
+        onPartnerAdUpdate={onPartnerAdUpdate}
+        onPartnerAdDelete={onPartnerAdDelete}
         onDeleteProfilePet={onDeleteProfilePet}
         onBlogCreate={onBlogCreate}
         onBlogUpdate={onBlogUpdate}

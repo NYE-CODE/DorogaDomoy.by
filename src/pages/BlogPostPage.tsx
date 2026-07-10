@@ -6,6 +6,7 @@ import { useI18n } from '@/app/providers/I18nContext';
 import { blogApi, API_BASE, type BlogPostPublic, type BlogPostListItem } from '@/shared/api/client';
 import { BlogBody } from '../../components/blog-body';
 import { BlogRelatedSlider } from '../../components/blog-related-slider';
+import { PartnerAdSlot } from '@/features/partner-ads/PartnerAdSlot';
 import { Calendar, MessageCircle } from 'lucide-react';
 import { BackQuickMenu } from '../../components/navigation/BackQuickMenu';
 import {
@@ -172,6 +173,8 @@ export default function BlogPostPage() {
               <p className="mt-4 text-lg text-muted-foreground leading-relaxed">{post.excerpt}</p>
             ) : null}
           </header>
+
+          <PartnerAdSlot placement="blog-article" className="mb-8" />
 
           <BlogBody markdown={post.body_md} />
         </article>

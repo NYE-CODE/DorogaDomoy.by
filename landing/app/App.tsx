@@ -12,6 +12,7 @@ import { Help } from "./components/help";
 import { Footer } from "./components/footer";
 import { ScrollToTop } from "./components/scroll-to-top";
 import { useFeatureFlags } from "../../context/FeatureFlagsContext";
+import { PartnerAdSlot } from "@/features/partner-ads/PartnerAdSlot";
 
 /** Условные секции должны совпадать с `landing-nav-config.ts` (навигация в футере). */
 export default function App() {
@@ -30,6 +31,9 @@ export default function App() {
       <HowItWorks />
       {ff_landing_show_pets_feature && <PetsFeature />}
       <Announcements />
+      <div className="page-container px-4 py-2 sm:px-6">
+        <PartnerAdSlot placement="landing-strip" />
+      </div>
       <ShelterPets />
       <Media />
       <Partners />

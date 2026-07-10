@@ -21,4 +21,6 @@ export interface MyAdsPageProps {
   onRenewPet?: (pet: Pet) => void;
   /** Зависит от ff_instagram_boost_stories в профиле */
   instagramBoostEnabled?: boolean;
+  /** Макс. день из listing_reminder_days — когда показывать кнопку «Продлить» */
+  renewPromptWithinDays?: number;
 }

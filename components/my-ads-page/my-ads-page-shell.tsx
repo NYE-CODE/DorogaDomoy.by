@@ -18,6 +18,7 @@ export function MyAdsPage({
   onBoostPet,
   onRenewPet,
   instagramBoostEnabled = true,
+  renewPromptWithinDays = 3,
 }: MyAdsPageProps) {
   const state = useMyAdsPage({
     pets,
@@ -54,6 +55,7 @@ export function MyAdsPage({
               <MyAdsListPanel
                 state={state}
                 instagramBoostEnabled={instagramBoostEnabled}
+                renewPromptWithinDays={renewPromptWithinDays}
                 onCreateClick={onCreateClick}
               />
 

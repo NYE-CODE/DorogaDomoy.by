@@ -45,6 +45,7 @@ export interface MyAdsCardProps {
   openMenuId: string | null;
   hoveredTooltipId: string | null;
   instagramBoostEnabled: boolean;
+  renewPromptWithinDays?: number;
   onRenewPet?: (pet: Pet) => void;
   onToggleMenu: (petId: string) => void;
   onCloseMenu: () => void;
@@ -63,6 +64,7 @@ export function MyAdsCard({
   openMenuId,
   hoveredTooltipId,
   instagramBoostEnabled,
+  renewPromptWithinDays = 3,
   onRenewPet,
   onToggleMenu,
   onCloseMenu,
@@ -79,8 +81,8 @@ export function MyAdsCard({
   const showRejectionTooltip =
     pet.moderationStatus === 'rejected' && pet.moderationReason && hoveredTooltipId === pet.id;
   const daysLeft = daysUntilListingExpires(pet.expiresAt);
-  const expiryUrgency = listingExpiryUrgency(daysLeft);
-  const showRenew = listingNeedsRenewal(pet);
+  const expiryUrgency = listingExpiryUrgency(daysLeft, renewPromptWithinDays);
+  const showRenew = listingNeedsRenewal(pet, renewPromptWithinDays);
   const expiryLabel = getMyAdExpiryLabel(pet, dateLocale, t.myAds);
 
   return (

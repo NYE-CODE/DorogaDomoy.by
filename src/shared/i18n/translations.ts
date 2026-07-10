@@ -30,6 +30,7 @@ import { commonLocales } from './common';
 import { publicPetProfileLocales } from './publicPetProfile';
 import { myShelterTeamLocales } from './myShelterTeam';
 import { myAdsLocales } from './myAds';
+import { partnerAdsLocales } from './partnerAds';
 import { createAdLocales } from './createAd';
 import { similarPetsLocales } from './similarPets';
 import { reunionLocales } from './reunion';
@@ -72,6 +73,7 @@ export const translations = {
     petTraits: petTraitsLocales.ru,
     filters: filtersLocales.ru,
     myAds: myAdsLocales.ru,
+    partnerAds: partnerAdsLocales.ru,
     myPets: myPetsLocales.ru,
     publicPetProfile: publicPetProfileLocales.ru,
     stats: statsLocales.ru,
@@ -118,6 +120,7 @@ export const translations = {
     petTraits: petTraitsLocales.be,
     filters: filtersLocales.be,
     myAds: myAdsLocales.be,
+    partnerAds: partnerAdsLocales.be,
     myPets: myPetsLocales.be,
     publicPetProfile: publicPetProfileLocales.be,
     stats: statsLocales.be,
@@ -164,6 +167,7 @@ export const translations = {
     petTraits: petTraitsLocales.en,
     filters: filtersLocales.en,
     myAds: myAdsLocales.en,
+    partnerAds: partnerAdsLocales.en,
     myPets: myPetsLocales.en,
     publicPetProfile: publicPetProfileLocales.en,
     stats: statsLocales.en,

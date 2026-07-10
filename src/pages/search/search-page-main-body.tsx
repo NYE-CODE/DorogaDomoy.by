@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, Fragment } from 'react';
 import { List } from 'lucide-react';
 import type { Pet } from '@/entities/pet/model/types';
 import type { useI18n } from '@/app/providers/I18nContext';
@@ -9,6 +9,8 @@ import { EmptyState } from '@/shared/ui/empty-state';
 import type { SearchLayoutMode } from '@/shared/lib/home-route';
 import { MapLoadingFallback } from './map-loading-fallback';
 import type { SearchView } from './search-storage';
+import { PartnerAdSlot } from '@/features/partner-ads/PartnerAdSlot';
+import { PARTNER_AD_SEARCH_FEED_INTERVAL } from '@/shared/lib/partner-ad-placements';
 
 const MapView = lazy(() => import('../../../components/map-view'));
 
@@ -68,8 +70,13 @@ export function SearchPageMainBody({
       </div>
     ) : (
       <div className="space-y-3 p-3 sm:space-y-4 sm:p-4">
-        {listDisplayPets.map((pet) => (
-          <PetCard key={pet.id} pet={pet} onClick={() => onPetClick(pet.id)} compact />
+        {listDisplayPets.map((pet, index) => (
+          <Fragment key={pet.id}>
+            <PetCard pet={pet} onClick={() => onPetClick(pet.id)} compact />
+            {(index + 1) % PARTNER_AD_SEARCH_FEED_INTERVAL === 0 ? (
+              <PartnerAdSlot placement="search-feed" />
+            ) : null}
+          </Fragment>
         ))}
       </div>
     );
