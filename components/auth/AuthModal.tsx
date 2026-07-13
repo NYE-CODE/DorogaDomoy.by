@@ -35,8 +35,21 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
   const [tgBotUsername, setTgBotUsername] = useState<string | null>(null);
   const [tgLoginEnabled, setTgLoginEnabled] = useState(false);
 
+  const resetForm = () => {
+    setMode('login');
+    setEmail('');
+    setPassword('');
+    setName('');
+    setAgreedToTerms(false);
+    setSignupRole('user');
+    setIsLoading(false);
+  };
+
   useEffect(() => {
-    if (!isAuthModalOpen) return;
+    if (!isAuthModalOpen) {
+      resetForm();
+      return;
+    }
     authApi
       .getConfig()
       .then((cfg) => {
@@ -47,6 +60,11 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
         setTgLoginEnabled(false);
       });
   }, [isAuthModalOpen]);
+
+  const handleClose = () => {
+    resetForm();
+    closeAuthModal();
+  };
 
   const navigateAfterAuth = (
     user: User,
@@ -127,10 +145,12 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
       if (mode === 'login') {
         const u = await login(email, password);
         toast.success(t.auth.welcomeBack);
+        resetForm();
         navigateAfterAuth(u, false);
       } else {
         const u = await register(email, name, password, {}, roleForSignup);
         toast.success(t.auth.registerSuccess);
+        resetForm();
         navigateAfterAuth(u, true, roleForSignup);
       }
     } catch (err) {
@@ -142,7 +162,7 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
 
   return (
     <div className="contents">
-      <Dialog open={isAuthModalOpen} onOpenChange={(next) => !next && closeAuthModal()}>
+      <Dialog open={isAuthModalOpen} onOpenChange={(next) => !next && handleClose()}>
         <DialogContent className="w-full max-w-md overflow-hidden rounded-lg p-0" showCloseButton={false}>
           <div className="relative flex h-32 items-center justify-center bg-gradient-to-r from-primary to-primary/80">
             <div className="text-center text-white">
@@ -174,7 +194,7 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-5" autoComplete="off">
               {mode === 'register' && (
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-foreground">{t.auth.yourName}</label>
@@ -187,6 +207,7 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
                       onChange={(e) => setName(e.target.value)}
                       className="pl-10"
                       placeholder={t.auth.namePlaceholder}
+                      autoComplete="name"
                     />
                   </div>
                 </div>
@@ -198,7 +219,7 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
                   <Mail className="absolute left-3 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     type="email"
-                    autoComplete="username"
+                    autoComplete={mode === 'login' ? 'username' : 'email'}
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -214,7 +235,7 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
                   {mode === 'login' && (
                     <Link
                       to="/forgot-password"
-                      onClick={closeAuthModal}
+                      onClick={handleClose}
                       className="text-xs font-medium text-primary hover:underline"
                     >
                       {t.auth.forgotPasswordLink}

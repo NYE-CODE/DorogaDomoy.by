@@ -1,4 +1,4 @@
-import { api } from '@/shared/api/http';
+import { api, uploadMultipart } from '@/shared/api/http';
 import type { PaginatedList, ShelterPetInput, ShelterPetUpdateInput } from '@/shared/api/pets';
 import { toPetFromShelter, type ShelterPetResponse } from '@/shared/api/pets';
 
@@ -103,6 +103,15 @@ export const sheltersApi = {
       method: 'POST',
       body: JSON.stringify(data),
     }),
+  /** Multipart-загрузка логотипа/обложки → короткий /uploads/… (без base64 в JSON). */
+  uploadImage: async (file: File) => {
+    const res = await uploadMultipart('/shelters/upload-image', file, {
+      tooLargeMessage: 'Файл слишком большой. Уменьшите изображение и попробуйте снова.',
+      errorFallback: 'Не удалось загрузить изображение',
+    });
+    const data = (await res.json()) as { url: string };
+    return data.url;
+  },
   update: (id: string, data: Partial<{
     name: string;
     kind: ShelterKind;

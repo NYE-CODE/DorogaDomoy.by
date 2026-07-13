@@ -76,19 +76,24 @@ else
   echo "    → Ключ: https://console.groq.com/keys (см. backend/.env.example)"
 fi
 
-# 4. Права на БД (идемпотентно, не сломает уже настроенное)
-echo "==> 6. Проверка прав на директорию БД"
-if [ -d "$DB_DIR" ]; then
-  if [ "$(id -u)" -eq 0 ]; then
+# 4. Права на БД и uploads (идемпотентно, не сломает уже настроенное)
+echo "==> 6. Проверка прав на директорию БД и uploads"
+UPLOADS_DIR="$REPO_DIR/backend/uploads"
+mkdir -p "$UPLOADS_DIR"
+if [ "$(id -u)" -eq 0 ]; then
+  if [ -d "$DB_DIR" ]; then
     chown -R "$SERVICE_USER:$SERVICE_USER" "$DB_DIR"
     chmod 755 "$DB_DIR"
     [ -f "$DB_DIR/petfinder.db" ] && chmod 664 "$DB_DIR/petfinder.db"
-    echo "    Права обновлены для $SERVICE_USER"
+    echo "    Права БД обновлены для $SERVICE_USER"
   else
-    echo "    Директория есть, пропуск chown (нужен root)"
+    echo "    $DB_DIR не найдена — создайте и настройте вручную (см. backend/DEPLOY.md)"
   fi
+  chown -R "$SERVICE_USER:$SERVICE_USER" "$UPLOADS_DIR"
+  chmod 755 "$UPLOADS_DIR"
+  echo "    Права uploads обновлены для $SERVICE_USER"
 else
-  echo "    $DB_DIR не найдена — создайте и настройте вручную (см. backend/DEPLOY.md)"
+  echo "    Пропуск chown (нужен root); uploads: $UPLOADS_DIR"
 fi
 
 # 5. Сборка фронтенда
