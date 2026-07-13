@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useSearchParams } from 'react-router';
+import { useLocation, useNavigate, useSearchParams } from 'react-router';
 import { telegramApi, notificationsApi, type NotificationSettingsData } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { useI18n } from '../../context/I18nContext';
@@ -10,6 +10,7 @@ import {
   isValidBelarusMobilePhoneOptional,
 } from '../../utils/belarus-phone';
 import { toast } from 'sonner';
+import { getSafeReturnPath } from '@/shared/lib/auth-return-path';
 import { formatProfileCountdown, sanitizeTelegramBotUrl, saveUserLocation } from './profile-page-helpers';
 import type { ProfileRoleDraft, ProfileTab, ProfileTranslations } from './profile-page-types';
 
@@ -17,6 +18,8 @@ const DEFAULT_WATCH_LOCATION = { lat: 53.9045, lng: 27.5615 };
 
 export function useProfilePage() {
   const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const { user, updateContacts, updateProfile, changePassword, setPassword, uploadAvatar, refreshUser } = useAuth();
   const { t } = useI18n();
   const pr = t.profile as typeof t.profile & ProfileTranslations;
@@ -232,6 +235,12 @@ export function useProfilePage() {
       viber: viber.trim() ? (formatBelarusPhoneStorage(viber) ?? undefined) : undefined,
     });
     toast.success(t.profile.profileUpdated);
+    const returnPath = getSafeReturnPath(
+      (location.state as { fromProtected?: string } | null)?.fromProtected,
+    );
+    if (returnPath) {
+      navigate(returnPath, { replace: true });
+    }
   };
 
   const handleSavePersonal = async (e: React.FormEvent) => {

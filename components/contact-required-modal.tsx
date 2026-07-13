@@ -1,4 +1,5 @@
 import { AlertCircle, User } from 'lucide-react';
+import { Link } from 'react-router';
 import { useI18n } from '../context/I18nContext';
 import {
   Dialog,
@@ -8,14 +9,21 @@ import {
   DialogTitle,
 } from './ui/dialog';
 import { Button } from './ui/button';
+import { buildProfileContactsTo } from '@/shared/lib/profile-contacts-link';
 
 interface ContactRequiredModalProps {
   open: boolean;
-  onGoToProfile: () => void;
+  returnPath?: string;
+  onGoToProfile?: () => void;
   onClose?: () => void;
 }
 
-export function ContactRequiredModal({ open, onGoToProfile, onClose }: ContactRequiredModalProps) {
+export function ContactRequiredModal({
+  open,
+  returnPath,
+  onGoToProfile,
+  onClose,
+}: ContactRequiredModalProps) {
   const { t } = useI18n();
 
   const handleOpenChange = (next: boolean) => {
@@ -39,9 +47,17 @@ export function ContactRequiredModal({ open, onGoToProfile, onClose }: ContactRe
               </DialogDescription>
             </DialogHeader>
             <div className="mt-6 space-y-3">
-              <Button onClick={onGoToProfile} className="h-11 w-full">
-                <User className="size-4" />
-                {t.contactRequired.goToProfile}
+              <Button className="h-11 w-full" asChild>
+                <Link
+                  to={buildProfileContactsTo(returnPath)}
+                  onClick={() => {
+                    onClose?.();
+                    onGoToProfile?.();
+                  }}
+                >
+                  <User className="size-4" />
+                  {t.contactRequired.goToProfile}
+                </Link>
               </Button>
               {onClose ? (
                 <Button type="button" variant="outline" onClick={onClose} className="h-11 w-full">

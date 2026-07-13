@@ -2,12 +2,14 @@ import { AlertCircle, User } from 'lucide-react';
 import { Link } from 'react-router';
 import { useI18n } from '../context/I18nContext';
 import { Button } from './ui/button';
+import { buildProfileContactsTo } from '@/shared/lib/profile-contacts-link';
 
 interface CreateAdContactBannerProps {
-  onAddContacts?: () => void;
+  /** Куда вернуть пользователя после добавления контактов в профиле. */
+  returnPath?: string;
 }
 
-export function CreateAdContactBanner({ onAddContacts }: CreateAdContactBannerProps) {
+export function CreateAdContactBanner({ returnPath }: CreateAdContactBannerProps) {
   const { t } = useI18n();
   const b = t.createAd.contactBanner;
 
@@ -23,19 +25,12 @@ export function CreateAdContactBanner({ onAddContacts }: CreateAdContactBannerPr
           <p className="mt-1 text-sm text-muted-foreground">{b.description}</p>
         </div>
       </div>
-      {onAddContacts ? (
-        <Button type="button" size="sm" className="shrink-0" onClick={onAddContacts}>
+      <Button type="button" size="sm" className="shrink-0" asChild>
+        <Link to={buildProfileContactsTo(returnPath)}>
           <User className="size-4" />
           {b.action}
-        </Button>
-      ) : (
-        <Button type="button" size="sm" className="shrink-0" asChild>
-          <Link to="/profile">
-            <User className="size-4" />
-            {b.action}
-          </Link>
-        </Button>
-      )}
+        </Link>
+      </Button>
     </div>
   );
 }

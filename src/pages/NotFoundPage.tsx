@@ -1,6 +1,13 @@
 import { useEffect } from 'react';
-import { ArrowLeft, Search } from 'lucide-react';
+import { Link } from 'react-router';
+import { MapPinOff } from 'lucide-react';
 import { useI18n } from '@/app/providers/I18nContext';
+import { Header } from '@/widgets/layout/Header';
+import { Footer } from '@/widgets/layout/Footer';
+import { Button } from '@/shared/ui/button';
+import { appPrimaryCtaClass } from '@/shared/styles/cta-classes';
+import { getHomePath, getLogoHref } from '@/shared/lib/home-route';
+import { ERROR_REPORT_TELEGRAM_URL } from '@/shared/lib/support-links';
 import {
   applySeo,
   canonicalUrlFromPath,
@@ -11,45 +18,61 @@ import {
 
 export default function NotFoundPage() {
   const { t } = useI18n();
+  const nf = t.notFoundPage;
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const path = window.location.pathname + window.location.search;
     applySeo({
-      title: `${t.notFoundPage.title} | DorogaDomoy.by`,
-      description: truncateMetaDescription(`${t.notFoundPage.description} DorogaDomoy.by.`),
+      title: `${nf.title} | DorogaDomoy.by`,
+      description: truncateMetaDescription(`${nf.description} DorogaDomoy.by.`),
       canonicalUrl: canonicalUrlFromPath(path.split('?')[0] || '/'),
       robots: SEO_ROBOTS_PRIVATE,
       keywords: SEO_KEYWORDS,
     });
-  }, [t.notFoundPage.title, t.notFoundPage.description]);
+  }, [nf.title, nf.description]);
 
   return (
-    <div className="min-h-screen bg-background dark:bg-background flex items-center justify-center px-4">
-      <div className="text-center max-w-md">
-        <div className="relative mx-auto w-40 h-40 mb-6">
-          <div className="absolute inset-0 flex items-center justify-center text-8xl">
-            ??
+    <div className="flex min-h-screen flex-col bg-background">
+      <Header showCitySelector />
+
+      <main className="flex flex-1 flex-col items-center justify-center px-4 py-16">
+        <div className="max-w-md space-y-5 text-center">
+          <div className="mx-auto flex size-20 items-center justify-center rounded-full bg-muted/60 text-muted-foreground">
+            <MapPinOff className="size-10" aria-hidden />
           </div>
-          <div className="absolute -bottom-1 -right-1 w-14 h-14 bg-red-100 dark:bg-red-950/50 rounded-full flex items-center justify-center">
-            <Search className="w-7 h-7 text-red-500" />
+
+          <div className="space-y-2">
+            <p className="typo-display text-primary/80">404</p>
+            <h1 className="typo-h2">{nf.title}</h1>
+            <p className="text-muted-foreground">{nf.description}</p>
+          </div>
+
+          <p className="text-sm text-muted-foreground">
+            {nf.reportPrefix}
+            <a
+              href={ERROR_REPORT_TELEGRAM_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-primary hover:text-primary-hover hover:underline dark:text-primary-soft dark:hover:text-primary-soft-hover"
+            >
+              {nf.reportLink}
+            </a>
+            {nf.reportSuffix}
+          </p>
+
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
+            <Button type="button" className={appPrimaryCtaClass} asChild>
+              <Link to={getHomePath()}>{nf.toMain}</Link>
+            </Button>
+            <Button type="button" variant="outline" asChild>
+              <Link to={getLogoHref()}>{nf.toLanding}</Link>
+            </Button>
           </div>
         </div>
+      </main>
 
-        <h1 className="typo-display mb-2">404</h1>
-        <p className="text-lg text-muted-foreground mb-1">{t.notFoundPage.title}</p>
-        <p className="text-sm text-muted-foreground/80 mb-8">
-          {t.notFoundPage.description}
-        </p>
-
-        <a
-          href="/search"
-          className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors shadow-sm"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          {t.notFoundPage.toMain}
-        </a>
-      </div>
+      <Footer />
     </div>
   );
 }
