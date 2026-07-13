@@ -516,6 +516,7 @@ export default function CreateAdPage() {
                     onClose={handleCloseForm}
                     onSubmit={handleSubmit}
                     prefillPartial={profilePrefill}
+                    aiPhotoAssistEnabled={!selectedProfilePetId}
                     initialStatus={scenario === 'found' ? 'found' : 'searching'}
                   />
                 </>

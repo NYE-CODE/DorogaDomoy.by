@@ -10,6 +10,7 @@ export interface PetFormStepPhotosProps extends PetFormStepBaseProps {
   initialStatus?: PetStatus;
   maxPhotos: number;
   aiAnalyzing: boolean;
+  showAiAssist?: boolean;
   onPhotoUpload: ChangeEventHandler<HTMLInputElement>;
   onAiAnalyze: () => void;
 }
@@ -24,6 +25,7 @@ export function PetFormStepPhotos({
   initialStatus,
   maxPhotos,
   aiAnalyzing,
+  showAiAssist = true,
   onPhotoUpload,
   onAiAnalyze,
 }: PetFormStepPhotosProps) {
@@ -113,10 +115,10 @@ export function PetFormStepPhotos({
       {formData.photos.length >= maxPhotos && (
         <p className="text-sm text-muted-foreground text-center py-1">{t.petForm.maxPhotosReached}</p>
       )}
-      {formData.photos.length > 0 && (
+      {formData.photos.length > 0 && showAiAssist ? (
         <p className="mb-3 text-center text-xs text-muted-foreground">{t.petForm.aiAutoHint}</p>
-      )}
-      {formData.photos.length > 0 && (
+      ) : null}
+      {formData.photos.length > 0 && showAiAssist ? (
         <button
           type="button"
           onClick={onAiAnalyze}
@@ -126,7 +128,7 @@ export function PetFormStepPhotos({
           <Sparkles className="h-4 w-4 shrink-0" aria-hidden />
           {aiAnalyzing ? t.petForm.aiAnalyzing : t.petForm.aiSuggestFromPhoto}
         </button>
-      )}
+      ) : null}
       {errors.photos && <p className="text-xs text-red-500 mt-1">{errors.photos}</p>}
     </div>
   );

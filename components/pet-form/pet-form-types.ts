@@ -19,6 +19,8 @@ export interface PetFormProps {
   renderStepHeaderExternally?: boolean;
   onStepChange?: (info: PetFormStepInfo) => void;
   prefillPartial?: Partial<PetFormData> | null;
+  /** AI по фото: автозапуск и кнопка. Выключить при объявлении из профиля питомца. */
+  aiPhotoAssistEnabled?: boolean;
   /** После успешного onSubmit вызвать onClose (по умолчанию true). Для /create — false, редирект в onSubmit. */
   closeOnSubmit?: boolean;
 }
