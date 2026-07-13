@@ -85,8 +85,6 @@ export function PetFormShell({
   const [aiFilledFields, setAiFilledFields] = useState<AiFilledAdFields>({});
   const [aiDescriptionBanner, setAiDescriptionBanner] = useState(false);
   const draftLoadedRef = useRef(false);
-  const autoAiTriggeredRef = useRef(false);
-  const prevPhotoCountRef = useRef(0);
   const photosRef = useRef(formData.photos);
   const aiRequestRef = useRef(0);
   photosRef.current = formData.photos;
@@ -212,7 +210,7 @@ export function PetFormShell({
     });
   };
 
-  const runAiAnalyze = useCallback(async (opts?: { autoAdvance?: boolean; isAuto?: boolean }) => {
+  const runAiAnalyze = useCallback(async (opts?: { autoAdvance?: boolean }) => {
     const images = pickPhotosForAi(photosRef.current);
     if (!images.length) return;
     const reqId = ++aiRequestRef.current;
@@ -255,9 +253,8 @@ export function PetFormShell({
         setAiFilledFields((current) => ({ ...current, ...filled }));
         return { ...prev, ...next };
       });
-      autoAiTriggeredRef.current = true;
       setAiDescriptionBanner(descriptionFilled);
-      toast.success(opts?.isAuto ? t.petForm.aiAppliedAuto : t.petForm.aiApplied);
+      toast.success(t.petForm.aiApplied);
       setTried(false);
       if (opts?.autoAdvance) setStep(2);
     } catch (err) {
@@ -272,28 +269,9 @@ export function PetFormShell({
     }
   }, [t]);
 
-  useEffect(() => {
-    if (!aiPhotoAssistEnabled) return;
-    const count = formData.photos.length;
-    if (count === 0) {
-      autoAiTriggeredRef.current = false;
-      prevPhotoCountRef.current = 0;
-      return;
-    }
-    const firstPhotoAdded = prevPhotoCountRef.current === 0 && count > 0;
-    prevPhotoCountRef.current = count;
-    if (!firstPhotoAdded || autoAiTriggeredRef.current || aiAnalyzing) return;
-    const timer = window.setTimeout(() => {
-      if (!autoAiTriggeredRef.current && photosRef.current.length > 0) {
-        void runAiAnalyze({ isAuto: true });
-      }
-    }, 900);
-    return () => window.clearTimeout(timer);
-  }, [aiPhotoAssistEnabled, formData.photos.length, aiAnalyzing, runAiAnalyze]);
-
   const handleAiAnalyzePhoto = () => {
     if (!aiPhotoAssistEnabled) return;
-    void runAiAnalyze({ isAuto: false });
+    void runAiAnalyze();
   };
 
   const toggleColor = (color: PetColor) => {
@@ -368,18 +346,32 @@ export function PetFormShell({
 
   const pageTitle = getPageTitle();
 
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+  const onStepChangeRef = useRef(onStepChange);
+  onStepChangeRef.current = onStepChange;
+
   useEffect(() => {
-    if (renderStepHeaderExternally && variant === 'page' && onStepChange) {
-      onStepChange({
-        step,
-        totalSteps,
-        stepTitle: currentStepTitle,
-        stepDesc: currentStepDesc,
-        pageTitle,
-        onBack: () => (step > 1 ? setStep(step - 1) : onClose()),
-      });
-    }
-  }, [step, totalSteps, formData.status, formData.animalType, renderStepHeaderExternally, variant, onStepChange, currentStepTitle, currentStepDesc, pageTitle, onClose]);
+    if (!renderStepHeaderExternally || variant !== 'page' || !onStepChangeRef.current) return;
+    onStepChangeRef.current({
+      step,
+      totalSteps,
+      stepTitle: currentStepTitle,
+      stepDesc: currentStepDesc,
+      pageTitle,
+      onBack: () => (step > 1 ? setStep(step - 1) : onCloseRef.current()),
+    });
+  }, [
+    step,
+    totalSteps,
+    formData.status,
+    formData.animalType,
+    renderStepHeaderExternally,
+    variant,
+    currentStepTitle,
+    currentStepDesc,
+    pageTitle,
+  ]);
 
   const stepBaseProps = { variant, formData, setFormData, errors, t };
 
