@@ -85,6 +85,22 @@ export function logoPreview(url?: string | null): string | undefined {
   return `${API_BASE}${url.startsWith('/') ? url : `/${url}`}`;
 }
 
+/** data:image → File для multipart-загрузки (без огромного JSON в POST /shelters). */
+export function dataUrlToImageFile(dataUrl: string, filename: string): File {
+  const comma = dataUrl.indexOf(',');
+  if (comma < 0) throw new Error('image');
+  const header = dataUrl.slice(0, comma);
+  const encoded = dataUrl.slice(comma + 1);
+  const mimeMatch = /data:([^;]+)/i.exec(header);
+  const mime = mimeMatch?.[1] || 'image/jpeg';
+  const binary = atob(encoded);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+  const ext = mime.includes('png') ? 'png' : mime.includes('webp') ? 'webp' : 'jpg';
+  const base = filename.replace(/\.[^.]+$/, '');
+  return new File([bytes], `${base}.${ext}`, { type: mime });
+}
+
 export function emptyForm(
   defaults: { city: string; lat: number; lng: number },
   contacts?: ShelterContacts | null,

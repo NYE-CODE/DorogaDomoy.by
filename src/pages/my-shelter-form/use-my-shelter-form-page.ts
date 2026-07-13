@@ -19,6 +19,7 @@ import {
   SHELTER_FORM_STEPS,
   compressLogo,
   compressShelterCover,
+  dataUrlToImageFile,
   defaultsFromSelectedCity,
   emptyForm,
   formFromShelter,
@@ -262,21 +263,28 @@ export function useMyShelterFormPage() {
       return;
     }
     const contacts = buildContacts();
-    const logoForUpdate =
-      form.logoDataUrl !== null && form.logoDataUrl !== ''
-        ? form.logoDataUrl
-        : form.existingLogo
-          ? form.existingLogo
-          : null;
-    const coverForUpdate =
-      form.coverDataUrl !== null && form.coverDataUrl !== ''
-        ? form.coverDataUrl
-        : form.existingCover
-          ? form.existingCover
-          : null;
-
     setSaving(true);
     try {
+      let logoUrl: string | null =
+        form.logoDataUrl !== null && form.logoDataUrl !== ''
+          ? null
+          : form.existingLogo
+            ? form.existingLogo
+            : null;
+      let coverUrl: string | null =
+        form.coverDataUrl !== null && form.coverDataUrl !== ''
+          ? null
+          : form.existingCover
+            ? form.existingCover
+            : null;
+
+      if (form.logoDataUrl) {
+        logoUrl = await sheltersApi.uploadImage(dataUrlToImageFile(form.logoDataUrl, 'shelter-logo'));
+      }
+      if (form.coverDataUrl) {
+        coverUrl = await sheltersApi.uploadImage(dataUrlToImageFile(form.coverDataUrl, 'shelter-cover'));
+      }
+
       if (isCreate) {
         await sheltersApi.create({
           name: form.name.trim(),
@@ -288,8 +296,8 @@ export function useMyShelterFormPage() {
           location_lat: form.lat,
           location_lng: form.lng,
           contacts,
-          ...(form.logoDataUrl ? { logo_url: form.logoDataUrl } : {}),
-          ...(form.coverDataUrl ? { cover_url: form.coverDataUrl } : {}),
+          ...(logoUrl ? { logo_url: logoUrl } : {}),
+          ...(coverUrl ? { cover_url: coverUrl } : {}),
         });
         toast.success(ms.createSuccess);
       } else if (shelterId) {
@@ -305,8 +313,8 @@ export function useMyShelterFormPage() {
             location_lat: form.lat,
             location_lng: form.lng,
             contacts,
-            logo_url: logoForUpdate,
-            cover_url: coverForUpdate,
+            logo_url: logoUrl,
+            cover_url: coverUrl,
             animal_focus: form.animalFocus,
           });
         } else {
@@ -320,8 +328,8 @@ export function useMyShelterFormPage() {
             location_lat: form.lat,
             location_lng: form.lng,
             contacts,
-            logo_url: logoForUpdate,
-            cover_url: coverForUpdate,
+            logo_url: logoUrl,
+            cover_url: coverUrl,
           });
         }
         toast.success(ms.updateSuccess);

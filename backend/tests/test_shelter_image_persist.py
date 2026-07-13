@@ -32,3 +32,20 @@ def test_persist_rejects_non_image_data_url(tmp_path: Path):
     with pytest.raises(HTTPException) as ei:
         persist_optional_image_url("data:text/plain;base64,YQ==", tmp_path)
     assert ei.value.status_code == 400
+
+
+def test_save_data_image_oserror_becomes_503(tmp_path: Path, monkeypatch):
+    from upload_utils import save_data_image
+
+    data_url = (
+        "data:image/png;base64,"
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+    )
+
+    def boom(*_a, **_k):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(Path, "write_bytes", boom)
+    with pytest.raises(HTTPException) as ei:
+        save_data_image(data_url, tmp_path)
+    assert ei.value.status_code == 503

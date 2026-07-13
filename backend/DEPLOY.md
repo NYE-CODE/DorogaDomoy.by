@@ -19,6 +19,9 @@ curl -s https://dorogadomoy.by/health
 ## Nginx reverse proxy (рекомендуемая конфигурация)
 
 ```nginx
+# Картинки организаций/объявлений; иначе nginx отдаёт 413/500 на больших телах
+client_max_body_size 20m;
+
 location /api/v1/ {
     proxy_pass http://127.0.0.1:8000/api/v1/;
     proxy_set_header Host $host;
@@ -116,6 +119,7 @@ curl -s https://dorogadomoy.by/health
 **nginx** должен проксировать **`/api/v1/`** на uvicorn с сохранением префикса:
 
 ```nginx
+client_max_body_size 20m;
 location /api/v1/ {
     proxy_pass http://127.0.0.1:8000/api/v1/;
     proxy_set_header Host $host;

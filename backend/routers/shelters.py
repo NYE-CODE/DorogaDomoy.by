@@ -6,7 +6,7 @@ import uuid
 from pathlib import Path
 from typing import Optional
 
-from fastapi import APIRouter, Body, Depends, HTTPException, Query, Request, status
+from fastapi import APIRouter, Body, Depends, File, HTTPException, Query, Request, UploadFile, status
 from sqlalchemy import delete, func, or_, select
 from sqlalchemy.orm import Session
 
@@ -25,7 +25,13 @@ from schemas import (
 )
 from time_utils import utc_now
 from rate_limit import limiter
-from upload_utils import delete_upload_url, persist_optional_image_url, replace_optional_image_url
+from upload_utils import (
+    MAX_PHOTO_BYTES,
+    MIME_TO_EXT,
+    delete_upload_url,
+    persist_optional_image_url,
+    replace_optional_image_url,
+)
 
 
 router = APIRouter(prefix="/shelters", tags=["shelters"])
@@ -242,6 +248,36 @@ def admin_delete_shelter(
             detail="Не удалось удалить организацию. Попробуйте позже.",
         ) from e
     return None
+
+
+@router.post("/upload-image")
+@limiter.limit("30/minute")
+def upload_shelter_image(
+    request: Request,
+    file: UploadFile = File(...),
+    user: User = Depends(require_volunteer_or_admin),
+):
+    """Загрузка логотипа/обложки организации (multipart) → короткий путь /uploads/…"""
+    _ = user
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Поддерживаются только изображения")
+    raw = file.file.read()
+    if not raw:
+        raise HTTPException(status_code=400, detail="Файл пустой")
+    if len(raw) > MAX_PHOTO_BYTES:
+        raise HTTPException(status_code=400, detail="Фото слишком большое (макс. 10 МБ)")
+    ext = MIME_TO_EXT.get(file.content_type, ".jpg")
+    filename = f"shelter-{uuid.uuid4().hex}{ext}"
+    try:
+        UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+        (UPLOADS_DIR / filename).write_bytes(raw)
+    except OSError as exc:
+        logger.exception("upload_shelter_image write failed")
+        raise HTTPException(
+            status_code=503,
+            detail="Не удалось сохранить изображение на сервере",
+        ) from exc
+    return {"url": f"/uploads/{filename}"}
 
 
 @router.get("/{shelter_id}", response_model=ShelterResponse)

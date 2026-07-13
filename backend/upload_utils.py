@@ -34,9 +34,16 @@ def save_data_image(data_url: str, uploads_dir: Path) -> str:
     if len(raw) > MAX_PHOTO_BYTES:
         raise HTTPException(status_code=400, detail="Фото слишком большое (макс. 10 МБ)")
 
-    uploads_dir.mkdir(parents=True, exist_ok=True)
-    filename = f"{uuid.uuid4().hex}{ext}"
-    (uploads_dir / filename).write_bytes(raw)
+    try:
+        uploads_dir.mkdir(parents=True, exist_ok=True)
+        filename = f"{uuid.uuid4().hex}{ext}"
+        (uploads_dir / filename).write_bytes(raw)
+    except OSError as exc:
+        logger.exception("Failed to write upload into %s", uploads_dir)
+        raise HTTPException(
+            status_code=503,
+            detail="Не удалось сохранить изображение на сервере",
+        ) from exc
     return f"/uploads/{filename}"
 
 
