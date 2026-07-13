@@ -11,6 +11,7 @@ import { useI18n } from '@/app/providers/I18nContext';
 import { getHomePath } from '@/shared/lib/home-route';
 import { getSafeReturnPath } from '@/shared/lib/auth-return-path';
 import { shouldShowPetProfileOnboarding } from '@/shared/lib/pet-profile-onboarding';
+import { shouldShowShelterOrgOnboarding } from '@/shared/lib/shelter-org-onboarding';
 
 export default function CompleteProfilePage() {
   const { t } = useI18n();
@@ -53,14 +54,24 @@ export default function CompleteProfilePage() {
         password: password.trim() || undefined,
       });
       toast.success(cp.success);
-      if (suggestPetProfile && user && shouldShowPetProfileOnboarding(user.id)) {
-        navigate('/welcome/pet-profile', {
-          replace: true,
-          state: returnPath ? { fromProtected: returnPath } : undefined,
-        });
-      } else {
-        navigate(returnPath ?? getHomePath(), { replace: true });
+      if (suggestPetProfile && user) {
+        const welcomePath =
+          signupRole === 'volunteer'
+            ? shouldShowShelterOrgOnboarding(user.id)
+              ? '/welcome/shelter-org'
+              : null
+            : shouldShowPetProfileOnboarding(user.id)
+              ? '/welcome/pet-profile'
+              : null;
+        if (welcomePath) {
+          navigate(welcomePath, {
+            replace: true,
+            state: returnPath ? { fromProtected: returnPath } : undefined,
+          });
+          return;
+        }
       }
+      navigate(returnPath ?? getHomePath(), { replace: true });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t.common.error);
     } finally {

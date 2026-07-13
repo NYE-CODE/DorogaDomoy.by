@@ -15,7 +15,15 @@ export const onboardingLocales = {
       create: 'Создать профиль питомца',
       later: 'Позже',
     },
-  
+    shelterOrg: {
+      title: 'Добавьте организацию',
+      subtitle: 'Зарегистрируйте приют, передержку или другую организацию — это займёт несколько минут',
+      benefitOrg: 'Карточка организации в каталоге приютов',
+      benefitPets: 'Публикация питомцев в поиске дома',
+      benefitTeam: 'Приглашение команды волонтёров',
+      create: 'Создать организацию',
+      later: 'Позже',
+    },
   },
   be: {
     modeSwitch: {
@@ -32,7 +40,16 @@ export const onboardingLocales = {
       create: 'Стварыць профіль жывёлы',
       later: 'Пазней',
     },
-  
+    shelterOrg: {
+      title: 'Дадайце арганізацыю',
+      subtitle:
+        'Зарэгіструйце прытулак, пераутрымку або іншую арганізацыю — гэта займе некалькі хвілін',
+      benefitOrg: 'Картка арганізацыі ў каталогу прытулкаў',
+      benefitPets: 'Публікацыя жывёл у пошуку дому',
+      benefitTeam: 'Запрашэнне каманды валанцёраў',
+      create: 'Стварыць арганізацыю',
+      later: 'Пазней',
+    },
   },
   en: {
     modeSwitch: {
@@ -49,6 +66,14 @@ export const onboardingLocales = {
       create: 'Create pet profile',
       later: 'Later',
     },
-  
+    shelterOrg: {
+      title: 'Add your organization',
+      subtitle: 'Register a shelter, foster home, or other org — it only takes a few minutes',
+      benefitOrg: 'Your organization in the shelter catalog',
+      benefitPets: 'Publish pets looking for a home',
+      benefitTeam: 'Invite volunteers to your team',
+      create: 'Create organization',
+      later: 'Later',
+    },
   },
 } as const;

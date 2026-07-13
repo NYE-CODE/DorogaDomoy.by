@@ -11,7 +11,7 @@ import { TelegramLoginButton } from './TelegramLoginButton';
 import { authApi, type TelegramAuthPayload } from '../../api/client';
 import type { User } from '@/entities/user/model/types';
 import { getSafeReturnPath } from '@/shared/lib/auth-return-path';
-import { shouldShowPetProfileOnboarding } from '@/shared/lib/pet-profile-onboarding';
+import { resolvePostSignupWelcomePath } from '@/shared/lib/post-signup-welcome';
 
 interface AuthModalProps {
   onNavigateToTerms?: () => void;
@@ -61,8 +61,9 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
       });
       return;
     }
-    if (isNewSignup && shouldShowPetProfileOnboarding(user.id)) {
-      navigate('/welcome/pet-profile', {
+    const welcomePath = resolvePostSignupWelcomePath(user, isNewSignup);
+    if (welcomePath) {
+      navigate(welcomePath, {
         replace: true,
         state: returnPath ? { fromProtected: returnPath } : undefined,
       });
