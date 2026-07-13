@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate, useSearchParams } from 'react-router';
+import { useLocation, useNavigate, useSearchParams } from 'react-router';
 import { useAuth } from '@/app/providers/AuthContext';
 import '../../landing/styles/theme-scoped.css';
 import { useI18n } from '@/app/providers/I18nContext';
@@ -28,6 +28,7 @@ export default function CreateAdPage() {
   const { user, isAuthenticated, isLoading, openAuthModal } = useAuth();
   const { t } = useI18n();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const urlPetId = searchParams.get('petId')?.trim() || null;
 
@@ -77,6 +78,8 @@ export default function CreateAdPage() {
       setSelectedProfilePetId(null);
     }
   }, [urlPetId]);
+
+  const createReturnPath = `${location.pathname}${location.search}`;
 
   const hasContacts = Boolean(
     user?.contacts?.phone || user?.contacts?.telegram || user?.contacts?.viber,
@@ -314,7 +317,7 @@ export default function CreateAdPage() {
       <main className="flex-1 px-4 py-8">
         <div className="max-w-[736px] mx-auto bg-white dark:bg-card rounded-md shadow-sm border border-border p-6 sm:p-8">
           {showContactBanner ? (
-            <CreateAdContactBanner onAddContacts={() => navigate('/profile')} />
+            <CreateAdContactBanner returnPath={createReturnPath} />
           ) : null}
 
           {flowStep === 'scenario' && (
@@ -524,11 +527,8 @@ export default function CreateAdPage() {
 
       <ContactRequiredModal
         open={showContactRequired}
+        returnPath={createReturnPath}
         onClose={() => setShowContactRequired(false)}
-        onGoToProfile={() => {
-          setShowContactRequired(false);
-          navigate('/profile');
-        }}
       />
 
       <Footer />

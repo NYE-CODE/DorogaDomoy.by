@@ -222,11 +222,8 @@ export default function MyAdsPageRoute() {
 
       <ContactRequiredModal
         open={showContactRequiredModal}
+        returnPath={`${location.pathname}${location.search}`}
         onClose={() => setShowContactRequiredModal(false)}
-        onGoToProfile={() => {
-          setShowContactRequiredModal(false);
-          navigate('/profile');
-        }}
       />
 
       <AuthModal />

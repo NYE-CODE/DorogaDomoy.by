@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router';
 import { useAuth } from '@/app/providers/AuthContext';
 import { getHomePath } from '@/shared/lib/home-route';
+import { getSafeReturnPath } from '@/shared/lib/auth-return-path';
 import { RouteLoader } from '@/app/router/RouteLoader';
 
 interface RequireAuthProps {
@@ -33,7 +34,16 @@ export function RequireAuth({ children, allowIncompleteProfile = false }: Requir
     );
   }
   if (!allowIncompleteProfile && user && user.profileCompleted === false) {
-    return <Navigate to="/complete-profile" replace />;
+    const fromProtected =
+      (location.state as { fromProtected?: string } | null)?.fromProtected ??
+      `${location.pathname}${location.search}${location.hash}`;
+    return (
+      <Navigate
+        to="/complete-profile"
+        replace
+        state={{ fromProtected: getSafeReturnPath(fromProtected) ?? fromProtected }}
+      />
+    );
   }
   return children;
 }

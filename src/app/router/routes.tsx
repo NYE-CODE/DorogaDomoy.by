@@ -48,7 +48,7 @@ export function AppRoutes() {
       <Route path="/" element={<LandingPage />} />
       <Route path="/search" element={<SearchPage />} />
       <Route path="/favorites" element={<FavoritesPage />} />
-      <Route path="/profile" element={<RequireAuth><ProfilePage /></RequireAuth>} />
+      <Route path="/profile" element={<RequireAuth allowIncompleteProfile><ProfilePage /></RequireAuth>} />
       <Route path="/pet-profile/:id" element={<PublicPetProfilePage />} />
       <Route path="/my-pets/add" element={<RequireAuth><AddEditPetPageRoute /></RequireAuth>} />
       <Route path="/my-pets/:id/edit" element={<RequireAuth><AddEditPetPageRoute /></RequireAuth>} />

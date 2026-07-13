@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 import { useAuth } from '@/app/providers/AuthContext';
 import { useCity } from '@/app/providers/CityContext';
 import { useI18n } from '@/app/providers/I18nContext';
@@ -37,6 +37,7 @@ export default function SearchPage() {
   const { selectedCity, saveCity, clearCity } = useCity();
   const { t } = useI18n();
   const routerNavigate = useNavigate();
+  const location = useLocation();
   const isMobile = useIsMobile();
 
   const [view, setViewRaw] = useState<SearchView>(readSearchView);
@@ -262,11 +263,8 @@ export default function SearchPage() {
 
       <ContactRequiredModal
         open={showContactRequiredModal}
+        returnPath={`${location.pathname}${location.search}`}
         onClose={() => setShowContactRequiredModal(false)}
-        onGoToProfile={() => {
-          setShowContactRequiredModal(false);
-          routerNavigate('/profile');
-        }}
       />
 
       <CitySelectModal
