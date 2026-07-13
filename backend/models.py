@@ -539,8 +539,8 @@ class Shelter(Base):
     location_lat = Column(Float, nullable=False)
     location_lng = Column(Float, nullable=False)
     contacts = Column(JSON, default=dict)
-    logo_url = Column(String, nullable=True)
-    cover_url = Column(String, nullable=True)  # широкое изображение-шапка публичной страницы
+    logo_url = Column(Text, nullable=True)
+    cover_url = Column(Text, nullable=True)  # широкое изображение-шапка публичной страницы (путь /uploads/…)
     moderation_status = Column(String, nullable=False, default="draft")  # draft, pending, approved, rejected, hidden
     moderation_reason = Column(String, nullable=True)
     moderated_at = Column(DateTime, nullable=True)

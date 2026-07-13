@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import logging
 import uuid
+from pathlib import Path
 from typing import Optional
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, Request, status
@@ -24,9 +25,12 @@ from schemas import (
 )
 from time_utils import utc_now
 from rate_limit import limiter
+from upload_utils import delete_upload_url, persist_optional_image_url, replace_optional_image_url
 
 
 router = APIRouter(prefix="/shelters", tags=["shelters"])
+logger = logging.getLogger(__name__)
+UPLOADS_DIR = Path(__file__).resolve().parent.parent / "uploads"
 
 
 def _contacts_dict(c) -> dict:
@@ -39,6 +43,12 @@ def _contacts_dict(c) -> dict:
     else:
         return {}
     return {k: v for k, v in d.items() if v is not None and str(v).strip() != ""}
+
+
+def _cleanup_uploads(urls: list[Optional[str]]) -> None:
+    for u in urls:
+        if u:
+            delete_upload_url(u, UPLOADS_DIR)
 
 
 def _to_response(s: Shelter) -> ShelterResponse:
@@ -271,40 +281,57 @@ def create_shelter(
 
     sid = str(uuid.uuid4())
     now = utc_now()
-    row = Shelter(
-        id=sid,
-        name=data.name.strip(),
-        kind=data.kind,
-        animal_focus=data.animal_focus,
-        description=data.description,
-        city=data.city.strip(),
-        address=data.address.strip() if data.address else None,
-        location_lat=data.location_lat,
-        location_lng=data.location_lng,
-        contacts=_contacts_dict(data.contacts),
-        logo_url=data.logo_url,
-        cover_url=data.cover_url,
-        moderation_status="draft",
-        owner_user_id=owner_id,
-        created_at=now,
-        updated_at=now,
-    )
-    owner_membership = ShelterMembership(
-        id=f"shm-{uuid.uuid4().hex[:10]}",
-        shelter_id=row.id,
-        user_id=owner_id,
-        role="owner",
-        status="active",
-        invited_by_user_id=user.id,
-        joined_at=now,
-        created_at=now,
-        updated_at=now,
-    )
-    db.add(row)
-    db.add(owner_membership)
-    db.commit()
-    db.refresh(row)
-    return _to_response(row)
+    new_uploads: list[Optional[str]] = []
+    try:
+        logo_url = persist_optional_image_url(data.logo_url, UPLOADS_DIR)
+        if logo_url and str(data.logo_url or "").startswith("data:"):
+            new_uploads.append(logo_url)
+        cover_url = persist_optional_image_url(data.cover_url, UPLOADS_DIR)
+        if cover_url and str(data.cover_url or "").startswith("data:"):
+            new_uploads.append(cover_url)
+
+        row = Shelter(
+            id=sid,
+            name=data.name.strip(),
+            kind=data.kind,
+            animal_focus=data.animal_focus,
+            description=data.description,
+            city=data.city.strip(),
+            address=data.address.strip() if data.address else None,
+            location_lat=data.location_lat,
+            location_lng=data.location_lng,
+            contacts=_contacts_dict(data.contacts),
+            logo_url=logo_url,
+            cover_url=cover_url,
+            moderation_status="draft",
+            owner_user_id=owner_id,
+            created_at=now,
+            updated_at=now,
+        )
+        owner_membership = ShelterMembership(
+            id=f"shm-{uuid.uuid4().hex[:10]}",
+            shelter_id=row.id,
+            user_id=owner_id,
+            role="owner",
+            status="active",
+            invited_by_user_id=user.id,
+            joined_at=now,
+            created_at=now,
+            updated_at=now,
+        )
+        db.add(row)
+        db.add(owner_membership)
+        db.commit()
+        db.refresh(row)
+        return _to_response(row)
+    except HTTPException:
+        _cleanup_uploads(new_uploads)
+        raise
+    except Exception:
+        db.rollback()
+        _cleanup_uploads(new_uploads)
+        logger.exception("create_shelter failed")
+        raise HTTPException(status_code=500, detail="Не удалось создать карточку организации")
 
 
 @router.patch("/{shelter_id}", response_model=ShelterResponse)
@@ -347,9 +374,25 @@ def update_shelter(
 
     if "cover_url" in d:
         cv = d.pop("cover_url")
-        s.cover_url = str(cv).strip() if cv and str(cv).strip() else None
+        if cv is None or (isinstance(cv, str) and not cv.strip()):
+            old = getattr(s, "cover_url", None)
+            s.cover_url = None
+            if old and str(old).startswith("/uploads/"):
+                delete_upload_url(str(old), UPLOADS_DIR)
+        else:
+            s.cover_url = replace_optional_image_url(getattr(s, "cover_url", None), str(cv), UPLOADS_DIR)
 
-    for key in ("kind", "animal_focus", "description", "location_lat", "location_lng", "logo_url"):
+    if "logo_url" in d:
+        lv = d.pop("logo_url")
+        if lv is None or (isinstance(lv, str) and not lv.strip()):
+            old = s.logo_url
+            s.logo_url = None
+            if old and str(old).startswith("/uploads/"):
+                delete_upload_url(str(old), UPLOADS_DIR)
+        else:
+            s.logo_url = replace_optional_image_url(s.logo_url, str(lv), UPLOADS_DIR)
+
+    for key in ("kind", "animal_focus", "description", "location_lat", "location_lng"):
         if key in d and d[key] is not None:
             setattr(s, key, d[key])
     if "name" in d and d["name"] is not None:
@@ -364,8 +407,13 @@ def update_shelter(
         pass
 
     s.updated_at = utc_now()
-    db.commit()
-    db.refresh(s)
+    try:
+        db.commit()
+        db.refresh(s)
+    except Exception:
+        db.rollback()
+        logger.exception("update_shelter failed id=%s", shelter_id)
+        raise HTTPException(status_code=500, detail="Не удалось сохранить карточку организации")
     return _to_response(s)
 
 
