@@ -5,7 +5,6 @@ import { useCity } from '@/app/providers/CityContext';
 import { useI18n } from '@/app/providers/I18nContext';
 import { Header } from '@/widgets/layout/Header';
 import { Footer } from '@/widgets/layout/Footer';
-import { AuthModal } from '../../../components/auth/AuthModal';
 import { ContactRequiredModal } from '../../../components/contact-required-modal';
 import { toast } from 'sonner';
 import { DeleteReasonModal } from '../../../components/delete-reason-modal';
@@ -32,7 +31,7 @@ import { useSearchPetsData } from './use-search-pets-data';
 import { SearchListTitleBlock, SearchPageMainBody } from './search-page-main-body';
 
 export default function SearchPage() {
-  const { user, closeAuthModal, isLoading } = useAuth();
+  const { user, isLoading } = useAuth();
   const { runWhenAuthed } = useAuthenticatedAction();
   const { selectedCity, saveCity, clearCity } = useCity();
   const { t } = useI18n();
@@ -243,13 +242,6 @@ export default function SearchPage() {
           isEditing
         />
       )}
-
-      <AuthModal
-        onNavigateToTerms={() => {
-          closeAuthModal();
-          setView('terms');
-        }}
-      />
 
       {deletingPet && (
         <DeleteReasonModal

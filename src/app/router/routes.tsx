@@ -38,6 +38,7 @@ const MyShelterPetCampaignPage = lazy(() => import('@/pages/MyShelterPetCampaign
 const MyShelterTeamPage = lazy(() => import('@/pages/MyShelterTeamPage'));
 const CompleteProfilePage = lazy(() => import('@/pages/CompleteProfilePage'));
 const WelcomePetProfilePage = lazy(() => import('@/pages/WelcomePetProfilePage'));
+const WelcomeShelterOrgPage = lazy(() => import('@/pages/WelcomeShelterOrgPage'));
 const ForgotPasswordPage = lazy(() => import('@/pages/ForgotPasswordPage'));
 const ResetPasswordPage = lazy(() => import('@/pages/ResetPasswordPage'));
 
@@ -81,6 +82,16 @@ export function AppRoutes() {
         element={
           <RequireAuth>
             <WelcomePetProfilePage />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/welcome/shelter-org"
+        element={
+          <RequireAuth>
+            <RequireVolunteer>
+              <WelcomeShelterOrgPage />
+            </RequireVolunteer>
           </RequireAuth>
         }
       />

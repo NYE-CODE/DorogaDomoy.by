@@ -1,24 +1,24 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
-import { PawPrint, QrCode, Megaphone, ClipboardList, ArrowRight } from 'lucide-react';
+import { Building2, PawPrint, Users, ArrowRight } from 'lucide-react';
 import { Header } from '@/widgets/layout/Header';
 import { Footer } from '@/widgets/layout/Footer';
 import { Button } from '@/shared/ui/button';
 import { PageLoader } from '@/shared/ui/page-loader';
 import { useAuth } from '@/app/providers/AuthContext';
 import { useI18n } from '@/app/providers/I18nContext';
-import { profilePetsApi } from '@/shared/api/client';
+import { sheltersApi } from '@/shared/api/client';
 import { getHomePath } from '@/shared/lib/home-route';
 import { getSafeReturnPath } from '@/shared/lib/auth-return-path';
 import {
-  dismissPetProfileOnboarding,
-  shouldShowPetProfileOnboarding,
-} from '@/shared/lib/pet-profile-onboarding';
+  dismissShelterOrgOnboarding,
+  shouldShowShelterOrgOnboarding,
+} from '@/shared/lib/shelter-org-onboarding';
 import '../../landing/styles/theme-scoped.css';
 
-export default function WelcomePetProfilePage() {
+export default function WelcomeShelterOrgPage() {
   const { t } = useI18n();
-  const tip = t.onboarding.petProfile;
+  const tip = t.onboarding.shelterOrg;
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -38,28 +38,23 @@ export default function WelcomePetProfilePage() {
       }
     };
 
-    if (user.role === 'volunteer' || user.role === 'admin' || user.registeredAsVolunteer) {
-      if (!cancelled) {
-        navigate('/welcome/shelter-org', {
-          replace: true,
-          state: returnPath ? { fromProtected: returnPath } : undefined,
-        });
-      }
-      return;
-    }
-
-    if (!shouldShowPetProfileOnboarding(user.id)) {
+    if (user.role !== 'volunteer' && user.role !== 'admin') {
       finish(returnPath ?? getHomePath());
       return;
     }
 
-    profilePetsApi
-      .my()
-      .then((pets) => {
+    if (!shouldShowShelterOrgOnboarding(user.id)) {
+      finish(returnPath ?? '/my-shelters');
+      return;
+    }
+
+    sheltersApi
+      .mine()
+      .then((orgs) => {
         if (cancelled) return;
-        if (pets.length > 0) {
-          dismissPetProfileOnboarding(user.id);
-          finish(returnPath ?? getHomePath());
+        if (orgs.length > 0) {
+          dismissShelterOrgOnboarding(user.id);
+          finish(returnPath ?? '/my-shelters');
           return;
         }
         setChecking(false);
@@ -75,14 +70,14 @@ export default function WelcomePetProfilePage() {
 
   const handleLater = () => {
     if (!user) return;
-    dismissPetProfileOnboarding(user.id);
-    navigate(returnPath ?? getHomePath(), { replace: true });
+    dismissShelterOrgOnboarding(user.id);
+    navigate(returnPath ?? '/my-shelters', { replace: true });
   };
 
   const handleCreate = () => {
     if (!user) return;
-    dismissPetProfileOnboarding(user.id);
-    navigate('/my-pets/add', {
+    dismissShelterOrgOnboarding(user.id);
+    navigate('/my-shelters/new', {
       replace: true,
       state: returnPath ? { fromProtected: returnPath } : undefined,
     });
@@ -97,9 +92,9 @@ export default function WelcomePetProfilePage() {
   }
 
   const benefits = [
-    { icon: QrCode, text: tip.benefitQr },
-    { icon: Megaphone, text: tip.benefitAd },
-    { icon: ClipboardList, text: tip.benefitInfo },
+    { icon: Building2, text: tip.benefitOrg },
+    { icon: PawPrint, text: tip.benefitPets },
+    { icon: Users, text: tip.benefitTeam },
   ];
 
   return (
@@ -109,7 +104,7 @@ export default function WelcomePetProfilePage() {
         <div className="mx-auto max-w-lg rounded-lg border border-border bg-card p-8 shadow-sm">
           <div className="mb-6 flex justify-center">
             <div className="flex size-16 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <PawPrint className="size-8" />
+              <Building2 className="size-8" />
             </div>
           </div>
           <h1 className="typo-h1 text-center">{tip.title}</h1>

@@ -11,7 +11,7 @@ import { TelegramLoginButton } from './TelegramLoginButton';
 import { authApi, type TelegramAuthPayload } from '../../api/client';
 import type { User } from '@/entities/user/model/types';
 import { getSafeReturnPath } from '@/shared/lib/auth-return-path';
-import { shouldShowPetProfileOnboarding } from '@/shared/lib/pet-profile-onboarding';
+import { resolvePostSignupWelcomePath } from '@/shared/lib/post-signup-welcome';
 
 interface AuthModalProps {
   onNavigateToTerms?: () => void;
@@ -48,21 +48,25 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
       });
   }, [isAuthModalOpen]);
 
-  if (!isAuthModalOpen) return null;
-
-  const navigateAfterAuth = (user: User, isNewSignup = false) => {
+  const navigateAfterAuth = (
+    user: User,
+    isNewSignup = false,
+    roleHint?: 'user' | 'volunteer' | null,
+  ) => {
     if (user.profileCompleted === false) {
       navigate('/complete-profile', {
         replace: true,
         state: {
           ...(returnPath ? { fromProtected: returnPath } : {}),
           suggestPetProfile: true,
+          suggestSignupRole: roleHint ?? undefined,
         },
       });
       return;
     }
-    if (isNewSignup && shouldShowPetProfileOnboarding(user.id)) {
-      navigate('/welcome/pet-profile', {
+    const welcomePath = resolvePostSignupWelcomePath(user, isNewSignup, roleHint);
+    if (welcomePath) {
+      navigate(welcomePath, {
         replace: true,
         state: returnPath ? { fromProtected: returnPath } : undefined,
       });
@@ -100,6 +104,7 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const roleForSignup = signupRole;
 
     if (mode === 'register' && name.trim().length < 2) {
       toast.error(t.auth.nameMinLength);
@@ -124,9 +129,9 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
         toast.success(t.auth.welcomeBack);
         navigateAfterAuth(u, false);
       } else {
-        const u = await register(email, name, password, {}, signupRole);
+        const u = await register(email, name, password, {}, roleForSignup);
         toast.success(t.auth.registerSuccess);
-        navigateAfterAuth(u, true);
+        navigateAfterAuth(u, true, roleForSignup);
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t.auth.genericError);
@@ -243,7 +248,7 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
                     <label className="flex cursor-pointer items-center gap-2 text-sm text-foreground">
                       <input
                         type="radio"
-                        name="signup-role"
+                        name="auth-modal-signup-role"
                         checked={signupRole === 'user'}
                         onChange={() => setSignupRole('user')}
                         className="size-4 accent-primary"
@@ -253,7 +258,7 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
                     <label className="flex cursor-pointer items-center gap-2 text-sm text-foreground">
                       <input
                         type="radio"
-                        name="signup-role"
+                        name="auth-modal-signup-role"
                         checked={signupRole === 'volunteer'}
                         onChange={() => setSignupRole('volunteer')}
                         className="size-4 accent-primary"
