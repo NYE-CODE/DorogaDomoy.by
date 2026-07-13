@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import { Button } from '@/shared/ui/button';
 import { appPrimaryCtaClass } from '@/shared/styles/cta-classes';
 import { getHomePath } from '@/shared/lib/home-route';
+import { ERROR_REPORT_TELEGRAM_URL } from '@/shared/lib/support-links';
 import { useI18n } from '@/app/providers/I18nContext';
 
 interface Props {
@@ -22,6 +23,18 @@ function ErrorBoundaryFallback() {
       <div className="max-w-md space-y-4 text-center">
         <h1 className="typo-h2">{eb.title}</h1>
         <p className="text-muted-foreground">{eb.description}</p>
+        <p className="text-sm text-muted-foreground">
+          {eb.reportErrorPrefix}
+          <a
+            href={ERROR_REPORT_TELEGRAM_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-primary hover:text-primary-hover hover:underline dark:text-primary-soft dark:hover:text-primary-soft-hover"
+          >
+            {eb.reportErrorLink}
+          </a>
+          {eb.reportErrorSuffix}
+        </p>
         <div className="flex flex-wrap items-center justify-center gap-3">
           <Button
             type="button"

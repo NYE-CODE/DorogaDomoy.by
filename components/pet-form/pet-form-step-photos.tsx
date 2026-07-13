@@ -3,6 +3,7 @@ import type { ChangeEventHandler } from 'react';
 import type { PetStatus } from '../../types/pet';
 import { petScenarioFormToggleActiveClass } from '@/shared/lib/pet-helpers';
 import type { PetFormStepBaseProps } from './pet-form-validation';
+import { formatI18nTemplate } from '@/shared/lib/i18n-template';
 
 export interface PetFormStepPhotosProps extends PetFormStepBaseProps {
   isEditing: boolean;
@@ -60,12 +61,19 @@ export function PetFormStepPhotos({
         </div>
       )}
       <div className="text-right text-sm text-muted-foreground mb-4">
-        {t.petForm.photosUploadedCount.replace('{current}', String(formData.photos.length)).replace('{max}', String(maxPhotos))}
+        {formatI18nTemplate(t.petForm.photosUploadedCount, {
+          current: formData.photos.length,
+          max: maxPhotos,
+        })}
       </div>
       <div className="grid grid-cols-3 gap-4 mb-4">
         {formData.photos.map((photo, index) => (
           <div key={index} className="relative aspect-square rounded-lg overflow-hidden group">
-            <img src={photo} alt={t.petForm.photoAltNumber.replace('{n}', String(index + 1))} className="w-full h-full object-cover" />
+            <img
+              src={photo}
+              alt={formatI18nTemplate(t.petForm.photoAltNumber, { n: index + 1 }, 'Photo')}
+              className="w-full h-full object-cover"
+            />
             <button
               type="button"
               onClick={() => setFormData({ ...formData, photos: formData.photos.filter((_, i) => i !== index) })}

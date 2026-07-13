@@ -12,6 +12,7 @@ import { settingsApi, shelterPetsApi, sheltersApi, type ShelterPetInput, type Sh
 import type { Compatibility, Pet } from '@/entities/pet/model/types';
 import { useI18n } from '@/app/providers/I18nContext';
 import { compressImageFileToDataUrl } from '@/shared/lib/compress-image';
+import { formatI18nTemplate } from '@/shared/lib/i18n-template';
 
 type FormState = {
   photos: string[];
@@ -402,7 +403,11 @@ export default function MyShelterPetFormPage() {
                   <div className="grid grid-cols-3 gap-3">
                     {form.photos.map((photo, idx) => (
                       <div key={idx} className="group relative aspect-square overflow-hidden rounded-lg">
-                        <img src={photo} alt="" className="size-full object-cover" />
+                        <img
+                          src={photo}
+                          alt={formatI18nTemplate(pf.photoAltNumber, { n: idx + 1 }, 'Photo')}
+                          className="size-full object-cover"
+                        />
                         <button type="button" onClick={() => setForm((p) => ({ ...p, photos: p.photos.filter((_, i) => i !== idx) }))} className="absolute inset-0 flex items-center justify-center bg-black/45 opacity-0 transition-opacity group-hover:opacity-100">
                           <X className="size-6 text-white" />
                         </button>

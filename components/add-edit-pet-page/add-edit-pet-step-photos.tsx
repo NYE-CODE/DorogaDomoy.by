@@ -4,13 +4,14 @@ import {
   slotsFromStoredPhotos,
   storedPhotosFromSlots,
 } from '@/shared/lib/profile-pet-photo-slots';
-import { ProfilePetPhotoSlotPicker } from '../profile-pet-photo-slot-picker';
+import { formatI18nTemplate } from '@/shared/lib/i18n-template';
+import { ProfilePetPhotoSlotPicker, type ProfilePetPhotoSlotLabels } from '../profile-pet-photo-slot-picker';
 import { PROFILE_PET_PHOTO_GUIDE_INSTAGRAM_URL } from './add-edit-pet-form-helpers';
 import type { ProfilePetFormData } from './add-edit-pet-form-types';
 
 export interface AddEditPetStepPhotosProps {
   formData: ProfilePetFormData;
-  f: Record<string, string | readonly string[] | ((n: number) => string)>;
+  f: Record<string, unknown>;
   t: { petForm: Record<string, string>; common: { toasts: Record<string, string> } };
   isUploadingPhotos: boolean;
   uploadingSlotIndex: number | null;
@@ -33,26 +34,25 @@ export function AddEditPetStepPhotos({
   onFileDrop,
   onAiAnalyze,
 }: AddEditPetStepPhotosProps) {
-  const photoAlt = f.photoAlt as (n: number) => string;
+  const photoAltTemplate = String(f.photoAlt ?? 'Photo {n}');
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">{f.step1PhotoHint as string}</p>
+      <p className="text-sm text-muted-foreground">{String(f.step1PhotoHint)}</p>
       <div className="text-right text-sm text-muted-foreground">
-        {(f.photosCount as string).replace(
-          '{n}',
-          String(countFilledProfilePetPhotoSlots(formData.photos)),
-        )}
+        {formatI18nTemplate(String(f.photosCount), {
+          n: countFilledProfilePetPhotoSlots(formData.photos),
+        })}
       </div>
 
       <ProfilePetPhotoSlotPicker
         photos={storedPhotosFromSlots(slotsFromStoredPhotos(formData.photos))}
-        labels={f.photoSlots as readonly string[]}
-        addLabel={f.photoSlotAdd as string}
-        replaceLabel={f.photoSlotReplace as string}
-        optionalLabel={f.photoSlotOptional as string}
-        recommendedLabel={f.photoSlotRecommended as string}
-        photoAlt={(n) => photoAlt(n)}
+        labels={f.photoSlots as ProfilePetPhotoSlotLabels}
+        addLabel={String(f.photoSlotAdd)}
+        replaceLabel={String(f.photoSlotReplace)}
+        optionalLabel={String(f.photoSlotOptional)}
+        recommendedLabel={String(f.photoSlotRecommended)}
+        photoAlt={(n) => formatI18nTemplate(photoAltTemplate, { n })}
         disabled={isUploadingPhotos}
         uploadingSlotIndex={uploadingSlotIndex}
         onPickSlot={onPickSlot}
