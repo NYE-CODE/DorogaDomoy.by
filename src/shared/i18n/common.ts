@@ -56,6 +56,9 @@ export const commonLocales = {
         'Произошла непредвиденная ошибка. Попробуйте обновить страницу или вернуться на главную.',
       reload: 'Обновить страницу',
       home: 'На главную',
+      reportErrorPrefix: 'Если ошибка повторяется, ',
+      reportErrorLink: 'сообщите об ошибке',
+      reportErrorSuffix: ' в Telegram.',
     },
   
   },
@@ -115,6 +118,9 @@ export const commonLocales = {
         'Адбылася нечаканая памылка. Паспрабуйце абнавіць старонку або вярнуцца на галоўную.',
       reload: 'Абнавіць старонку',
       home: 'На галоўную',
+      reportErrorPrefix: 'Калі памылка паўтараецца, ',
+      reportErrorLink: 'паведамце пра памылку',
+      reportErrorSuffix: ' у Telegram.',
     },
   
   },
@@ -173,6 +179,9 @@ export const commonLocales = {
       description: 'An unexpected error occurred. Try refreshing the page or go to the home page.',
       reload: 'Refresh page',
       home: 'Home',
+      reportErrorPrefix: 'If the error keeps happening, ',
+      reportErrorLink: 'report it',
+      reportErrorSuffix: ' on Telegram.',
     },
   
   },
