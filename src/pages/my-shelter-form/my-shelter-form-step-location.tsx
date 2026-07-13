@@ -12,6 +12,7 @@ export interface MyShelterFormStepLocationProps {
   setForm: React.Dispatch<React.SetStateAction<ShelterFormState>>;
   approvedLocked: boolean;
   mapSyncing: boolean;
+  fieldErrors?: { city?: string; location?: string };
   onSyncMap: () => void;
   onPlaceFromMap: (
     loc: { lat: number; lng: number },
@@ -26,6 +27,7 @@ export function MyShelterFormStepLocation({
   setForm,
   approvedLocked,
   mapSyncing,
+  fieldErrors = {},
   onSyncMap,
   onPlaceFromMap,
 }: MyShelterFormStepLocationProps) {
@@ -40,7 +42,14 @@ export function MyShelterFormStepLocation({
             onChange={(e) => setForm((p) => ({ ...p, city: e.target.value }))}
             disabled={approvedLocked}
             autoComplete="address-level2"
+            aria-invalid={Boolean(fieldErrors.city)}
+            className={fieldErrors.city ? 'border-destructive' : undefined}
           />
+          {fieldErrors.city ? (
+            <p className="text-xs text-destructive" role="alert">
+              {fieldErrors.city}
+            </p>
+          ) : null}
         </div>
         <div className="space-y-2 sm:col-span-2">
           <Label htmlFor="shelter-address">{ms.fieldAddress}</Label>
@@ -65,13 +74,18 @@ export function MyShelterFormStepLocation({
         </Button>
       </div>
       <div className="space-y-2">
-        <p className="text-sm font-medium text-foreground">{ms.fieldLocation}</p>
+        <p className="text-sm font-medium text-foreground">{ms.fieldLocation} *</p>
         <LocationPicker
           mapHeight="h-64 sm:h-72"
           initialLocation={{ lat: form.lat, lng: form.lng }}
           onLocationSelect={(loc) => setForm((p) => ({ ...p, lat: loc.lat, lng: loc.lng }))}
           onLocationPlaceSync={onPlaceFromMap}
         />
+        {fieldErrors.location ? (
+          <p className="text-xs text-destructive" role="alert">
+            {fieldErrors.location}
+          </p>
+        ) : null}
       </div>
     </div>
   );

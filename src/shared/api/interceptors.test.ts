@@ -13,6 +13,18 @@ describe('formatApiErrorBody', () => {
     ).toBe('Required · Too short');
   });
 
+  it('includes real field names', () => {
+    expect(
+      formatApiErrorBody({ detail: [{ field: 'name', msg: 'Field required' }] }, 'fallback'),
+    ).toBe('name: Field required');
+  });
+
+  it('hides FastAPI query.data body-misparse noise', () => {
+    expect(
+      formatApiErrorBody({ detail: [{ field: 'query.data', msg: 'Field required' }] }, 'Проверьте данные'),
+    ).toBe('Проверьте данные');
+  });
+
   it('returns fallback for unknown shape', () => {
     expect(formatApiErrorBody(null, 'fallback')).toBe('fallback');
   });

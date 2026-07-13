@@ -16,6 +16,7 @@ export interface MyShelterFormStepBasicProps {
   form: ShelterFormState;
   setForm: React.Dispatch<React.SetStateAction<ShelterFormState>>;
   approvedLocked: boolean;
+  fieldErrors?: { name?: string };
 }
 
 export function MyShelterFormStepBasic({
@@ -23,6 +24,7 @@ export function MyShelterFormStepBasic({
   form,
   setForm,
   approvedLocked,
+  fieldErrors = {},
 }: MyShelterFormStepBasicProps) {
   return (
     <>
@@ -34,7 +36,14 @@ export function MyShelterFormStepBasic({
           onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
           disabled={approvedLocked}
           autoComplete="organization"
+          aria-invalid={Boolean(fieldErrors.name)}
+          className={fieldErrors.name ? 'border-destructive' : undefined}
         />
+        {fieldErrors.name ? (
+          <p className="text-xs text-destructive" role="alert">
+            {fieldErrors.name}
+          </p>
+        ) : null}
       </div>
       <div className="space-y-2">
         <Label htmlFor="shelter-kind">{ms.fieldKind}</Label>

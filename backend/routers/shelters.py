@@ -5,7 +5,7 @@ import logging
 import uuid
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Query, Request, status
 from sqlalchemy import delete, func, or_, select
 from sqlalchemy.orm import Session
 
@@ -254,7 +254,7 @@ def get_shelter(
 @limiter.limit("20/minute")
 def create_shelter(
     request: Request,
-    data: ShelterCreate,
+    data: ShelterCreate = Body(...),
     user: User = Depends(require_volunteer_or_admin),
     db: Session = Depends(get_db),
 ):
@@ -312,7 +312,7 @@ def create_shelter(
 def update_shelter(
     request: Request,
     shelter_id: str,
-    data: ShelterUpdate,
+    data: ShelterUpdate = Body(...),
     user: User = Depends(require_volunteer_or_admin),
     db: Session = Depends(get_db),
 ):
