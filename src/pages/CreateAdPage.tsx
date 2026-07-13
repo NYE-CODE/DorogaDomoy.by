@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router';
 import { useAuth } from '@/app/providers/AuthContext';
 import '../../landing/styles/theme-scoped.css';
@@ -29,7 +29,7 @@ export default function CreateAdPage() {
   const { t } = useI18n();
   const navigate = useNavigate();
   const location = useLocation();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const urlPetId = searchParams.get('petId')?.trim() || null;
 
   const [flowStep, setFlowStep] = useState<FlowStep>('scenario');
@@ -66,17 +66,11 @@ export default function CreateAdPage() {
   }, [isLoading, isAuthenticated, openAuthModal]);
 
   useEffect(() => {
-    if (urlPetId) {
-      setSelectedProfilePetId(urlPetId);
-      setScenario('lost');
-      setLostSubflow('owner');
-      setFlowStep('form');
-    } else {
-      setFlowStep('scenario');
-      setScenario(null);
-      setLostSubflow(null);
-      setSelectedProfilePetId(null);
-    }
+    if (!urlPetId) return;
+    setSelectedProfilePetId(urlPetId);
+    setScenario('lost');
+    setLostSubflow('owner');
+    setFlowStep('form');
   }, [urlPetId]);
 
   const createReturnPath = `${location.pathname}${location.search}`;
@@ -122,6 +116,7 @@ export default function CreateAdPage() {
       });
     return () => {
       cancelled = true;
+      setProfilePrefillLoading(false);
     };
   }, [selectedProfilePetId, user?.id, prefillLabels, flowStep]);
 
@@ -162,21 +157,27 @@ export default function CreateAdPage() {
     }
   };
 
-  const handleFormBack = () => {
+  const clearPetIdFromUrl = useCallback(() => {
+    if (!searchParams.get('petId')) return;
+    setSearchParams({}, { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  const handleFormBack = useCallback(() => {
     if (scenario === 'found') {
       setFlowStep('scenario');
       return;
     }
     if (lostSubflow === 'owner') {
+      clearPetIdFromUrl();
       setFlowStep('select-pet');
       return;
     }
     if (lostSubflow === 'helping') {
       setFlowStep('lost-role');
     }
-  };
+  }, [scenario, lostSubflow, clearPetIdFromUrl]);
 
-  const handleCloseForm = () => navigate(getHomePath());
+  const handleCloseForm = useCallback(() => navigate(getHomePath()), [navigate]);
 
   const handleSubmit = async (formData: PetFormData) => {
     if (!user) return;

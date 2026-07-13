@@ -41,9 +41,7 @@ export function useAddEditPetForm() {
   const [aiAnalyzing, setAiAnalyzing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pendingSlotRef = useRef(0);
-  const autoAiTriggeredRef = useRef(false);
   const loadRequestRef = useRef(0);
-  const autoAiTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const profileAiRequestRef = useRef(0);
   const formPhotosRef = useRef(formData.photos);
   formPhotosRef.current = formData.photos;
@@ -84,7 +82,6 @@ export function useAddEditPetForm() {
 
   useEffect(() => {
     return () => {
-      if (autoAiTimerRef.current) clearTimeout(autoAiTimerRef.current);
       profileAiRequestRef.current += 1;
       loadRequestRef.current += 1;
     };
@@ -120,11 +117,8 @@ export function useAddEditPetForm() {
     fileInputRef.current?.click();
   };
 
-  const runProfileAiAnalyze = async (
-    imageOverride?: string,
-    opts?: { isAuto?: boolean; advanceStep?: boolean },
-  ) => {
-    const images = imageOverride ? [imageOverride] : pickPhotosForAi(formPhotosRef.current);
+  const runProfileAiAnalyze = async (opts?: { advanceStep?: boolean }) => {
+    const images = pickPhotosForAi(formPhotosRef.current);
     if (!images.length || aiAnalyzing || isUploadingPhotos) return;
     const reqId = ++profileAiRequestRef.current;
     setAiAnalyzing(true);
@@ -169,8 +163,7 @@ export function useAddEditPetForm() {
         }
         return next;
       });
-      autoAiTriggeredRef.current = true;
-      toast.success(opts?.isAuto ? t.petForm.aiAppliedAuto : t.petForm.aiApplied);
+      toast.success(t.petForm.aiApplied);
       if (opts?.advanceStep && currentStep === 1) setCurrentStep(2);
     } catch (err) {
       const msg = err instanceof Error ? err.message : '';
@@ -197,16 +190,6 @@ export function useAddEditPetForm() {
         return { ...prev, photos: storedPhotosFromSlots(slotsFromStoredPhotos(next)) };
       });
       toast.success(f.toastPhotoAdded);
-      if (slotIndex === 0) {
-        autoAiTriggeredRef.current = false;
-        if (autoAiTimerRef.current) clearTimeout(autoAiTimerRef.current);
-        const uploadedUrl = url;
-        autoAiTimerRef.current = window.setTimeout(() => {
-          autoAiTimerRef.current = null;
-          if (formPhotosRef.current[0] !== uploadedUrl) return;
-          void runProfileAiAnalyze(uploadedUrl, { isAuto: true });
-        }, 600);
-      }
     } catch (error) {
       if (error instanceof PhotoPrepareError) {
         toast.error(
@@ -245,7 +228,7 @@ export function useAddEditPetForm() {
   };
 
   const handleProfileAiAnalyze = () => {
-    void runProfileAiAnalyze(undefined, { isAuto: false });
+    void runProfileAiAnalyze();
   };
 
   const handleNext = () => {
