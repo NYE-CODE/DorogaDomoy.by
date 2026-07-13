@@ -45,6 +45,7 @@ export function PetFormShell({
   renderStepHeaderExternally = false,
   onStepChange,
   prefillPartial = null,
+  aiPhotoAssistEnabled = true,
   closeOnSubmit = true,
 }: PetFormProps) {
   const { user } = useAuth();
@@ -272,6 +273,7 @@ export function PetFormShell({
   }, [t]);
 
   useEffect(() => {
+    if (!aiPhotoAssistEnabled) return;
     const count = formData.photos.length;
     if (count === 0) {
       autoAiTriggeredRef.current = false;
@@ -287,9 +289,10 @@ export function PetFormShell({
       }
     }, 900);
     return () => window.clearTimeout(timer);
-  }, [formData.photos.length, aiAnalyzing, runAiAnalyze]);
+  }, [aiPhotoAssistEnabled, formData.photos.length, aiAnalyzing, runAiAnalyze]);
 
   const handleAiAnalyzePhoto = () => {
+    if (!aiPhotoAssistEnabled) return;
     void runAiAnalyze({ isAuto: false });
   };
 
@@ -338,7 +341,13 @@ export function PetFormShell({
   };
 
   const stepTitles = [t.petForm.step1Title, t.petForm.step2Title, t.petForm.step3Title, t.petForm.step4Title, t.petForm.step5Title];
-  const stepDescs = [t.petForm.step1Desc, t.petForm.step2Desc, t.petForm.step3Desc, t.petForm.step4Desc, t.petForm.step5Desc];
+  const stepDescs = [
+    aiPhotoAssistEnabled ? t.petForm.step1Desc : t.petForm.step1DescFromProfilePet,
+    t.petForm.step2Desc,
+    t.petForm.step3Desc,
+    t.petForm.step4Desc,
+    t.petForm.step5Desc,
+  ];
   const safeStepIndex = Math.min(Math.max(step, 1), totalSteps) - 1;
   const currentStepTitle = stepTitles[safeStepIndex] ?? '';
   const currentStepDesc = stepDescs[safeStepIndex] ?? '';
@@ -416,6 +425,7 @@ export function PetFormShell({
             initialStatus={initialStatus}
             maxPhotos={maxPhotos}
             aiAnalyzing={aiAnalyzing}
+            showAiAssist={aiPhotoAssistEnabled}
             onPhotoUpload={handlePhotoUpload}
             onAiAnalyze={handleAiAnalyzePhoto}
           />
