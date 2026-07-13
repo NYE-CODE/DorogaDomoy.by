@@ -45,6 +45,7 @@ export const mySheltersLocales = {
     fillRequired: 'Укажите название и город',
     fillNameRequired: 'Укажите название организации',
     fillCityRequired: 'Укажите город',
+    fillLocationRequired: 'Укажите точку на карте',
     moderationReason: 'Комментарий модератора',
     hiddenHint: 'Карточка скрыта администратором. Для изменений свяжитесь с поддержкой.',
     approvedEditHint:
@@ -132,6 +133,7 @@ export const mySheltersLocales = {
     fillRequired: 'Пакажыце назву і горад',
     fillNameRequired: 'Пакажыце назву арганізацыі',
     fillCityRequired: 'Пакажыце горад',
+    fillLocationRequired: 'Пакажыце кропку на карце',
     moderationReason: 'Каментар мадэратара',
     hiddenHint: 'Картка схавана адміністратарам. Для змен звяжыцеся з падтрымкай.',
     approvedEditHint:
@@ -219,6 +221,7 @@ export const mySheltersLocales = {
     fillRequired: 'Enter name and city',
     fillNameRequired: 'Enter the organization name',
     fillCityRequired: 'Enter the city',
+    fillLocationRequired: 'Set a point on the map',
     moderationReason: 'Moderator note',
     hiddenHint: 'This listing was hidden by an administrator. Contact support to change it.',
     approvedEditHint:

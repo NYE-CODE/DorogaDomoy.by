@@ -63,6 +63,7 @@ export default function MyShelterFormPage() {
                     form={p.form}
                     setForm={p.setForm}
                     approvedLocked={p.approvedLocked}
+                    fieldErrors={p.fieldErrors}
                   />
                 ) : null}
 
@@ -74,6 +75,7 @@ export default function MyShelterFormPage() {
                     setForm={p.setForm}
                     approvedLocked={p.approvedLocked}
                     mapSyncing={p.mapSyncing}
+                    fieldErrors={p.fieldErrors}
                     onSyncMap={() => void p.syncMapFromAddress()}
                     onPlaceFromMap={p.handlePlaceFromMap}
                   />

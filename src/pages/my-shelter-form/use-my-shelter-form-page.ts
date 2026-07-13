@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type SetStateAction } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
 import { useAuth } from '@/app/providers/AuthContext';
@@ -26,6 +26,12 @@ import {
 } from '@/shared/lib/shelter-org-form';
 import { geocode } from '@/shared/lib/geocode';
 
+export type ShelterFormFieldErrors = {
+  name?: string;
+  city?: string;
+  location?: string;
+};
+
 export function useMyShelterFormPage() {
   const { t } = useI18n();
   const ms = t.myShelters;
@@ -41,6 +47,7 @@ export function useMyShelterFormPage() {
     existingLogo: null,
     existingCover: null,
   }));
+  const [fieldErrors, setFieldErrors] = useState<ShelterFormFieldErrors>({});
   const [editingStatus, setEditingStatus] = useState<ShelterModerationStatus | null>(null);
   const [formStep, setFormStep] = useState(1);
   const [saving, setSaving] = useState(false);
@@ -50,6 +57,30 @@ export function useMyShelterFormPage() {
   const coverInputRef = useRef<HTMLInputElement>(null);
 
   const goList = useCallback(() => navigate('/my-shelters'), [navigate]);
+
+  const updateForm = useCallback((updater: SetStateAction<ShelterFormState>) => {
+    setForm(updater);
+    setFieldErrors({});
+  }, []);
+
+  const validateStep = useCallback(
+    (step: number): ShelterFormFieldErrors => {
+      const errors: ShelterFormFieldErrors = {};
+      if (step === 1 && !form.name.trim()) {
+        errors.name = ms.fillNameRequired;
+      }
+      if (step === 2) {
+        if (!form.city.trim()) {
+          errors.city = ms.fillCityRequired;
+        }
+        if (!Number.isFinite(form.lat) || !Number.isFinite(form.lng)) {
+          errors.location = ms.fillLocationRequired;
+        }
+      }
+      return errors;
+    },
+    [form.city, form.lat, form.lng, form.name, ms.fillCityRequired, ms.fillLocationRequired, ms.fillNameRequired],
+  );
 
   useEffect(() => {
     const path = isCreate ? '/my-shelters/new' : `/my-shelters/edit/${shelterId}`;
@@ -214,8 +245,20 @@ export function useMyShelterFormPage() {
   };
 
   const handleSave = async () => {
-    if (!form.name.trim() || !form.city.trim()) {
-      toast.error(ms.fillRequired);
+    const step1 = validateStep(1);
+    const step2 = validateStep(2);
+    const errors = { ...step1, ...step2 };
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      if (errors.name) {
+        setFormStep(1);
+        toast.error(errors.name);
+      } else if (errors.city || errors.location) {
+        setFormStep(2);
+        toast.error(errors.city || errors.location || ms.fillRequired);
+      } else {
+        toast.error(ms.fillRequired);
+      }
       return;
     }
     const contacts = buildContacts();
@@ -292,25 +335,28 @@ export function useMyShelterFormPage() {
   };
 
   const goFormNext = () => {
-    if (formStep === 1 && !form.name.trim()) {
-      toast.error(ms.fillNameRequired);
+    const errors = validateStep(formStep);
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      toast.error(Object.values(errors)[0]);
       return;
     }
-    if (formStep === 2 && !form.city.trim()) {
-      toast.error(ms.fillCityRequired);
-      return;
-    }
+    setFieldErrors({});
     setFormStep((s) => Math.min(SHELTER_FORM_STEPS, s + 1));
   };
 
-  const goFormBack = () => setFormStep((s) => Math.max(1, s - 1));
+  const goFormBack = () => {
+    setFieldErrors({});
+    setFormStep((s) => Math.max(1, s - 1));
+  };
 
   return {
     t,
     ms,
     isCreate,
     form,
-    setForm,
+    setForm: updateForm,
+    fieldErrors,
     formStep,
     saving,
     bootLoading,

@@ -19,8 +19,17 @@ export function formatApiErrorBody(errBody: unknown, fallback: string): string {
     const parts = detail.flatMap((item) => {
       if (typeof item === 'string') return [item];
       if (item && typeof item === 'object' && 'msg' in item) {
-        const m = (item as { msg?: unknown }).msg;
-        return typeof m === 'string' ? [m] : [];
+        const m = (item as { msg?: unknown; field?: unknown }).msg;
+        const field = (item as { field?: unknown }).field;
+        if (typeof m !== 'string') return [];
+        // Служебная ошибка FastAPI, когда тело запроса не разобралось как Body
+        if (typeof field === 'string' && (field === 'query.data' || field === 'body')) {
+          return [fallback];
+        }
+        if (typeof field === 'string' && field && !field.startsWith('query.')) {
+          return [`${field}: ${m}`];
+        }
+        return [m];
       }
       return [];
     });
