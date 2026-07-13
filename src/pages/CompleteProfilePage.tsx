@@ -10,8 +10,7 @@ import { useAuth } from '@/app/providers/AuthContext';
 import { useI18n } from '@/app/providers/I18nContext';
 import { getHomePath } from '@/shared/lib/home-route';
 import { getSafeReturnPath } from '@/shared/lib/auth-return-path';
-import { shouldShowPetProfileOnboarding } from '@/shared/lib/pet-profile-onboarding';
-import { shouldShowShelterOrgOnboarding } from '@/shared/lib/shelter-org-onboarding';
+import { resolvePostSignupWelcomePath } from '@/shared/lib/post-signup-welcome';
 
 export default function CompleteProfilePage() {
   const { t } = useI18n();
@@ -19,12 +18,18 @@ export default function CompleteProfilePage() {
   const { user, completeProfile, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const locationState = location.state as { fromProtected?: string; suggestPetProfile?: boolean } | null;
+  const locationState = location.state as {
+    fromProtected?: string;
+    suggestPetProfile?: boolean;
+    suggestSignupRole?: 'user' | 'volunteer';
+  } | null;
   const returnPath = getSafeReturnPath(locationState?.fromProtected);
   const suggestPetProfile = Boolean(locationState?.suggestPetProfile);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [signupRole, setSignupRole] = useState<'user' | 'volunteer'>('user');
+  const [signupRole, setSignupRole] = useState<'user' | 'volunteer'>(
+    locationState?.suggestSignupRole === 'volunteer' ? 'volunteer' : 'user',
+  );
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -48,21 +53,18 @@ export default function CompleteProfilePage() {
     }
     setSaving(true);
     try {
-      await completeProfile({
+      const updated = await completeProfile({
         email: email.trim(),
         role: signupRole,
         password: password.trim() || undefined,
       });
       toast.success(cp.success);
-      if (suggestPetProfile && user) {
-        const welcomePath =
-          signupRole === 'volunteer'
-            ? shouldShowShelterOrgOnboarding(user.id)
-              ? '/welcome/shelter-org'
-              : null
-            : shouldShowPetProfileOnboarding(user.id)
-              ? '/welcome/pet-profile'
-              : null;
+      if (suggestPetProfile) {
+        const welcomePath = resolvePostSignupWelcomePath(
+          updated ?? { ...user, role: signupRole },
+          true,
+          signupRole,
+        );
         if (welcomePath) {
           navigate(welcomePath, {
             replace: true,

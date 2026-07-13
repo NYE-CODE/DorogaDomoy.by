@@ -21,7 +21,7 @@ interface AuthContextType {
     email: string;
     role: 'user' | 'volunteer';
     password?: string;
-  }) => Promise<void>;
+  }) => Promise<User>;
   logout: () => Promise<void>;
   updateContacts: (contacts: User['contacts']) => Promise<void>;
   updateProfile: (name: string, email: string, opts?: { role?: 'volunteer' }) => Promise<void>;
@@ -94,6 +94,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }) => {
     const u = await authApi.completeProfile(data);
     setUser(u);
+    return u;
   };
 
   const logout = async () => {

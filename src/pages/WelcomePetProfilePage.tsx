@@ -38,6 +38,16 @@ export default function WelcomePetProfilePage() {
       }
     };
 
+    if (user.role === 'volunteer' || user.role === 'admin' || user.registeredAsVolunteer) {
+      if (!cancelled) {
+        navigate('/welcome/shelter-org', {
+          replace: true,
+          state: returnPath ? { fromProtected: returnPath } : undefined,
+        });
+      }
+      return;
+    }
+
     if (!shouldShowPetProfileOnboarding(user.id)) {
       finish(returnPath ?? getHomePath());
       return;

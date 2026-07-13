@@ -5,7 +5,6 @@ import { useI18n } from '@/app/providers/I18nContext';
 import { MyAdsPage as MyAdsList } from '../../components/my-ads-page';
 import { DeleteReasonModal } from '../../components/delete-reason-modal';
 import { ContactRequiredModal } from '../../components/contact-required-modal';
-import { AuthModal } from '../../components/auth/AuthModal';
 import { featureFlagsApi, instagramApi, petsApi, settingsApi } from '@/shared/api/client';
 import { Pet } from '@/entities/pet/model/types';
 import { maxListingReminderDays } from '@/shared/lib/listing-expiry';
@@ -13,7 +12,7 @@ import { toast } from 'sonner';
 import { getHomePath } from '@/shared/lib/home-route';
 
 export default function MyAdsPageRoute() {
-  const { user, isAuthenticated, openAuthModal, closeAuthModal, isLoading } = useAuth();
+  const { user, isAuthenticated, openAuthModal, isLoading } = useAuth();
   const { t } = useI18n();
   const navigate = useNavigate();
   const location = useLocation();
@@ -225,8 +224,6 @@ export default function MyAdsPageRoute() {
         returnPath={`${location.pathname}${location.search}`}
         onClose={() => setShowContactRequiredModal(false)}
       />
-
-      <AuthModal />
     </>
   );
 }

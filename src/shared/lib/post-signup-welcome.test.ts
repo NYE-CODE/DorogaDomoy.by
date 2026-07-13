@@ -23,6 +23,26 @@ describe('resolvePostSignupWelcomePath', () => {
     ).toBe('/welcome/shelter-org');
   });
 
+  it('prefers signupRole=volunteer even if API user.role is still user', () => {
+    expect(resolvePostSignupWelcomePath(baseUser, true, 'volunteer')).toBe('/welcome/shelter-org');
+  });
+
+  it('uses API volunteer role even if signupRole hint is user', () => {
+    expect(
+      resolvePostSignupWelcomePath(
+        { ...baseUser, role: 'volunteer', registeredAsVolunteer: true },
+        true,
+        'user',
+      ),
+    ).toBe('/welcome/shelter-org');
+  });
+
+  it('treats registeredAsVolunteer as volunteer when role missing', () => {
+    expect(
+      resolvePostSignupWelcomePath({ ...baseUser, registeredAsVolunteer: true }, true),
+    ).toBe('/welcome/shelter-org');
+  });
+
   it('returns null for returning user login', () => {
     expect(resolvePostSignupWelcomePath(baseUser, false)).toBeNull();
   });
