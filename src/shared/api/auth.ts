@@ -160,5 +160,10 @@ export const authApi = {
       clearLegacyToken();
     }
   },
+
+  deleteAccount: async () => {
+    await api<void>('/auth/me', { method: 'DELETE' });
+    clearLegacyToken();
+  },
 };
 

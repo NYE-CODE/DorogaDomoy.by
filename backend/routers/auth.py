@@ -14,6 +14,7 @@ from pydantic import BaseModel, field_validator
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
+from account_deletion import delete_user_account
 from database import get_db
 from models import User, PasswordResetToken
 from schemas import (
@@ -408,6 +409,30 @@ def logout(request: Request):
 @router.get("/me", response_model=UserResponse)
 def me(user: User = Depends(get_current_user_required)):
     return user_to_response(user)
+
+
+@router.delete("/me", status_code=204)
+@limiter.limit("5/minute")
+def delete_me(
+    request: Request,
+    response: Response,
+    user: User = Depends(get_current_user_required),
+    db: Session = Depends(get_db),
+):
+    """Самоудаление аккаунта (Play / GDPR): объявления, питомцы, токены."""
+    reject_cross_site_browser_request(request)
+    try:
+        delete_user_account(db, user)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        logging.exception("Ошибка удаления аккаунта %s: %s", user.id, e)
+        raise HTTPException(
+            status_code=500,
+            detail="Не удалось удалить аккаунт. Попробуйте позже.",
+        ) from e
+    clear_auth_cookie(response)
+    return Response(status_code=204)
 
 
 class UpdateProfileBody(BaseModel):

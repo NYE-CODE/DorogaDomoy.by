@@ -5,7 +5,7 @@ import { useI18n } from '@/app/providers/I18nContext';
 import { MyAdsPage as MyAdsList } from '../../components/my-ads-page';
 import { DeleteReasonModal } from '../../components/delete-reason-modal';
 import { ContactRequiredModal } from '../../components/contact-required-modal';
-import { featureFlagsApi, instagramApi, petsApi, settingsApi } from '@/shared/api/client';
+import { petsApi, settingsApi } from '@/shared/api/client';
 import { Pet } from '@/entities/pet/model/types';
 import { maxListingReminderDays } from '@/shared/lib/listing-expiry';
 import { toast } from 'sonner';
@@ -21,7 +21,6 @@ export default function MyAdsPageRoute() {
   const [dataLoading, setDataLoading] = useState(true);
   const [deletingPet, setDeletingPet] = useState<Pet | null>(null);
   const [showContactRequiredModal, setShowContactRequiredModal] = useState(false);
-  const [instagramBoostEnabled, setInstagramBoostEnabled] = useState(true);
   const [renewPromptWithinDays, setRenewPromptWithinDays] = useState(3);
 
   useEffect(() => {
@@ -30,17 +29,6 @@ export default function MyAdsPageRoute() {
       .then((s) => setRenewPromptWithinDays(maxListingReminderDays(s.listing_reminder_days)))
       .catch((e) => {
         console.warn('[settings] my-ads reminder days', e);
-      });
-  }, []);
-
-  useEffect(() => {
-    featureFlagsApi
-      .get()
-      .then((ff) =>
-        setInstagramBoostEnabled((ff.ff_instagram_boost_stories ?? 'true') === 'true')
-      )
-      .catch((e) => {
-        console.warn("[featureFlags] my-ads", e);
       });
   }, []);
 
@@ -152,43 +140,6 @@ export default function MyAdsPageRoute() {
     }
   };
 
-  const handleBoostPet = async (pet: Pet) => {
-    try {
-      const eligibility = await instagramApi.boostEligibility(pet.id);
-      if (!eligibility.eligible) {
-        if (eligibility.reason === 'too_early') {
-          toast.error(t.common.toasts.boostTooEarly);
-          return;
-        }
-        if (eligibility.reason === 'limit_reached') {
-          const next = eligibility.next_available_at
-            ? new Date(eligibility.next_available_at).toLocaleString('ru-RU')
-            : '';
-          toast.error(
-            next
-              ? t.common.toasts.boostLimitUntil.replace('{date}', next)
-              : t.common.toasts.boostLimitReached,
-          );
-          return;
-        }
-        if (eligibility.reason === 'route_missing') {
-          toast.error(t.common.toasts.boostRouteMissing);
-          return;
-        }
-        if (eligibility.reason === 'feature_disabled') {
-          toast.error(t.common.toasts.boostFeatureDisabled);
-          return;
-        }
-        toast.error(t.common.toasts.boostUnavailable);
-        return;
-      }
-      await instagramApi.createBoostPublication(pet.id);
-      toast.success(t.common.toasts.boostQueued);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t.common.error);
-    }
-  };
-
   return (
     <>
       <MyAdsList
@@ -197,11 +148,7 @@ export default function MyAdsPageRoute() {
         onCreateClick={handleCreateClick}
         onEditPet={(pet) => navigate(`/edit/${pet.id}`)}
         onDeletePet={setDeletingPet}
-        instagramBoostEnabled={instagramBoostEnabled}
         renewPromptWithinDays={renewPromptWithinDays}
-        onBoostPet={(pet) => {
-          void handleBoostPet(pet);
-        }}
         onRenewPet={(pet) => {
           void handleRenewPet(pet);
         }}

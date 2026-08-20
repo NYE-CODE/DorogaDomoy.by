@@ -30,6 +30,8 @@ export interface ProfilePetResponse {
   owner_viber?: string | null;
   /** Привязан ли Telegram у владельца (нужен для кнопки «Я нашёл питомца») */
   owner_telegram_linked?: boolean;
+  /** Владелец может получить сигнал через Telegram и/или push */
+  owner_notify_available?: boolean;
 }
 
 export interface ProfilePetInput {
@@ -56,6 +58,7 @@ export interface ProfilePetFoundSignalResponse {
   accepted: boolean;
   throttled: boolean;
   telegram_sent: boolean;
+  push_sent?: boolean;
   detail: string;
 }
 

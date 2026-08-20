@@ -113,12 +113,6 @@ PROFILE_PET_COLUMNS_TO_ADD = [
     ("updated_at", "DATETIME"),
 ]
 
-INSTAGRAM_PUBLICATION_COLUMNS_TO_ADD = [
-    ("source", "VARCHAR DEFAULT 'auto'"),
-    ("requested_by_user_id", "VARCHAR REFERENCES users(id) ON DELETE SET NULL"),
-    ("requested_at", "DATETIME"),
-]
-
 PARTNER_COLUMNS_TO_ADD = [
     ("is_medallion_partner", "INTEGER DEFAULT 0"),
 ]
@@ -127,6 +121,10 @@ NOTIFICATION_SETTINGS_COLUMNS_TO_ADD = [
     ("notify_similar_matches", "INTEGER DEFAULT 1"),
     ("watch_zone_enabled", "INTEGER DEFAULT 0"),
     ("watch_radius_km", "REAL DEFAULT 5.0"),
+]
+
+PROFILE_PET_SCAN_SIGNAL_COLUMNS_TO_ADD = [
+    ("push_sent", "INTEGER DEFAULT 0"),
 ]
 
 NEW_TABLES = {
@@ -176,6 +174,17 @@ NEW_TABLES = {
             is_read INTEGER DEFAULT 0,
             sent_via VARCHAR DEFAULT 'telegram',
             sent_at DATETIME
+        )
+    """,
+    "device_tokens": """
+        CREATE TABLE device_tokens (
+            id VARCHAR PRIMARY KEY,
+            user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            token VARCHAR NOT NULL UNIQUE,
+            platform VARCHAR DEFAULT 'android',
+            is_active INTEGER DEFAULT 1,
+            created_at DATETIME,
+            updated_at DATETIME
         )
     """,
     "sightings": """
@@ -335,52 +344,8 @@ NEW_TABLES = {
             ip_hash VARCHAR,
             source VARCHAR DEFAULT 'unknown',
             telegram_sent INTEGER DEFAULT 0,
+            push_sent INTEGER DEFAULT 0,
             created_at DATETIME
-        )
-    """,
-    "instagram_accounts": """
-        CREATE TABLE instagram_accounts (
-            id VARCHAR PRIMARY KEY,
-            name VARCHAR NOT NULL,
-            instagram_business_id VARCHAR NOT NULL,
-            facebook_page_id VARCHAR,
-            access_token TEXT,
-            is_active INTEGER DEFAULT 1,
-            created_at DATETIME,
-            updated_at DATETIME
-        )
-    """,
-    "instagram_region_routes": """
-        CREATE TABLE instagram_region_routes (
-            id VARCHAR PRIMARY KEY,
-            region_key VARCHAR NOT NULL UNIQUE,
-            account_id VARCHAR NOT NULL REFERENCES instagram_accounts(id) ON DELETE CASCADE,
-            is_fallback INTEGER DEFAULT 0,
-            created_at DATETIME,
-            updated_at DATETIME
-        )
-    """,
-    "instagram_publications": """
-        CREATE TABLE instagram_publications (
-            id VARCHAR PRIMARY KEY,
-            pet_id VARCHAR NOT NULL REFERENCES pets(id) ON DELETE CASCADE,
-            account_id VARCHAR REFERENCES instagram_accounts(id) ON DELETE SET NULL,
-            initiated_by VARCHAR REFERENCES users(id) ON DELETE SET NULL,
-            region_key VARCHAR,
-            mode VARCHAR DEFAULT 'auto',
-            source VARCHAR DEFAULT 'auto',
-            requested_by_user_id VARCHAR REFERENCES users(id) ON DELETE SET NULL,
-            requested_at DATETIME,
-            format VARCHAR DEFAULT 'story',
-            status VARCHAR DEFAULT 'pending',
-            attempts INTEGER DEFAULT 0,
-            last_error TEXT,
-            external_media_id VARCHAR,
-            idempotency_key VARCHAR NOT NULL UNIQUE,
-            payload JSON DEFAULT '{}',
-            created_at DATETIME,
-            updated_at DATETIME,
-            published_at DATETIME
         )
     """,
     "points_transactions": """
@@ -469,10 +434,10 @@ def migrate(conn):
         ),
         ("users", USER_COLUMNS_TO_ADD),
         ("profile_pets", PROFILE_PET_COLUMNS_TO_ADD),
-        ("instagram_publications", INSTAGRAM_PUBLICATION_COLUMNS_TO_ADD),
         ("partners", PARTNER_COLUMNS_TO_ADD),
         ("shelter_pet_details", SHELTER_PET_DETAILS_COLUMNS_TO_ADD),
         ("notification_settings", NOTIFICATION_SETTINGS_COLUMNS_TO_ADD),
+        ("profile_pet_scan_signals", PROFILE_PET_SCAN_SIGNAL_COLUMNS_TO_ADD),
     ]:
         try:
             existing = get_existing_columns(conn, table)
@@ -565,6 +530,8 @@ PERFORMANCE_INDEXES = [
         "CREATE INDEX IF NOT EXISTS ix_notifications_user_pet "
         "ON notifications (user_id, pet_id)"
     ),
+    "CREATE INDEX IF NOT EXISTS ix_device_tokens_user_id ON device_tokens (user_id)",
+    "CREATE INDEX IF NOT EXISTS ix_device_tokens_user_active ON device_tokens (user_id, is_active)",
     (
         "CREATE INDEX IF NOT EXISTS ix_sightings_pet_reporter_created "
         "ON sightings (pet_id, reporter_id, created_at)"
@@ -576,14 +543,6 @@ PERFORMANCE_INDEXES = [
     "CREATE INDEX IF NOT EXISTS ix_sightings_pet_seen_at ON sightings (pet_id, seen_at DESC)",
     "CREATE UNIQUE INDEX IF NOT EXISTS ix_users_helper_code ON users (helper_code)",
     "CREATE INDEX IF NOT EXISTS ix_points_transactions_user_id ON points_transactions (user_id)",
-    "CREATE INDEX IF NOT EXISTS ix_instagram_accounts_business_id ON instagram_accounts (instagram_business_id)",
-    "CREATE INDEX IF NOT EXISTS ix_instagram_routes_account_id ON instagram_region_routes (account_id)",
-    "CREATE INDEX IF NOT EXISTS ix_instagram_publications_status ON instagram_publications (status)",
-    "CREATE INDEX IF NOT EXISTS ix_instagram_publications_pet_id ON instagram_publications (pet_id)",
-    "CREATE INDEX IF NOT EXISTS ix_instagram_publications_account_id ON instagram_publications (account_id)",
-    "CREATE INDEX IF NOT EXISTS ix_instagram_publications_region_key ON instagram_publications (region_key)",
-    "CREATE INDEX IF NOT EXISTS ix_instagram_publications_source_requested ON instagram_publications (source, requested_by_user_id, created_at)",
-    "CREATE UNIQUE INDEX IF NOT EXISTS ix_instagram_publications_idempotency_key ON instagram_publications (idempotency_key)",
     "CREATE INDEX IF NOT EXISTS ix_pets_shelter_id ON pets (shelter_id)",
     "CREATE INDEX IF NOT EXISTS ix_pets_profile_pet_id ON pets (profile_pet_id)",
     "CREATE INDEX IF NOT EXISTS ix_pets_pet_scope ON pets (pet_scope)",

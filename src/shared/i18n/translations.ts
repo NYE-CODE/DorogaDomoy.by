@@ -33,7 +33,6 @@ import { myAdsLocales } from './myAds';
 import { partnerAdsLocales } from './partnerAds';
 import { createAdLocales } from './createAd';
 import { similarPetsLocales } from './similarPets';
-import { reunionLocales } from './reunion';
 import { userProfileLocales } from './userProfile';
 import { profileLocales } from './profile';
 import { authLocales } from './auth';
@@ -41,7 +40,6 @@ import { mySheltersLocales } from './myShelters';
 import { petDetailLocales } from './petDetail';
 import { petFormLocales } from './petForm';
 import { myPetsLocales } from './myPets';
-import { matchLocales } from './match';
 import { landingLocales } from './landing';
 
 export type Locale = 'ru' | 'be' | 'en';
@@ -65,11 +63,9 @@ export const translations = {
     petCard: petCardLocales.ru,
     petForm: petFormLocales.ru,
     similarPets: similarPetsLocales.ru,
-    reunion: reunionLocales.ru,
     petDetail: petDetailLocales.ru,
     sightings: sightingsLocales.ru,
     locationPicker: locationPickerLocales.ru,
-    match: matchLocales.ru,
     petTraits: petTraitsLocales.ru,
     filters: filtersLocales.ru,
     myAds: myAdsLocales.ru,
@@ -112,11 +108,9 @@ export const translations = {
     petCard: petCardLocales.be,
     petForm: petFormLocales.be,
     similarPets: similarPetsLocales.be,
-    reunion: reunionLocales.be,
     petDetail: petDetailLocales.be,
     sightings: sightingsLocales.be,
     locationPicker: locationPickerLocales.be,
-    match: matchLocales.be,
     petTraits: petTraitsLocales.be,
     filters: filtersLocales.be,
     myAds: myAdsLocales.be,
@@ -159,11 +153,9 @@ export const translations = {
     petCard: petCardLocales.en,
     petForm: petFormLocales.en,
     similarPets: similarPetsLocales.en,
-    reunion: reunionLocales.en,
     petDetail: petDetailLocales.en,
     sightings: sightingsLocales.en,
     locationPicker: locationPickerLocales.en,
-    match: matchLocales.en,
     petTraits: petTraitsLocales.en,
     filters: filtersLocales.en,
     myAds: myAdsLocales.en,

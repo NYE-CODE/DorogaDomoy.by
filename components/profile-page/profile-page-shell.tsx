@@ -76,7 +76,9 @@ export default function ProfilePage() {
                     showConfirmPw={p.showConfirmPw}
                     setShowConfirmPw={p.setShowConfirmPw}
                     isSavingPassword={p.isSavingPassword}
+                    isDeletingAccount={p.isDeletingAccount}
                     onSubmit={(e) => void p.handleSavePassword(e)}
+                    onDeleteAccount={() => void p.handleDeleteAccount()}
                   />
                 ) : null}
 

@@ -9,7 +9,6 @@ import { landingPetsFeatureLocales } from './landing/petsFeature';
 import { landingAnnouncementsLocales } from './landing/announcements';
 import { landingShelterPetsLocales } from './landing/shelterPets';
 import { landingBlogLocales } from './landing/blog';
-import { landingGuidesLocales } from './landing/guides';
 import { landingSheltersLocales } from './landing/shelters';
 import { landingHeaderLocales } from './landing/header';
 import { landingFooterLocales } from './landing/footer';
@@ -26,7 +25,6 @@ export const landingLocales = {
     announcements: landingAnnouncementsLocales.ru,
     shelterPets: landingShelterPetsLocales.ru,
     blog: landingBlogLocales.ru,
-    guides: landingGuidesLocales.ru,
     shelters: landingSheltersLocales.ru,
     header: landingHeaderLocales.ru,
     footer: landingFooterLocales.ru,
@@ -42,7 +40,6 @@ export const landingLocales = {
     announcements: landingAnnouncementsLocales.be,
     shelterPets: landingShelterPetsLocales.be,
     blog: landingBlogLocales.be,
-    guides: landingGuidesLocales.be,
     shelters: landingSheltersLocales.be,
     header: landingHeaderLocales.be,
     footer: landingFooterLocales.be,
@@ -58,7 +55,6 @@ export const landingLocales = {
     announcements: landingAnnouncementsLocales.en,
     shelterPets: landingShelterPetsLocales.en,
     blog: landingBlogLocales.en,
-    guides: landingGuidesLocales.en,
     shelters: landingSheltersLocales.en,
     header: landingHeaderLocales.en,
     footer: landingFooterLocales.en,

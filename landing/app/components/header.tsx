@@ -1,4 +1,4 @@
-import { MapPin, User, Settings, FileText, Shield, LogOut, ChevronDown, PawPrint, Menu, Heart, Building2, CirclePlay } from "lucide-react";
+import { MapPin, User, Settings, FileText, Shield, LogOut, ChevronDown, PawPrint, Menu, Heart, Building2 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router";
 import { Button } from "./ui/button";
@@ -168,10 +168,6 @@ export function Header(props: HeaderProps = {}) {
                         <button type="button" onClick={() => { navigate("/blog"); setIsProfileOpen(false); trackHeaderNavClick("blog_profile_menu"); }} className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-muted">
                           <FileText size={18} className="text-muted-foreground" />
                           <span className="text-foreground">{t.landing.header.blog}</span>
-                        </button>
-                        <button type="button" onClick={() => { navigate("/guides"); setIsProfileOpen(false); trackHeaderNavClick("guides_profile_menu"); }} className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-muted">
-                          <CirclePlay size={18} className="text-muted-foreground" />
-                          <span className="text-foreground">{t.header.guides}</span>
                         </button>
                         {user.role === "admin" && (
                           <>

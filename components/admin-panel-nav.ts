@@ -13,10 +13,8 @@ export type AdminTab =
   | 'partnerAds'
   | 'helpSection'
   | 'featureFlags'
-  | 'instagram'
   | 'telegramBlog'
   | 'faq'
-  | 'guides'
   | 'settings'
   | 'sheltersCatalog'
   | 'sheltersModeration';
@@ -36,7 +34,6 @@ export const TAB_PRIMARY: Record<AdminTab, AdminPrimarySection> = {
   partnerAds: 'landing',
   helpSection: 'landing',
   faq: 'landing',
-  guides: 'landing',
   users: 'petSearch',
   profilePets: 'petSearch',
   pets: 'petSearch',
@@ -49,17 +46,16 @@ export const TAB_PRIMARY: Record<AdminTab, AdminPrimarySection> = {
   blogCategories: 'blog',
   telegramBlog: 'blog',
   featureFlags: 'administration',
-  instagram: 'administration',
   settings: 'administration',
 };
 
 export const TABS_BY_PRIMARY: Record<AdminPrimarySection, AdminTab[]> = {
   dashboard: ['dashboard'],
-  landing: ['media', 'partners', 'partnerAds', 'helpSection', 'faq', 'guides'],
+  landing: ['media', 'partners', 'partnerAds', 'helpSection', 'faq'],
   petSearch: ['users', 'profilePets', 'pets', 'moderation', 'reports', 'rewards'],
   shelter: ['sheltersCatalog', 'sheltersModeration'],
   blog: ['blog', 'blogCategories', 'telegramBlog'],
-  administration: ['featureFlags', 'instagram', 'settings'],
+  administration: ['featureFlags', 'settings'],
 };
 
 export const ALL_ADMIN_TABS = Object.keys(TAB_PRIMARY) as AdminTab[];
