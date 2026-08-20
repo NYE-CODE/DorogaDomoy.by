@@ -402,6 +402,18 @@ NEW_TABLES = {
             UNIQUE (user_id, shelter_id)
         )
     """,
+    "device_tokens": """
+        CREATE TABLE device_tokens (
+            id VARCHAR PRIMARY KEY,
+            user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            token VARCHAR NOT NULL,
+            platform VARCHAR NOT NULL DEFAULT 'android',
+            is_active INTEGER NOT NULL DEFAULT 1,
+            created_at DATETIME,
+            updated_at DATETIME,
+            UNIQUE (token)
+        )
+    """,
 }
 
 
@@ -562,6 +574,8 @@ PERFORMANCE_INDEXES = [
     "CREATE INDEX IF NOT EXISTS ix_shelter_pet_details_published ON shelter_pet_details (is_published)",
     "CREATE INDEX IF NOT EXISTS ix_shelter_subscriptions_shelter_id ON shelter_subscriptions (shelter_id)",
     "CREATE INDEX IF NOT EXISTS ix_shelter_subscriptions_user_id ON shelter_subscriptions (user_id)",
+    "CREATE INDEX IF NOT EXISTS ix_device_tokens_user_id ON device_tokens (user_id)",
+    "CREATE INDEX IF NOT EXISTS ix_device_tokens_user_active ON device_tokens (user_id, is_active)",
 ]
 
 

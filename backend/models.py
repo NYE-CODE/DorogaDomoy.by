@@ -257,15 +257,15 @@ class NotificationSettings(Base):
 
 
 class DeviceToken(Base):
-    """FCM / APNs device tokens for mobile push."""
+    """FCM device tokens for mobile push."""
     __tablename__ = "device_tokens"
     __table_args__ = (UniqueConstraint("token", name="uq_device_tokens_token"),)
 
     id = Column(String, primary_key=True, index=True)
     user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     token = Column(String, nullable=False)
-    platform = Column(String, default="android")  # android | ios | web
-    is_active = Column(Boolean, default=True)
+    platform = Column(String, nullable=False, default="android")
+    is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
