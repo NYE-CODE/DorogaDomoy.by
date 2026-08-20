@@ -41,7 +41,6 @@ from routers.sightings import (
 from auth import get_current_user, get_current_user_required, require_admin
 from platform_settings import DEFAULT_MAX_PHOTOS, get_bool_setting, get_int_setting, get_settings_with_defaults
 from integrations.telegram import send_notifications_for_pet, send_pending_moderation_alert_sync
-from instagram_publications import enqueue_autopublish_for_pet
 from listing_lifecycle import (
     LISTING_EXPIRED_ARCHIVE_REASON,
     compute_listing_expires_at,
@@ -57,6 +56,18 @@ from rate_limit import limiter
 from ttl_cache import statistics_cache_get, statistics_cache_set
 
 LIST_PETS_DEFAULT_LIMIT = 500
+
+
+def _try_instagram_autopublish(db: Session, pet, user_id: str) -> None:
+    """Instagram-очередь опциональна: на проде модуля может не быть."""
+    try:
+        from instagram_publications import enqueue_autopublish_for_pet
+    except ImportError:
+        return
+    try:
+        enqueue_autopublish_for_pet(db, pet=pet, initiated_by=user_id)
+    except Exception as e:
+        logging.exception("Instagram autopublish enqueue failed for pet %s: %s", pet.id, e)
 
 
 def _moderation_required(db: Session) -> bool:
@@ -759,10 +770,7 @@ async def create_pet(
     if initial_status == "approved":
         background_tasks.add_task(_send_notifications_bg, pet.id)
         _enqueue_photo_embedding(background_tasks, pet.id)
-        try:
-            enqueue_autopublish_for_pet(db, pet=pet, initiated_by=user.id)
-        except Exception as e:
-            logging.exception("Instagram autopublish enqueue failed for pet %s: %s", pet.id, e)
+        _try_instagram_autopublish(db, pet, user.id)
     elif initial_status == "pending":
         background_tasks.add_task(send_pending_moderation_alert_sync, pet.id)
 
@@ -947,10 +955,7 @@ async def update_pet(
     if old_moderation_status != "approved" and pet.moderation_status == "approved":
         background_tasks.add_task(_send_notifications_bg, pet.id)
         _enqueue_photo_embedding(background_tasks, pet.id)
-        try:
-            enqueue_autopublish_for_pet(db, pet=pet, initiated_by=user.id)
-        except Exception as e:
-            logging.exception("Instagram autopublish enqueue failed for pet %s: %s", pet.id, e)
+        _try_instagram_autopublish(db, pet, user.id)
     elif photos_changed and pet.moderation_status == "approved":
         _enqueue_photo_embedding(background_tasks, pet.id)
 
