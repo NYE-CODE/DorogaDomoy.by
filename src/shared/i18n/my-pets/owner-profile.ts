@@ -39,7 +39,7 @@ export const myPetsOwnerProfileLocales = {
     needAuth: 'Войдите, чтобы просмотреть профиль питомца',
     telegramFoundSignalTitle: 'Уведомления о QR / NFC',
     telegramFoundSignalHint:
-      'Когда кто-то нажмёт на публичной странице «Я нашёл этого питомца», вам придёт сообщение в Telegram. Подключите Telegram во вкладке «Уведомления» в профиле.',
+      'Когда кто-то нажмёт на публичной странице «Я нашёл этого питомца», вам придёт уведомление в Telegram и/или push в приложении. Подключите Telegram во вкладке «Уведомления» или включите push в мобильном приложении.',
     linkTelegramCta: 'Подключить Telegram',
     registrationTitle: 'Госучёт (жетон)',
     registrationAuthority: 'Орган учёта',
@@ -84,7 +84,7 @@ export const myPetsOwnerProfileLocales = {
     needAuth: 'Увайдзіце, каб праглядзець профіль жывёлы',
     telegramFoundSignalTitle: 'Апавяшчэнні пра QR / NFC',
     telegramFoundSignalHint:
-      'Калі хто-небудзь націсне на публічнай старонцы «Я знайшоў гэту жывёлу», вы атрымаеце паведамленне ў Telegram. Падлучыце Telegram на ўкладцы «Апавяшчэнні» ў профілі.',
+      'Калі хто-небудзь націсне на публічнай старонцы «Я знайшоў гэту жывёлу», вы атрымаеце апавяшчэнне ў Telegram і/або push у дадатку. Падлучыце Telegram на ўкладцы «Апавяшчэнні» або ўключыце push у мабільным дадатку.',
     linkTelegramCta: 'Падлучыць Telegram',
     registrationTitle: 'Дзяржулік (жэтон)',
     registrationAuthority: 'Орган уліку',
@@ -129,7 +129,7 @@ export const myPetsOwnerProfileLocales = {
     needAuth: 'Sign in to view this pet profile',
     telegramFoundSignalTitle: 'QR / NFC notifications',
     telegramFoundSignalHint:
-      'When someone taps “I found this pet” on the public page, you’ll get a Telegram message. Link Telegram in Profile → Notifications.',
+      'When someone taps “I found this pet” on the public page, you’ll get a Telegram and/or push notification. Link Telegram in Profile → Notifications, or enable push in the mobile app.',
     linkTelegramCta: 'Link Telegram',
     registrationTitle: 'State registration (token)',
     registrationAuthority: 'Registering authority',

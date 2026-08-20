@@ -9,7 +9,7 @@ from typing import Optional
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from models import Notification, Pet, User
+from models import Notification, NotificationSettings, Pet, User
 from platform_settings import get_int_setting
 from telegram_bot import SITE_URL, _send_telegram_message_sync, ANIMAL_TYPE_LABELS, STATUS_LABELS
 from time_utils import utc_now
@@ -147,7 +147,12 @@ def _send_listing_telegram(
     message: str,
     period_start: datetime,
 ) -> bool:
-    if not user.telegram_id or user.is_blocked:
+    if user.is_blocked:
+        return False
+    settings = db.scalar(
+        select(NotificationSettings).where(NotificationSettings.user_id == user.id)
+    )
+    if settings and not settings.notifications_enabled:
         return False
     if _reminder_already_sent(
         db,
@@ -157,22 +162,44 @@ def _send_listing_telegram(
         period_start=period_start,
     ):
         return False
-    keyboard = {
-        "inline_keyboard": [
-            [{"text": "Продлить публикацию", "url": f"{SITE_URL}/my-ads"}],
-            [{"text": "Открыть объявление", "url": f"{SITE_URL}/pet/{pet.id}"}],
-        ]
-    }
-    ok = _send_telegram_message_sync(user.telegram_id, message, reply_markup=keyboard)
+
+    channels: list[str] = []
+    if user.telegram_id:
+        keyboard = {
+            "inline_keyboard": [
+                [{"text": "Продлить публикацию", "url": f"{SITE_URL}/my-ads"}],
+                [{"text": "Открыть объявление", "url": f"{SITE_URL}/pet/{pet.id}"}],
+            ]
+        }
+        if _send_telegram_message_sync(user.telegram_id, message, reply_markup=keyboard):
+            channels.append("telegram")
+
+    try:
+        from push_delivery import push_to_user
+
+        if push_to_user(
+            db,
+            user_id=user.id,
+            title="Срок объявления",
+            message=message,
+            data={"pet_id": pet.id, "type": notif_type},
+        ):
+            channels.append("fcm")
+    except Exception:
+        logger.exception("FCM listing reminder failed for user %s pet %s", user.id, pet.id)
+
+    if not channels:
+        return False
+
     _record_notification(
         db,
         user_id=user.id,
         pet_id=pet.id,
         notif_type=notif_type,
         message=message,
-        sent_via="telegram" if ok else "failed",
+        sent_via=",".join(channels),
     )
-    return ok
+    return True
 
 
 def _ensure_expires_at(db: Session, pet: Pet, now: datetime, reminder_days: tuple[int, ...]) -> None:

@@ -12,7 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
 
 from database import get_db
-from models import Pet, ProfilePet, ProfilePetScanSignal, NotificationSettings, User
+from models import Pet, ProfilePet, ProfilePetScanSignal, NotificationSettings, User, DeviceToken
 from schemas import (
     ProfilePetCreate,
     ProfilePetUpdate,
@@ -88,12 +88,59 @@ def upload_profile_pet_photo(
     return {"photo": f"/uploads/{filename}"}
 
 
-def _to_response(p: ProfilePet, *, include_owner_contacts: bool = True) -> ProfilePetResponse:
+def _user_has_active_push(db: Session, user_id: str) -> bool:
+    return (
+        db.scalar(
+            select(DeviceToken.id).where(
+                DeviceToken.user_id == user_id,
+                DeviceToken.is_active.is_(True),
+            ).limit(1)
+        )
+        is not None
+    )
+
+
+def _active_push_user_ids(db: Session, user_ids: set[str]) -> set[str]:
+    if not user_ids:
+        return set()
+    return set(
+        db.scalars(
+            select(DeviceToken.user_id).where(
+                DeviceToken.user_id.in_(user_ids),
+                DeviceToken.is_active.is_(True),
+            ).distinct()
+        ).all()
+    )
+
+
+def _owner_can_receive_found_signal(db: Session, owner: User | None) -> bool:
+    if not owner:
+        return False
+    if owner.telegram_id:
+        return True
+    return _user_has_active_push(db, owner.id)
+
+
+def _to_response(
+    p: ProfilePet,
+    *,
+    db: Session | None = None,
+    include_owner_contacts: bool = True,
+    expose_channel_details: bool | None = None,
+    push_user_ids: set[str] | None = None,
+) -> ProfilePetResponse:
     owner: User | None = p.owner
     contacts = (owner.contacts or {}) if owner else {}
-    city = None
-    if contacts:
-        pass
+    tg_linked = bool(owner and owner.telegram_id)
+    notify_ok = tg_linked
+    if not notify_ok and owner is not None:
+        if push_user_ids is not None:
+            notify_ok = owner.id in push_user_ids
+        elif db is not None:
+            notify_ok = _user_has_active_push(db, owner.id)
+    # Default: channel breakdown only for owner/admin views (same gate as contacts).
+    if expose_channel_details is None:
+        expose_channel_details = include_owner_contacts
     return ProfilePetResponse(
         id=p.id,
         owner_id=p.owner_id,
@@ -121,7 +168,8 @@ def _to_response(p: ProfilePet, *, include_owner_contacts: bool = True) -> Profi
         owner_email=owner.email if owner and include_owner_contacts else None,
         owner_city=None,
         owner_viber=contacts.get("viber") if include_owner_contacts else None,
-        owner_telegram_linked=bool(owner and owner.telegram_id),
+        owner_telegram_linked=tg_linked if expose_channel_details else False,
+        owner_notify_available=notify_ok,
     )
 
 
@@ -145,9 +193,19 @@ def list_profile_pets(
     )
     if owner_id:
         stmt = stmt.where(ProfilePet.owner_id == owner_id)
+    pets = list(db.scalars(stmt).all())
+    push_user_ids = _active_push_user_ids(
+        db,
+        {p.owner_id for p in pets if p.owner and not p.owner.telegram_id},
+    )
     return [
-        _to_response(p, include_owner_contacts=include_owner_contacts)
-        for p in db.scalars(stmt).all()
+        _to_response(
+            p,
+            db=db,
+            include_owner_contacts=include_owner_contacts,
+            push_user_ids=push_user_ids,
+        )
+        for p in pets
     ]
 
 
@@ -156,13 +214,16 @@ def list_my_profile_pets(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user_required),
 ):
-    pets = db.scalars(
-        select(ProfilePet)
-        .options(joinedload(ProfilePet.owner))
-        .where(ProfilePet.owner_id == user.id)
-        .order_by(ProfilePet.created_at.desc())
-    ).all()
-    return [_to_response(p) for p in pets]
+    pets = list(
+        db.scalars(
+            select(ProfilePet)
+            .options(joinedload(ProfilePet.owner))
+            .where(ProfilePet.owner_id == user.id)
+            .order_by(ProfilePet.created_at.desc())
+        ).all()
+    )
+    push_user_ids = _active_push_user_ids(db, {user.id} if not user.telegram_id else set())
+    return [_to_response(p, db=db, push_user_ids=push_user_ids) for p in pets]
 
 
 @router.get("/{pet_id}", response_model=ProfilePetResponse)
@@ -177,7 +238,8 @@ def get_profile_pet(
     )
     if not p:
         raise HTTPException(status_code=404, detail="Профиль питомца не найден")
-    return _to_response(p)
+    # Public card shows contacts for finders, but not which notify channel the owner uses.
+    return _to_response(p, db=db, include_owner_contacts=True, expose_channel_details=False)
 
 
 def _normalize_profile_pet_photos(raw: list[str] | None) -> list[str]:
@@ -226,7 +288,7 @@ def create_profile_pet(
     db.add(pet)
     db.commit()
     db.refresh(pet)
-    return _to_response(pet)
+    return _to_response(pet, db=db)
 
 
 @router.patch("/{pet_id}", response_model=ProfilePetResponse)
@@ -253,7 +315,7 @@ def update_profile_pet(
     pet.updated_at = utc_now()
     db.commit()
     db.refresh(pet)
-    return _to_response(pet)
+    return _to_response(pet, db=db)
 
 
 @router.post("/{pet_id}/found-signal", response_model=ProfilePetFoundSignalResponse)
@@ -271,10 +333,13 @@ def send_found_signal(
         raise HTTPException(status_code=404, detail="Профиль питомца не найден")
 
     owner = db.scalar(select(User).where(User.id == pet.owner_id))
-    if not owner or not owner.telegram_id:
+    if not _owner_can_receive_found_signal(db, owner):
         raise HTTPException(
             status_code=400,
-            detail="У владельца не подключён Telegram — уведомление о находке недоступно. Свяжитесь по контактам на странице.",
+            detail=(
+                "У владельца нет канала уведомлений (Telegram или push) — "
+                "свяжитесь по контактам на странице."
+            ),
         )
 
     if current_user and current_user.id == pet.owner_id:
@@ -312,6 +377,7 @@ def send_found_signal(
             accepted=True,
             throttled=True,
             telegram_sent=False,
+            push_sent=False,
             detail="cooldown",
         )
 
@@ -323,6 +389,7 @@ def send_found_signal(
         ip_hash=ip_hash if not reporter_id else None,
         source=src,
         telegram_sent=False,
+        push_sent=False,
         created_at=utc_now(),
     )
     db.add(signal)
@@ -337,13 +404,18 @@ def send_found_signal(
         should_send = False
 
     if should_send:
+        # Deliver off the request path (Telegram + FCM can take several seconds).
         background_tasks.add_task(send_profile_pet_signal_sync, signal.id, pet.id)
+        detail = "queued"
+    else:
+        detail = "notifications_disabled"
 
     return ProfilePetFoundSignalResponse(
         accepted=True,
         throttled=False,
-        telegram_sent=bool(should_send),
-        detail="ok",
+        telegram_sent=False,
+        push_sent=False,
+        detail=detail,
     )
 
 

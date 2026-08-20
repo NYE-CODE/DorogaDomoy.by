@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router';
 import {
   Phone,
@@ -61,15 +61,25 @@ export default function PublicPetProfilePage() {
       setLoading(false);
       return;
     }
+    let cancelled = false;
     setLoading(true);
     setNotFound(false);
     setPet(null);
     setMainPhotoIndex(0);
     profilePetsApi
       .get(id)
-      .then((p) => setPet(p))
-      .catch(() => setNotFound(true))
-      .finally(() => setLoading(false));
+      .then((p) => {
+        if (!cancelled) setPet(p);
+      })
+      .catch(() => {
+        if (!cancelled) setNotFound(true);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   useEffect(() => {
@@ -148,7 +158,7 @@ export default function PublicPetProfilePage() {
   const ownerEmail = (pet.owner_email ?? '').trim();
   const ownerCity = (pet.owner_city ?? '').trim();
   const ownerViber = (pet.owner_viber ?? '').trim();
-  const showFoundSignalCta = pet.owner_telegram_linked === true;
+  const showFoundSignalCta = pet.owner_notify_available === true;
 
   const handleFoundSignal = async () => {
     if (!id || sendingFoundSignal) return;

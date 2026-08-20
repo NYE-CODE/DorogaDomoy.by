@@ -33,7 +33,6 @@ export default function ShelterDetailPage() {
                 row={p.row}
                 s={p.s}
                 logo={p.logo}
-                cover={p.cover}
                 subCount={p.subCount}
                 subLoading={p.subLoading}
                 subscribed={p.subscribed}

@@ -64,7 +64,6 @@ def init_db():
     зарегистрировались в ``Base.metadata`` (см. ``main`` / ``seed``).
     """
     Base.metadata.create_all(bind=engine)
-    _ensure_instagram_publications_columns()
     _ensure_bounty_and_helper_columns()
     _ensure_shelters_table()
     _ensure_shelter_pet_details_table()
@@ -97,34 +96,6 @@ def _run_sqlite_schema_migrations() -> None:
             conn.close()
     except Exception:
         logger.exception("Startup migrate_schema failed")
-
-
-def _ensure_instagram_publications_columns() -> None:
-    """Best-effort schema compatibility for older SQLite DBs.
-
-    Some existing dev/prod databases may miss newly added columns because
-    SQLAlchemy `create_all` does not alter existing tables.
-    """
-    if not SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
-        return
-    required_columns = {
-        "source": "VARCHAR DEFAULT 'auto'",
-        "requested_by_user_id": "VARCHAR",
-        "requested_at": "DATETIME",
-    }
-    with engine.begin() as conn:
-        table_exists = conn.execute(
-            text("SELECT name FROM sqlite_master WHERE type='table' AND name='instagram_publications'")
-        ).fetchone()
-        if not table_exists:
-            return
-        rows = conn.execute(text("PRAGMA table_info(instagram_publications)")).fetchall()
-        existing = {row[1] for row in rows}
-        for col_name, col_type in required_columns.items():
-            if col_name in existing:
-                continue
-            conn.execute(text(f"ALTER TABLE instagram_publications ADD COLUMN {col_name} {col_type}"))
-            logger.warning("Auto-migrated column instagram_publications.%s", col_name)
 
 
 def _ensure_bounty_and_helper_columns() -> None:

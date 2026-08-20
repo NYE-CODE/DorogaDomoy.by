@@ -1,5 +1,5 @@
 ﻿import { useEffect, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 import { Mail, Lock, User as UserIcon, ArrowRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useI18n } from '../../context/I18nContext';
@@ -233,13 +233,12 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
                 <div className="mb-1.5 flex items-center justify-between">
                   <label className="block text-sm font-medium text-foreground">{t.auth.password}</label>
                   {mode === 'login' && (
-                    <Link
-                      to="/forgot-password"
-                      onClick={handleClose}
-                      className="text-xs font-medium text-primary hover:underline"
+                    <span
+                      className="cursor-not-allowed text-xs font-medium text-muted-foreground"
+                      title={t.auth.forgotPasswordDisabled}
                     >
-                      {t.auth.forgotPasswordLink}
-                    </Link>
+                      {t.auth.forgotPasswordDisabled}
+                    </span>
                   )}
                 </div>
                 <div className="relative">

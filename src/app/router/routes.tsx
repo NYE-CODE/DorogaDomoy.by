@@ -1,6 +1,11 @@
 import { lazy } from 'react';
-import { Route } from 'react-router';
+import { Navigate, Route, useParams } from 'react-router';
 import { RequireAdmin, RequireAuth, RequireVolunteer } from '@/app/router/guards';
+
+function RedirectToPetMatch() {
+  const { matchId } = useParams();
+  return <Navigate to={matchId ? `/pet/${matchId}` : '/search'} replace />;
+}
 
 const LandingPage = lazy(() => import('@/pages/LandingPage'));
 const SearchPage = lazy(() => import('@/pages/SearchPage'));
@@ -13,7 +18,6 @@ const AdminPage = lazy(() => import('@/pages/AdminPage'));
 const MyAdsPageRoute = lazy(() => import('@/pages/MyAdsPage'));
 const CreateAdPage = lazy(() => import('@/pages/CreateAdPage'));
 const CreateAdSuccessPage = lazy(() => import('@/pages/CreateAdSuccessPage'));
-const ReunionMatchPage = lazy(() => import('@/pages/ReunionMatchPage'));
 const EditAdPage = lazy(() => import('@/pages/EditAdPage'));
 const SettingsPageRoute = lazy(() => import('@/pages/SettingsPage'));
 const MyPetsPageRoute = lazy(() => import('@/pages/MyPetsPage'));
@@ -23,11 +27,8 @@ const PublicPetProfilePage = lazy(() => import('@/pages/PublicPetProfilePage'));
 const TermsPage = lazy(() => import('@/pages/TermsPage'));
 const PrivacyPage = lazy(() => import('@/pages/PrivacyPage'));
 const BlogListPage = lazy(() => import('@/pages/BlogListPage'));
-const GuidesPage = lazy(() => import('@/pages/GuidesPage'));
 const BlogPostPage = lazy(() => import('@/pages/BlogPostPage'));
 const FavoritesPage = lazy(() => import('@/pages/FavoritesPage'));
-const MatchQuizPage = lazy(() => import('@/pages/MatchQuizPage'));
-const MatchSwipePage = lazy(() => import('@/pages/MatchSwipePage'));
 const SheltersPage = lazy(() => import('@/pages/SheltersPage'));
 const ShelterDetailPage = lazy(() => import('@/pages/ShelterDetailPage'));
 const MySheltersPage = lazy(() => import('@/pages/MySheltersPage'));
@@ -39,8 +40,6 @@ const MyShelterTeamPage = lazy(() => import('@/pages/MyShelterTeamPage'));
 const CompleteProfilePage = lazy(() => import('@/pages/CompleteProfilePage'));
 const WelcomePetProfilePage = lazy(() => import('@/pages/WelcomePetProfilePage'));
 const WelcomeShelterOrgPage = lazy(() => import('@/pages/WelcomeShelterOrgPage'));
-const ForgotPasswordPage = lazy(() => import('@/pages/ForgotPasswordPage'));
-const ResetPasswordPage = lazy(() => import('@/pages/ResetPasswordPage'));
 
 /** Все маршруты SPA — lazy-loaded страницы из слоя pages. */
 export function AppRoutes() {
@@ -55,7 +54,6 @@ export function AppRoutes() {
       <Route path="/my-pets/:id/edit" element={<RequireAuth><AddEditPetPageRoute /></RequireAuth>} />
       <Route path="/my-pets/:id" element={<RequireAuth><MyPetProfilePage /></RequireAuth>} />
       <Route path="/my-pets" element={<RequireAuth><MyPetsPageRoute /></RequireAuth>} />
-      <Route path="/pet/:sourceId/reunion/:matchId" element={<ReunionMatchPage />} />
       <Route path="/pet/:id" element={<PetDetailPage />} />
       <Route path="/shelter-pet/:id" element={<ShelterPetDetailPage />} />
       <Route path="/user/:id" element={<UserProfilePage />} />
@@ -67,8 +65,9 @@ export function AppRoutes() {
       <Route path="/admin" element={<RequireAdmin><AdminPage /></RequireAdmin>} />
       <Route path="/terms" element={<TermsPage />} />
       <Route path="/privacy" element={<PrivacyPage />} />
-      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-      <Route path="/reset-password" element={<ResetPasswordPage />} />
+      {/* Password reset temporarily disabled */}
+      <Route path="/forgot-password" element={<Navigate to="/" replace />} />
+      <Route path="/reset-password" element={<Navigate to="/" replace />} />
       <Route
         path="/complete-profile"
         element={
@@ -97,12 +96,14 @@ export function AppRoutes() {
       />
       <Route path="/blog" element={<BlogListPage />} />
       <Route path="/blog/:slug" element={<BlogPostPage />} />
-      <Route path="/guides" element={<GuidesPage />} />
+      {/* Removed web features — keep redirects for old bookmarks / shared links */}
+      <Route path="/guides" element={<Navigate to="/" replace />} />
+      <Route path="/match" element={<Navigate to="/shelters?tab=pets" replace />} />
+      <Route path="/match/quiz" element={<Navigate to="/shelters?tab=pets" replace />} />
+      <Route path="/pet/:sourceId/reunion/:matchId" element={<RedirectToPetMatch />} />
       <Route path="/shelters/:shelterId" element={<ShelterDetailPage />} />
       <Route path="/shelters" element={<SheltersPage />} />
       <Route path="/shelters/" element={<SheltersPage />} />
-      <Route path="/match/quiz" element={<MatchQuizPage />} />
-      <Route path="/match" element={<MatchSwipePage />} />
       <Route
         path="/my-shelters/:shelterId/pets"
         element={

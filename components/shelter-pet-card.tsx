@@ -157,8 +157,8 @@ export function ShelterPetCard({ pet, onClick, compact = false }: ShelterPetCard
             </span>
             <span
               className="inline-flex items-center text-rose-500"
-              title={`${t.match.card.detailHealth}: ${health}`}
-              aria-label={`${t.match.card.detailHealth}: ${health}`}
+              title={`${t.shelterPet.healthLabel}: ${health}`}
+              aria-label={`${t.shelterPet.healthLabel}: ${health}`}
             >
               {renderHealthIcon()}
             </span>

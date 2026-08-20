@@ -409,17 +409,14 @@ def send_pending_moderation_alert_sync(pet_id: str) -> int:
 
 
 def send_sighting_notification_sync(sighting_id: str, pet_id: str) -> None:
-    """Синхронная отправка уведомления владельцу (для BackgroundTasks, т.к. они выполняются в threadpool)."""
-    if not BOT_TOKEN:
-        logger.info("TELEGRAM_BOT_TOKEN not configured, skipping sighting notification")
-        return
+    """Уведомление владельцу объявления о новом видении (Telegram + FCM)."""
     db = SessionLocal()
     try:
         pet = db.scalar(select(Pet).where(Pet.id == pet_id))
         if not pet:
             return
         author = db.scalar(select(User).where(User.id == pet.author_id))
-        if not author or not author.telegram_id:
+        if not author:
             return
         sighting = db.scalar(select(Sighting).where(Sighting.id == sighting_id))
         if not sighting:
@@ -427,56 +424,183 @@ def send_sighting_notification_sync(sighting_id: str, pet_id: str) -> None:
 
         animal = ANIMAL_TYPE_LABELS.get(pet.animal_type, pet.animal_type)
         seen_str = sighting.seen_at.strftime("%d.%m.%Y %H:%M") if sighting.seen_at else ""
-        comment_line = f"\n💬 {sighting.comment[:80]}..." if sighting.comment and len(sighting.comment) > 80 else (f"\n💬 {sighting.comment}" if sighting.comment else "")
+        comment_line = (
+            f"\n💬 {sighting.comment[:80]}..."
+            if sighting.comment and len(sighting.comment) > 80
+            else (f"\n💬 {sighting.comment}" if sighting.comment else "")
+        )
         msg = (
             f"👁 <b>Новое видение!</b>\n\n"
             f"Кто-то видел похожее животное ({animal}) рядом с вашим объявлением.\n"
             f"📍 Когда: {seen_str}{comment_line}"
         )
-        keyboard = {"inline_keyboard": [[{"text": "Смотреть на карте", "url": f"{SITE_URL}/pet/{pet.id}"}]]}
-        _send_telegram_message_sync(author.telegram_id, msg, reply_markup=keyboard)
+        if BOT_TOKEN and author.telegram_id:
+            keyboard = {
+                "inline_keyboard": [[{"text": "Смотреть на карте", "url": f"{SITE_URL}/pet/{pet.id}"}]]
+            }
+            _send_telegram_message_sync(author.telegram_id, msg, reply_markup=keyboard)
+        elif not BOT_TOKEN:
+            logger.info("TELEGRAM_BOT_TOKEN not configured — sighting Telegram skipped")
+
+        try:
+            from push_delivery import push_to_user
+
+            push_to_user(
+                db,
+                user_id=author.id,
+                title="Новое видение",
+                message=msg,
+                data={"pet_id": pet.id, "type": "sighting"},
+            )
+        except Exception:
+            logger.exception("FCM sighting failed for pet %s", pet.id)
     except Exception as e:
         logger.exception("send_sighting_notification error: %s", e)
     finally:
         db.close()
 
 
-def send_profile_pet_signal_sync(signal_id: str, profile_pet_id: str) -> bool:
-    """Синхронная отправка сигнала владельцу адресника (QR/NFC)."""
-    if not BOT_TOKEN:
-        logger.info("TELEGRAM_BOT_TOKEN not configured, skipping profile pet signal")
-        return False
+def send_profile_pet_signal_sync(signal_id: str, profile_pet_id: str) -> dict:
+    """Сигнал владельцу адресника (QR/NFC): Telegram + FCM.
+
+    Returns ``{"telegram": bool, "push": bool}``.
+    """
+    result = {"telegram": False, "push": False}
     db = SessionLocal()
     try:
         signal = db.scalar(select(ProfilePetScanSignal).where(ProfilePetScanSignal.id == signal_id))
         pet = db.scalar(select(ProfilePet).where(ProfilePet.id == profile_pet_id))
         if not signal or not pet:
-            return False
+            return result
         owner = db.scalar(select(User).where(User.id == pet.owner_id))
-        if not owner or not owner.telegram_id:
-            return False
+        if not owner:
+            return result
 
         settings = db.scalar(
             select(NotificationSettings).where(NotificationSettings.user_id == owner.id)
         )
         if settings and not settings.notifications_enabled:
-            return False
+            return result
 
-        source_label = "QR-коду" if signal.source == "qr" else ("NFC-брелока" if signal.source == "nfc" else "адресника")
+        source_label = (
+            "QR-коду"
+            if signal.source == "qr"
+            else ("NFC-брелока" if signal.source == "nfc" else "адресника")
+        )
         msg = (
             f"🐾 <b>Сигнал по питомцу!</b>\n\n"
             f"Кто-то нажал «Я нашёл этого питомца» после сканирования {source_label}.\n"
             f"Питомец: <b>{pet.name}</b>\n\n"
             f"Проверьте контакты и, если нужно, обновите статус."
         )
-        keyboard = {
-            "inline_keyboard": [[{"text": "Открыть карточку питомца", "url": f"{SITE_URL}/pet-profile/{pet.id}"}]]
-        }
-        sent = _send_telegram_message_sync(owner.telegram_id, msg, reply_markup=keyboard)
-        return bool(sent)
+
+        if BOT_TOKEN and owner.telegram_id:
+            keyboard = {
+                "inline_keyboard": [
+                    [{"text": "Открыть карточку питомца", "url": f"{SITE_URL}/pet-profile/{pet.id}"}]
+                ]
+            }
+            result["telegram"] = bool(
+                _send_telegram_message_sync(owner.telegram_id, msg, reply_markup=keyboard)
+            )
+        elif not BOT_TOKEN:
+            logger.info("TELEGRAM_BOT_TOKEN not configured — profile pet Telegram skipped")
+
+        try:
+            from push_delivery import push_to_user
+
+            result["push"] = bool(
+                push_to_user(
+                    db,
+                    user_id=owner.id,
+                    title="Сигнал по питомцу",
+                    message=msg,
+                    data={
+                        "profile_pet_id": pet.id,
+                        "type": "found_signal",
+                    },
+                )
+            )
+        except Exception:
+            logger.exception("FCM found_signal failed for profile pet %s", pet.id)
+
+        if result["telegram"] or result["push"]:
+            signal.telegram_sent = bool(result["telegram"])
+            signal.push_sent = bool(result["push"])
+            try:
+                db.commit()
+            except Exception:
+                db.rollback()
+        return result
     except Exception as e:
         logger.exception("send_profile_pet_signal_sync error: %s", e)
-        return False
+        return result
+    finally:
+        db.close()
+
+
+def notify_author_pet_moderation_sync(pet_id: str, new_status: str) -> None:
+    """Push (+ Telegram при наличии) автору после approve/reject объявления."""
+    if new_status not in {"approved", "rejected"}:
+        return
+    db = SessionLocal()
+    try:
+        pet = db.scalar(select(Pet).where(Pet.id == pet_id))
+        if not pet or not pet.author_id:
+            return
+        author = db.scalar(select(User).where(User.id == pet.author_id))
+        if not author:
+            return
+
+        animal = ANIMAL_TYPE_LABELS.get(pet.animal_type, pet.animal_type)
+        city = (pet.city or "").strip() or "—"
+        if new_status == "approved":
+            title = "Объявление одобрено"
+            msg = (
+                f"✅ <b>Объявление одобрено</b>\n\n"
+                f"{html.escape(animal)} · {html.escape(city)}\n"
+                f"Оно снова видно в поиске."
+            )
+            notif_type = "moderation_approved"
+        else:
+            reason = (pet.moderation_reason or "").strip()
+            reason_block = f"\n\nПричина: {html.escape(reason)}" if reason else ""
+            title = "Объявление отклонено"
+            msg = (
+                f"❌ <b>Объявление отклонено</b>\n\n"
+                f"{html.escape(animal)} · {html.escape(city)}"
+                f"{reason_block}\n\n"
+                f"Исправьте объявление и сохраните снова."
+            )
+            notif_type = "moderation_rejected"
+
+        if BOT_TOKEN and author.telegram_id:
+            keyboard = {
+                "inline_keyboard": [
+                    [{"text": "Открыть объявление", "url": f"{SITE_URL}/pet/{pet.id}"}],
+                    [{"text": "Мои объявления", "url": f"{SITE_URL}/my-ads"}],
+                ]
+            }
+            _send_telegram_message_sync(author.telegram_id, msg, reply_markup=keyboard)
+
+        try:
+            from push_delivery import push_to_user
+
+            push_to_user(
+                db,
+                user_id=author.id,
+                title=title,
+                message=msg,
+                data={"pet_id": pet.id, "type": notif_type},
+            )
+        except Exception:
+            logger.exception("FCM moderation notify failed for pet %s", pet.id)
+        try:
+            db.commit()
+        except Exception:
+            db.rollback()
+    except Exception as e:
+        logger.exception("notify_author_pet_moderation_sync error for %s: %s", pet_id, e)
     finally:
         db.close()
 
