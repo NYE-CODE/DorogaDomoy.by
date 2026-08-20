@@ -12,6 +12,7 @@ import { useAuth } from '@/app/providers/AuthContext';
 import { useI18n } from '@/app/providers/I18nContext';
 import { useShelterPetBrowseOptional } from '@/app/providers/ShelterPetBrowseContext';
 import { useIsMobile } from '@/shared/hooks/use-mobile';
+import { isMobileTelegramAuthPath } from '@/shared/lib/mobile-telegram-auth-path';
 import { cn } from '@/shared/ui/utils';
 
 const HIDDEN_PREFIXES = ['/create', '/edit/', '/admin', '/terms', '/privacy', '/my-pets/add'];
@@ -34,6 +35,7 @@ function navShellClass(showBrowseArrows: boolean, hasExtraOrgSlot: boolean) {
 }
 
 function shouldHide(pathname: string): boolean {
+  if (isMobileTelegramAuthPath(pathname)) return true;
   if (HIDDEN_PREFIXES.some((p) => pathname.startsWith(p))) return true;
   if (/^\/my-pets\/[^/]+\/edit$/.test(pathname)) return true;
   return false;

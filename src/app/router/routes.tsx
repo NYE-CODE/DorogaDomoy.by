@@ -40,6 +40,7 @@ const MyShelterTeamPage = lazy(() => import('@/pages/MyShelterTeamPage'));
 const CompleteProfilePage = lazy(() => import('@/pages/CompleteProfilePage'));
 const WelcomePetProfilePage = lazy(() => import('@/pages/WelcomePetProfilePage'));
 const WelcomeShelterOrgPage = lazy(() => import('@/pages/WelcomeShelterOrgPage'));
+const MobileTelegramAuthPage = lazy(() => import('@/pages/MobileTelegramAuthPage'));
 
 /** Все маршруты SPA — lazy-loaded страницы из слоя pages. */
 export function AppRoutes() {
@@ -65,6 +66,8 @@ export function AppRoutes() {
       <Route path="/admin" element={<RequireAdmin><AdminPage /></RequireAdmin>} />
       <Route path="/terms" element={<TermsPage />} />
       <Route path="/privacy" element={<PrivacyPage />} />
+      <Route path="/mobile-telegram-auth.html" element={<MobileTelegramAuthPage />} />
+      <Route path="/mobile-telegram-auth" element={<MobileTelegramAuthPage />} />
       {/* Password reset temporarily disabled */}
       <Route path="/forgot-password" element={<Navigate to="/" replace />} />
       <Route path="/reset-password" element={<Navigate to="/" replace />} />

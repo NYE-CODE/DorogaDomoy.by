@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router';
 import { YM_ID } from '@/shared/config';
+import { isMobileTelegramAuthPath } from '@/shared/lib/mobile-telegram-auth-path';
 import { hasAnalyticsConsent } from '@/shared/lib/cookie-consent';
 
 /** Отправляет hit в Yandex.Metrika при смене маршрута SPA. */
@@ -8,6 +9,7 @@ export function MetrikaTracker() {
   const location = useLocation();
 
   useEffect(() => {
+    if (isMobileTelegramAuthPath(location.pathname)) return;
     if (!hasAnalyticsConsent()) return;
     if (typeof window !== 'undefined' && (window as unknown as { ym?: (...args: unknown[]) => void }).ym) {
       (window as unknown as { ym: (...args: unknown[]) => void }).ym(
