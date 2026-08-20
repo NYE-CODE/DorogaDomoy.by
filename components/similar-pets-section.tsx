@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { ArrowLeftRight, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import { PetCard } from './pet-card';
 import { petsApi } from '@/shared/api/client';
 import { useI18n } from '@/app/providers/I18nContext';
@@ -88,6 +88,15 @@ export function SimilarPetsSection({
     return [...items].sort((a, b) => (b.matchPercent ?? 0) - (a.matchPercent ?? 0))[0] ?? null;
   }, [items]);
 
+  const openPet = (id: string) => {
+    const url = `/pet/${id}`;
+    if (openInNewTab) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } else {
+      navigate(url);
+    }
+  };
+
   if (loading) {
     return (
       <div className={cn('rounded-lg border border-border bg-card p-6', className)}>
@@ -105,12 +114,11 @@ export function SimilarPetsSection({
       {highlightTopMatch && topMatch && (topMatch.matchPercent ?? 0) >= 55 && (
         <div className="border-b border-primary/20 bg-primary/5 px-6 py-4">
           <p className="text-sm text-foreground">
-            {t.reunion.topMatchBanner.replace('{percent}', String(topMatch.matchPercent))}
+            {t.similarPets.topMatchBanner.replace('{percent}', String(topMatch.matchPercent))}
           </p>
           <Button asChild size="sm" className="mt-3">
-            <Link to={`/pet/${petId}/reunion/${topMatch.pet.id}`}>
-              <ArrowLeftRight className="mr-2 h-4 w-4" aria-hidden />
-              {t.reunion.topMatchAction}
+            <Link to={`/pet/${topMatch.pet.id}`}>
+              {t.similarPets.openListing}
             </Link>
           </Button>
         </div>
@@ -142,14 +150,7 @@ export function SimilarPetsSection({
                   pet={item.pet}
                   compact
                   showFavoriteToggle
-                  onClick={() => {
-                    const url = `/pet/${item.pet.id}`;
-                    if (openInNewTab) {
-                      window.open(url, '_blank', 'noopener,noreferrer');
-                    } else {
-                      navigate(url);
-                    }
-                  }}
+                  onClick={() => openPet(item.pet.id)}
                 />
                 <div className="px-1">
                   <Tooltip delayDuration={200}>
@@ -185,12 +186,6 @@ export function SimilarPetsSection({
                       )}
                     </TooltipContent>
                   </Tooltip>
-                  <Button asChild variant="outline" size="sm" className="mt-2 w-full">
-                    <Link to={`/pet/${petId}/reunion/${item.pet.id}`}>
-                      <ArrowLeftRight className="mr-2 h-3.5 w-3.5" aria-hidden />
-                      {t.reunion.compareCta}
-                    </Link>
-                  </Button>
                 </div>
               </div>
             );

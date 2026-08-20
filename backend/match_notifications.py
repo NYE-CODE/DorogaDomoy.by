@@ -79,10 +79,6 @@ def _already_notified(db: Session, user_id: str, pet_id: str) -> bool:
 
 
 def _send_similar_match_notifications(pet: Pet, db: Session) -> None:
-    if not BOT_TOKEN:
-        logger.info("Telegram bot token not configured, skipping similar match notifications")
-        return
-
     if (pet.pet_scope or "lost_found") != "lost_found":
         return
     if pet.moderation_status != "approved" or pet.is_archived:
@@ -104,6 +100,32 @@ def _send_similar_match_notifications(pet: Pet, db: Session) -> None:
     new_animal_label = ANIMAL_TYPE_LABELS.get(pet.animal_type, pet.animal_type)
     new_breed_text = f" ({pet.breed})" if pet.breed else ""
 
+    owner_ids = {
+        m["pet"].author_id
+        for m in qualified
+        if m["pet"].author_id and m["pet"].author_id != pet.author_id
+    }
+    owners_by_id = {
+        u.id: u
+        for u in db.scalars(select(User).where(User.id.in_(owner_ids))).all()
+    } if owner_ids else {}
+    from models import DeviceToken
+
+    push_owner_ids = set(
+        db.scalars(
+            select(DeviceToken.user_id).where(
+                DeviceToken.user_id.in_(owner_ids),
+                DeviceToken.is_active.is_(True),
+            ).distinct()
+        ).all()
+    ) if owner_ids else set()
+    settings_by_user = {
+        ns.user_id: ns
+        for ns in db.scalars(
+            select(NotificationSettings).where(NotificationSettings.user_id.in_(owner_ids))
+        ).all()
+    } if owner_ids else {}
+
     for match in qualified:
         candidate: Pet = match["pet"]
         owner_id = candidate.author_id
@@ -112,11 +134,14 @@ def _send_similar_match_notifications(pet: Pet, db: Session) -> None:
         if _already_notified(db, owner_id, pet.id):
             continue
 
-        owner = db.scalar(select(User).where(User.id == owner_id))
-        if not owner or not owner.telegram_id or owner.is_blocked:
+        owner = owners_by_id.get(owner_id)
+        if not owner or owner.is_blocked:
+            continue
+        has_push = owner_id in push_owner_ids
+        if not owner.telegram_id and not has_push:
             continue
 
-        ns = db.scalar(select(NotificationSettings).where(NotificationSettings.user_id == owner_id))
+        ns = settings_by_user.get(owner_id)
         if ns and not ns.notifications_enabled:
             continue
         if ns and getattr(ns, "notify_similar_matches", True) is False:
@@ -151,7 +176,24 @@ def _send_similar_match_notifications(pet: Pet, db: Session) -> None:
                 ]
             ]
         }
-        sent = _send_telegram_message_sync(owner.telegram_id, message, reply_markup=keyboard)
+        channels: list[str] = []
+        if BOT_TOKEN and owner.telegram_id:
+            sent = _send_telegram_message_sync(owner.telegram_id, message, reply_markup=keyboard)
+            if sent:
+                channels.append("telegram")
+        try:
+            from push_delivery import push_to_user
+
+            if push_to_user(
+                db,
+                user_id=owner.id,
+                title="Возможное совпадение",
+                message=message,
+                data={"pet_id": pet.id, "type": "similar_match"},
+            ):
+                channels.append("fcm")
+        except Exception:
+            logger.exception("FCM similar_match failed for %s", owner.id)
 
         db.add(
             Notification(
@@ -160,7 +202,7 @@ def _send_similar_match_notifications(pet: Pet, db: Session) -> None:
                 pet_id=pet.id,
                 type="similar_match",
                 message=message,
-                sent_via="telegram" if sent else "failed",
+                sent_via=",".join(channels) if channels else "failed",
                 sent_at=utc_now(),
             )
         )

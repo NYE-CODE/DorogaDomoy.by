@@ -23,6 +23,7 @@ interface AuthContextType {
     password?: string;
   }) => Promise<User>;
   logout: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
   updateContacts: (contacts: User['contacts']) => Promise<void>;
   updateProfile: (name: string, email: string, opts?: { role?: 'volunteer' }) => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
@@ -108,6 +109,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const deleteAccount = async () => {
+    await authApi.deleteAccount();
+    setUser(null);
+    setIsAuthModalOpen(false);
+  };
+
   const updateContacts = async (contacts: User['contacts']) => {
     if (!user) return;
     const u = await authApi.updateProfile({ contacts });
@@ -166,6 +173,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         register,
         completeProfile,
         logout,
+        deleteAccount,
         updateContacts,
         updateProfile,
         changePassword,

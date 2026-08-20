@@ -10,7 +10,6 @@ import {
   Handshake,
   Heart,
   HelpCircle,
-  Instagram,
   LayoutDashboard,
   LayoutTemplate,
   Megaphone,
@@ -21,7 +20,6 @@ import {
   Settings,
   Tags,
   Users,
-  Video,
   Wrench,
 } from 'lucide-react';
 import { rewardsApi, sheltersApi } from '../../api/client';
@@ -220,7 +218,6 @@ export function useAdminPanel({
         { id: 'partnerAds' as const, label: ap.tabs.partnerAds, icon: Megaphone },
         { id: 'helpSection' as const, label: ap.tabs.helpSection, icon: Heart },
         { id: 'faq' as const, label: ap.tabs.faq, icon: HelpCircle },
-        { id: 'guides' as const, label: ap.tabs.guides, icon: Video },
         { id: 'users' as const, label: ap.tabs.users, icon: Users },
         { id: 'profilePets' as const, label: ap.tabs.pets, icon: PawPrint },
         { id: 'pets' as const, label: ap.tabs.ads, icon: FileText },
@@ -233,7 +230,6 @@ export function useAdminPanel({
         { id: 'blogCategories' as const, label: ap.tabs.categories, icon: Tags },
         { id: 'telegramBlog' as const, label: ap.tabs.blogSettings, icon: MessageCircle },
         { id: 'featureFlags' as const, label: ap.tabs.featureFlags, icon: Flag },
-        { id: 'instagram' as const, label: ap.tabs.instagram, icon: Instagram },
         { id: 'settings' as const, label: ap.tabs.settings, icon: Settings },
       ] as const,
     [ap, locale],

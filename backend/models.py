@@ -416,63 +416,6 @@ class ProfilePet(Base):
     owner = relationship("User", backref="profile_pets", foreign_keys=[owner_id])
 
 
-class InstagramAccount(Base):
-    """Instagram-аккаунт для региональной публикации объявлений."""
-    __tablename__ = "instagram_accounts"
-
-    id = Column(String, primary_key=True, index=True)
-    name = Column(String, nullable=False)
-    instagram_business_id = Column(String, nullable=False, index=True)
-    facebook_page_id = Column(String, nullable=True)
-    access_token = Column(Text, nullable=True)
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-
-class InstagramRegionRoute(Base):
-    """Маршрутизация региона (город/область) в Instagram-аккаунт."""
-    __tablename__ = "instagram_region_routes"
-
-    id = Column(String, primary_key=True, index=True)
-    region_key = Column(String, nullable=False, unique=True, index=True)
-    account_id = Column(String, ForeignKey("instagram_accounts.id", ondelete="CASCADE"), nullable=False, index=True)
-    is_fallback = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    account = relationship("InstagramAccount", foreign_keys=[account_id])
-
-
-class InstagramPublication(Base):
-    """Очередь публикаций объявлений в Instagram (авто/ручной режим)."""
-    __tablename__ = "instagram_publications"
-
-    id = Column(String, primary_key=True, index=True)
-    pet_id = Column(String, ForeignKey("pets.id", ondelete="CASCADE"), nullable=False, index=True)
-    account_id = Column(String, ForeignKey("instagram_accounts.id", ondelete="SET NULL"), nullable=True, index=True)
-    initiated_by = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
-    region_key = Column(String, nullable=True, index=True)
-    mode = Column(String, default="auto")  # auto, manual, boost
-    source = Column(String, default="auto")  # auto, manual_admin, boost_user
-    requested_by_user_id = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
-    requested_at = Column(DateTime, nullable=True)
-    format = Column(String, default="story")  # story
-    status = Column(String, default="pending")  # pending, processing, published, failed, cancelled
-    attempts = Column(Integer, default=0)
-    last_error = Column(Text, nullable=True)
-    external_media_id = Column(String, nullable=True)
-    idempotency_key = Column(String, nullable=False, unique=True, index=True)
-    payload = Column(JSON, default=dict)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    published_at = Column(DateTime, nullable=True)
-
-    pet = relationship("Pet", foreign_keys=[pet_id])
-    account = relationship("InstagramAccount", foreign_keys=[account_id])
-    initiator = relationship("User", foreign_keys=[initiated_by])
-
-
 class BlogCategory(Base):
     """Категория статей блога (динамический справочник; slug хранится в blog_posts.category)."""
 
@@ -619,6 +562,7 @@ class ProfilePetScanSignal(Base):
     ip_hash = Column(String, nullable=True, index=True)
     source = Column(String, default="unknown")  # qr, nfc, unknown
     telegram_sent = Column(Boolean, default=False)
+    push_sent = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
 
     profile_pet = relationship("ProfilePet", foreign_keys=[profile_pet_id])

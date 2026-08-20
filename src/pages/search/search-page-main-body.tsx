@@ -162,12 +162,16 @@ export function SearchListTitleBlock({
   listDisplayPets,
   mapDisplayPets,
   statistics,
+  resultsMayBeTruncated = false,
+  fetchLimit = 500,
   t,
 }: {
   selectedCity: string;
   listDisplayPets: Pet[];
   mapDisplayPets: Pet[];
   statistics: { searching: number; found: number; fostering: number };
+  resultsMayBeTruncated?: boolean;
+  fetchLimit?: number;
   t: SearchPageT;
 }) {
   return (
@@ -181,6 +185,11 @@ export function SearchListTitleBlock({
         {t.stats.searching}: {statistics.searching} · {t.stats.found}: {statistics.found} ·{' '}
         {t.stats.fostering}: {statistics.fostering}
       </p>
+      {resultsMayBeTruncated && (
+        <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">
+          {t.app.resultsLimited.replace('{limit}', String(fetchLimit))}
+        </p>
+      )}
       {selectedCity.trim() && listDisplayPets.length === 0 && mapDisplayPets.length > 0 && (
         <p className="mt-1 text-xs text-muted-foreground">{t.app.mapHasOtherCities}</p>
       )}

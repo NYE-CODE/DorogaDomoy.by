@@ -1,22 +1,14 @@
 import { useCallback, useMemo, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router';
+import { useNavigate } from 'react-router';
 import { useAuth } from '@/app/providers/AuthContext';
 import { useCity } from '@/app/providers/CityContext';
 import { useI18n } from '@/app/providers/I18nContext';
 import { Header } from '@/widgets/layout/Header';
 import { Footer } from '@/widgets/layout/Footer';
-import { ContactRequiredModal } from '../../../components/contact-required-modal';
-import { toast } from 'sonner';
-import { DeleteReasonModal } from '../../../components/delete-reason-modal';
 import { CitySelectModal } from '../../../components/city-select-modal';
 import { CityDetectPopup } from '../../../components/city-detect-popup';
-import type { Pet } from '@/entities/pet/model/types';
-import type { PetFormData } from '../../../components/pet-form';
 import { EMPTY_FILTER_STATE, Filters, type FilterState } from '../../../components/filters';
-import { petsApi } from '@/shared/api/client';
-import { PetForm } from '../../../components/pet-form';
 import { useIsMobile } from '@/shared/ui/use-mobile';
-import { useAuthenticatedAction } from '@/shared/hooks/use-authenticated-action';
 import { PageLoader } from '@/shared/ui/page-loader';
 import { ActiveFilterChips } from '../../../components/search/active-filter-chips';
 import { SearchLayoutToggle } from '../../../components/search/search-layout-toggle';
@@ -27,16 +19,14 @@ import {
 } from '@/shared/lib/home-route';
 import { readSearchView, writeSearchView, type SearchView } from './search-storage';
 import { useSearchCitySetup } from './use-search-city-setup';
-import { useSearchPetsData } from './use-search-pets-data';
+import { SEARCH_PETS_FETCH_LIMIT, useSearchPetsData } from './use-search-pets-data';
 import { SearchListTitleBlock, SearchPageMainBody } from './search-page-main-body';
 
 export default function SearchPage() {
-  const { user, isLoading } = useAuth();
-  const { runWhenAuthed } = useAuthenticatedAction();
+  const { isLoading } = useAuth();
   const { selectedCity, saveCity, clearCity } = useCity();
   const { t } = useI18n();
   const routerNavigate = useNavigate();
-  const location = useLocation();
   const isMobile = useIsMobile();
 
   const [view, setViewRaw] = useState<SearchView>(readSearchView);
@@ -55,18 +45,15 @@ export default function SearchPage() {
     saveSearchLayoutMode(mode);
   }, []);
 
-  const [showForm, setShowForm] = useState(false);
-  const [editingPet, setEditingPet] = useState<Pet | null>(null);
-  const [deletingPet, setDeletingPet] = useState<Pet | null>(null);
-  const [showContactRequiredModal, setShowContactRequiredModal] = useState(false);
-
   const approvedAllPets = pets.allPets.filter((p) => !p.isArchived && p.moderationStatus === 'approved');
   const sourcePets =
     view === 'main' ? (pets.mapBounds && pets.mapPetsLoaded ? pets.mapPets : approvedAllPets) : pets.allPets;
 
   const mapDisplayPets = useMemo(() => {
-    if (filters.colors.length === 0) return sourcePets;
-    return sourcePets.filter((p) => p.colors.some((c) => filters.colors.includes(c)));
+    // Always drop archived — mapPets may stay stale after archive until reload.
+    const active = sourcePets.filter((p) => !p.isArchived && p.moderationStatus === 'approved');
+    if (filters.colors.length === 0) return active;
+    return active.filter((p) => p.colors.some((c) => filters.colors.includes(c)));
   }, [sourcePets, filters.colors]);
 
   const listDisplayPets = useMemo(() => {
@@ -83,6 +70,11 @@ export default function SearchPage() {
       fostering: 0,
     };
   }, [sourcePets]);
+
+  const resultsMayBeTruncated =
+    (view === 'main' && pets.mapBounds && pets.mapPetsLoaded
+      ? pets.mapMayBeTruncated
+      : pets.listMayBeTruncated) || false;
 
   const openPetDetail = useCallback(
     (petId: string) => {
@@ -117,70 +109,6 @@ export default function SearchPage() {
     );
   }
 
-  const handleUpdatePet = async (formData: PetFormData) => {
-    if (!editingPet) return;
-    try {
-      const updatedPet = await petsApi.update(editingPet.id, {
-        photos: formData.photos,
-        animalType: formData.animalType,
-        breed: formData.breed,
-        colors: formData.colors,
-        gender: formData.gender,
-        approximateAge: formData.approximateAge,
-        status: formData.status,
-        description: formData.description,
-        city: formData.city,
-        location: formData.location,
-        contacts: formData.contacts,
-        registrationAuthority: formData.registrationAuthority,
-        registrationTokenNumber: formData.registrationTokenNumber,
-      });
-      pets.setAllPets((prev) => prev.map((p) => (p.id === editingPet.id ? updatedPet : p)));
-      setEditingPet(null);
-      setShowForm(false);
-      if (updatedPet.moderationStatus === 'pending') {
-        toast.success(t.common.toasts.adUpdatedModeration);
-      } else {
-        toast.success(t.app.adUpdated);
-      }
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t.common.error);
-    }
-  };
-
-  const handleDeletePet = async (payload: { reason: string; rewardHelperCode?: string }) => {
-    if (!deletingPet) return;
-    const reason = payload.reason;
-    const archiveReasons = [
-      t.deleteReason.reasons.returned,
-      t.deleteReason.reasons.adopted,
-      t.deleteReason.reasons.transferred,
-    ];
-    const isArchiveReason = archiveReasons.includes(reason);
-    try {
-      if (isArchiveReason) {
-        const updated = await petsApi.update(deletingPet.id, {
-          isArchived: true,
-          archiveReason: reason,
-          rewardHelperCode: payload.rewardHelperCode,
-        });
-        pets.setAllPets((prev) => prev.map((p) => (p.id === deletingPet.id ? updated : p)));
-        toast.success(t.common.toasts.adArchived, {
-          description: payload.rewardHelperCode
-            ? t.common.toasts.pointsAwardedToUser.replace('{code}', payload.rewardHelperCode)
-            : reason,
-        });
-      } else {
-        await petsApi.delete(deletingPet.id);
-        pets.setAllPets((prev) => prev.filter((p) => p.id !== deletingPet.id));
-        toast.success(t.common.toasts.adDeleted);
-      }
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t.common.error);
-    }
-    setDeletingPet(null);
-  };
-
   const searchToolbar =
     view === 'main' ? (
       <div className="shrink-0 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
@@ -198,6 +126,8 @@ export default function SearchPage() {
               listDisplayPets={listDisplayPets}
               mapDisplayPets={mapDisplayPets}
               statistics={statistics}
+              resultsMayBeTruncated={resultsMayBeTruncated}
+              fetchLimit={SEARCH_PETS_FETCH_LIMIT}
               t={t}
             />
             <SearchLayoutToggle mode={layoutMode} onChange={handleLayoutModeChange} />
@@ -230,34 +160,6 @@ export default function SearchPage() {
       </div>
 
       {view === 'main' && !isMobile && <Footer />}
-
-      {showForm && editingPet && (
-        <PetForm
-          onClose={() => {
-            setShowForm(false);
-            setEditingPet(null);
-          }}
-          onSubmit={handleUpdatePet}
-          initialData={editingPet}
-          isEditing
-        />
-      )}
-
-      {deletingPet && (
-        <DeleteReasonModal
-          onClose={() => setDeletingPet(null)}
-          onConfirm={handleDeletePet}
-          enableRewardSection={deletingPet.status === 'searching' && deletingPet.rewardMode === 'points'}
-          rewardPoints={deletingPet.rewardPoints ?? 50}
-          petDescription={`${t.pet.animalType[deletingPet.animalType]} ${deletingPet.breed ? `(${deletingPet.breed})` : ''} - ${deletingPet.city}`}
-        />
-      )}
-
-      <ContactRequiredModal
-        open={showContactRequiredModal}
-        returnPath={`${location.pathname}${location.search}`}
-        onClose={() => setShowContactRequiredModal(false)}
-      />
 
       <CitySelectModal
         open={city.showCityModal}

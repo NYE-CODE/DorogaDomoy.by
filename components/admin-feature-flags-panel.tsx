@@ -14,7 +14,6 @@ export function AdminFeatureFlagsPanel() {
     ff_landing_show_help: true,
     ff_landing_show_pets_feature: true,
     ff_landing_show_faq: true,
-    ff_instagram_boost_stories: true,
     ff_partner_ads_enabled: false,
     ff_reward_enabled: true,
     ff_reward_money_enabled: true,
@@ -32,7 +31,6 @@ export function AdminFeatureFlagsPanel() {
           ff_landing_show_help: ff.ff_landing_show_help === 'true',
           ff_landing_show_pets_feature: (ff.ff_landing_show_pets_feature ?? 'true') === 'true',
           ff_landing_show_faq: (ff.ff_landing_show_faq ?? 'true') === 'true',
-          ff_instagram_boost_stories: (ff.ff_instagram_boost_stories ?? 'true') === 'true',
           ff_partner_ads_enabled: (ff.ff_partner_ads_enabled ?? 'false') === 'true',
           ff_reward_enabled: (ff.ff_reward_enabled ?? 'true') === 'true',
           ff_reward_money_enabled: (ff.ff_reward_money_enabled ?? 'true') === 'true',
@@ -54,7 +52,6 @@ export function AdminFeatureFlagsPanel() {
         ff_landing_show_help: featureFlags.ff_landing_show_help,
         ff_landing_show_pets_feature: featureFlags.ff_landing_show_pets_feature,
         ff_landing_show_faq: featureFlags.ff_landing_show_faq,
-        ff_instagram_boost_stories: featureFlags.ff_instagram_boost_stories,
         ff_partner_ads_enabled: featureFlags.ff_partner_ads_enabled,
         ff_reward_enabled: featureFlags.ff_reward_enabled,
         ff_reward_money_enabled: featureFlags.ff_reward_money_enabled,
@@ -125,16 +122,6 @@ export function AdminFeatureFlagsPanel() {
         <h3 className={adm.settingsCardTitle}>{ap.featureFlags.siteTitle}</h3>
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-sm font-medium text-foreground/90">{ap.featureFlags.ffInstagramBoost}</p>
-              <p className="text-xs text-muted-foreground mt-1">{ap.featureFlags.ffInstagramBoostDesc}</p>
-            </div>
-            <Switch
-              checked={featureFlags.ff_instagram_boost_stories}
-              onCheckedChange={(v) => setFeatureFlags((f) => ({ ...f, ff_instagram_boost_stories: v }))}
-            />
-          </div>
-          <div className="flex items-center justify-between gap-4 pt-4 border-t border-border dark:border-border">
             <div>
               <p className="text-sm font-medium text-foreground/90">{ap.featureFlags.ffRewardEnabled}</p>
               <p className="text-xs text-muted-foreground mt-1">{ap.featureFlags.ffRewardEnabledDesc}</p>

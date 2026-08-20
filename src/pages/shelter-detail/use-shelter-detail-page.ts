@@ -203,7 +203,6 @@ export function useShelterDetailPage() {
   }, [row, s.detailShareCopied, t.common.error]);
 
   const logo = row ? shelterLogoSrc(row.logo_url) : undefined;
-  const cover = row?.cover_url ? shelterLogoSrc(row.cover_url) : undefined;
   const c = row?.contacts || {};
   const locationLine = row?.address?.trim() || '';
   const websiteHref =
@@ -241,7 +240,6 @@ export function useShelterDetailPage() {
     handleSubscribeToggle,
     handleShare,
     logo,
-    cover,
     c,
     locationLine,
     websiteHref,

@@ -19,10 +19,8 @@ import { adminPanelPartnersLocales } from './admin-panel/partners';
 import { adminPanelPartnerAdsLocales } from './admin-panel/partnerAds';
 import { adminPanelFaqLocales } from './admin-panel/faq';
 import { adminPanelHelpSectionLocales } from './admin-panel/helpSection';
-import { adminPanelGuidesSectionLocales } from './admin-panel/guidesSection';
 import { adminPanelFeatureFlagsLocales } from './admin-panel/featureFlags';
 import { adminPanelSettingsLocales } from './admin-panel/settings';
-import { adminPanelInstagramLocales } from './admin-panel/instagram';
 import { adminPanelModerationLocales } from './admin-panel/moderation';
 
 export const adminPanelLocales = {
@@ -47,10 +45,8 @@ export const adminPanelLocales = {
     partnerAds: adminPanelPartnerAdsLocales.ru,
     faq: adminPanelFaqLocales.ru,
     helpSection: adminPanelHelpSectionLocales.ru,
-    guidesSection: adminPanelGuidesSectionLocales.ru,
     featureFlags: adminPanelFeatureFlagsLocales.ru,
     settings: adminPanelSettingsLocales.ru,
-    instagram: adminPanelInstagramLocales.ru,
     moderation: adminPanelModerationLocales.ru,
   },
   be: {
@@ -74,10 +70,8 @@ export const adminPanelLocales = {
     partnerAds: adminPanelPartnerAdsLocales.be,
     faq: adminPanelFaqLocales.be,
     helpSection: adminPanelHelpSectionLocales.be,
-    guidesSection: adminPanelGuidesSectionLocales.be,
     featureFlags: adminPanelFeatureFlagsLocales.be,
     settings: adminPanelSettingsLocales.be,
-    instagram: adminPanelInstagramLocales.be,
     moderation: adminPanelModerationLocales.be,
   },
   en: {
@@ -101,10 +95,8 @@ export const adminPanelLocales = {
     partnerAds: adminPanelPartnerAdsLocales.en,
     faq: adminPanelFaqLocales.en,
     helpSection: adminPanelHelpSectionLocales.en,
-    guidesSection: adminPanelGuidesSectionLocales.en,
     featureFlags: adminPanelFeatureFlagsLocales.en,
     settings: adminPanelSettingsLocales.en,
-    instagram: adminPanelInstagramLocales.en,
     moderation: adminPanelModerationLocales.en,
   },
 } as const;

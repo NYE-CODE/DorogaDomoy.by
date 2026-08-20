@@ -5,7 +5,6 @@ import {
   Edit,
   Eye,
   MoreVertical,
-  Rocket,
   Trash2,
 } from 'lucide-react';
 import type { Pet } from '@/entities/pet/model/types';
@@ -44,7 +43,6 @@ export interface MyAdsCardProps {
   sightingCount: number;
   openMenuId: string | null;
   hoveredTooltipId: string | null;
-  instagramBoostEnabled: boolean;
   renewPromptWithinDays?: number;
   onRenewPet?: (pet: Pet) => void;
   onToggleMenu: (petId: string) => void;
@@ -52,7 +50,6 @@ export interface MyAdsCardProps {
   onHoverTooltip: (petId: string | null) => void;
   onEdit: (e: React.MouseEvent, pet: Pet) => void;
   onDelete: (e: React.MouseEvent, pet: Pet) => void;
-  onBoost: (e: React.MouseEvent, pet: Pet) => void;
   onRenew: (e: React.MouseEvent, pet: Pet) => void;
 }
 
@@ -63,7 +60,6 @@ export function MyAdsCard({
   sightingCount,
   openMenuId,
   hoveredTooltipId,
-  instagramBoostEnabled,
   renewPromptWithinDays = 3,
   onRenewPet,
   onToggleMenu,
@@ -71,7 +67,6 @@ export function MyAdsCard({
   onHoverTooltip,
   onEdit,
   onDelete,
-  onBoost,
   onRenew,
 }: MyAdsCardProps) {
   const photoUrl = pet.photos[0] || DEFAULT_PHOTO;
@@ -124,18 +119,6 @@ export function MyAdsCard({
                     <span className="font-medium text-amber-800 dark:text-amber-300">
                       {t.myAds.renewPublication}
                     </span>
-                  </button>
-                ) : null}
-                {instagramBoostEnabled &&
-                pet.moderationStatus === 'approved' &&
-                pet.status === 'searching' ? (
-                  <button
-                    type="button"
-                    onClick={(e) => onBoost(e, pet)}
-                    className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm transition-colors hover:bg-primary/10"
-                  >
-                    <Rocket className="size-4 shrink-0 text-primary" />
-                    <span className="font-medium text-primary">{t.myAds.boostInstagramStories}</span>
                   </button>
                 ) : null}
                 <button

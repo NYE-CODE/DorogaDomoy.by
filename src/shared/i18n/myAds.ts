@@ -26,7 +26,6 @@ export const myAdsLocales = {
     rejectedShort: 'Откл.',
     emptyNoAdsHint:
       'Если вы потеряли питомца или нашли чужого — создайте объявление, чтобы помочь ему вернуться домой.',
-    boostInstagramStories: 'Продвигать в Instagram Stories',
     renewPublication: 'Продлить публикацию',
     expiresInDays: 'Осталось {n} дн.',
     expiresTomorrow: 'Истекает завтра',
@@ -60,7 +59,6 @@ export const myAdsLocales = {
     rejectedShort: 'Адх.',
     emptyNoAdsHint:
       'Калі вы згубілі жывёлу або знайшлі чужую — стварыце аб\'яву, каб дапамагчы ёй вярнуцца дадому.',
-    boostInstagramStories: 'Прасоўваць у Instagram Stories',
     renewPublication: 'Працягнуць публікацыю',
     expiresInDays: 'Засталося {n} дн.',
     expiresTomorrow: 'Тэрмін мінае заўтра',
@@ -93,7 +91,6 @@ export const myAdsLocales = {
     rejectedShort: 'Rej.',
     emptyNoAdsHint:
       'If you lost a pet or found someone else’s, create an ad to help them get home.',
-    boostInstagramStories: 'Boost in Instagram Stories',
     renewPublication: 'Extend publication',
     expiresInDays: '{n} days left',
     expiresTomorrow: 'Expires tomorrow',

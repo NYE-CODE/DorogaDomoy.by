@@ -1,11 +1,12 @@
 """Users API (admin + profile)."""
 import logging
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import delete, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from account_deletion import delete_user_account
 from database import get_db
-from models import User, Pet, Notification, NotificationSettings
+from models import User
 from schemas import HelperLookupResponse, UserResponse, UserUpdate
 from auth import get_current_user, get_current_user_required, require_admin
 from mappers.user import user_to_response
@@ -127,13 +128,7 @@ def delete_user(
     if not user:
         raise HTTPException(status_code=404, detail="Пользователь не найден")
     try:
-        db.execute(delete(Notification).where(Notification.user_id == user_id))
-        db.execute(delete(NotificationSettings).where(NotificationSettings.user_id == user_id))
-        from models import TelegramLinkCode, Report
-        db.execute(delete(Report).where(Report.reporter_id == user_id))
-        db.execute(delete(TelegramLinkCode).where(TelegramLinkCode.user_id == user_id))
-        db.execute(delete(Pet).where(Pet.author_id == user_id))
-        db.delete(user)
+        delete_user_account(db, user)
         db.commit()
     except Exception as e:
         db.rollback()

@@ -5,6 +5,9 @@ import { petsApi } from '@/shared/api/client';
 import type { FilterState } from '../../../components/filters';
 import type { SearchView } from './search-storage';
 
+/** Soft cap for list/map fetches — show truncation UX when result hits this. */
+export const SEARCH_PETS_FETCH_LIMIT = 500;
+
 export function useSearchPetsData(view: SearchView, filters: FilterState) {
   const [allPets, setAllPets] = useState<Pet[]>([]);
   const [mapPets, setMapPets] = useState<Pet[]>([]);
@@ -17,21 +20,36 @@ export function useSearchPetsData(view: SearchView, filters: FilterState) {
   const mapBoundsRef = useRef<LatLngBounds | null>(null);
   const filtersRef = useRef<FilterState | null>(null);
   const mapRequestAbortRef = useRef<AbortController | null>(null);
+  const listRequestAbortRef = useRef<AbortController | null>(null);
   const mapRequestSeqRef = useRef(0);
+  const listRequestSeqRef = useRef(0);
 
   filtersRef.current = filters;
 
   const loadAllPets = useCallback((showLoading = false): Promise<void> => {
     if (showLoading) setDataLoading(true);
+    listRequestAbortRef.current?.abort();
+    const controller = new AbortController();
+    listRequestAbortRef.current = controller;
+    const requestId = ++listRequestSeqRef.current;
     return petsApi
-      .list()
-      .then(setAllPets)
+      // Explicit for admin tokens: without is_archived=false the API returns archive too.
+      .list(
+        { moderation_status: 'approved', is_archived: false, limit: SEARCH_PETS_FETCH_LIMIT },
+        { signal: controller.signal },
+      )
+      .then((list) => {
+        if (requestId === listRequestSeqRef.current) setAllPets(list);
+      })
       .catch((err: unknown) => {
+        if (controller.signal.aborted) return;
         console.warn('[SearchPage] loadAllPets failed', err);
-        setAllPets([]);
+        if (requestId === listRequestSeqRef.current) setAllPets([]);
       })
       .finally(() => {
-        if (showLoading) setDataLoading(false);
+        if (showLoading && requestId === listRequestSeqRef.current) {
+          setDataLoading(false);
+        }
       });
   }, []);
 
@@ -48,7 +66,7 @@ export function useSearchPetsData(view: SearchView, filters: FilterState) {
     const params: Parameters<typeof petsApi.list>[0] = {
       moderation_status: 'approved',
       is_archived: false,
-      limit: 500,
+      limit: SEARCH_PETS_FETCH_LIMIT,
     };
 
     if (currentBounds) {
@@ -151,6 +169,7 @@ export function useSearchPetsData(view: SearchView, filters: FilterState) {
   useEffect(() => {
     return () => {
       mapRequestAbortRef.current?.abort();
+      listRequestAbortRef.current?.abort();
     };
   }, []);
 
@@ -162,13 +181,19 @@ export function useSearchPetsData(view: SearchView, filters: FilterState) {
     return () => clearTimeout(timer);
   }, [view, filters.animalType, filters.breed, filters.days, filters.searchQuery, filters.statuses, loadMapPets]);
 
+  const listMayBeTruncated = allPets.length >= SEARCH_PETS_FETCH_LIMIT;
+  const mapMayBeTruncated = mapPets.length >= SEARCH_PETS_FETCH_LIMIT;
+
   return {
     allPets,
     setAllPets,
     mapPets,
+    setMapPets,
     dataLoading,
     mapBounds,
     setMapBounds,
     mapPetsLoaded,
+    listMayBeTruncated,
+    mapMayBeTruncated,
   };
 }

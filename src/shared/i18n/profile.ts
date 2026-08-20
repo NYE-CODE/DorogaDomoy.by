@@ -73,6 +73,13 @@ export const profileLocales = {
     pointsBalanceLabel: 'Баланс баллов',
     setPasswordTitle: 'Задать пароль',
     setPasswordHint: 'Вы вошли через Telegram. Задайте пароль, чтобы входить также по email.',
+    deleteAccount: 'Удалить аккаунт',
+    deleteAccountTitle: 'Удалить аккаунт навсегда?',
+    deleteAccountBody:
+      'Профиль, объявления, карточки питомцев и данные входа будут удалены. Приюты, которыми вы владеете, тоже будут удалены. Это нельзя отменить.',
+    deleteAccountConfirm: 'Удалить навсегда',
+    deleteAccountCancel: 'Отмена',
+    deleteAccountError: 'Не удалось удалить аккаунт. Попробуйте позже.',
   
   },
   be: {
@@ -144,6 +151,13 @@ export const profileLocales = {
     pointsBalanceLabel: 'Баланс балаў',
     setPasswordTitle: 'Задаць пароль',
     setPasswordHint: 'Вы ўвайшлі праз Telegram. Задайце пароль, каб уваходзіць таксама па email.',
+    deleteAccount: 'Выдаліць акаўнт',
+    deleteAccountTitle: 'Выдаліць акаўнт назаўсёды?',
+    deleteAccountBody:
+      'Профіль, аб\'явы, карткі гадаванцаў і даныя ўваходу будуць выдалены. Прытулкі, якімі вы валодаеце, таксама будуць выдалены. Гэта нельга адмяніць.',
+    deleteAccountConfirm: 'Выдаліць назаўсёды',
+    deleteAccountCancel: 'Адмена',
+    deleteAccountError: 'Не ўдалося выдаліць акаўнт. Паспрабуйце пазней.',
   
   },
   en: {
@@ -215,6 +229,13 @@ export const profileLocales = {
     pointsBalanceLabel: 'Points balance',
     setPasswordTitle: 'Set password',
     setPasswordHint: 'You signed in with Telegram. Set a password to also sign in with email.',
+    deleteAccount: 'Delete account',
+    deleteAccountTitle: 'Delete account forever?',
+    deleteAccountBody:
+      'Your profile, listings, pet cards and sign-in data will be deleted. Shelters you own will also be removed. This cannot be undone.',
+    deleteAccountConfirm: 'Delete forever',
+    deleteAccountCancel: 'Cancel',
+    deleteAccountError: 'Could not delete the account. Try again later.',
   
   },
 } as const;

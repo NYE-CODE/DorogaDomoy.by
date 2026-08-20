@@ -1,4 +1,0 @@
-334:   /** ���� false � slug ��������������� �� ��������� (������ ����� ������). */
-1505:                         {row.address ? ` � ${row.address}` : ''}
-3361:                           <span className="text-muted-foreground/80">�</span>
-3648:       {/* ������� + ���������� */}
