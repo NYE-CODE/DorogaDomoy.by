@@ -58,18 +58,6 @@ from ttl_cache import statistics_cache_get, statistics_cache_set
 LIST_PETS_DEFAULT_LIMIT = 500
 
 
-def _try_instagram_autopublish(db: Session, pet, user_id: str) -> None:
-    """Instagram-очередь опциональна: на проде модуля может не быть."""
-    try:
-        from instagram_publications import enqueue_autopublish_for_pet
-    except ImportError:
-        return
-    try:
-        enqueue_autopublish_for_pet(db, pet=pet, initiated_by=user_id)
-    except Exception as e:
-        logging.exception("Instagram autopublish enqueue failed for pet %s: %s", pet.id, e)
-
-
 def _moderation_required(db: Session) -> bool:
     try:
         return get_bool_setting(db, "require_moderation", default=True)
@@ -770,7 +758,6 @@ async def create_pet(
     if initial_status == "approved":
         background_tasks.add_task(_send_notifications_bg, pet.id)
         _enqueue_photo_embedding(background_tasks, pet.id)
-        _try_instagram_autopublish(db, pet, user.id)
     elif initial_status == "pending":
         background_tasks.add_task(send_pending_moderation_alert_sync, pet.id)
 
@@ -955,7 +942,6 @@ async def update_pet(
     if old_moderation_status != "approved" and pet.moderation_status == "approved":
         background_tasks.add_task(_send_notifications_bg, pet.id)
         _enqueue_photo_embedding(background_tasks, pet.id)
-        _try_instagram_autopublish(db, pet, user.id)
     elif photos_changed and pet.moderation_status == "approved":
         _enqueue_photo_embedding(background_tasks, pet.id)
 
