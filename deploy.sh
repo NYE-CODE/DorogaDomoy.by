@@ -141,6 +141,9 @@ fi
 
 echo ""
 echo "==> Деплой завершён."
-echo "    Похожие объявления: GET /api/v1/pets/{id}/similar"
-echo "    AI в форме: POST /api/v1/pets/analyze-photo (нужен GROQ_API_KEY в backend/.env)"
-echo "    Проверка: curl -s $SMOKE_BASE_URL/health"
+if [ -f backend/.env ] && grep -qE '^GROQ_API_KEY=.+[^[:space:]]' backend/.env; then
+  echo "    AI в форме: включён (GROQ_API_KEY задан)"
+else
+  echo "    AI в форме: выключен (нет GROQ_API_KEY) — сайт при этом работает"
+fi
+echo "    Проверка: curl -s http://127.0.0.1:8000/health"

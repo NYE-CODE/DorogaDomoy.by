@@ -1,4 +1,6 @@
-﻿/** Публичный URL сайта для canonical и мета (без слэша в конце). */
+﻿import { isMobileTelegramAuthPath } from '@/shared/lib/mobile-telegram-auth-path';
+
+/** Публичный URL сайта для canonical и мета (без слэша в конце). */
 const RAW_SITE =
   (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SITE_URL?.trim()) ||
   'https://dorogadomoy.by';
@@ -107,6 +109,7 @@ export function ensurePublisherMeta() {
 }
 
 export function isPrivateSeoPath(pathname: string): boolean {
+  if (isMobileTelegramAuthPath(pathname)) return true;
   if (pathname.startsWith('/admin')) return true;
   if (pathname.startsWith('/profile')) return true;
   if (pathname.startsWith('/my-ads')) return true;

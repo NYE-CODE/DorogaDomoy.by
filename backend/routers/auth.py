@@ -14,7 +14,10 @@ from pydantic import BaseModel, field_validator
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
-from account_deletion import delete_user_account
+try:
+    from account_deletion import delete_user_account
+except ImportError:
+    delete_user_account = None
 from database import get_db
 from models import User, PasswordResetToken
 from schemas import (
@@ -420,6 +423,8 @@ def delete_me(
     db: Session = Depends(get_db),
 ):
     """Самоудаление аккаунта (Play / GDPR): объявления, питомцы, токены."""
+    if delete_user_account is None:
+        raise HTTPException(status_code=503, detail="Удаление аккаунта временно недоступно")
     reject_cross_site_browser_request(request)
     try:
         delete_user_account(db, user)

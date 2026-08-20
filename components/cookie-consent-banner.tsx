@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useLocation } from 'react-router';
 import { useI18n } from '@/app/providers/I18nContext';
+import { isMobileTelegramAuthPath } from '@/shared/lib/mobile-telegram-auth-path';
 import { Button } from '@/shared/ui/button';
 import {
   initYandexMetrika,
@@ -13,9 +14,12 @@ import {
 export function CookieConsentBanner() {
   const { t } = useI18n();
   const c = t.cookieConsent;
+  const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
+  const hideForAppWebView = isMobileTelegramAuthPath(pathname);
 
   useEffect(() => {
+    if (hideForAppWebView) return;
     const saved = readCookieConsent();
     if (saved === 'all') {
       initYandexMetrika();
@@ -23,14 +27,14 @@ export function CookieConsentBanner() {
     if (!saved) {
       setOpen(true);
     }
-  }, []);
+  }, [hideForAppWebView]);
 
   const choose = (level: CookieConsentLevel) => {
     saveCookieConsent(level);
     setOpen(false);
   };
 
-  if (!open) return null;
+  if (hideForAppWebView || !open) return null;
 
   return (
     <div

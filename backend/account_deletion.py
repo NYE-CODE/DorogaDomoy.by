@@ -4,7 +4,6 @@ from sqlalchemy.orm import Session
 
 from models import (
     BlogPost,
-    DeviceToken,
     Notification,
     NotificationSettings,
     PasswordResetToken,
@@ -17,6 +16,11 @@ from models import (
     TelegramLinkCode,
     User,
 )
+
+try:
+    from models import DeviceToken
+except ImportError:
+    DeviceToken = None
 
 
 def delete_user_account(db: Session, user: User) -> None:
@@ -46,7 +50,8 @@ def delete_user_account(db: Session, user: User) -> None:
     db.execute(delete(NotificationSettings).where(NotificationSettings.user_id == uid))
     db.execute(delete(TelegramLinkCode).where(TelegramLinkCode.user_id == uid))
     db.execute(delete(PasswordResetToken).where(PasswordResetToken.user_id == uid))
-    db.execute(delete(DeviceToken).where(DeviceToken.user_id == uid))
+    if DeviceToken is not None:
+        db.execute(delete(DeviceToken).where(DeviceToken.user_id == uid))
     db.execute(delete(PetFavorite).where(PetFavorite.user_id == uid))
     db.execute(delete(PointsTransaction).where(PointsTransaction.user_id == uid))
     db.execute(delete(Pet).where(Pet.author_id == uid))
