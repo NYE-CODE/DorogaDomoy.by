@@ -41,7 +41,13 @@ from routers.sightings import (
 from auth import get_current_user, get_current_user_required, require_admin
 from platform_settings import DEFAULT_MAX_PHOTOS, get_bool_setting, get_int_setting, get_settings_with_defaults
 from integrations.telegram import send_notifications_for_pet, send_pending_moderation_alert_sync
-from instagram_publications import enqueue_autopublish_for_pet
+try:
+    from instagram_publications import enqueue_autopublish_for_pet
+except Exception:
+    logging.getLogger(__name__).exception("Instagram autopublish unavailable")
+
+    def enqueue_autopublish_for_pet(*_args, **_kwargs):
+        return []
 from listing_lifecycle import (
     LISTING_EXPIRED_ARCHIVE_REASON,
     compute_listing_expires_at,

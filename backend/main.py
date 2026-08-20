@@ -19,9 +19,8 @@ from slowapi.middleware import SlowAPIMiddleware
 
 from database import init_db, check_db_writable
 import models  # noqa: F401 — регистрация ORM до init_db()
-from instagram_worker import process_single_publication
 from rate_limit import limiter
-from routers import auth, pets, users, reports, settings, telegram, notifications, media, partners, partner_ads, feature_flags, profile_pets, blog, faq, social_card, instagram_publish, rewards, favorites, shelters, shelter_pets, shelter_campaigns, shelter_subscriptions, help, guides, internal_cron, device_tokens
+from routers import auth, pets, users, reports, settings, telegram, notifications, media, partners, partner_ads, feature_flags, profile_pets, blog, faq, social_card, rewards, favorites, shelters, shelter_pets, shelter_campaigns, shelter_subscriptions, help, guides, internal_cron, device_tokens
 from telegram_bot import BOT_TOKEN, process_telegram_update
 
 logging.basicConfig(
@@ -29,6 +28,18 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
 logger = logging.getLogger(__name__)
+
+try:
+    from instagram_worker import process_single_publication
+except Exception:
+    process_single_publication = None
+    logging.getLogger(__name__).exception("Instagram worker failed to import — publisher disabled")
+
+try:
+    from routers import instagram_publish
+except Exception:
+    instagram_publish = None
+    logging.getLogger(__name__).exception("Instagram publish router failed to import — IG API disabled")
 
 UPLOADS_DIR = Path(__file__).resolve().parent / "uploads"
 UPLOADS_DIR.mkdir(exist_ok=True)
@@ -113,11 +124,14 @@ async def lifespan(app: FastAPI):
 
     instagram_worker_task = None
     instagram_worker_enabled = (
-        os.getenv("INSTAGRAM_PUBLISHER_ENABLED", "true").strip().lower()
+        process_single_publication is not None
+        and os.getenv("INSTAGRAM_PUBLISHER_ENABLED", "true").strip().lower()
         in {"1", "true", "yes", "on"}
     )
     if instagram_worker_enabled:
         instagram_worker_task = asyncio.create_task(_instagram_publications_loop())
+    elif process_single_publication is None:
+        logger.warning("Instagram publications worker skipped — module did not import")
     else:
         logger.info("Instagram publications worker disabled by INSTAGRAM_PUBLISHER_ENABLED")
 
@@ -220,7 +234,8 @@ api_v1.include_router(faq.router)
 api_v1.include_router(help.router)
 api_v1.include_router(guides.router)
 api_v1.include_router(social_card.router)
-api_v1.include_router(instagram_publish.router)
+if instagram_publish is not None:
+    api_v1.include_router(instagram_publish.router)
 api_v1.include_router(rewards.router)
 api_v1.include_router(favorites.router)
 api_v1.include_router(shelters.router)
