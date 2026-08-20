@@ -20,7 +20,7 @@ from slowapi.middleware import SlowAPIMiddleware
 from database import init_db, check_db_writable
 import models  # noqa: F401 — регистрация ORM до init_db()
 from rate_limit import limiter
-from routers import auth, pets, users, reports, settings, telegram, notifications, media, partners, partner_ads, feature_flags, profile_pets, blog, faq, social_card, instagram_publish, rewards, favorites, shelters, shelter_pets, shelter_campaigns, shelter_subscriptions, help, guides, internal_cron, device_tokens
+from routers import auth, pets, users, reports, settings, telegram, notifications, media, partners, partner_ads, feature_flags, profile_pets, blog, faq, social_card, rewards, favorites, shelters, shelter_pets, shelter_campaigns, shelter_subscriptions, help, guides, internal_cron, device_tokens
 from telegram_bot import BOT_TOKEN, process_telegram_update
 
 logging.basicConfig(
@@ -28,6 +28,18 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
 logger = logging.getLogger(__name__)
+
+try:
+    from instagram_worker import process_single_publication
+except Exception:
+    process_single_publication = None
+    logging.getLogger(__name__).exception("Instagram worker failed to import — publisher disabled")
+
+try:
+    from routers import instagram_publish
+except Exception:
+    instagram_publish = None
+    logging.getLogger(__name__).exception("Instagram publish router failed to import — IG API disabled")
 
 UPLOADS_DIR = Path(__file__).resolve().parent / "uploads"
 UPLOADS_DIR.mkdir(exist_ok=True)
@@ -45,7 +57,7 @@ async def _telegram_polling():
             await client.post(f"{api_url}/deleteWebhook", json={"drop_pending_updates": True})
             logger.info("Webhook deleted, pending updates dropped")
         except Exception:
-            logger.warning("Telegram deleteWebhook failed on startup", exc_info=True)
+            pass
 
     async with httpx.AsyncClient(timeout=35) as client:
         while True:
@@ -59,7 +71,7 @@ async def _telegram_polling():
                     try:
                         await client.post(f"{api_url}/deleteWebhook", json={"drop_pending_updates": True})
                     except Exception:
-                        logger.warning("Telegram deleteWebhook retry failed after 409", exc_info=True)
+                        pass
                     await asyncio.sleep(10)
                     continue
                 if resp.status_code != 200:
@@ -80,6 +92,21 @@ async def _telegram_polling():
                 await asyncio.sleep(5)
 
 
+async def _instagram_publications_loop():
+    """Background loop: processes Instagram publication queue."""
+    interval = int(os.getenv("INSTAGRAM_WORKER_POLL_SECONDS", "8"))
+    logger.info("Instagram publications worker started (poll=%ss)", interval)
+    while True:
+        try:
+            did_work = await asyncio.to_thread(process_single_publication)
+            if did_work:
+                await asyncio.sleep(0.2)
+                continue
+        except Exception as e:
+            logger.exception("Instagram worker loop error: %s", e)
+        await asyncio.sleep(max(2, interval))
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     UPLOADS_DIR.mkdir(exist_ok=True)
@@ -95,12 +122,31 @@ async def lifespan(app: FastAPI):
     else:
         logger.warning("TELEGRAM_BOT_TOKEN not set — bot polling disabled")
 
+    instagram_worker_task = None
+    instagram_worker_enabled = (
+        process_single_publication is not None
+        and os.getenv("INSTAGRAM_PUBLISHER_ENABLED", "true").strip().lower()
+        in {"1", "true", "yes", "on"}
+    )
+    if instagram_worker_enabled:
+        instagram_worker_task = asyncio.create_task(_instagram_publications_loop())
+    elif process_single_publication is None:
+        logger.warning("Instagram publications worker skipped — module did not import")
+    else:
+        logger.info("Instagram publications worker disabled by INSTAGRAM_PUBLISHER_ENABLED")
+
     yield
 
     if polling_task:
         polling_task.cancel()
         try:
             await polling_task
+        except asyncio.CancelledError:
+            pass
+    if instagram_worker_task:
+        instagram_worker_task.cancel()
+        try:
+            await instagram_worker_task
         except asyncio.CancelledError:
             pass
 
@@ -188,9 +234,10 @@ api_v1.include_router(faq.router)
 api_v1.include_router(help.router)
 api_v1.include_router(guides.router)
 api_v1.include_router(social_card.router)
+if instagram_publish is not None:
+    api_v1.include_router(instagram_publish.router)
 api_v1.include_router(rewards.router)
 api_v1.include_router(favorites.router)
-api_v1.include_router(device_tokens.router)
 api_v1.include_router(shelters.router)
 api_v1.include_router(shelter_pets.router)
 api_v1.include_router(shelter_campaigns.router)
