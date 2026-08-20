@@ -638,9 +638,6 @@ class PlatformSettingsUpdate(BaseModel):
     reward_default_points: Optional[int] = Field(None, ge=0, le=1_000_000)
     telegram_blog_chat_id: Optional[str] = Field(None, max_length=64)
     telegram_blog_public_username: Optional[str] = Field(None, max_length=64)
-    instagram_autopublish_enabled: Optional[bool] = None
-    instagram_story_enabled: Optional[bool] = None
-    instagram_manual_when_auto_off: Optional[bool] = None
     help_volunteer_url: Optional[str] = Field(None, max_length=2000)
 
     @field_validator("help_volunteer_url", mode="before")
@@ -654,9 +651,6 @@ class PlatformSettingsUpdate(BaseModel):
 
     @field_validator(
         "require_moderation",
-        "instagram_autopublish_enabled",
-        "instagram_story_enabled",
-        "instagram_manual_when_auto_off",
         mode="before",
     )
     @classmethod
@@ -1137,8 +1131,10 @@ class ProfilePetResponse(BaseModel):
     owner_email: Optional[str] = None
     owner_city: Optional[str] = None
     owner_viber: Optional[str] = None
-    # True, если у владельца привязан Telegram — доступна отправка сигнала «нашёл питомца»
+    # True only for owner/admin views — public cards use owner_notify_available alone
     owner_telegram_linked: bool = False
+    # Aggregate: owner can receive found-signal (Telegram and/or push)
+    owner_notify_available: bool = False
 
     class Config:
         from_attributes = True
@@ -1148,6 +1144,7 @@ class ProfilePetFoundSignalResponse(BaseModel):
     accepted: bool = True
     throttled: bool = False
     telegram_sent: bool = False
+    push_sent: bool = False
     detail: str = "ok"
 
 
@@ -1381,117 +1378,6 @@ class GuideVideoAdminResponse(GuideVideoPublicResponse):
     status: str
     created_at: datetime
     updated_at: datetime
-
-
-# --- Instagram Publications ---
-class InstagramAccountCreate(BaseModel):
-    name: str = Field(..., min_length=1, max_length=120)
-    instagram_business_id: str = Field(..., min_length=1, max_length=120)
-    facebook_page_id: Optional[str] = Field(None, max_length=120)
-    access_token: Optional[str] = Field(None, max_length=4000)
-    is_active: bool = True
-
-
-class InstagramAccountUpdate(BaseModel):
-    name: Optional[str] = Field(None, min_length=1, max_length=120)
-    instagram_business_id: Optional[str] = Field(None, min_length=1, max_length=120)
-    facebook_page_id: Optional[str] = Field(None, max_length=120)
-    access_token: Optional[str] = Field(None, max_length=4000)
-    is_active: Optional[bool] = None
-
-
-class InstagramAccountResponse(BaseModel):
-    id: str
-    name: str
-    instagram_business_id: str
-    facebook_page_id: Optional[str] = None
-    has_access_token: bool = False
-    is_active: bool = True
-    created_at: datetime
-    updated_at: datetime
-
-    class Config:
-        from_attributes = True
-
-
-class InstagramRegionRouteCreate(BaseModel):
-    region_key: str = Field(..., min_length=1, max_length=120)
-    account_id: str = Field(..., min_length=1, max_length=120)
-    is_fallback: bool = False
-
-
-class InstagramRegionRouteUpdate(BaseModel):
-    account_id: Optional[str] = Field(None, min_length=1, max_length=120)
-    is_fallback: Optional[bool] = None
-
-
-class InstagramRegionRouteResponse(BaseModel):
-    id: str
-    region_key: str
-    account_id: str
-    account_name: str
-    is_fallback: bool = False
-    created_at: datetime
-    updated_at: datetime
-
-    class Config:
-        from_attributes = True
-
-
-class InstagramPublicationCreateManual(BaseModel):
-    pet_id: str = Field(..., min_length=1, max_length=120)
-    format: str = Field(default="story")
-
-    @field_validator("format")
-    @classmethod
-    def format_ok(cls, v):
-        if v != "story":
-            raise ValueError("format: only story")
-        return v
-
-
-class InstagramPublicationResponse(BaseModel):
-    id: str
-    pet_id: str
-    account_id: Optional[str] = None
-    account_name: Optional[str] = None
-    initiated_by: Optional[str] = None
-    region_key: Optional[str] = None
-    mode: str
-    source: str = "auto"
-    requested_by_user_id: Optional[str] = None
-    requested_at: Optional[datetime] = None
-    format: str
-    status: str
-    attempts: int
-    last_error: Optional[str] = None
-    external_media_id: Optional[str] = None
-    idempotency_key: str
-    payload: dict = Field(default_factory=dict)
-    created_at: datetime
-    updated_at: datetime
-    published_at: Optional[datetime] = None
-
-    class Config:
-        from_attributes = True
-
-
-class InstagramPublicationListResponse(BaseModel):
-    items: list[InstagramPublicationResponse]
-    total: int
-    limit: int
-    offset: int
-
-
-class InstagramBoostCreate(BaseModel):
-    pet_id: str = Field(..., min_length=1, max_length=120)
-
-
-class InstagramBoostEligibilityResponse(BaseModel):
-    eligible: bool
-    reason: str
-    next_available_at: Optional[datetime] = None
-    pet_age_days: Optional[int] = None
 
 
 # --- Shelters (приюты / передержки; владелец — пользователь с ролью shelter) ---

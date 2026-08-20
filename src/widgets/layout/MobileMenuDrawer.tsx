@@ -14,7 +14,6 @@ import {
   BookOpen,
   Heart,
   Building2,
-  CirclePlay,
 } from 'lucide-react';
 import { useAuth } from '@/app/providers/AuthContext';
 import { useI18n } from '@/app/providers/I18nContext';
@@ -132,10 +131,6 @@ export function MobileMenuDrawer({ open, onClose }: MobileMenuDrawerProps) {
           <button type="button" onClick={() => go('/blog')} className={linkCls('/blog')}>
             <BookOpen size={20} />
             <span>{t.header.blog}</span>
-          </button>
-          <button type="button" onClick={() => go('/guides')} className={linkCls('/guides')}>
-            <CirclePlay size={20} />
-            <span>{t.header.guides}</span>
           </button>
 
           {isAuthenticated && (

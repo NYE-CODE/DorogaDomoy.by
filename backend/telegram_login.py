@@ -13,8 +13,8 @@ logger = logging.getLogger(__name__)
 
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 _resolved_bot_username: str | None = None
-# Максимальный возраст auth_date (секунды)
-MAX_AUTH_AGE_SECONDS = 86400
+# Максимальный возраст auth_date (секунды). Короткое окно снижает риск replay.
+MAX_AUTH_AGE_SECONDS = 600
 
 
 def resolve_telegram_bot_username() -> str | None:

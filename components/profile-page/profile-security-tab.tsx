@@ -22,7 +22,9 @@ export interface ProfileSecurityTabProps {
   showConfirmPw: boolean;
   setShowConfirmPw: (v: boolean) => void;
   isSavingPassword: boolean;
+  isDeletingAccount: boolean;
   onSubmit: (e: React.FormEvent) => void;
+  onDeleteAccount: () => void;
 }
 
 export function ProfileSecurityTab({
@@ -41,7 +43,9 @@ export function ProfileSecurityTab({
   showConfirmPw,
   setShowConfirmPw,
   isSavingPassword,
+  isDeletingAccount,
   onSubmit,
+  onDeleteAccount,
 }: ProfileSecurityTabProps) {
   return (
     <div className="space-y-6">
@@ -91,6 +95,19 @@ export function ProfileSecurityTab({
           </button>
         </div>
       </form>
+
+      <div className="border border-red-200 dark:border-red-900/60 rounded-lg p-4 space-y-3">
+        <h3 className="font-bold text-black dark:text-white">{t.profile.deleteAccount}</h3>
+        <p className="text-sm text-gray-700 dark:text-gray-300">{t.profile.deleteAccountBody}</p>
+        <button
+          type="button"
+          disabled={isDeletingAccount}
+          onClick={onDeleteAccount}
+          className="h-12 px-6 rounded-lg border border-red-500 text-red-600 dark:text-red-400 font-medium disabled:opacity-50"
+        >
+          {isDeletingAccount ? '…' : t.profile.deleteAccount}
+        </button>
+      </div>
     </div>
   );
 }

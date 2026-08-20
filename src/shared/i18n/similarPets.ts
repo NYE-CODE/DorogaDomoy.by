@@ -8,6 +8,8 @@ export const similarPetsLocales = {
     matchLabel: 'совпадение',
     matchTooltipTitle: 'Почему похоже',
     matchTooltipEmpty: 'Совпадение по нескольким признакам',
+    topMatchBanner: 'Лучшее совпадение — {percent}%. Откройте объявление и сравните фото.',
+    openListing: 'Открыть объявление',
     reasons: {
       very_nearby: 'Очень близко',
       nearby: 'Рядом',
@@ -24,7 +26,6 @@ export const similarPetsLocales = {
       similar_description: 'Похожее описание',
       matching_marks: 'Общие приметы',
     },
-  
   },
   be: {
     title: 'Магчымыя супадзенні',
@@ -34,6 +35,8 @@ export const similarPetsLocales = {
     matchLabel: 'супадзенне',
     matchTooltipTitle: 'Чаму падобна',
     matchTooltipEmpty: 'Супадзенне па некалькіх прызнаках',
+    topMatchBanner: 'Лепшае супадзенне — {percent}%. Адкрыйце аб\'яву і параўнайце фота.',
+    openListing: 'Адкрыць аб\'яву',
     reasons: {
       very_nearby: 'Вельмі блізка',
       nearby: 'Побач',
@@ -50,7 +53,6 @@ export const similarPetsLocales = {
       similar_description: 'Падобнае апісанне',
       matching_marks: 'Агульныя прыкметы',
     },
-  
   },
   en: {
     title: 'Possible matches',
@@ -60,6 +62,8 @@ export const similarPetsLocales = {
     matchLabel: 'match',
     matchTooltipTitle: 'Why it matches',
     matchTooltipEmpty: 'Match based on several factors',
+    topMatchBanner: 'Best match — {percent}%. Open the listing and compare photos.',
+    openListing: 'Open listing',
     reasons: {
       very_nearby: 'Very close',
       nearby: 'Nearby',
@@ -76,6 +80,5 @@ export const similarPetsLocales = {
       similar_description: 'Similar description',
       matching_marks: 'Shared distinctive marks',
     },
-  
   },
 } as const;

@@ -27,6 +27,7 @@ export const authLocales = {
     registerAsVolunteer: 'Волонтёр',
     orDivider: 'или',
     forgotPasswordLink: 'Забыли пароль?',
+    forgotPasswordDisabled: 'Сброс пароля временно недоступен',
     telegramLoginSuccess: 'Вы вошли через Telegram',
     completeProfile: {
       title: 'Завершите регистрацию',
@@ -88,6 +89,7 @@ export const authLocales = {
     registerAsVolunteer: 'Валанцёр',
     orDivider: 'або',
     forgotPasswordLink: 'Забылі пароль?',
+    forgotPasswordDisabled: 'Скід пароля часова недаступны',
     telegramLoginSuccess: 'Вы ўвайшлі праз Telegram',
     completeProfile: {
       title: 'Завершыце рэгістрацыю',
@@ -149,6 +151,7 @@ export const authLocales = {
     registerAsVolunteer: 'Volunteer',
     orDivider: 'or',
     forgotPasswordLink: 'Forgot password?',
+    forgotPasswordDisabled: 'Password reset is temporarily unavailable',
     telegramLoginSuccess: 'Signed in with Telegram',
     completeProfile: {
       title: 'Complete your profile',

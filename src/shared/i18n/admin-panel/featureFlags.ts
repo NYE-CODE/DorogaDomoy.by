@@ -12,9 +12,6 @@ export const adminPanelFeatureFlagsLocales = {
     ffFaq: 'Секция «Вопросы и ответы»',
     ffFaqDesc: 'Блок FAQ на лендинге и ссылка в подвале',
     siteTitle: 'Основной сайт поиска',
-    ffInstagramBoost: 'Продвижение в Instagram Stories',
-    ffInstagramBoostDesc:
-      'Кнопка «Продвигать в Instagram Stories» в разделе «Мои объявления» и API буста',
     ffRewardEnabled: 'Включить систему наград',
     ffRewardEnabledDesc: 'Отключение скрывает и блокирует начисления наград.',
     ffRewardMoneyEnabled: 'Разрешить денежную награду',
@@ -35,9 +32,6 @@ export const adminPanelFeatureFlagsLocales = {
     ffFaq: 'Секцыя «Пытанні і адказы»',
     ffFaqDesc: 'Блок FAQ на лендынгу і спасылка ў падвале',
     siteTitle: 'Асноўны сайт пошуку',
-    ffInstagramBoost: 'Прасоўванне ў Instagram Stories',
-    ffInstagramBoostDesc:
-      'Кнопка ў раздзеле «Мае аб\'явы» і API буста',
     ffRewardEnabled: 'Уключыць сістэму узнагарод',
     ffRewardEnabledDesc: 'Адключэнне хавае і блакуе налічэнне узнагарод.',
     ffRewardMoneyEnabled: 'Дазволіць грашовую ўзнагароду',
@@ -58,9 +52,6 @@ export const adminPanelFeatureFlagsLocales = {
     ffFaq: '“Questions & answers” section',
     ffFaqDesc: 'FAQ block on the landing page and footer link',
     siteTitle: 'Main search site',
-    ffInstagramBoost: 'Promote to Instagram Stories',
-    ffInstagramBoostDesc:
-      '“Promote to Instagram Stories” in My Ads and the boost API',
     ffRewardEnabled: 'Enable reward system',
     ffRewardEnabledDesc: 'When off, rewards are hidden and granting is blocked.',
     ffRewardMoneyEnabled: 'Allow money rewards',

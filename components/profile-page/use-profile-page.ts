@@ -20,7 +20,7 @@ export function useProfilePage() {
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, updateContacts, updateProfile, changePassword, setPassword, uploadAvatar, refreshUser } = useAuth();
+  const { user, updateContacts, updateProfile, changePassword, setPassword, uploadAvatar, refreshUser, deleteAccount } = useAuth();
   const { t } = useI18n();
   const pr = t.profile as typeof t.profile & ProfileTranslations;
 
@@ -36,6 +36,7 @@ export function useProfilePage() {
 
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isSavingPassword, setIsSavingPassword] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [isSavingContacts, setIsSavingContacts] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
@@ -198,6 +199,22 @@ export function useProfilePage() {
       toast.error(err instanceof Error ? err.message : t.profile.wrongPassword);
     } finally {
       setIsSavingPassword(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    const confirmed = window.confirm(
+      `${t.profile.deleteAccountTitle}\n\n${t.profile.deleteAccountBody}`,
+    );
+    if (!confirmed) return;
+    setIsDeletingAccount(true);
+    try {
+      await deleteAccount();
+      navigate('/');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t.profile.deleteAccountError);
+    } finally {
+      setIsDeletingAccount(false);
     }
   };
 
@@ -478,6 +495,7 @@ export function useProfilePage() {
     setShowConfirmPw,
     isSavingProfile,
     isSavingPassword,
+    isDeletingAccount,
     isSavingContacts,
     isUploadingAvatar,
     isTelegramLinked,
@@ -501,6 +519,7 @@ export function useProfilePage() {
     hasAnyContact,
     handleSaveProfile,
     handleSavePassword,
+    handleDeleteAccount,
     handleSaveContacts,
     handleSavePersonal,
     handleConfirmVolunteerUpgrade,

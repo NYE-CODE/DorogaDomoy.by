@@ -17,11 +17,8 @@ export const headerLocales = {
     home: 'Главная',
     searchAds: 'Поиск объявлений',
     blog: 'Блог',
-    guides: 'Гайды',
     favorites: 'Избранное',
     shelters: 'Приюты',
-    matchPet: 'Подобрать питомца',
-  
   },
   be: {
     tagline: 'Дарога Дадому — экасістэма дапамогі жывёлам',
@@ -40,11 +37,8 @@ export const headerLocales = {
     home: 'Галоўная',
     searchAds: 'Пошук аб\'яў',
     blog: 'Блог',
-    guides: 'Гайды',
     favorites: 'Абранае',
     shelters: 'Прыюты',
-    matchPet: 'Падобраць гадаванца',
-  
   },
   en: {
     tagline: 'Doroga Domoy — animal help ecosystem',
@@ -63,10 +57,7 @@ export const headerLocales = {
     home: 'Home',
     searchAds: 'Search ads',
     blog: 'Blog',
-    guides: 'Guides',
     favorites: 'Favorites',
     shelters: 'Shelters',
-    matchPet: 'Find a pet',
-  
   },
 } as const;

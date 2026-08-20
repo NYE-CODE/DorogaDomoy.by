@@ -1,5 +1,4 @@
 ﻿import type { AnimalType, Gender, Pet, PetColor, PetStatus } from '@/entities/pet/model/types';
-import type { AdopterAgePref } from '@/entities/adopter-profile/model/types';
 
 /** Состояние фильтров приюта (черновик / применённые). */
 export type ShelterPetAgeBand =
@@ -202,47 +201,6 @@ export function petMatchesShelterFilters(p: Pet, f: ShelterPetFilterState): bool
     if (!blob.includes(q)) return false;
   }
 
-  return true;
-}
-
-/** Возрастное предпочтение из анкеты подбора. */
-export function matchesAdopterAgePref(p: Pet, pref: AdopterAgePref): boolean {
-  if (pref === 'any') return true;
-  const blob = petSearchBlob(p);
-  if (!hasAnyAgeSignal(p, blob)) return true;
-
-  const presetYoung = p.approximateAge?.trim() === 'менее 2 года';
-  const presetOld = p.approximateAge?.trim() === 'более 2 года';
-  const isYoung =
-    presetYoung ||
-    matchesAgeBand(p, 'under5mo') ||
-    matchesAgeBand(p, 'm6to12');
-  const isSenior = presetOld || matchesAgeBand(p, 'y10plus');
-  const isAdult =
-    !isYoung &&
-    !isSenior &&
-    (matchesAgeBand(p, 'y1to5') || matchesAgeBand(p, 'y6to10'));
-
-  switch (pref) {
-    case 'young':
-      return isYoung;
-    case 'adult':
-      return isAdult || (!isYoung && !isSenior);
-    case 'senior':
-      return isSenior;
-    default:
-      return true;
-  }
-}
-
-export function petMatchesAdopterHealth(
-  p: Pet,
-  opts: { acceptsTreatment: boolean; acceptsDisability: boolean },
-): boolean {
-  const status = p.healthStatus;
-  if (!status) return true;
-  if (status === 'treatment' && !opts.acceptsTreatment) return false;
-  if (status === 'disabled' && !opts.acceptsDisability) return false;
   return true;
 }
 

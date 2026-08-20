@@ -11,11 +11,10 @@ export function useMyAdsPage({
   pets,
   onEditPet,
   onDeletePet,
-  onBoostPet,
   onRenewPet,
 }: Pick<
   MyAdsPageProps,
-  'pets' | 'onEditPet' | 'onDeletePet' | 'onBoostPet' | 'onRenewPet'
+  'pets' | 'onEditPet' | 'onDeletePet' | 'onRenewPet'
 >) {
   const { user } = useAuth();
   const { t, locale } = useI18n();
@@ -100,13 +99,6 @@ export function useMyAdsPage({
     onDeletePet(pet);
   };
 
-  const handleBoost = (e: React.MouseEvent, pet: Pet) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setOpenMenuId(null);
-    onBoostPet(pet);
-  };
-
   const handleRenew = (e: React.MouseEvent, pet: Pet) => {
     e.preventDefault();
     e.stopPropagation();
@@ -132,7 +124,6 @@ export function useMyAdsPage({
     totalActive,
     handleEdit,
     handleDelete,
-    handleBoost,
     handleRenew,
     onRenewPet,
   };

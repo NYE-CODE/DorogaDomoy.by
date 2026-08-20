@@ -72,10 +72,20 @@ def update_notification_settings(
 
     if data.notifications_enabled is not None:
         if data.notifications_enabled and not user.telegram_id:
-            raise HTTPException(
-                status_code=400,
-                detail="Привяжите Telegram перед включением уведомлений",
+            from models import DeviceToken
+            from sqlalchemy import select as sa_select
+
+            has_device = db.scalar(
+                sa_select(DeviceToken.id).where(
+                    DeviceToken.user_id == user.id,
+                    DeviceToken.is_active.is_(True),
+                )
             )
+            if not has_device:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Привяжите Telegram или зарегистрируйте устройство приложения перед включением уведомлений",
+                )
         ns.notifications_enabled = data.notifications_enabled
 
     if data.notification_radius_km is not None:

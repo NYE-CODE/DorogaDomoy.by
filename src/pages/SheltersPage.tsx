@@ -3,15 +3,10 @@ import { Link, useNavigate, useSearchParams } from 'react-router';
 import { Header } from '@/widgets/layout/Header';
 import { Footer } from '@/widgets/layout/Footer';
 import { useI18n } from '@/app/providers/I18nContext';
-import { useAuth } from '@/app/providers/AuthContext';
 import { sheltersApi, type ShelterResponse } from '@/shared/api/client';
 import type { Pet } from '@/entities/pet/model/types';
-import { MapPin, Building2, ChevronRight, Search, Sparkles } from 'lucide-react';
+import { MapPin, Building2, ChevronRight, Search } from 'lucide-react';
 import { buildShelterPetUrl, loadCatalogShelterPets } from '@/shared/lib/shelter-pet-browse';
-import { getMatchPath } from '@/shared/lib/match-nav';
-import { adopterProfileScope, readAdopterProfile } from '@/shared/lib/adopter-profile-storage';
-import { matchOrangeFabClass } from '@/shared/styles/match-styles';
-import { Button } from '@/shared/ui/button';
 import {
   shelterAnimalFocusLabel,
   shelterKindLabel,
@@ -37,8 +32,6 @@ import { PartnerAdSlot } from '@/features/partner-ads/PartnerAdSlot';
 export default function SheltersPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { user } = useAuth();
-  const profileScope = adopterProfileScope(user?.id);
   const { t } = useI18n();
   const s = t.landing.shelters;
   const ALL_CITIES_VALUE = '__all__';
@@ -106,8 +99,6 @@ export default function SheltersPage() {
   }, [cityOptions, citySearch]);
 
   const activeTab = searchParams.get('tab') === 'pets' ? 'pets' : 'orgs';
-  const hasMatchProfile = Boolean(readAdopterProfile(profileScope)?.completedAt);
-  const matchCta = t.match.cta;
 
   const list = useMemo(() => {
     return allShelters.filter((x) => {
@@ -301,20 +292,6 @@ export default function SheltersPage() {
         </>
         ) : (
           <>
-          <div className="mb-6 flex flex-col gap-4 rounded-lg border border-primary/25 bg-gradient-to-br from-primary/8 via-card to-card p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
-            <div className="flex min-w-0 items-start gap-3">
-              <div className="flex size-11 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary-emphasis dark:text-primary-soft">
-                <Sparkles size={22} aria-hidden />
-              </div>
-              <div className="min-w-0">
-                <h2 className="text-base font-semibold text-foreground sm:text-lg">{matchCta.title}</h2>
-                <p className="mt-1 text-sm text-muted-foreground">{matchCta.description}</p>
-              </div>
-            </div>
-            <Button asChild className={`shrink-0 ${matchOrangeFabClass}`}>
-              <Link to={getMatchPath(user?.id)}>{hasMatchProfile ? matchCta.continue : matchCta.start}</Link>
-            </Button>
-          </div>
           <div className="mb-8 rounded-lg border border-border bg-muted/20 p-4 sm:p-5">
             <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
               <div className="w-full">

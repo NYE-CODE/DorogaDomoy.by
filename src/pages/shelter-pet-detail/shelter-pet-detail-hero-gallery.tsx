@@ -33,7 +33,7 @@ export function ShelterPetDetailHeroGallery({
         {heroPhoto ? (
           <img src={heroPhoto} alt={title} className="block size-full max-h-full object-cover" />
         ) : (
-          <div className="flex size-full items-center justify-center text-muted-foreground">{t.match.card.noPhoto}</div>
+          <div className="flex size-full items-center justify-center text-muted-foreground">{t.shelterPet.noPhoto}</div>
         )}
         {canSlide ? (
           <>
@@ -41,7 +41,7 @@ export function ShelterPetDetailHeroGallery({
               type="button"
               onClick={goPrev}
               className="absolute left-3 top-1/2 z-10 inline-flex size-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/40 bg-black/30 text-white backdrop-blur-sm hover:bg-black/45"
-              aria-label={t.match.card.photoPrev}
+              aria-label={t.shelterPet.photoPrev}
             >
               <ChevronLeft className="size-5" />
             </button>
@@ -49,7 +49,7 @@ export function ShelterPetDetailHeroGallery({
               type="button"
               onClick={goNext}
               className="absolute right-3 top-1/2 z-10 inline-flex size-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/40 bg-black/30 text-white backdrop-blur-sm hover:bg-black/45"
-              aria-label={t.match.card.photoNext}
+              aria-label={t.shelterPet.photoNext}
             >
               <ChevronRight className="size-5" />
             </button>

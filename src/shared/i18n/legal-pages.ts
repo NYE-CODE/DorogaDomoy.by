@@ -25,7 +25,7 @@ const ru: LegalPagesLocale = {
   terms: {
     title: 'Условия использования',
     back: 'Назад',
-    updatedAt: 'Дата последнего обновления: 28 февраля 2026 г.',
+    updatedAt: 'Дата последнего обновления: 20 августа 2026 г.',
     contactParagraph:
       'По всем вопросам, связанным с условиями использования, вы можете связаться с администрацией платформы через форму обратной связи или по адресу электронной почты:',
     contactEmail: 'contact@dorogadomoy.by',
@@ -119,7 +119,7 @@ const ru: LegalPagesLocale = {
   privacy: {
     title: 'Политика конфиденциальности',
     back: 'Назад',
-    updatedAt: 'Дата последнего обновления: 28 февраля 2026 г.',
+    updatedAt: 'Дата последнего обновления: 20 августа 2026 г.',
     contactParagraph:
       'По вопросам обработки персональных данных обращайтесь к администрации платформы:',
     contactEmail: 'contact@dorogadomoy.by',
@@ -133,7 +133,7 @@ const ru: LegalPagesLocale = {
       {
         title: '1. Какие данные мы обрабатываем',
         paragraphs: [
-          'При регистрации и использовании сервиса мы можем обрабатывать: имя, адрес электронной почты, номер телефона, идентификаторы мессенджеров (Telegram, Viber), данные объявлений (описание, фото, местоположение), технические данные (IP-адрес, cookies, данные браузера).',
+          'При регистрации и использовании сайта или мобильного приложения мы можем обрабатывать: имя, адрес электронной почты, номер телефона, идентификаторы мессенджеров (Telegram, Viber), данные объявлений (описание, фото, местоположение), точную геолокацию при указании точки на карте, фото с камеры или из галереи, токен устройства для push-уведомлений (Firebase Cloud Messaging), технические данные (IP-адрес, cookies, данные браузера).',
         ],
       },
       {
@@ -151,7 +151,7 @@ const ru: LegalPagesLocale = {
       {
         title: '4. Передача третьим лицам',
         paragraphs: [
-          'Мы не продаём и не передаём ваши данные третьим лицам в маркетинговых целях. Передача возможна поставщикам инфраструктуры (хостинг, почта), по требованию закона или с вашего согласия.',
+          'Мы не продаём и не передаём ваши данные третьим лицам в маркетинговых целях. Передача возможна поставщикам инфраструктуры (хостинг, почта, Firebase Cloud Messaging для push), по требованию закона или с вашего согласия.',
         ],
       },
       {
@@ -169,7 +169,7 @@ const ru: LegalPagesLocale = {
       {
         title: '7. Ваши права',
         paragraphs: [
-          'Вы можете запросить доступ к своим данным, их исправление или удаление, отозвать согласие на обработку и удалить аккаунт через настройки профиля или обратившись в поддержку.',
+          'Вы можете запросить доступ к своим данным, их исправление или удаление, отозвать согласие на обработку и удалить аккаунт в настройках профиля на сайте (вкладка «Безопасность») или в мобильном приложении. Также можно обратиться в поддержку.',
         ],
       },
       {
@@ -191,7 +191,7 @@ const be: LegalPagesLocale = {
     ...ru.terms,
     title: 'Умовы выкарыстання',
     back: 'Назад',
-    updatedAt: 'Дата апошняга абнаўлення: 28 лютага 2026 г.',
+    updatedAt: 'Дата апошняга абнаўлення: 20 жніўня 2026 г.',
     contactParagraph:
       'Па ўсіх пытаннях, звязаных з умовамі выкарыстання, звяртайцеся да адміністрацыі платформы:',
     sections: ru.terms.sections.map((s, i) => ({
@@ -225,7 +225,7 @@ const be: LegalPagesLocale = {
     ...ru.privacy,
     title: 'Палітыка канфідэнцыйнасці',
     back: 'Назад',
-    updatedAt: 'Дата апошняга абнаўлення: 28 лютага 2026 г.',
+    updatedAt: 'Дата апошняга абнаўлення: 20 жніўня 2026 г.',
     contactParagraph: 'Па пытаннях апрацоўкі персанальных дадзеных звяртайцеся да адміністрацыі платформы:',
     sections: ru.privacy.sections.map((s, i) => ({
       ...s,
@@ -248,7 +248,7 @@ const en: LegalPagesLocale = {
   terms: {
     title: 'Terms of use',
     back: 'Back',
-    updatedAt: 'Last updated: 28 February 2026',
+    updatedAt: 'Last updated: 20 August 2026',
     contactParagraph:
       'For questions about these terms of use, contact platform administration:',
     contactEmail: 'contact@dorogadomoy.by',
@@ -339,7 +339,7 @@ const en: LegalPagesLocale = {
   privacy: {
     title: 'Privacy policy',
     back: 'Back',
-    updatedAt: 'Last updated: 28 February 2026',
+    updatedAt: 'Last updated: 20 August 2026',
     contactParagraph: 'For personal data processing questions, contact platform administration:',
     contactEmail: 'contact@dorogadomoy.by',
     sections: [
@@ -352,7 +352,7 @@ const en: LegalPagesLocale = {
       {
         title: '1. Data we process',
         paragraphs: [
-          'When you register and use the service, we may process: name, email, phone number, messenger IDs (Telegram, Viber), listing data (description, photos, location), and technical data (IP address, cookies, browser data).',
+          'When you register and use the website or mobile app, we may process: name, email, phone number, messenger IDs (Telegram, Viber), listing data (description, photos, location), precise location when you drop a pin on the map, camera or gallery photos, a device token for push notifications (Firebase Cloud Messaging), and technical data (IP address, cookies, browser data).',
         ],
       },
       {
@@ -370,7 +370,7 @@ const en: LegalPagesLocale = {
       {
         title: '4. Third-party sharing',
         paragraphs: [
-          'We do not sell or share your data for marketing. Sharing may occur with infrastructure providers (hosting, email), when required by law, or with your consent.',
+          'We do not sell or share your data for marketing. Sharing may occur with infrastructure providers (hosting, email, Firebase Cloud Messaging for push), when required by law, or with your consent.',
         ],
       },
       {
@@ -388,7 +388,7 @@ const en: LegalPagesLocale = {
       {
         title: '7. Your rights',
         paragraphs: [
-          'You may request access, correction, or deletion of your data, withdraw consent, and delete your account via profile settings or by contacting support.',
+          'You may request access, correction, or deletion of your data, withdraw consent, and delete your account in website profile settings (Security tab) or in the mobile app. You can also contact support.',
         ],
       },
       {

@@ -3,9 +3,7 @@ import { AdminBlogPanel } from '../admin-blog-panel';
 import { AdminDashboardPanel } from '../admin-dashboard-panel';
 import { AdminFaqPanel } from '../admin-faq-panel';
 import { AdminFeatureFlagsPanel } from '../admin-feature-flags-panel';
-import { AdminGuidesPanel } from '../admin-guides-panel';
 import { AdminHelpSectionPanel } from '../admin-help-section-panel';
-import { AdminInstagramPanel } from '../admin-instagram-panel';
 import { AdminMediaPanel } from '../admin-media-panel';
 import { AdminPartnersPanel } from '../admin-partners-panel';
 import { AdminPartnerAdsPanel } from '../admin-partner-ads-panel';
@@ -226,11 +224,9 @@ export function AdminPanelTabContent({
           onFaqDelete={onFaqDelete}
         />
       )}
-      {activeTab === 'guides' && <AdminGuidesPanel />}
       {activeTab === 'helpSection' && <AdminHelpSectionPanel />}
       {activeTab === 'featureFlags' && <AdminFeatureFlagsPanel />}
       {activeTab === 'telegramBlog' && <AdminTelegramBlogPanel />}
-      {activeTab === 'instagram' && <AdminInstagramPanel />}
       {activeTab === 'settings' && <AdminSettingsPanel />}
     </div>
   );

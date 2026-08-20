@@ -6,7 +6,6 @@ export interface FeatureFlagsState {
   ff_landing_show_help: boolean;
   ff_landing_show_pets_feature: boolean;
   ff_landing_show_faq: boolean;
-  ff_instagram_boost_stories: boolean;
   ff_partner_ads_enabled: boolean;
 }
 
@@ -15,7 +14,6 @@ const defaultFlags: FeatureFlagsState = {
   ff_landing_show_help: true,
   ff_landing_show_pets_feature: true,
   ff_landing_show_faq: true,
-  ff_instagram_boost_stories: true,
   ff_partner_ads_enabled: false,
 };
 
@@ -37,7 +35,6 @@ export function FeatureFlagsProvider({ children }: { children: React.ReactNode }
           ff_landing_show_pets_feature:
             (ff.ff_landing_show_pets_feature ?? "true") === "true",
           ff_landing_show_faq: (ff.ff_landing_show_faq ?? "true") === "true",
-          ff_instagram_boost_stories: (ff.ff_instagram_boost_stories ?? "true") === "true",
           ff_partner_ads_enabled: (ff.ff_partner_ads_enabled ?? "false") === "true",
         });
       } catch (e) {

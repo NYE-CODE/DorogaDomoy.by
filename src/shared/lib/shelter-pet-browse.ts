@@ -1,6 +1,5 @@
 ﻿import { sheltersApi, shelterPetsApi } from '@/shared/api/client';
 import type { Pet } from '@/entities/pet/model/types';
-import { adopterProfileScope, readAdopterProfile, readMatchLikedPetIdsOrdered } from './adopter-profile-storage';
 import {
   defaultShelterPetFilters,
   petMatchesShelterFilters,
@@ -8,7 +7,7 @@ import {
   type ShelterPetFilterState,
 } from './shelter-pet-filters';
 
-export type ShelterPetBrowseSource = 'catalog' | 'shelter' | 'match';
+export type ShelterPetBrowseSource = 'catalog' | 'shelter';
 
 export type ShelterPetBrowseContext = {
   source: ShelterPetBrowseSource;
@@ -61,9 +60,6 @@ export function parseBrowseContext(searchParams: URLSearchParams): ShelterPetBro
       shelterFilters: decodeShelterFilters(searchParams.get(FILTER_PARAM)),
     };
   }
-  if (from === 'match') {
-    return { source: 'match' };
-  }
   return null;
 }
 
@@ -73,10 +69,6 @@ export function browseContextToSearchParams(ctx: ShelterPetBrowseContext): URLSe
     params.set('from', 'catalog');
     if (ctx.catalogCity?.trim()) params.set('petCity', ctx.catalogCity.trim());
     if (ctx.catalogAnimal && ctx.catalogAnimal !== 'all') params.set('petAnimal', ctx.catalogAnimal);
-    return params;
-  }
-  if (ctx.source === 'match') {
-    params.set('from', 'match');
     return params;
   }
   params.set('from', 'shelter');
@@ -124,14 +116,8 @@ function filterCatalogPets(pets: Pet[], ctx: ShelterPetBrowseContext): Pet[] {
 export async function resolveShelterPetBrowseIds(
   ctx: ShelterPetBrowseContext | null,
   fallbackShelterId?: string | null,
-  userId?: string | null,
+  _userId?: string | null,
 ): Promise<string[]> {
-  if (ctx?.source === 'match') {
-    const profile = readAdopterProfile(adopterProfileScope(userId));
-    if (!profile) return [];
-    return readMatchLikedPetIdsOrdered(profile.completedAt);
-  }
-
   if (ctx?.source === 'catalog') {
     const pets = await loadCatalogShelterPets();
     return filterCatalogPets(pets, ctx).map((p) => p.id);
