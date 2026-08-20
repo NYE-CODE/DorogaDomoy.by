@@ -12,7 +12,12 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
 
 from database import get_db
-from models import Pet, ProfilePet, ProfilePetScanSignal, NotificationSettings, User, DeviceToken
+from models import Pet, ProfilePet, ProfilePetScanSignal, NotificationSettings, User
+
+try:
+    from models import DeviceToken
+except ImportError:
+    DeviceToken = None
 from schemas import (
     ProfilePetCreate,
     ProfilePetUpdate,
@@ -89,6 +94,8 @@ def upload_profile_pet_photo(
 
 
 def _user_has_active_push(db: Session, user_id: str) -> bool:
+    if DeviceToken is None:
+        return False
     return (
         db.scalar(
             select(DeviceToken.id).where(
@@ -101,7 +108,7 @@ def _user_has_active_push(db: Session, user_id: str) -> bool:
 
 
 def _active_push_user_ids(db: Session, user_ids: set[str]) -> set[str]:
-    if not user_ids:
+    if not user_ids or DeviceToken is None:
         return set()
     return set(
         db.scalars(

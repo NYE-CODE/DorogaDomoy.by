@@ -4,7 +4,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from account_deletion import delete_user_account
+try:
+    from account_deletion import delete_user_account
+except ImportError:
+    delete_user_account = None
 from database import get_db
 from models import User
 from schemas import HelperLookupResponse, UserResponse, UserUpdate
@@ -127,6 +130,8 @@ def delete_user(
     user = db.scalar(select(User).where(User.id == user_id))
     if not user:
         raise HTTPException(status_code=404, detail="Пользователь не найден")
+    if delete_user_account is None:
+        raise HTTPException(status_code=503, detail="Удаление пользователя временно недоступно")
     try:
         delete_user_account(db, user)
         db.commit()
