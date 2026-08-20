@@ -48,6 +48,7 @@ class User(Base):
     pet_favorites = relationship("PetFavorite", back_populates="user", cascade="all, delete-orphan")
     reports = relationship("Report", back_populates="reporter", foreign_keys="Report.reporter_id")
     notification_settings = relationship("NotificationSettings", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    device_tokens = relationship("DeviceToken", back_populates="user", cascade="all, delete-orphan")
 
 
 class Pet(Base):
@@ -253,6 +254,22 @@ class NotificationSettings(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     user = relationship("User", back_populates="notification_settings")
+
+
+class DeviceToken(Base):
+    """FCM device tokens for mobile push."""
+    __tablename__ = "device_tokens"
+    __table_args__ = (UniqueConstraint("token", name="uq_device_tokens_token"),)
+
+    id = Column(String, primary_key=True, index=True)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    token = Column(String, nullable=False)
+    platform = Column(String, nullable=False, default="android")
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    user = relationship("User", back_populates="device_tokens")
 
 
 class Sighting(Base):
