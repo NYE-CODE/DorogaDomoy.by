@@ -40,7 +40,7 @@ const MyShelterTeamPage = lazy(() => import('@/pages/MyShelterTeamPage'));
 const CompleteProfilePage = lazy(() => import('@/pages/CompleteProfilePage'));
 const WelcomePetProfilePage = lazy(() => import('@/pages/WelcomePetProfilePage'));
 const WelcomeShelterOrgPage = lazy(() => import('@/pages/WelcomeShelterOrgPage'));
-const MobileTelegramAuthPage = lazy(() => import('@/pages/MobileTelegramAuthPage'));
+const MobileTelegramAuthPage = lazy(() => import('@/pages/mobile-telegram-auth-page'));
 
 /** Все маршруты SPA — lazy-loaded страницы из слоя pages. */
 export function AppRoutes() {
