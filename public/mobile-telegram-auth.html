@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Вход через Telegram — DorogaDomoy</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: #f6f7f4;
+      color: #1a1a1a;
+      display: flex;
+      min-height: 100vh;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      box-sizing: border-box;
+    }
+    .card {
+      width: 100%;
+      max-width: 360px;
+      background: #fff;
+      border-radius: 16px;
+      padding: 28px 22px;
+      box-shadow: 0 8px 28px rgba(0,0,0,.06);
+      text-align: center;
+    }
+    h1 { font-size: 1.25rem; margin: 0 0 8px; }
+    p { margin: 0 0 20px; color: #5b5b5b; font-size: .95rem; line-height: 1.4; }
+    #widget { min-height: 44px; display: flex; justify-content: center; }
+    .err { color: #b42318; font-size: .9rem; margin-top: 12px; }
+    .loading { color: #5b5b5b; font-size: .9rem; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Вход через Telegram</h1>
+    <p>Авторизуйтесь виджетом Telegram — приложение продолжит автоматически.</p>
+    <div id="widget"><div class="loading">Загрузка…</div></div>
+    <div id="err" class="err" hidden></div>
+  </div>
+  <script>
+    function showError(msg) {
+      var el = document.getElementById('err');
+      el.hidden = false;
+      el.textContent = msg;
+    }
+
+    function postToApp(payload) {
+      try {
+        if (window.TelegramAuthChannel && window.TelegramAuthChannel.postMessage) {
+          window.TelegramAuthChannel.postMessage(JSON.stringify(payload));
+          return;
+        }
+      } catch (e) {
+        console.warn('[tg-auth] bridge postMessage failed', e);
+      }
+      // Do not put Telegram Login hash/id into a deep-link URL (history, logs, referrers).
+      showError('Откройте эту страницу внутри приложения DorogaDomoy.');
+    }
+
+    window.onTelegramAuth = function (user) {
+      postToApp(user);
+    };
+
+    async function boot() {
+      try {
+        var res = await fetch('/api/v1/auth/config', { credentials: 'omit' });
+        if (!res.ok) throw new Error('config');
+        var cfg = await res.json();
+        var bot = (cfg.telegram_bot_username || '').replace(/^@/, '');
+        if (!cfg.telegram_login_enabled || !bot) {
+          showError('Вход через Telegram сейчас недоступен.');
+          document.getElementById('widget').innerHTML = '';
+          return;
+        }
+        var el = document.getElementById('widget');
+        el.innerHTML = '';
+        var script = document.createElement('script');
+        script.src = 'https://telegram.org/js/telegram-widget.js?22';
+        script.async = true;
+        script.setAttribute('data-telegram-login', bot);
+        script.setAttribute('data-size', 'large');
+        script.setAttribute('data-radius', '8');
+        script.setAttribute('data-onauth', 'onTelegramAuth(user)');
+        script.setAttribute('data-request-access', 'write');
+        el.appendChild(script);
+      } catch (e) {
+        showError('Не удалось загрузить виджет. Проверьте интернет и попробуйте снова.');
+        document.getElementById('widget').innerHTML = '';
+      }
+    }
+    boot();
+  </script>
+</body>
+</html>
