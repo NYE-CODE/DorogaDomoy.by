@@ -132,6 +132,12 @@ if curl -sf "$SMOKE_BASE_URL/api/v1/feature-flags" >/dev/null; then
 else
   echo "    /api/v1/feature-flags: FAIL"
 fi
+SW_CT="$(curl -sI "$SMOKE_BASE_URL/sw.js" | tr -d '\r' | awk -F': ' 'tolower($1)=="content-type"{print $2}')"
+if echo "$SW_CT" | grep -qi 'javascript'; then
+  echo "    /sw.js: ok ($SW_CT)"
+else
+  echo "    /sw.js: FAIL Content-Type=$SW_CT (должен быть JavaScript, не HTML — иначе старый SW не снимается)"
+fi
 SIMILAR_CODE="$(curl -s -o /dev/null -w "%{http_code}" "$SMOKE_BASE_URL/api/v1/pets/pet-smoketest/similar")"
 if [ "$SIMILAR_CODE" = "404" ]; then
   echo "    /api/v1/pets/{id}/similar: ok (маршрут есть, 404 для несуществующего id)"
