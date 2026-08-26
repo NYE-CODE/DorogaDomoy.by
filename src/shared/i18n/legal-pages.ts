@@ -1,13 +1,41 @@
 import type { Locale } from './translations';
 import { bePrivacyParagraphs, beTermsParagraphs } from './legal-pages-be-paragraphs';
+import { deleteAccountBe, deleteAccountEn, deleteAccountRu } from './legal-pages-delete-account';
+
+export type LegalPageKind = 'terms' | 'privacy' | 'delete-account';
+
+export type LegalSectionLink = {
+  to: string;
+  label: string;
+};
+
+export type LegalSectionCta = {
+  href: string;
+  label: string;
+};
+
+export type LegalMailtoForm = {
+  emailLabel: string;
+  emailPlaceholder: string;
+  button: string;
+  hint: string;
+  mailSubject: string;
+  mailBodyTemplate: string;
+};
 
 export type LegalSection = {
   title: string;
   paragraphs: string[];
   bullets?: string[];
+  /** Показать контактный email после текста секции (вместо хака title.startsWith('9.')). */
+  showContact?: boolean;
+  links?: LegalSectionLink[];
+  cta?: LegalSectionCta;
+  mailtoForm?: LegalMailtoForm;
 };
 
 export type LegalPageContent = {
+  kind: LegalPageKind;
   title: string;
   back: string;
   updatedAt: string;
@@ -19,10 +47,12 @@ export type LegalPageContent = {
 export type LegalPagesLocale = {
   terms: LegalPageContent;
   privacy: LegalPageContent;
+  'delete-account': LegalPageContent;
 };
 
 const ru: LegalPagesLocale = {
   terms: {
+    kind: 'terms',
     title: 'Условия использования',
     back: 'Назад',
     updatedAt: 'Дата последнего обновления: 20 августа 2026 г.',
@@ -113,13 +143,15 @@ const ru: LegalPagesLocale = {
       {
         title: '9. Контакты',
         paragraphs: [],
+        showContact: true,
       },
     ],
   },
   privacy: {
+    kind: 'privacy',
     title: 'Политика конфиденциальности',
     back: 'Назад',
-    updatedAt: 'Дата последнего обновления: 20 августа 2026 г.',
+    updatedAt: 'Дата последнего обновления: 26 августа 2026 г.',
     contactParagraph:
       'По вопросам обработки персональных данных обращайтесь к администрации платформы:',
     contactEmail: 'contact@dorogadomoy.by',
@@ -170,7 +202,9 @@ const ru: LegalPagesLocale = {
         title: '7. Ваши права',
         paragraphs: [
           'Вы можете запросить доступ к своим данным, их исправление или удаление, отозвать согласие на обработку и удалить аккаунт в настройках профиля на сайте (вкладка «Безопасность») или в мобильном приложении. Также можно обратиться в поддержку.',
+          'Пошаговая инструкция, в том числе запрос без входа в аккаунт, — на странице удаления аккаунта.',
         ],
+        links: [{ to: '/delete-account', label: 'Удаление аккаунта' }],
       },
       {
         title: '8. Изменения политики',
@@ -181,9 +215,11 @@ const ru: LegalPagesLocale = {
       {
         title: '9. Контакты',
         paragraphs: [],
+        showContact: true,
       },
     ],
   },
+  'delete-account': deleteAccountRu,
 };
 
 const be: LegalPagesLocale = {
@@ -225,7 +261,7 @@ const be: LegalPagesLocale = {
     ...ru.privacy,
     title: 'Палітыка канфідэнцыйнасці',
     back: 'Назад',
-    updatedAt: 'Дата апошняга абнаўлення: 20 жніўня 2026 г.',
+    updatedAt: 'Дата апошняга абнаўлення: 26 жніўня 2026 г.',
     contactParagraph: 'Па пытаннях апрацоўкі персанальных дадзеных звяртайцеся да адміністрацыі платформы:',
     sections: ru.privacy.sections.map((s, i) => ({
       ...s,
@@ -240,12 +276,16 @@ const be: LegalPagesLocale = {
         .replace('8. Изменения политики', '8. Змены палітыкі')
         .replace('9. Контакты', '9. Кантакты'),
       paragraphs: bePrivacyParagraphs[i] ?? s.paragraphs,
+      links:
+        i === 7 ? [{ to: '/delete-account', label: 'Выдаленне акаўнта' }] : s.links,
     })),
   },
+  'delete-account': deleteAccountBe,
 };
 
 const en: LegalPagesLocale = {
   terms: {
+    kind: 'terms',
     title: 'Terms of use',
     back: 'Back',
     updatedAt: 'Last updated: 20 August 2026',
@@ -333,13 +373,14 @@ const en: LegalPagesLocale = {
           '8.3. Continued use after changes means you accept the new terms.',
         ],
       },
-      { title: '9. Contacts', paragraphs: [] },
+      { title: '9. Contacts', paragraphs: [], showContact: true },
     ],
   },
   privacy: {
+    kind: 'privacy',
     title: 'Privacy policy',
     back: 'Back',
-    updatedAt: 'Last updated: 20 August 2026',
+    updatedAt: 'Last updated: 26 August 2026',
     contactParagraph: 'For personal data processing questions, contact platform administration:',
     contactEmail: 'contact@dorogadomoy.by',
     sections: [
@@ -389,7 +430,9 @@ const en: LegalPagesLocale = {
         title: '7. Your rights',
         paragraphs: [
           'You may request access, correction, or deletion of your data, withdraw consent, and delete your account in website profile settings (Security tab) or in the mobile app. You can also contact support.',
+          'Step-by-step instructions, including a request without signing in, are on the account deletion page.',
         ],
+        links: [{ to: '/delete-account', label: 'Delete account' }],
       },
       {
         title: '8. Policy changes',
@@ -397,13 +440,14 @@ const en: LegalPagesLocale = {
           'We may update this Policy. The current version is always available on this page. The update date is shown below.',
         ],
       },
-      { title: '9. Contacts', paragraphs: [] },
+      { title: '9. Contacts', paragraphs: [], showContact: true },
     ],
   },
+  'delete-account': deleteAccountEn,
 };
 
 export const legalPages: Record<Locale, LegalPagesLocale> = { ru, be, en };
 
-export function getLegalPage(locale: Locale, kind: 'terms' | 'privacy'): LegalPageContent {
+export function getLegalPage(locale: Locale, kind: LegalPageKind): LegalPageContent {
   return legalPages[locale][kind];
 }

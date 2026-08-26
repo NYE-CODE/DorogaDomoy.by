@@ -3,7 +3,7 @@ import os
 
 os.environ.setdefault("SECRET_KEY", "unit-test-secret-key-for-account-deletion")
 
-from account_deletion import delete_user_account
+from account_deletion import delete_user_account, _delete_owned_shelters
 from routers import auth as auth_mod
 
 
@@ -25,3 +25,4 @@ def test_delete_me_route_is_registered():
 
 def test_delete_user_account_is_callable():
     assert callable(delete_user_account)
+    assert callable(_delete_owned_shelters)

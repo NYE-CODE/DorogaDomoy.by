@@ -17,6 +17,8 @@ import {
   SEO_TERMS_TITLE,
   SEO_PRIVACY_DESCRIPTION,
   SEO_PRIVACY_TITLE,
+  SEO_DELETE_ACCOUNT_DESCRIPTION,
+  SEO_DELETE_ACCOUNT_TITLE,
 } from '@/shared/lib/seo';
 
 let publisherEnsured = false;
@@ -90,6 +92,17 @@ export function SeoRouteSync() {
       applySeo({
         title: SEO_PRIVACY_TITLE,
         description: SEO_PRIVACY_DESCRIPTION,
+        canonicalUrl: canonical,
+        robots,
+        keywords: SEO_KEYWORDS,
+      });
+      return;
+    }
+
+    if (pathname === '/delete-account') {
+      applySeo({
+        title: SEO_DELETE_ACCOUNT_TITLE,
+        description: SEO_DELETE_ACCOUNT_DESCRIPTION,
         canonicalUrl: canonical,
         robots,
         keywords: SEO_KEYWORDS,

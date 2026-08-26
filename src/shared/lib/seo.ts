@@ -40,6 +40,11 @@ export const SEO_PRIVACY_TITLE = 'Политика конфиденциальн�
 export const SEO_PRIVACY_DESCRIPTION =
   'Как DorogaDomoy.by обрабатывает персональные данные: регистрация, объявления, контакты и cookies.';
 
+export const SEO_DELETE_ACCOUNT_TITLE = 'Удаление аккаунта | DorogaDomoy.by';
+
+export const SEO_DELETE_ACCOUNT_DESCRIPTION =
+  'Как удалить аккаунт DorogaDomoy.by в приложении, на сайте или письмом без входа. Что стирается и в какой срок.';
+
 export function getSiteOrigin(): string {
   try {
     return new URL(RAW_SITE).origin;

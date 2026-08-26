@@ -130,6 +130,12 @@ export function Footer() {
             <Link to="/privacy" className={`${linkClass}`}>
               {f.privacyPolicy}
             </Link>
+            <span className="text-border" aria-hidden>
+              ·
+            </span>
+            <Link to="/delete-account" className={`${linkClass}`}>
+              {f.deleteAccount}
+            </Link>
           </p>
         </div>
       </div>

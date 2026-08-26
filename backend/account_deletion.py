@@ -1,5 +1,5 @@
 """Удаление аккаунта пользователя и связанных записей."""
-from sqlalchemy import delete, update
+from sqlalchemy import delete, select, update
 from sqlalchemy.orm import Session
 
 from models import (
@@ -12,6 +12,7 @@ from models import (
     PointsTransaction,
     ProfilePet,
     Report,
+    Shelter,
     ShelterCampaign,
     TelegramLinkCode,
     User,
@@ -21,6 +22,23 @@ try:
     from models import DeviceToken
 except ImportError:
     DeviceToken = None
+
+
+def _delete_owned_shelters(db: Session, uid: str) -> None:
+    """Карточки приютов владельца и их объявления (как admin_delete_shelter).
+
+    Иначе при ``ON DELETE SET NULL`` у ``pets.shelter_id`` остаются объявления без приюта.
+    Подписки, членство и сборы по приюту снимаются каскадом БД при удалении ``shelters``.
+    """
+    shelter_ids = list(db.scalars(select(Shelter.id).where(Shelter.owner_user_id == uid)))
+    if not shelter_ids:
+        return
+    shelter_pets = list(db.scalars(select(Pet).where(Pet.shelter_id.in_(shelter_ids))))
+    pet_ids = [p.id for p in shelter_pets]
+    if pet_ids:
+        db.execute(delete(Report).where(Report.pet_id.in_(pet_ids)))
+        db.execute(delete(Pet).where(Pet.id.in_(pet_ids)))
+    db.execute(delete(Shelter).where(Shelter.id.in_(shelter_ids)))
 
 
 def delete_user_account(db: Session, user: User) -> None:
@@ -56,4 +74,5 @@ def delete_user_account(db: Session, user: User) -> None:
     db.execute(delete(PointsTransaction).where(PointsTransaction.user_id == uid))
     db.execute(delete(Pet).where(Pet.author_id == uid))
     db.execute(delete(ProfilePet).where(ProfilePet.owner_id == uid))
+    _delete_owned_shelters(db, uid)
     db.delete(user)

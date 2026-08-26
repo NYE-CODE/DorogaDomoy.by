@@ -26,6 +26,7 @@ const AddEditPetPageRoute = lazy(() => import('@/pages/AddEditPetPage'));
 const PublicPetProfilePage = lazy(() => import('@/pages/PublicPetProfilePage'));
 const TermsPage = lazy(() => import('@/pages/TermsPage'));
 const PrivacyPage = lazy(() => import('@/pages/PrivacyPage'));
+const DeleteAccountPage = lazy(() => import('@/pages/DeleteAccountPage'));
 const BlogListPage = lazy(() => import('@/pages/BlogListPage'));
 const BlogPostPage = lazy(() => import('@/pages/BlogPostPage'));
 const FavoritesPage = lazy(() => import('@/pages/FavoritesPage'));
@@ -66,6 +67,7 @@ export function AppRoutes() {
       <Route path="/admin" element={<RequireAdmin><AdminPage /></RequireAdmin>} />
       <Route path="/terms" element={<TermsPage />} />
       <Route path="/privacy" element={<PrivacyPage />} />
+      <Route path="/delete-account" element={<DeleteAccountPage />} />
       <Route path="/mobile-telegram-auth.html" element={<MobileTelegramAuthPage />} />
       <Route path="/mobile-telegram-auth" element={<MobileTelegramAuthPage />} />
       {/* Password reset temporarily disabled */}

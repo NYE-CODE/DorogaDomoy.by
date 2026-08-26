@@ -15,7 +15,7 @@ import { useIsMobile } from '@/shared/hooks/use-mobile';
 import { isMobileTelegramAuthPath } from '@/shared/lib/mobile-telegram-auth-path';
 import { cn } from '@/shared/ui/utils';
 
-const HIDDEN_PREFIXES = ['/create', '/edit/', '/admin', '/terms', '/privacy', '/my-pets/add'];
+const HIDDEN_PREFIXES = ['/create', '/edit/', '/admin', '/terms', '/privacy', '/delete-account', '/my-pets/add'];
 const SIDE_BTN_CLASS =
   'flex w-full min-w-0 flex-col items-center justify-center gap-0.5 pb-2 pt-2 transition-colors';
 const SIDE_ICON = 22;
