@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "by.doragadomoy.doragadomoy_mobile",
+      "sha256_cert_fingerprints": [
+        "E2:DE:B1:56:1D:30:8C:D5:64:55:3A:D3:1D:22:28:99:E6:CF:BF:CA:C2:29:8B:E0:FD:39:F9:FA:CD:58:24:1D"
+      ]
+    }
+  }
+]
