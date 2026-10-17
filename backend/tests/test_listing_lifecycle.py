@@ -15,9 +15,9 @@ class _ScalarResult:
         return self._items
 
 
-def test_run_listing_lifecycle_archives_expired_pet():
+def _pet(**overrides):
     now = utc_now()
-    pet = SimpleNamespace(
+    base = dict(
         id="pet-expired",
         author_id="user-1",
         animal_type="cat",
@@ -25,12 +25,19 @@ def test_run_listing_lifecycle_archives_expired_pet():
         breed=None,
         city="Минск",
         expires_at=now - timedelta(hours=1),
+        published_at=now - timedelta(days=100),
         is_archived=False,
         archive_reason=None,
         updated_at=None,
         pet_scope="lost_found",
         moderation_status="approved",
     )
+    base.update(overrides)
+    return SimpleNamespace(**base)
+
+
+def test_run_listing_lifecycle_archives_expired_pet():
+    pet = _pet()
 
     db = MagicMock()
     # Первый scalars().all() — активные объявления; остальные — пусто/None
@@ -43,6 +50,37 @@ def test_run_listing_lifecycle_archives_expired_pet():
     assert pet.is_archived is True
     assert pet.archive_reason == LISTING_EXPIRED_ARCHIVE_REASON
     db.commit.assert_called()
+
+
+def test_run_listing_lifecycle_archives_naive_sqlite_expires_at():
+    """SQLite отдаёт naive datetime — сравнение с aware utc_now не должно падать."""
+    # Наивный UTC, как из SQLite
+    pet = _pet(expires_at=(utc_now() - timedelta(days=30)).replace(tzinfo=None))
+
+    db = MagicMock()
+    db.scalars.return_value = _ScalarResult([pet])
+    db.scalar.return_value = None
+
+    stats = run_listing_lifecycle(db)
+
+    assert stats["archived"] == 1
+    assert pet.is_archived is True
+    assert pet.archive_reason == LISTING_EXPIRED_ARCHIVE_REASON
+
+
+def test_run_listing_lifecycle_archives_long_overdue_pet():
+    """Давно просроченные объявления архивируются сразу, без «grace»-продления."""
+    pet = _pet(expires_at=utc_now() - timedelta(days=120))
+
+    db = MagicMock()
+    db.scalars.return_value = _ScalarResult([pet])
+    db.scalar.return_value = None
+
+    stats = run_listing_lifecycle(db)
+
+    assert stats["archived"] == 1
+    assert pet.is_archived is True
+    assert "legacy_grace_applied" not in stats
 
 
 def test_expired_archived_pet_excluded_from_public_list_sql():

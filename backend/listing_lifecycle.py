@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from models import Notification, NotificationSettings, Pet, User
 from platform_settings import get_int_setting
 from telegram_bot import SITE_URL, _send_telegram_message_sync, ANIMAL_TYPE_LABELS, STATUS_LABELS
-from time_utils import utc_now
+from time_utils import as_utc_aware, utc_now
 
 logger = logging.getLogger(__name__)
 
@@ -59,19 +59,19 @@ def max_listing_reminder_days(db: Session) -> int:
 
 def compute_listing_expires_at(db: Session, from_dt: Optional[datetime] = None) -> datetime:
     days = get_int_setting(db, "auto_archive_days", default=90)
-    base = from_dt or utc_now()
+    base = as_utc_aware(from_dt) if from_dt is not None else utc_now()
     return base + timedelta(days=days)
 
 
 def listing_period_start(expires_at: datetime, db: Session) -> datetime:
     days = get_int_setting(db, "auto_archive_days", default=90)
-    return expires_at - timedelta(days=days)
+    return as_utc_aware(expires_at) - timedelta(days=days)
 
 
 def calendar_days_until_expiry(expires_at: datetime, now: Optional[datetime] = None) -> int:
     now = now or utc_now()
-    exp_day = expires_at.date()
-    cur_day = now.date()
+    exp_day = as_utc_aware(expires_at).date()
+    cur_day = as_utc_aware(now).date()
     return (exp_day - cur_day).days
 
 
@@ -212,6 +212,7 @@ def _ensure_expires_at(db: Session, pet: Pet, now: datetime, reminder_days: tupl
         return
     computed = compute_listing_expires_at(db, pet.published_at)
     if computed <= now:
+        # Первый backfill давно просроченного объявления: короткое окно на напоминание/продление.
         grace = max(reminder_days) if reminder_days else 1
         pet.expires_at = now + timedelta(days=grace)
     else:
@@ -228,7 +229,6 @@ def run_listing_lifecycle(db: Session) -> dict:
         "archived": 0,
         "expired_notified": 0,
         "backfilled_expires_at": 0,
-        "legacy_grace_applied": 0,
     }
     for day in reminder_days:
         stats["reminders"][str(day)] = 0
@@ -250,15 +250,10 @@ def run_listing_lifecycle(db: Session) -> dict:
         if not expires_at:
             continue
 
-        if expires_at <= now:
-            days_overdue = (now.date() - expires_at.date()).days
-            if days_overdue > 1:
-                grace = max(reminder_days) if reminder_days else 1
-                pet.expires_at = now + timedelta(days=grace)
-                pet.updated_at = now
-                stats["legacy_grace_applied"] = stats.get("legacy_grace_applied", 0) + 1
-                continue
+        expires_at_utc = as_utc_aware(expires_at)
 
+        # SQLite отдаёт naive datetime — сравниваем только через as_utc_aware.
+        if expires_at_utc <= now:
             pet.is_archived = True
             pet.archive_reason = LISTING_EXPIRED_ARCHIVE_REASON
             pet.updated_at = now
@@ -266,7 +261,7 @@ def run_listing_lifecycle(db: Session) -> dict:
 
             author = db.scalar(select(User).where(User.id == pet.author_id))
             if author:
-                period_start = listing_period_start(expires_at, db)
+                period_start = listing_period_start(expires_at_utc, db)
                 msg = (
                     "📦 <b>Срок размещения истёк</b>\n\n"
                     f"{_pet_summary(pet)}\n\n"
@@ -283,7 +278,7 @@ def run_listing_lifecycle(db: Session) -> dict:
                     stats["expired_notified"] += 1
             continue
 
-        days_left = calendar_days_until_expiry(expires_at, now)
+        days_left = calendar_days_until_expiry(expires_at_utc, now)
         if days_left not in reminder_days:
             continue
 
@@ -291,7 +286,7 @@ def run_listing_lifecycle(db: Session) -> dict:
         if not author:
             continue
 
-        period_start = listing_period_start(expires_at, db)
+        period_start = listing_period_start(expires_at_utc, db)
         notif_type = notification_type_expiring(days_left)
         msg = _reminder_message(pet, days_left)
 
