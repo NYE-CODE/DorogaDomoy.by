@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react';
-import { Building2, Heart, Home } from 'lucide-react';
+import { Archive, Building2, Heart, Home } from 'lucide-react';
 import type { Pet } from '@/entities/pet/model/types';
 import type { useI18n } from '@/app/providers/I18nContext';
 import { translations } from '@/shared/i18n/translations';
+import { LISTING_EXPIRED_ARCHIVE_REASON } from '@/shared/lib/listing-expiry';
 
 export type PetDetailT = ReturnType<typeof useI18n>['t'];
 
@@ -40,7 +41,12 @@ export function getArchiveReasonBadge(pet: Pet, t: PetDetailT): ArchiveBadgeStyl
     translations.en.deleteReason.reasons.transferred,
   ];
 
-  if (returnedLabels.some((label) => pet.archiveReason === label)) {
+  if (pet.archiveReason === LISTING_EXPIRED_ARCHIVE_REASON) {
+    icon = <Archive className="w-4 h-4" />;
+    bgColor = 'bg-amber-50 dark:bg-amber-900/20';
+    textColor = 'text-amber-800 dark:text-amber-300';
+    borderColor = 'border-amber-200 dark:border-amber-800';
+  } else if (returnedLabels.some((label) => pet.archiveReason === label)) {
     icon = <Home className="w-4 h-4" />;
   } else if (adoptedLabels.some((label) => pet.archiveReason === label)) {
     icon = <Heart className="w-4 h-4" />;

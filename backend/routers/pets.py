@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Optional
 import uuid
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
-from sqlalchemy import delete, func, or_, select
+from sqlalchemy import case, delete, func, or_, select
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session, selectinload
 
@@ -46,6 +46,7 @@ from listing_lifecycle import (
     compute_listing_expires_at,
 )
 from time_utils import utc_now
+from ttl_cache import invalidate_statistics_cache
 from upload_utils import delete_upload_url, save_data_image
 from search_normalization import normalize_search_query, resolve_animal_type_from_search
 from pet_create_trace import (
@@ -443,9 +444,11 @@ def _happy_archive_sql_condition():
 
 
 def _compute_statistics(db: Session) -> StatisticsResponse:
+    # Только lost/found объявления — без питомцев приютов (у них отдельная секция на лендинге).
     active_base = (
         Pet.is_archived.is_(False),
         Pet.moderation_status == "approved",
+        or_(Pet.pet_scope.is_(None), Pet.pet_scope == "lost_found"),
     )
     searching = db.scalar(
         select(func.count()).select_from(Pet).where(*active_base, Pet.status == "searching")
@@ -453,11 +456,22 @@ def _compute_statistics(db: Session) -> StatisticsResponse:
     found = db.scalar(
         select(func.count()).select_from(Pet).where(*active_base, Pet.status == "found")
     ) or 0
+    # «Город» = часть адреса до первой запятой («Минск, ул. …» → «Минск»).
+    # Считаем по всем approved lost/found — и активные, и архив.
+    lost_found_scope = or_(Pet.pet_scope.is_(None), Pet.pet_scope == "lost_found")
+    city_name = case(
+        (
+            Pet.city.contains(","),
+            func.trim(func.substr(Pet.city, 1, func.instr(Pet.city, ",") - 1)),
+        ),
+        else_=func.trim(Pet.city),
+    )
     cities_count = db.scalar(
-        select(func.count(func.distinct(Pet.city)))
+        select(func.count(func.distinct(city_name)))
         .select_from(Pet)
         .where(
-            *active_base,
+            Pet.moderation_status == "approved",
+            lost_found_scope,
             Pet.city.is_not(None),
             Pet.city != "",
         )
@@ -727,6 +741,7 @@ async def create_pet(
         db.commit()
         db.refresh(pet)
         committed = True
+        invalidate_statistics_cache()
         if profile_pet_id:
             logging.info(
                 format_pet_created_from_profile_log(
@@ -800,6 +815,7 @@ async def update_pet(
         raise HTTPException(status_code=403, detail="Нет прав на редактирование")
 
     old_moderation_status = pet.moderation_status
+    old_is_archived = bool(pet.is_archived)
 
     COMMON_FIELDS = {
         "photos", "animal_type", "breed", "colors", "gender",
@@ -920,6 +936,8 @@ async def update_pet(
             pet.expires_at = compute_listing_expires_at(db)
         db.commit()
         committed = True
+        if old_is_archived != bool(pet.is_archived) or old_moderation_status != pet.moderation_status:
+            invalidate_statistics_cache()
     except HTTPException:
         raise
     except Exception as e:
@@ -975,6 +993,7 @@ def renew_pet_listing(
     pet.updated_at = utc_now()
     pet.updated_by_user_id = user.id
     db.commit()
+    invalidate_statistics_cache()
     db.refresh(pet)
     return pet_to_response(pet)
 
@@ -994,6 +1013,7 @@ def delete_pet(
         db.execute(delete(Report).where(Report.pet_id == pet_id))
         db.delete(pet)
         db.commit()
+        invalidate_statistics_cache()
     except Exception as e:
         db.rollback()
         logging.exception("Ошибка при удалении объявления %s: %s", pet_id, e)

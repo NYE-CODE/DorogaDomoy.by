@@ -8,6 +8,7 @@ import { Button } from '@/shared/ui/button';
 import { RewardBadge } from '../../../components/reward-badge';
 import { RevealPhoneButton } from '../../../components/reveal-phone-button';
 import { PartnerAdSlot } from '@/features/partner-ads/PartnerAdSlot';
+import { formatArchiveReasonLabel } from '@/shared/lib/listing-expiry';
 import { type ArchiveBadgeStyle } from './pet-detail-archive-badge';
 import type { PetDetailT } from './pet-detail-archive-badge';
 
@@ -161,7 +162,9 @@ export function PetDetailSidebar({ pet, t, archiveBadge, onReport }: PetDetailSi
               <div className="flex justify-center">
                 <div className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border ${archiveBadge.bgColor} ${archiveBadge.borderColor} ${archiveBadge.textColor}`}>
                   {archiveBadge.icon}
-                  <span className="text-sm">{pet.archiveReason}</span>
+                  <span className="text-sm">
+                    {formatArchiveReasonLabel(pet.archiveReason, t.myAds.expiredArchived)}
+                  </span>
                 </div>
               </div>
             )}

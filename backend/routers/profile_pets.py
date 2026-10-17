@@ -27,6 +27,7 @@ from schemas import (
 from auth import get_current_user, get_current_user_required
 from integrations.telegram import send_profile_pet_signal_sync
 from time_utils import utc_now
+from ttl_cache import invalidate_statistics_cache
 from upload_utils import save_data_image
 from rate_limit import limiter
 from profile_pet_photo_slots import PROFILE_PET_PHOTO_SLOT_COUNT, pad_profile_pet_photos
@@ -500,4 +501,6 @@ def delete_profile_pet(
 
     db.delete(pet)
     db.commit()
+    if archive_linked_ads and linked_active:
+        invalidate_statistics_cache()
     return None

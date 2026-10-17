@@ -13,6 +13,7 @@ from models import Notification, NotificationSettings, Pet, User
 from platform_settings import get_int_setting
 from telegram_bot import SITE_URL, _send_telegram_message_sync, ANIMAL_TYPE_LABELS, STATUS_LABELS
 from time_utils import as_utc_aware, utc_now
+from ttl_cache import invalidate_statistics_cache
 
 logger = logging.getLogger(__name__)
 
@@ -301,4 +302,6 @@ def run_listing_lifecycle(db: Session) -> dict:
             stats["reminders"][str(days_left)] = stats["reminders"].get(str(days_left), 0) + 1
 
     db.commit()
+    if stats["archived"] or stats["backfilled_expires_at"]:
+        invalidate_statistics_cache()
     return stats

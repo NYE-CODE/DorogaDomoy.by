@@ -739,7 +739,21 @@ class NotificationPatch(BaseModel):
 
 # --- Statistics ---
 # Причины архивации со счастливым концом (найден питомец)
-ARCHIVE_HAPPY_KEYWORDS = ("вернулся домой", "найден хозяин", "пристроен", "приют")
+# Совпадает с локалями deleteReason (ru / be / en) — подстроки для ilike.
+ARCHIVE_HAPPY_KEYWORDS = (
+    "вернулся домой",
+    "найден хозяин",
+    "пристроен",
+    "приют",
+    "вярнулася",
+    "знойдзены",
+    "ўладкавана",
+    "прытулак",
+    "returned home",
+    "owner found",
+    "rehomed",
+    "transferred to shelter",
+)
 
 
 def _is_happy_archive(reason: Optional[str]) -> bool:
@@ -754,7 +768,7 @@ class StatisticsResponse(BaseModel):
     found: int
     fostering: int = 0
     # Для лендинга
-    cities_count: int = 0  # количество городов с активными объявлениями
+    cities_count: int = 0  # уникальные города по всем approved lost/found (включая архив)
     found_pets: int = 0  # архив: питомец вернулся/пристроен/приют
     success_rate: Optional[float] = None  # процент найденных (None если выборка < 5)
     users_count: int = 0  # всего зарегистрированных пользователей

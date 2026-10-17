@@ -1,6 +1,16 @@
 export const LISTING_EXPIRED_ARCHIVE_REASON = 'listing_expired';
 export const DEFAULT_LISTING_REMINDER_DAYS = [3, 1] as const;
 
+/** Человекочитаемая причина архивации (код `listing_expired` → текст). */
+export function formatArchiveReasonLabel(
+  reason: string | undefined | null,
+  expiredLabel = 'Срок размещения истёк',
+): string {
+  if (!reason) return '';
+  if (reason === LISTING_EXPIRED_ARCHIVE_REASON) return expiredLabel;
+  return reason;
+}
+
 export function parseListingReminderDays(raw: string | undefined | null): number[] {
   if (!raw?.trim()) return [...DEFAULT_LISTING_REMINDER_DAYS];
   const parsed: number[] = [];

@@ -16,6 +16,7 @@ from routers.pets import _max_photos, save_base64_photo
 from schemas import ShelterPetCreate, ShelterPetResponse, ShelterPetUpdate
 from shelter_subscription_notify import schedule_new_shelter_pet_notifications
 from time_utils import utc_now
+from ttl_cache import invalidate_statistics_cache
 
 router = APIRouter(tags=["shelter_pets"])
 
@@ -387,6 +388,7 @@ def archive_shelter_pet(
         is_published=bool(pet.is_published),
     )
     db.commit()
+    invalidate_statistics_cache()
     db.refresh(pet)
     return shelter_pet_to_response(pet)
 

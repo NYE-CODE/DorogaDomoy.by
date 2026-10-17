@@ -1,5 +1,5 @@
 ﻿import { useState, useRef, useEffect } from 'react';
-import { MapPin, Phone, MessageCircle, Edit2, Trash2, Home, Heart, Building2, Clock, CheckCircle2, XCircle, Eye, MoreVertical } from 'lucide-react';
+import { MapPin, Phone, MessageCircle, Edit2, Trash2, Home, Heart, Building2, Archive, Clock, CheckCircle2, XCircle, Eye, MoreVertical } from 'lucide-react';
 import { Pet } from '../types/pet';
 import { petStatusPhotoPillClass, formatDate, formatRelativeTime } from '../utils/pet-helpers';
 import { useAuth } from '../context/AuthContext';
@@ -9,6 +9,10 @@ import { FavoriteHeartButton } from './favorite-heart-button';
 import { cn } from './ui/utils';
 import { typoH4 } from '@/shared/styles/typography-classes';
 import { activateOnKeyboard, interactiveCardClass } from '@/shared/styles/interaction-classes';
+import {
+  formatArchiveReasonLabel,
+  LISTING_EXPIRED_ARCHIVE_REASON,
+} from '@/shared/lib/listing-expiry';
 
 interface PetCardProps {
   pet: Pet;
@@ -98,7 +102,12 @@ export function PetCard({
     let textColor = 'text-green-700 dark:text-green-400';
     let borderColor = 'border-green-200 dark:border-green-800';
 
-    if (pet.archiveReason.includes('вернулся домой') || pet.archiveReason.includes('найден хозяин')) {
+    if (pet.archiveReason === LISTING_EXPIRED_ARCHIVE_REASON) {
+      icon = <Archive className="w-3.5 h-3.5" />;
+      bgColor = 'bg-amber-50 dark:bg-amber-900/20';
+      textColor = 'text-amber-800 dark:text-amber-300';
+      borderColor = 'border-amber-200 dark:border-amber-800';
+    } else if (pet.archiveReason.includes('вернулся домой') || pet.archiveReason.includes('найден хозяин')) {
       icon = <Home className="w-3.5 h-3.5" />;
       bgColor = 'bg-green-50 dark:bg-green-900/20';
       textColor = 'text-green-700 dark:text-green-400';
@@ -343,7 +352,7 @@ export function PetCard({
           {archiveBadge && (
             <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm ${archiveBadge.bgColor} ${archiveBadge.textColor} ${archiveBadge.borderColor}`}>
               {archiveBadge.icon}
-              <span>{pet.archiveReason}</span>
+              <span>{formatArchiveReasonLabel(pet.archiveReason, t.myAds.expiredArchived)}</span>
             </div>
           )}
         </div>

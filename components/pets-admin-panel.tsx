@@ -16,6 +16,10 @@ import { formatDate, petStatusSoftPillClass, statusLabels } from '../utils/pet-h
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { User } from '../context/AuthContext';
 import { useI18n } from '../context/I18nContext';
+import {
+  formatArchiveReasonLabel,
+  LISTING_EXPIRED_ARCHIVE_REASON,
+} from '@/shared/lib/listing-expiry';
 import { adm } from './admin-panel-chrome';
 import { AdminTablePagination } from './admin-table-pagination';
 
@@ -26,15 +30,18 @@ interface PetsAdminPanelProps {
   onOpenPet?: (petId: string) => void;
 }
 
-function getArchiveReasonStyle(reason: string | undefined) {
+function getArchiveReasonStyle(reason: string | undefined, expiredLabel: string) {
   if (!reason) return { label: '—', className: 'text-muted-foreground/80' };
+  const label = formatArchiveReasonLabel(reason, expiredLabel) || '—';
+  if (reason === LISTING_EXPIRED_ARCHIVE_REASON)
+    return { label, className: 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300', icon: Archive };
   if (reason.includes('вернулся домой') || reason.includes('найден хозяин'))
-    return { label: reason, className: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400', icon: Home };
+    return { label, className: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400', icon: Home };
   if (reason.includes('пристроен'))
-    return { label: reason, className: 'bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-400', icon: Heart };
-  if (reason.includes('приют'))
-    return { label: reason, className: 'bg-muted text-muted-foreground', icon: Building2 };
-  return { label: reason, className: 'bg-muted dark:bg-accent text-foreground/90', icon: Archive };
+    return { label, className: 'bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-400', icon: Heart };
+  if (reason.includes('приют') || reason.includes('Профиль питомца'))
+    return { label, className: 'bg-muted text-muted-foreground', icon: Building2 };
+  return { label, className: 'bg-muted dark:bg-accent text-foreground/90', icon: Archive };
 }
 
 function getRewardLabel(pet: Pet): string {
@@ -355,7 +362,10 @@ export function PetsAdminPanel({ pets, users = [], onDeletePet, onOpenPet }: Pet
                     )}
                   </td>
                   {petsFilter === 'archived' && (() => {
-                    const style = getArchiveReasonStyle(pet.archiveReason);
+                    const style = getArchiveReasonStyle(
+                      pet.archiveReason,
+                      t.myAds.expiredArchived,
+                    );
                     const Icon = 'icon' in style ? style.icon : null;
                     return (
                       <td className="px-4 py-3">
