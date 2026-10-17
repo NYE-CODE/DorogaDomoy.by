@@ -1,14 +1,12 @@
 import { Header } from "./components/header";
 import { Hero } from "./components/hero";
 import { Stats } from "./components/stats";
-import { HowItWorks } from "./components/how-it-works";
 import { PetsFeature } from "./components/pets-feature";
 import { Announcements } from "./components/announcements";
 import { ShelterPets } from "./components/shelter-pets";
 import { Media } from "./components/media";
 import { Partners } from "./components/partners";
 import { FAQ } from "./components/faq";
-import { Help } from "./components/help";
 import { LandingClose } from "./components/landing-close";
 import { Footer } from "./components/footer";
 import { ScrollToTop } from "./components/scroll-to-top";
@@ -18,7 +16,6 @@ import { PartnerAdSlot } from "@/features/partner-ads/PartnerAdSlot";
 /** Условные секции должны совпадать с `landing-nav-config.ts` (навигация в футере). */
 export default function App() {
   const {
-    ff_landing_show_help,
     ff_landing_show_stats,
     ff_landing_show_pets_feature,
     ff_landing_show_faq,
@@ -29,7 +26,6 @@ export default function App() {
       <Header showCitySelector={false} compactActions />
       <main id="main-content" tabIndex={-1} className="outline-none">
         <Hero />
-        <HowItWorks />
         <Announcements />
         <ShelterPets />
         {ff_landing_show_stats && <Stats />}
@@ -39,7 +35,6 @@ export default function App() {
         </div>
         <Media />
         <Partners />
-        {ff_landing_show_help && <Help />}
         {ff_landing_show_faq && <FAQ />}
         <LandingClose />
       </main>

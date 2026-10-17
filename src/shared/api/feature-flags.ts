@@ -2,7 +2,8 @@ import { api } from '@/shared/api/http';
 
 export interface FeatureFlags {
   ff_landing_show_stats: string;
-  ff_landing_show_help: string;
+  /** Устаревший флаг секции «Как нам помочь» — больше не используется на клиенте */
+  ff_landing_show_help?: string;
   /** Отсутствует в ответе старых бэкендов до миграции — клиент трактует как true */
   ff_landing_show_pets_feature?: string;
   /** FAQ на лендинге; до миграции — true */

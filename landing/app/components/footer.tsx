@@ -1,24 +1,31 @@
-import { Mail, MessageCircle, Bot } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Mail, MessageCircle, Bot, Heart } from "lucide-react";
 import { Link } from "react-router";
 import { useI18n } from "../../../context/I18nContext";
 import type { translations } from "../../../i18n/translations";
 import { useFeatureFlags } from "../../../context/FeatureFlagsContext";
+import { helpApi, type HelpDonationTier } from "../../../api/client";
+import { safeExternalUrl } from "../../../utils/safe-external-url";
 import {
   LANDING_NAV_ITEMS,
   type LandingNavHash,
   isLandingNavItemVisible,
 } from "../landing-nav-config";
+import { Button } from "./ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "./ui/dialog";
 import { landingContainerWide } from "./landing-section-styles";
 
 function landingNavLabel(hash: LandingNavHash, t: (typeof translations)["ru"]): string {
   const f = t.landing.footer;
   switch (hash) {
     case "stats":
-      return (
-        (t.landing.help as { statsTitle?: string }).statsTitle ?? "В цифрах"
-      );
-    case "how-it-works":
-      return f.howItWorks;
+      return t.landing.help.statsTitle;
     case "pets-feature":
       return f.sectionPets;
     case "announcements":
@@ -29,8 +36,6 @@ function landingNavLabel(hash: LandingNavHash, t: (typeof translations)["ru"]): 
       return t.landing.media.title;
     case "partners":
       return f.partners;
-    case "help":
-      return f.help;
     case "faq":
       return f.faq;
   }
@@ -40,6 +45,41 @@ export function Footer() {
   const { t } = useI18n();
   const ff = useFeatureFlags();
   const f = t.landing.footer;
+  const h = t.landing.help;
+
+  const [supportOpen, setSupportOpen] = useState(false);
+  const [donationTiers, setDonationTiers] = useState<HelpDonationTier[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const cfg = await helpApi.get();
+        if (cancelled) return;
+        setDonationTiers(cfg.donation_tiers ?? []);
+      } catch {
+        if (!cancelled) setDonationTiers([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const sortedTiers = useMemo(
+    () =>
+      [...donationTiers].sort(
+        (a, b) => a.sort_order - b.sort_order || a.label.localeCompare(b.label),
+      ),
+    [donationTiers],
+  );
+
+  const handleDonationClick = (tier: HelpDonationTier) => {
+    const link = safeExternalUrl(tier.payment_url, { httpsOnly: true });
+    if (!link) return;
+    window.open(link, "_blank", "noopener,noreferrer");
+    setSupportOpen(false);
+  };
 
   /** Пункты только для секций, которые включены теми же флагами, что и в App.tsx */
   const navLinks = LANDING_NAV_ITEMS.filter((item) =>
@@ -60,19 +100,40 @@ export function Footer() {
         <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-3 lg:gap-12">
           <div>
             <div className="mb-5 flex items-center gap-3">
-              <Link to="/" className="flex items-center gap-3 min-w-0 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-lg">
-                <img src="/logo.png" alt="DorogaDomoy.by" className="h-10 w-10 shrink-0 object-contain" />
-                <span className="text-xl font-bold tracking-tight text-foreground">DorogaDomoy.by</span>
+              <Link
+                to="/"
+                className="flex min-w-0 items-center gap-3 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                <img
+                  src="/logo.png"
+                  alt="DorogaDomoy.by"
+                  className="h-10 w-10 shrink-0 object-contain"
+                />
+                <span className="text-xl font-bold tracking-tight text-foreground">
+                  DorogaDomoy.by
+                </span>
               </Link>
             </div>
             <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">{f.about}</p>
+            <Button
+              type="button"
+              variant="default"
+              className="mt-5 h-11 gap-2 rounded-lg font-medium"
+              onClick={() => setSupportOpen(true)}
+            >
+              <Heart size={18} aria-hidden />
+              {f.supportProject}
+            </Button>
           </div>
 
           <div>
             <h3 className={colTitleClass}>{f.contactsTitle}</h3>
             <ul className="space-y-3">
               <li>
-                <a href="mailto:contact@dorogadomoy.by" className={`${linkClass} inline-flex items-center gap-3 text-sm`}>
+                <a
+                  href="mailto:contact@dorogadomoy.by"
+                  className={`${linkClass} inline-flex items-center gap-3 text-sm`}
+                >
                   <Mail size={18} className="shrink-0 opacity-80" aria-hidden />
                   <span>contact@dorogadomoy.by</span>
                 </a>
@@ -127,24 +188,50 @@ export function Footer() {
             <span className="text-border" aria-hidden>
               ·
             </span>
-            <Link to="/terms" className={`${linkClass}`}>
+            <Link to="/terms" className={linkClass}>
               {f.rules}
             </Link>
             <span className="text-border" aria-hidden>
               ·
             </span>
-            <Link to="/privacy" className={`${linkClass}`}>
+            <Link to="/privacy" className={linkClass}>
               {f.privacyPolicy}
             </Link>
             <span className="text-border" aria-hidden>
               ·
             </span>
-            <Link to="/delete-account" className={`${linkClass}`}>
+            <Link to="/delete-account" className={linkClass}>
               {f.deleteAccount}
             </Link>
           </p>
         </div>
       </div>
+
+      <Dialog open={supportOpen} onOpenChange={setSupportOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{h.supportModalTitle}</DialogTitle>
+            <DialogDescription>{h.supportModalHint}</DialogDescription>
+          </DialogHeader>
+          {sortedTiers.length === 0 ? (
+            <p className="py-2 text-sm text-muted-foreground">{h.supportEmpty}</p>
+          ) : (
+            <div className="grid gap-2 pt-1">
+              {sortedTiers.map((tier) => (
+                <Button
+                  key={tier.id}
+                  type="button"
+                  variant="secondary"
+                  className="h-12 w-full justify-center text-base font-semibold"
+                  onClick={() => handleDonationClick(tier)}
+                >
+                  {tier.label}
+                </Button>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </footer>
   );
 }

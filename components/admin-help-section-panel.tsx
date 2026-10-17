@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { ExternalLink, Heart, Plus, Save, Trash2, X } from 'lucide-react';
+import { ExternalLink, Heart, Plus, Trash2, X } from 'lucide-react';
 import { helpApi, type HelpDonationTier } from '../api/client';
 import { useI18n } from '../context/I18nContext';
 import { adm } from './admin-panel-chrome';
@@ -11,8 +11,6 @@ export function AdminHelpSectionPanel() {
   const { t } = useI18n();
   const h = t.adminPanel.helpSection;
   const [loading, setLoading] = useState(true);
-  const [savingVolunteer, setSavingVolunteer] = useState(false);
-  const [volunteerUrl, setVolunteerUrl] = useState('');
   const [tiers, setTiers] = useState<HelpDonationTier[]>([]);
   const [tierEdit, setTierEdit] = useState<TierEditMode | null>(null);
   const [tierLabel, setTierLabel] = useState('');
@@ -27,7 +25,6 @@ export function AdminHelpSectionPanel() {
 
   const refresh = async () => {
     const cfg = await helpApi.get();
-    setVolunteerUrl(cfg.volunteer_url ?? '');
     setTiers(cfg.donation_tiers ?? []);
   };
 
@@ -58,19 +55,6 @@ export function AdminHelpSectionPanel() {
     setTierLabel('');
     setTierPaymentUrl('');
     setTierSortOrder(0);
-  };
-
-  const saveVolunteerUrl = async () => {
-    setSavingVolunteer(true);
-    try {
-      const res = await helpApi.updateVolunteerUrl(volunteerUrl.trim());
-      setVolunteerUrl(res.volunteer_url);
-      toast.success(h.volunteerSaved);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : h.saveError);
-    } finally {
-      setSavingVolunteer(false);
-    }
   };
 
   const saveTier = async () => {
@@ -128,28 +112,6 @@ export function AdminHelpSectionPanel() {
         <h2 className={adm.title}>{h.title}</h2>
         <p className={adm.subtitle}>{h.hint}</p>
       </div>
-
-      <section className="rounded-md border border-border bg-white dark:bg-card/50 p-5 space-y-4">
-        <h3 className="text-base font-semibold text-foreground">{h.volunteerTitle}</h3>
-        <p className="text-sm text-muted-foreground">{h.volunteerHint}</p>
-        <label className="block text-sm font-medium text-foreground/90">{h.volunteerUrlLabel}</label>
-        <input
-          type="url"
-          value={volunteerUrl}
-          onChange={(e) => setVolunteerUrl(e.target.value.slice(0, 2000))}
-          placeholder={h.volunteerUrlPlaceholder}
-          className="w-full px-3 py-2.5 border border-border dark:bg-muted dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-        />
-        <button
-          type="button"
-          onClick={() => void saveVolunteerUrl()}
-          disabled={savingVolunteer}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-white text-sm font-medium hover:opacity-90 disabled:opacity-50"
-        >
-          <Save className="w-4 h-4" />
-          {savingVolunteer ? h.saving : h.volunteerSave}
-        </button>
-      </section>
 
       <section className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">

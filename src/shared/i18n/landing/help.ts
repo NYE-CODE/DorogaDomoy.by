@@ -1,17 +1,6 @@
-/** Landing — `help` (ru / be / en). */
+/** Landing — `help` (support modal + stats labels). */
 export const landingHelpLocales = {
   ru: {
-    title: 'Как нам помочь?',
-    subtitle: 'Каждый может внести свой вклад в доброе дело',
-    ways: [
-      { title: 'Поделитесь информацией', desc: 'Расскажите о DorogaDomoy друзьям и в социальных сетях', action: 'Поделиться' },
-      { title: 'Станьте волонтером', desc: 'Помогайте проверять и модерировать объявления', action: 'Присоединиться' },
-      { title: 'Поддержите проект', desc: 'Ваше пожертвование поможет развивать платформу', action: 'Поддержать' },
-    ],
-    shareText: 'DorogaDomoy.by — платформа поиска пропавших питомцев и помощи приютам в Беларуси',
-    shareCopied: 'Ссылка скопирована — отправьте друзьям',
-    shareFailed: 'Не удалось поделиться. Попробуйте скопировать ссылку вручную.',
-    volunteerNoLink: 'Ссылка для волонтёров скоро появится',
     supportModalTitle: 'Поддержать проект',
     supportModalHint: 'Выберите сумму — откроется страница оплаты в новой вкладке',
     supportEmpty: 'Варианты поддержки скоро появятся',
@@ -23,17 +12,6 @@ export const landingHelpLocales = {
     statsSuccess: 'Успешных поисков',
   },
   be: {
-    title: 'Як нам дапамагчы?',
-    subtitle: 'Кожны можа ўнесці свой уклад у дабрую справу',
-    ways: [
-      { title: 'Падзяліцеся інфармацыяй', desc: 'Раскажыце пра DorogaDomoy сябрам і ў сацыяльных сетках', action: 'Падзяліцца' },
-      { title: 'Станьце валанцёрам', desc: 'Дапамагайце правяраць і мадэраваць аб\'явы', action: 'Далучыцца' },
-      { title: 'Падтрымайце праект', desc: 'Ваш ахвяраванне дапаможа развіваць платформу', action: 'Падтрымаць' },
-    ],
-    shareText: 'DorogaDomoy.by — платформа пошуку зніклых гадаванцаў і дапамогі прытулкам у Беларусі',
-    shareCopied: 'Спасылка скапіравана — дашліце сябрам',
-    shareFailed: 'Не атрымалася падзяліцца. Паспрабуйце скапіраваць спасылку ўручную.',
-    volunteerNoLink: 'Спасылка для валанцёраў хутка з\'явіцца',
     supportModalTitle: 'Падтрымайце праект',
     supportModalHint: 'Абярыце суму — адкрыецца старонка аплаты ў новай укладцы',
     supportEmpty: 'Варыянты падтрымкі хутка з\'явяцца',
@@ -45,17 +23,6 @@ export const landingHelpLocales = {
     statsSuccess: 'Паспяховых пошукаў',
   },
   en: {
-    title: 'How can you help?',
-    subtitle: 'Everyone can contribute to a good cause',
-    ways: [
-      { title: 'Share information', desc: 'Tell friends and on social media about DorogaDomoy', action: 'Share' },
-      { title: 'Become a volunteer', desc: 'Help verify and moderate ads', action: 'Join' },
-      { title: 'Support the project', desc: 'Your donation will help develop the platform', action: 'Support' },
-    ],
-    shareText: 'DorogaDomoy.by — lost pet search and shelter support platform in Belarus',
-    shareCopied: 'Link copied — share it with friends',
-    shareFailed: 'Could not share. Try copying the link manually.',
-    volunteerNoLink: 'Volunteer link coming soon',
     supportModalTitle: 'Support the project',
     supportModalHint: 'Pick an amount — the payment page opens in a new tab',
     supportEmpty: 'Support options coming soon',

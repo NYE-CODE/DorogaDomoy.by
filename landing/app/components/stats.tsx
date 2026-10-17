@@ -30,8 +30,7 @@ export function Stats() {
     petsApi.statistics().then(setStats).catch(() => setStats(null));
   }, []);
 
-  const statsTitle =
-    (t.landing.help as { statsTitle?: string }).statsTitle ?? "В цифрах";
+  const statsTitle = t.landing.help.statsTitle;
 
   const searchItems = [
     {
@@ -41,9 +40,7 @@ export function Stats() {
         stats
           ? ((stats.searching ?? 0) + (stats.found ?? 0)).toLocaleString("ru")
           : "—",
-      label:
-        (t.landing.help as { statsActiveAds?: string }).statsActiveAds ??
-        "Активных объявлений",
+      label: t.landing.help.statsActiveAds,
       iconClass: landingIconChipPrimary,
     },
     {

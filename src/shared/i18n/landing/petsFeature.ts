@@ -1,129 +1,129 @@
 /** Landing — `petsFeature` (ru / be / en). */
 export const landingPetsFeatureLocales = {
   ru: {
-    title: 'Защитите своего питомца заранее',
+    title: 'Защитите питомца',
     subtitle:
-      'Создайте профиль вашего питомца прямо сейчас и получите бесплатный QR-код для ошейника. Если питомец потеряется, нашедший сможет моментально с вами связаться!',
-    imageAlt: 'Счастливая собака с ошейником',
+      'Создайте профиль и получите бесплатный QR-код на ошейник. Если питомец потеряется — нашедший сразу свяжется с вами.',
+    imageAlt: 'Собака с ошейником',
     benefitsLabel: 'Преимущества',
-    stepsCount: '3 простых шага',
+    stepsCount: '3 шага',
     features: [
       {
         title: 'Бесплатный QR-код',
         shortLabel: 'QR-код',
-        desc: 'Создайте профиль питомца и получите уникальный QR-код, который можно прикрепить к ошейнику. Любой, кто найдет питомца, сможет отсканировать код и связаться с вами.',
+        desc: 'Код на ошейник: нашедший сканирует — и видит ваши контакты.',
       },
       {
-        title: 'Быстрое создание объявления',
+        title: 'Объявление в один клик',
         shortLabel: 'Объявление',
-        desc: 'Если питомец потеряется, создайте объявление в один клик, используя сохраненные данные. Все фото, описание и характеристики уже заполнены!',
+        desc: 'Если питомец пропал — объявление создаётся из уже сохранённых фото и данных.',
       },
       {
-        title: 'Всегда под рукой',
+        title: 'Всё в одном месте',
         shortLabel: 'Профиль',
-        desc: 'Вся информация о питомце в одном месте: медицинские данные, особые приметы, контакты. Доступно с любого устройства в любое время.',
+        desc: 'Приметы, медицина и контакты — доступны с любого устройства.',
       },
     ],
     howTitle: 'Как это работает',
     steps: [
       {
         title: 'Создайте профиль',
-        desc: 'Добавьте фото, кличку, породу и особые приметы вашего питомца в личном кабинете',
+        desc: 'Фото, кличка, порода и приметы в личном кабинете',
       },
       {
         title: 'Скачайте QR-код',
-        desc: 'Сгенерируйте и распечатайте уникальный QR-код для ошейника питомца',
+        desc: 'Распечатайте и закрепите на ошейнике',
       },
       {
         title: 'Будьте спокойны',
-        desc: 'Если питомец потеряется, нашедший сразу получит информацию и контакты',
+        desc: 'Нашедший сразу увидит ваши контакты',
       },
     ],
     ctaButton: 'Добавить питомца бесплатно',
-    ctaSub: 'Создайте профиль питомца и QR для ошейника — бесплатно',
+    ctaSub: 'Профиль и QR-код — бесплатно',
   },
   be: {
-    title: 'Абараніце свайго любімца загадзя',
+    title: 'Абараніце жывёлу',
     subtitle:
-      'Стварыце профіль вашай жывёлы зараз і атрымайце бясплатны QR-код для аброі. Калі жывёла згубіцца, той, хто знойдзе, зможа імгненна звязацца з вамі!',
-    imageAlt: 'Шчаслівая сабака з аброяй',
+      'Стварыце профіль і атрымайце бясплатны QR-код на аброю. Калі жывёла згубіцца — той, хто знойдзе, адразу звяжацца з вамі.',
+    imageAlt: 'Сабака з аброяй',
     benefitsLabel: 'Перавагі',
-    stepsCount: '3 простых крокі',
+    stepsCount: '3 крокі',
     features: [
       {
         title: 'Бясплатны QR-код',
         shortLabel: 'QR-код',
-        desc: 'Стварыце профіль жывёлы і атрымайце ўнікальны QR-код для аброі. Любы, хто знойдзе жывёлу, зможа адсканаваць код і звязацца з вамі.',
+        desc: 'Код на аброю: той, хто знойдзе, скануе — і бачыць вашы кантакты.',
       },
       {
-        title: 'Хуткае стварэнне аб\'явы',
+        title: 'Аб\'ява ў адзін клік',
         shortLabel: 'Аб\'ява',
-        desc: 'Калі жывёла згубіцца, стварыце аб\'яву ў адзін клік, выкарыстоўваючы захаваныя даныя. Усе фота, апісанне і характарыстыкі ўжо запоўнены!',
+        desc: 'Калі жывёла згубілася — аб\'ява ствараецца з ужо захаваных фота і даных.',
       },
       {
-        title: 'Заўсёды пад рукой',
+        title: 'Усё ў адным месцы',
         shortLabel: 'Профіль',
-        desc: 'Уся інфармацыя пра жывёлу ў адным месцы: медыцынскія даныя, асаблівыя прыкметы, кантакты. Даступна з любой прылады ў любы час.',
+        desc: 'Прыкметы, медыцына і кантакты — даступныя з любой прылады.',
       },
     ],
     howTitle: 'Як гэта працуе',
     steps: [
       {
         title: 'Стварыце профіль',
-        desc: 'Дадайце фота, мянушку, пароду і асаблівыя прыкметы вашай жывёлы ў асабістым кабінеце',
+        desc: 'Фота, мянушка, парода і прыкметы ў асабістым кабінеце',
       },
       {
         title: 'Спампуйце QR-код',
-        desc: 'Згенеруйце і раздрукуйце ўнікальны QR-код для аброі жывёлы',
+        desc: 'Раздрукуйце і замацуйце на аброі',
       },
       {
         title: 'Будзьце спакойныя',
-        desc: 'Калі жывёла згубіцца, той, хто знойдзе, адразу атрымае інфармацыю і кантакты',
+        desc: 'Той, хто знойдзе, адразу ўбачыць вашы кантакты',
       },
     ],
     ctaButton: 'Дадаць жывёлу бясплатна',
-    ctaSub: 'Стварыце профіль жывёлы і QR для аброі — бясплатна',
+    ctaSub: 'Профіль і QR-код — бясплатна',
   },
   en: {
-    title: 'Protect your pet in advance',
+    title: 'Protect your pet',
     subtitle:
-      'Create your pet’s profile now and get a free QR code for their collar. If your pet gets lost, whoever finds them can reach you instantly!',
-    imageAlt: 'Happy dog with a collar',
+      'Create a profile and get a free collar QR code. If your pet gets lost, the finder can reach you right away.',
+    imageAlt: 'Dog with a collar',
     benefitsLabel: 'Benefits',
-    stepsCount: '3 simple steps',
+    stepsCount: '3 steps',
     features: [
       {
         title: 'Free QR code',
         shortLabel: 'QR code',
-        desc: 'Create a pet profile and get a unique QR code you can attach to the collar. Anyone who finds your pet can scan it and contact you.',
+        desc: 'A code on the collar: the finder scans it and sees your contacts.',
       },
       {
         title: 'One-click lost ad',
         shortLabel: 'Lost ad',
-        desc: 'If your pet goes missing, post an ad in one click using saved details. Photos, description and traits are already filled in!',
+        desc: 'If your pet goes missing, the ad is built from saved photos and details.',
       },
       {
-        title: 'Always at hand',
+        title: 'All in one place',
         shortLabel: 'Profile',
-        desc: 'All pet info in one place: medical notes, distinctive marks, contacts. Available on any device, anytime.',
+        desc: 'Marks, medical notes, and contacts — available on any device.',
       },
     ],
     howTitle: 'How it works',
     steps: [
       {
         title: 'Create a profile',
-        desc: 'Add a photo, name, breed and distinctive features in your account',
+        desc: 'Photo, name, breed, and marks in your account',
       },
       {
         title: 'Download the QR code',
-        desc: 'Generate and print a unique QR code for your pet’s collar',
+        desc: 'Print it and attach it to the collar',
       },
       {
         title: 'Stay calm',
-        desc: 'If your pet is lost, the finder gets your info and contacts right away',
+        desc: 'The finder sees your contacts right away',
       },
     ],
     ctaButton: 'Add a pet for free',
-    ctaSub: 'Create a pet profile and collar QR — free',
+    ctaSub: 'Profile and QR code — free',
   },
 } as const;

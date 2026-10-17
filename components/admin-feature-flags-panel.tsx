@@ -11,7 +11,6 @@ export function AdminFeatureFlagsPanel() {
 
   const [featureFlags, setFeatureFlags] = useState({
     ff_landing_show_stats: true,
-    ff_landing_show_help: true,
     ff_landing_show_pets_feature: true,
     ff_landing_show_faq: true,
     ff_partner_ads_enabled: false,
@@ -28,7 +27,6 @@ export function AdminFeatureFlagsPanel() {
         if (cancelled) return;
         setFeatureFlags({
           ff_landing_show_stats: ff.ff_landing_show_stats === 'true',
-          ff_landing_show_help: ff.ff_landing_show_help === 'true',
           ff_landing_show_pets_feature: (ff.ff_landing_show_pets_feature ?? 'true') === 'true',
           ff_landing_show_faq: (ff.ff_landing_show_faq ?? 'true') === 'true',
           ff_partner_ads_enabled: (ff.ff_partner_ads_enabled ?? 'false') === 'true',
@@ -49,7 +47,6 @@ export function AdminFeatureFlagsPanel() {
     featureFlagsApi
       .update({
         ff_landing_show_stats: featureFlags.ff_landing_show_stats,
-        ff_landing_show_help: featureFlags.ff_landing_show_help,
         ff_landing_show_pets_feature: featureFlags.ff_landing_show_pets_feature,
         ff_landing_show_faq: featureFlags.ff_landing_show_faq,
         ff_partner_ads_enabled: featureFlags.ff_partner_ads_enabled,
@@ -83,16 +80,6 @@ export function AdminFeatureFlagsPanel() {
             <Switch
               checked={featureFlags.ff_landing_show_stats}
               onCheckedChange={(v) => setFeatureFlags((f) => ({ ...f, ff_landing_show_stats: v }))}
-            />
-          </div>
-          <div className="flex items-center justify-between gap-4 pt-4 border-t border-border dark:border-border">
-            <div>
-              <p className="text-sm font-medium text-foreground/90">{ap.featureFlags.ffHelp}</p>
-              <p className="text-xs text-muted-foreground mt-1">{ap.featureFlags.ffHelpDesc}</p>
-            </div>
-            <Switch
-              checked={featureFlags.ff_landing_show_help}
-              onCheckedChange={(v) => setFeatureFlags((f) => ({ ...f, ff_landing_show_help: v }))}
             />
           </div>
           <div className="flex items-center justify-between gap-4 pt-4 border-t border-border dark:border-border">
