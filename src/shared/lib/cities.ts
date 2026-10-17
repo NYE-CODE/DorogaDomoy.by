@@ -122,12 +122,95 @@ export const REGIONAL_CENTERS = new Set([
   'Могилёв',
 ]);
 
+/** Стабильные slug для SEO-страниц /city/:slug (областные центры). */
+export const CITY_SLUG_BY_NAME: Record<string, string> = {
+  Минск: 'minsk',
+  Брест: 'brest',
+  Витебск: 'vitebsk',
+  Гомель: 'gomel',
+  Гродно: 'grodno',
+  Могилёв: 'mogilev',
+  Могилев: 'mogilev',
+};
+
+export const CITY_NAME_BY_SLUG: Record<string, string> = {
+  minsk: 'Минск',
+  brest: 'Брест',
+  vitebsk: 'Витебск',
+  gomel: 'Гомель',
+  grodno: 'Гродно',
+  mogilev: 'Могилёв',
+};
+
+const CYR_TO_LAT: Record<string, string> = {
+  а: 'a',
+  б: 'b',
+  в: 'v',
+  г: 'g',
+  д: 'd',
+  е: 'e',
+  ё: 'e',
+  ж: 'zh',
+  з: 'z',
+  и: 'i',
+  й: 'y',
+  к: 'k',
+  л: 'l',
+  м: 'm',
+  н: 'n',
+  о: 'o',
+  п: 'p',
+  р: 'r',
+  с: 's',
+  т: 't',
+  у: 'u',
+  ф: 'f',
+  х: 'h',
+  ц: 'ts',
+  ч: 'ch',
+  ш: 'sh',
+  щ: 'sch',
+  ъ: '',
+  ы: 'y',
+  ь: '',
+  э: 'e',
+  ю: 'yu',
+  я: 'ya',
+  і: 'i',
+  ў: 'u',
+  ґ: 'g',
+};
+
 /** Нормализация для поиска: ё→е, trim, toLowerCase */
 function normalizeForSearch(s: string): string {
   return s
     .trim()
     .toLowerCase()
     .replace(/ё/g, 'е');
+}
+
+/** URL-slug города для /city/:slug. */
+export function citySlug(name: string): string {
+  const cleaned = name.trim();
+  if (!cleaned) return '';
+  const known = CITY_SLUG_BY_NAME[cleaned];
+  if (known) return known;
+  const normalized = cleaned.toLowerCase().replace(/ё/g, 'е');
+  let out = '';
+  for (const ch of normalized) {
+    if (CYR_TO_LAT[ch] !== undefined) out += CYR_TO_LAT[ch];
+    else if (/[a-z0-9]/.test(ch)) out += ch;
+    else if (ch === ' ' || ch === '-' || ch === '_') out += '-';
+  }
+  return out.replace(/-{2,}/g, '-').replace(/^-|-$/g, '');
+}
+
+export function findCityBySlug(slug: string): City | undefined {
+  const key = slug.trim().toLowerCase();
+  if (!key) return undefined;
+  const knownName = CITY_NAME_BY_SLUG[key];
+  if (knownName) return findCityByName(knownName);
+  return cities.find((c) => citySlug(c.name) === key);
 }
 
 export function searchCities(query: string, limit: number = 50): City[] {

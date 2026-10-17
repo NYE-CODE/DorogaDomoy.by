@@ -49,6 +49,7 @@ export function AppRoutes() {
     <>
       <Route path="/" element={<LandingPage />} />
       <Route path="/search" element={<SearchPage />} />
+      <Route path="/city/:slug" element={<SearchPage />} />
       <Route path="/favorites" element={<FavoritesPage />} />
       <Route path="/profile" element={<RequireAuth allowIncompleteProfile><ProfilePage /></RequireAuth>} />
       <Route path="/pet-profile/:id" element={<PublicPetProfilePage />} />

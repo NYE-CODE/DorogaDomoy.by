@@ -77,6 +77,16 @@ function upsertMetaByName(name: string, content: string) {
   el.setAttribute('content', content);
 }
 
+function upsertMetaByProperty(property: string, content: string) {
+  let el = document.querySelector(`meta[property="${property}"]`) as HTMLMetaElement | null;
+  if (!el) {
+    el = document.createElement('meta');
+    el.setAttribute('property', property);
+    document.head.appendChild(el);
+  }
+  el.setAttribute('content', content);
+}
+
 function upsertLinkCanonical(href: string) {
   let link = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
   if (!link) {
@@ -87,6 +97,15 @@ function upsertLinkCanonical(href: string) {
   link.setAttribute('href', href);
 }
 
+function absoluteSeoUrl(url: string): string {
+  const raw = url.trim();
+  if (!raw) return `${getSiteOrigin()}/logo.png`;
+  if (/^https?:\/\//i.test(raw)) return raw;
+  if (raw.startsWith('//')) return `https:${raw}`;
+  const path = raw.startsWith('/') ? raw : `/${raw}`;
+  return `${getSiteOrigin()}${path}`;
+}
+
 export type ApplySeoOptions = {
   title?: string;
   description?: string;
@@ -94,6 +113,9 @@ export type ApplySeoOptions = {
   robots?: string;
   /** Передайте null, чтобы не менять keywords; строка — выставить. */
   keywords?: string | null;
+  /** Абсолютный или относительный URL превью (OG / Twitter). */
+  imageUrl?: string | null;
+  ogType?: string;
 };
 
 /** Обновляет document и мета-теги в &lt;head&gt; (SPA). */
@@ -105,6 +127,41 @@ export function applySeo(opts: ApplySeoOptions) {
     upsertMetaByName('keywords', opts.keywords);
   }
   if (opts.canonicalUrl !== undefined) upsertLinkCanonical(opts.canonicalUrl);
+
+  const title = opts.title;
+  const description = opts.description;
+  const pageUrl = opts.canonicalUrl;
+  const image =
+    opts.imageUrl === null
+      ? null
+      : opts.imageUrl !== undefined
+        ? absoluteSeoUrl(opts.imageUrl)
+        : undefined;
+
+  if (title !== undefined) {
+    upsertMetaByProperty('og:title', title);
+    upsertMetaByName('twitter:title', title);
+  }
+  if (description !== undefined) {
+    upsertMetaByProperty('og:description', description);
+    upsertMetaByName('twitter:description', description);
+  }
+  if (pageUrl !== undefined) {
+    upsertMetaByProperty('og:url', pageUrl);
+  }
+  if (opts.ogType !== undefined) {
+    upsertMetaByProperty('og:type', opts.ogType);
+  } else if (title !== undefined || description !== undefined) {
+    upsertMetaByProperty('og:type', 'website');
+  }
+  upsertMetaByProperty('og:site_name', SEO_PUBLISHER);
+  upsertMetaByProperty('og:locale', 'ru_BY');
+  if (image) {
+    upsertMetaByProperty('og:image', image);
+    upsertMetaByProperty('og:image:alt', title || SEO_PUBLISHER);
+    upsertMetaByName('twitter:card', 'summary_large_image');
+    upsertMetaByName('twitter:image', image);
+  }
 }
 
 /** Publisher и keywords один раз при старте (дополняют index.html). */
@@ -131,6 +188,8 @@ export function isPrivateSeoPath(pathname: string): boolean {
 export function isAsyncSeoPath(pathname: string): boolean {
   if (pathname.startsWith('/blog/') && pathname !== '/blog') return true;
   if (/^\/pet\/[^/]+$/.test(pathname)) return true;
+  if (/^\/shelter-pet\/[^/]+$/.test(pathname)) return true;
+  if (/^\/city\/[^/]+$/.test(pathname)) return true;
   if (/^\/user\/[^/]+$/.test(pathname)) return true;
   if (/^\/pet-profile\/[^/]+$/.test(pathname)) return true;
   if (/^\/shelters\/[^/]+$/.test(pathname)) return true;

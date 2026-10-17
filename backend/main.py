@@ -20,7 +20,7 @@ from slowapi.middleware import SlowAPIMiddleware
 from database import init_db, check_db_writable
 import models  # noqa: F401 — регистрация ORM до init_db()
 from rate_limit import limiter
-from routers import auth, pets, users, reports, settings, telegram, notifications, media, partners, partner_ads, feature_flags, profile_pets, blog, faq, social_card, rewards, favorites, shelters, shelter_pets, shelter_campaigns, shelter_subscriptions, help, guides, internal_cron, integrations_susedzi
+from routers import auth, pets, users, reports, settings, telegram, notifications, media, partners, partner_ads, feature_flags, profile_pets, blog, faq, social_card, rewards, favorites, shelters, shelter_pets, shelter_campaigns, shelter_subscriptions, help, guides, internal_cron, integrations_susedzi, spa_seo
 from telegram_bot import BOT_TOKEN, process_telegram_update
 
 logging.basicConfig(
@@ -205,6 +205,8 @@ api_v1.include_router(integrations_susedzi.router)
 if device_tokens is not None:
     api_v1.include_router(device_tokens.router)
 app.include_router(api_v1)
+# Публичный HTML с OG для карточек/городов (nginx проксирует /pet/, /shelter-pet/, /city/)
+app.include_router(spa_seo.router)
 
 
 @app.get("/")

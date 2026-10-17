@@ -1,5 +1,5 @@
-import { useCallback, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router';
 import { useAuth } from '@/app/providers/AuthContext';
 import { useCity } from '@/app/providers/CityContext';
 import { useI18n } from '@/app/providers/I18nContext';
@@ -17,6 +17,17 @@ import {
   saveSearchLayoutMode,
   type SearchLayoutMode,
 } from '@/shared/lib/home-route';
+import { findCityBySlug } from '@/shared/lib/cities';
+import {
+  applySeo,
+  canonicalUrlFromPath,
+  getSiteOrigin,
+  SEO_KEYWORDS,
+  SEO_ROBOTS_PUBLIC,
+  SEO_SEARCH_DESCRIPTION,
+  SEO_SEARCH_TITLE,
+  truncateMetaDescription,
+} from '@/shared/lib/seo';
 import { readSearchPageQuery } from './search-query';
 import { readSearchView, writeSearchView, type SearchView } from './search-storage';
 import { useSearchCitySetup } from './use-search-city-setup';
@@ -28,6 +39,8 @@ export default function SearchPage() {
   const { selectedCity, saveCity, clearCity, setSelectedCity } = useCity();
   const { t } = useI18n();
   const routerNavigate = useNavigate();
+  const location = useLocation();
+  const { slug: citySlugParam } = useParams<{ slug?: string }>();
   const isMobile = useIsMobile();
 
   const [view, setViewRaw] = useState<SearchView>(readSearchView);
@@ -36,14 +49,62 @@ export default function SearchPage() {
     writeSearchView(v);
   }, []);
 
-  const [pageQuery] = useState(() => readSearchPageQuery(window.location.search));
-  const [filters, setFilters] = useState<FilterState>({
+  const pageQuery = useMemo(() => {
+    const q = readSearchPageQuery(location.search);
+    const fromSlug = citySlugParam ? findCityBySlug(citySlugParam) : undefined;
+    if (fromSlug) {
+      return { ...q, cityName: fromSlug.name, city: fromSlug };
+    }
+    return q;
+  }, [location.search, citySlugParam]);
+
+  const [filters, setFilters] = useState<FilterState>(() => ({
     ...EMPTY_FILTER_STATE,
-    statuses: pageQuery.statuses,
-    animalType: pageQuery.animalType,
-  });
+    statuses: readSearchPageQuery(typeof window !== 'undefined' ? window.location.search : '').statuses,
+    animalType: readSearchPageQuery(typeof window !== 'undefined' ? window.location.search : '').animalType,
+  }));
+
+  useEffect(() => {
+    setFilters((prev) => ({
+      ...prev,
+      statuses: pageQuery.statuses,
+      animalType: pageQuery.animalType,
+    }));
+  }, [pageQuery.statuses, pageQuery.animalType]);
+
   const pets = useSearchPetsData(view, filters);
   const city = useSearchCitySetup(saveCity, clearCity, pageQuery.cityName, setSelectedCity);
+
+  useEffect(() => {
+    const fromSlug = citySlugParam ? findCityBySlug(citySlugParam) : undefined;
+    if (fromSlug) {
+      const title = `Пропавшие и найденные животные — ${fromSlug.name} | DorogaDomoy.by`;
+      const description = truncateMetaDescription(
+        `Объявления о пропавших и найденных собаках и кошках в городе ${fromSlug.name}. Карта, фото и контакты на DorogaDomoy.by.`,
+      );
+      applySeo({
+        title,
+        description,
+        canonicalUrl: canonicalUrlFromPath(`/city/${citySlugParam}`),
+        robots: SEO_ROBOTS_PUBLIC,
+        keywords: SEO_KEYWORDS,
+        imageUrl: `${getSiteOrigin()}/logo.png`,
+        ogType: 'website',
+      });
+      return;
+    }
+    if (!citySlugParam) {
+      applySeo({
+        title: SEO_SEARCH_TITLE,
+        description: SEO_SEARCH_DESCRIPTION,
+        canonicalUrl: canonicalUrlFromPath('/search'),
+        robots: SEO_ROBOTS_PUBLIC,
+        keywords: SEO_KEYWORDS,
+        imageUrl: `${getSiteOrigin()}/logo.png`,
+        ogType: 'website',
+      });
+    }
+  }, [citySlugParam]);
 
   const [layoutMode, setLayoutMode] = useState<SearchLayoutMode>(() => readSearchLayoutMode());
   const handleLayoutModeChange = useCallback((mode: SearchLayoutMode) => {

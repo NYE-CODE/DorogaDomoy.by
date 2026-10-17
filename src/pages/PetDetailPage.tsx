@@ -93,7 +93,7 @@ export default function PetDetailPage() {
     const animal = t.pet.animalType[pet.animalType];
     const headline = pet.status === 'searching' ? t.petDetail.lostPet : t.petDetail.foundPet;
     const breedPart = pet.breed ? `, ${pet.breed}` : '';
-    const title = `${headline} ? ${animal}${breedPart}, ${pet.city} | DorogaDomoy.by`;
+    const title = `${headline} — ${animal}${breedPart}, ${pet.city} | DorogaDomoy.by`;
     const description = truncateMetaDescription(`${headline}. ${animal}, ${pet.city}. ${pet.description}`);
     applySeo({
       title,
@@ -101,6 +101,8 @@ export default function PetDetailPage() {
       canonicalUrl: `${getSiteOrigin()}/pet/${pet.id}`,
       robots: SEO_ROBOTS_PUBLIC,
       keywords: SEO_KEYWORDS,
+      imageUrl: pet.photos?.[0] || `${getSiteOrigin()}/logo.png`,
+      ogType: 'article',
     });
   }, [pet, locale, t]);
 

@@ -136,10 +136,12 @@ export function useShelterPetDetailData(
     const title = `${pet.name?.trim() || pet.breed || t.pet.animalType[pet.animalType]} — ищет дом`;
     const description = `${adoptionSeo} · ${pet.city}. Узнайте больше о питомце на DorogaDomoy.by`;
     applySeo({
-      title,
+      title: `${title} | DorogaDomoy.by`,
       description,
       canonicalUrl: canonicalUrlFromPath(`/shelter-pet/${pet.id}`),
       keywords: SEO_KEYWORDS,
+      imageUrl: pet.photos?.[0] || undefined,
+      ogType: 'article',
     });
   }, [pet, t]);
 

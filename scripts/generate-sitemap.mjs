@@ -11,7 +11,14 @@ const SITE = (process.env.VITE_SITE_URL || 'https://dorogadomoy.by').replace(/\/
 const API = (process.env.SITEMAP_API_ORIGIN || SITE).replace(/\/+$/, '');
 const OUT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../public/sitemap.xml');
 
-const CITIES = ['Минск', 'Брест', 'Витебск', 'Гомель', 'Гродно', 'Могилёв'];
+const CITIES = [
+  { name: 'Минск', slug: 'minsk' },
+  { name: 'Брест', slug: 'brest' },
+  { name: 'Витебск', slug: 'vitebsk' },
+  { name: 'Гомель', slug: 'gomel' },
+  { name: 'Гродно', slug: 'grodno' },
+  { name: 'Могилёв', slug: 'mogilev' },
+];
 
 function esc(value) {
   return String(value)
@@ -44,9 +51,10 @@ function staticEntries() {
     urlEntry('/privacy', '0.3'),
   ];
   for (const city of CITIES) {
-    const q = encodeURIComponent(city);
-    entries.push(urlEntry(`/search?city=${q}`, '0.7'));
-    entries.push(urlEntry(`/search?city=${q}&status=searching`, '0.6'));
+    entries.push(urlEntry(`/city/${city.slug}`, '0.8'));
+    const q = encodeURIComponent(city.name);
+    entries.push(urlEntry(`/search?city=${q}`, '0.5'));
+    entries.push(urlEntry(`/search?city=${q}&status=searching`, '0.4'));
   }
   return entries;
 }
