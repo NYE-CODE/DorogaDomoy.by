@@ -116,12 +116,16 @@ else
   exit 1
 fi
 
-# 8. Перезагрузка nginx
-echo "==> 10. Перезагрузка nginx"
+# 8. Кэш статики и HTTP/2 (nginx -t, при ошибке конфиг откатывается)
+echo "==> 10. Кэш статики и HTTP/2"
+sudo "$PYTHON" "$REPO_DIR/deploy/nginx/apply_static_cache.py" || echo "    Предупреждение: кэш nginx не обновлён"
+
+# 9. Перезагрузка nginx
+echo "==> 11. Перезагрузка nginx"
 sudo systemctl reload nginx
 
 # 9. Smoke tests
-echo "==> 11. Smoke tests ($SMOKE_BASE_URL)"
+echo "==> 12. Smoke tests ($SMOKE_BASE_URL)"
 if curl -sf "$SMOKE_BASE_URL/health" | grep -q '"status"'; then
   echo "    /health: ok"
 else

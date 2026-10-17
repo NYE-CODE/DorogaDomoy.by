@@ -10,6 +10,7 @@ import { RewardBadge, getRewardBadgeMeta } from "../../../components/reward-badg
 import { FavoriteHeartButton } from "../../../components/favorite-heart-button";
 import { trackYmGoal } from "../../../utils/ym";
 import { cn } from "./ui/utils";
+import { displayPhotoUrl } from "@/shared/lib/display-photo-url";
 import {
   landingContainerWide,
   landingH2,
@@ -89,7 +90,7 @@ export function Announcements() {
                 >
                   <div className="relative overflow-hidden">
                     <img
-                      src={announcement.image}
+                      src={displayPhotoUrl(announcement.image, 640)}
                       alt={announcement.petType}
                       className="h-52 w-full object-cover"
                       loading="lazy"

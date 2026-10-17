@@ -5,6 +5,7 @@ import type { Pet } from '../types/pet';
 import { cn } from './ui/utils';
 import { typoH4 } from '@/shared/styles/typography-classes';
 import { activateOnKeyboard, interactiveCardClass } from '@/shared/styles/interaction-classes';
+import { displayPhotoUrl } from '@/shared/lib/display-photo-url';
 import { FavoriteHeartButton } from './favorite-heart-button';
 
 interface ShelterPetCardProps {
@@ -98,7 +99,7 @@ export function ShelterPetCard({ pet, onClick, compact = false }: ShelterPetCard
         <div className="relative flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted">
           {pet.photos?.[0] ? (
             <img
-              src={pet.photos[0]}
+              src={displayPhotoUrl(pet.photos[0], 256)}
               alt={t.shelterPet.photoAlt.replace('{name}', name).replace('{n}', '1')}
               className="size-full object-cover object-center"
               loading="lazy"

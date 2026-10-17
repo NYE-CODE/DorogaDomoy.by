@@ -73,8 +73,8 @@ export function Hero() {
                 src="/hero/search-main.webp"
                 alt={hero.imageSearchAlt}
                 className="aspect-[4/3] w-full object-cover lg:aspect-[5/4]"
-                width={960}
-                height={720}
+                width={1200}
+                height={800}
                 fetchPriority="high"
                 decoding="async"
               />
