@@ -20,7 +20,6 @@ import {
   landingH2,
   landingLeadWideCenter,
   landingPanel,
-  landingPathAccentBorder,
   landingSectionAlt,
   landingSectionHeader,
   landingSectionY,
@@ -75,7 +74,6 @@ function ScenarioTabButton({
   const meta = tabMeta[tabId];
   const accent = petScenarioAccentClass[tabId];
   const Icon = meta.icon;
-  const pathBorder = landingPathAccentBorder[tabId];
 
   if (variant === "mobile") {
     return (
@@ -89,9 +87,7 @@ function ScenarioTabButton({
         className={cn(
           landingCell,
           "flex min-h-[4.75rem] flex-col items-center justify-center gap-1.5 rounded-md px-1.5 py-2 text-center",
-          isActive
-            ? cn("bg-card", pathBorder, "border-l-[3px] sm:border-l-0 sm:border-t-[3px]")
-            : "text-muted-foreground",
+          isActive ? cn("bg-card", accent.soft) : "text-muted-foreground",
         )}
       >
         <span
@@ -126,7 +122,7 @@ function ScenarioTabButton({
         landingCell,
         "flex w-full items-start gap-3 rounded-lg border px-3.5 py-3 text-left",
         isActive
-          ? cn("border-border bg-card", pathBorder, "border-l-[3px]")
+          ? cn("border-border bg-card", accent.soft)
           : "border-transparent hover:border-border/60",
       )}
     >
@@ -214,7 +210,6 @@ export function HowItWorks() {
             {TAB_ORDER.map((tabId) => {
               const meta = tabMeta[tabId];
               const accent = petScenarioAccentClass[tabId];
-              const pathBorder = landingPathAccentBorder[tabId];
               const tab = hw.tabs[tabId];
               const isActive = activeTab === tabId;
               const ScenarioIcon = meta.icon;
@@ -254,9 +249,8 @@ export function HowItWorks() {
                         <li
                           key={`${tabId}-step-${index}`}
                           className={cn(
-                            "flex gap-3 rounded-lg border border-border bg-muted/15 p-3.5 sm:p-4",
-                            pathBorder,
-                            "border-l-[3px] sm:border-l-[3px] sm:border-t-0",
+                            "flex gap-3 rounded-lg border border-border p-3.5 sm:p-4",
+                            accent.soft,
                           )}
                         >
                           <span

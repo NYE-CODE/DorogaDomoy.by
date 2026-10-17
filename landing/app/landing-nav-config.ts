@@ -31,11 +31,11 @@ export type LandingNavItemDef = {
  * Любая секция с флагом здесь должна условно рендериться там же через тот же флаг.
  */
 export const LANDING_NAV_ITEMS: readonly LandingNavItemDef[] = [
-  { hash: "stats", requiredFlag: "ff_landing_show_stats" },
   { hash: "how-it-works" },
-  { hash: "pets-feature", requiredFlag: "ff_landing_show_pets_feature" },
   { hash: "announcements" },
   { hash: "shelter-pets" },
+  { hash: "stats", requiredFlag: "ff_landing_show_stats" },
+  { hash: "pets-feature", requiredFlag: "ff_landing_show_pets_feature" },
   { hash: "media" },
   { hash: "partners" },
   { hash: "help", requiredFlag: "ff_landing_show_help" },

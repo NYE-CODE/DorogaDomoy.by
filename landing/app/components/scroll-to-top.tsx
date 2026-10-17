@@ -1,10 +1,12 @@
 import { ChevronUp } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { useI18n } from "../../../context/I18nContext";
 import { Button } from "./ui/button";
 
 const SHOW_AFTER_PX = 400;
 
 export function ScrollToTop() {
+  const { t } = useI18n();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -29,7 +31,7 @@ export function ScrollToTop() {
       size="icon"
       className="fixed right-6 z-50 h-12 w-12 rounded-full border border-border/80 bg-background/95 shadow-lg backdrop-blur-md supports-[backdrop-filter]:bg-background/80 hover:bg-accent bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:bottom-8 md:right-8"
       onClick={scrollTop}
-      aria-label="Наверх"
+      aria-label={t.common.scrollToTop}
     >
       <ChevronUp className="h-6 w-6" aria-hidden />
     </Button>

@@ -9,6 +9,7 @@ import { cn } from './ui/utils';
 
 export {
   landingSectionY,
+  landingSectionYTight,
   landingHeroY,
   landingContainerWide,
   landingContainerNarrow,

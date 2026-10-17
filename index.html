@@ -12,7 +12,7 @@
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
     <meta
       name="keywords"
-      content="пропавшая собака, пропавший кот, потерялся питомец, найдена собака, найден кот, объявления животные Беларусь, Минск, поиск питомца, DorogaDomoy"
+      content="пропавшая собака, пропавший кот, потерялся питомец, найдена собака, найден кот, поиск питомца, объявления животные Беларусь, Минск, приюты Беларусь, DorogaDomoy"
     />
     <meta name="publisher" content="DorogaDomoy.by" />
     <link rel="canonical" href="https://dorogadomoy.by/" />
@@ -22,22 +22,29 @@
     <meta name="apple-mobile-web-app-title" content="DorogaDomoy" />
     <link rel="apple-touch-icon" href="/logo.png" />
     <title>Пропавшие и найденные животные в Беларуси — объявления и карта | DorogaDomoy.by</title>
+    <script>
+      document.documentElement.classList.add('js');
+    </script>
+    <style>
+      html.js #crawl-fallback { display: none !important; }
+    </style>
   </head>
   <body>
-    <noscript>
-      <div style="padding: 2rem; max-width: 40rem; margin: 0 auto; font-family: system-ui, sans-serif; line-height: 1.5;">
-        <h1 style="font-size: 1.5rem; margin-bottom: 0.5rem;">DorogaDomoy.by</h1>
-        <p style="margin-bottom: 1rem; color: #444;">
-          Для полной работы сайта нужен JavaScript. Основные разделы доступны без него:
+    <div id="root">
+      <article id="crawl-fallback" style="padding: 2rem 1.25rem 3rem; max-width: 42rem; margin: 0 auto; font-family: system-ui, sans-serif; line-height: 1.55; color: #111827;">
+        <h1 style="font-size: 1.7rem; line-height: 1.25; margin: 0 0 0.75rem;">DorogaDomoy.by — поиск пропавших и найденных животных в Беларуси</h1>
+        <p style="margin: 0 0 1rem; color: #5c5c6b;">
+          Сервис помогает найти потерявшуюся собаку или кошку: карта объявлений по городам Беларуси, фотографии и контакты.
+          Смотреть объявления можно без регистрации.
         </p>
-        <ul style="padding-left: 1.25rem; margin-bottom: 1rem;">
-          <li><a href="/search">Поиск потерявшихся питомцев</a></li>
+        <ul style="padding-left: 1.25rem; margin: 0 0 1rem;">
+          <li><a href="/poisk-propavshih-zhivotnyh/">Как искать пропавшее животное</a></li>
+          <li><a href="/search">Карта объявлений о пропавших и найденных питомцах</a></li>
           <li><a href="/shelters">Каталог приютов</a></li>
-          <li><a href="/create">Подать объявление</a></li>
+          <li><a href="/create">Сообщить о пропаже или находке</a></li>
         </ul>
-      </div>
-    </noscript>
-    <div id="root"></div>
+      </article>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

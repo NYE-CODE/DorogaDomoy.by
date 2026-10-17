@@ -2,10 +2,10 @@
 export const landingHeroLocales = {
   ru: {
     badge: 'Платформа для питомцев',
-    title: 'Поиск, помощь и новый дом —',
-    titleHighlight: 'в одном месте',
+    title: 'Дорога домой для питомцев —',
+    titleHighlight: 'по всей Беларуси',
     subtitle:
-      'Карта объявлений по всей Беларуси, быстрая публикация и каталог питомцев из приютов.',
+      'Карта объявлений, быстрая публикация и питомцы из приютов — чтобы скорее найти путь домой.',
     primaryCta: 'Открыть карту',
     secondaryCta: 'Создать объявление',
     paths: {
@@ -27,10 +27,10 @@ export const landingHeroLocales = {
   },
   be: {
     badge: 'Платформа для жывёл',
-    title: 'Пошук, дапамога і новы дом —',
-    titleHighlight: 'ў адным месцы',
+    title: 'Дарога дадому для жывёл —',
+    titleHighlight: 'па ўсёй Беларусі',
     subtitle:
-      'Карта аб\'яў па ўсёй Беларусі, хуткая публікацыя і каталог жывёл з прытулкаў.',
+      'Карта аб\'яў, хуткая публікацыя і жывёлы з прытулкаў — каб хутчэй знайсці шлях дадому.',
     primaryCta: 'Адкрыць карту',
     secondaryCta: 'Стварыць аб\'яву',
     paths: {
@@ -52,10 +52,10 @@ export const landingHeroLocales = {
   },
   en: {
     badge: 'Platform for pets',
-    title: 'Search, help, and a new home —',
-    titleHighlight: 'all in one place',
+    title: 'The road home for pets —',
+    titleHighlight: 'across Belarus',
     subtitle:
-      'Map of listings across Belarus, quick publishing, and a catalog of shelter pets.',
+      'A listings map, quick publishing, and shelter pets — so the way home is closer.',
     primaryCta: 'Open map',
     secondaryCta: 'Create listing',
     paths: {

@@ -1,0 +1,48 @@
+# Поисковый индекс ChatGPT. Приватные разделы не содержат публичных объявлений.
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /admin
+Disallow: /profile
+Disallow: /my-ads
+Disallow: /my-pets
+Disallow: /my-shelters
+Disallow: /settings
+Disallow: /favorites
+Disallow: /create
+Disallow: /edit/
+Disallow: /complete-profile
+Disallow: /welcome/
+Disallow: /mobile-telegram-auth
+
+# Запросы, которые пользователь явно просит открыть в браузере ChatGPT.
+User-agent: ChatGPT-User
+Allow: /
+Disallow: /admin
+Disallow: /profile
+Disallow: /my-ads
+Disallow: /my-pets
+Disallow: /my-shelters
+Disallow: /settings
+Disallow: /favorites
+Disallow: /create
+Disallow: /edit/
+Disallow: /complete-profile
+Disallow: /welcome/
+Disallow: /mobile-telegram-auth
+
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /profile
+Disallow: /my-ads
+Disallow: /my-pets
+Disallow: /my-shelters
+Disallow: /settings
+Disallow: /favorites
+Disallow: /create
+Disallow: /edit/
+Disallow: /complete-profile
+Disallow: /welcome/
+Disallow: /mobile-telegram-auth
+
+Sitemap: https://dorogadomoy.by/sitemap.xml

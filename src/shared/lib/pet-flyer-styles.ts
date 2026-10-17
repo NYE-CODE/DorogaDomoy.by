@@ -22,7 +22,7 @@ export function buildPetFlyerCss(palette: FlyerPalette): string {
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html { font-size: 18px; height: 100%; }
     body {
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-family: Manrope, Inter, system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
       color: var(--ink);
       background: ${c.bgSubtle};
       padding: 18px 14px 28px;
@@ -114,10 +114,10 @@ export function buildPetFlyerCss(palette: FlyerPalette): string {
     .description {
       font-size: 15.5px;
       line-height: 1.38;
-      padding: 8px 10px;
+      padding: 10px 12px;
       background: var(--accent-soft);
-      border-left: 4px solid var(--accent);
-      border-radius: 0 4px 4px 0;
+      border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+      border-radius: 6px;
       white-space: pre-wrap;
     }
     .contact-box {

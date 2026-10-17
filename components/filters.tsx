@@ -120,7 +120,7 @@ export function Filters({
             key={status}
             type="button"
             onClick={() => toggleStatus(status)}
-            className={`rounded-lg border px-3 py-1.5 text-sm transition-all ${
+            className={`min-h-11 rounded-lg border px-3 py-2 text-sm transition-all ${
               filters.statuses.includes(status)
                 ? petStatusFilterSelectedClass[status]
                 : 'border-border bg-card text-foreground hover:bg-muted/80'
@@ -143,7 +143,7 @@ export function Filters({
               <button
                 type="button"
                 onClick={() => onFiltersChange({ ...filters, animalType: opt.value })}
-                className={`flex min-h-[36px] w-full items-center justify-center gap-1 rounded-lg px-1.5 py-1.5 text-xs font-medium transition-all sm:min-h-0 sm:gap-1.5 sm:px-2 sm:text-sm ${
+                className={`flex min-h-11 w-full items-center justify-center gap-1 rounded-lg px-1.5 py-2 text-xs font-medium transition-all sm:gap-1.5 sm:px-2 sm:text-sm ${
                   filters.animalType === opt.value
                     ? 'bg-card text-foreground shadow-sm'
                     : 'text-muted-foreground hover:bg-background/80 hover:text-foreground'
@@ -216,7 +216,7 @@ export function Filters({
               key={color}
               type="button"
               onClick={() => toggleColor(color)}
-              className={`min-w-0 rounded-lg border px-1.5 py-1.5 text-center text-xs leading-tight transition-all sm:px-2 sm:text-sm sm:leading-snug ${
+              className={`min-h-11 min-w-0 rounded-lg border px-1.5 py-2 text-center text-xs leading-tight transition-all sm:px-2 sm:text-sm sm:leading-snug ${
                 filters.colors.includes(color)
                   ? 'border-primary/45 bg-primary/12 text-primary shadow-sm'
                   : 'border-border bg-card text-foreground hover:bg-muted/80'
@@ -289,7 +289,7 @@ export function Filters({
               key={color}
               type="button"
               onClick={() => toggleColor(color)}
-              className={`min-w-0 rounded-lg border px-1.5 py-1.5 text-center text-xs leading-tight transition-all sm:px-2 sm:text-sm sm:leading-snug ${
+              className={`min-h-11 min-w-0 rounded-lg border px-1.5 py-2 text-center text-xs leading-tight transition-all sm:px-2 sm:text-sm sm:leading-snug ${
                 filters.colors.includes(color)
                   ? 'border-primary/45 bg-primary/12 text-primary shadow-sm'
                   : 'border-border bg-card text-foreground hover:bg-muted/80'
@@ -313,7 +313,8 @@ export function Filters({
         value={filters.searchQuery}
         onChange={(e) => onFiltersChange({ ...filters, searchQuery: e.target.value })}
         placeholder={t.filters.searchPlaceholder}
-        className="h-10 w-full rounded-md border border-border bg-card py-2 pl-10 pr-4 text-sm shadow-sm outline-none ring-offset-background transition-shadow focus-visible:ring-2 focus-visible:ring-ring sm:h-11 sm:py-2.5"
+        aria-label={t.filters.searchPlaceholder}
+        className="h-11 w-full rounded-md border border-border bg-card py-2 pl-10 pr-4 text-sm shadow-sm outline-none ring-offset-background transition-shadow focus-visible:ring-2 focus-visible:ring-ring"
       />
     </div>
   );
@@ -369,7 +370,7 @@ export function Filters({
                     key={status}
                     type="button"
                     onClick={() => toggleStatus(status)}
-                    className={`whitespace-nowrap rounded-lg border px-2.5 py-1.5 text-sm transition-all sm:px-3 ${
+                    className={`min-h-11 whitespace-nowrap rounded-lg border px-2.5 py-2 text-sm transition-all sm:px-3 ${
                       filters.statuses.includes(status)
                         ? petStatusFilterSelectedClass[status]
                         : 'border-border bg-card text-foreground hover:bg-muted/80'
@@ -392,7 +393,7 @@ export function Filters({
                       <button
                         type="button"
                         onClick={() => onFiltersChange({ ...filters, animalType: opt.value })}
-                        className={`flex min-h-[34px] items-center justify-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium transition-all sm:min-h-[36px] sm:gap-1.5 sm:px-2.5 sm:text-sm ${
+                        className={`flex min-h-11 items-center justify-center gap-1 rounded-lg px-2 py-2 text-xs font-medium transition-all sm:gap-1.5 sm:px-2.5 sm:text-sm ${
                           filters.animalType === opt.value
                             ? 'bg-card text-foreground shadow-sm'
                             : 'text-muted-foreground hover:bg-background/80 hover:text-foreground'

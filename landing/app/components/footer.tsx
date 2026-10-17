@@ -121,6 +121,12 @@ export function Footer() {
             &copy; {new Date().getFullYear()} DorogaDomoy.by — {f.copyright}
           </p>
           <p className="mt-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
+            <a href="/poisk-propavshih-zhivotnyh/" className={linkClass}>
+              {f.searchGuide}
+            </a>
+            <span className="text-border" aria-hidden>
+              ·
+            </span>
             <Link to="/terms" className={`${linkClass}`}>
               {f.rules}
             </Link>

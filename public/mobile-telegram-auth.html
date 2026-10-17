@@ -4,12 +4,15 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Вход через Telegram — DorogaDomoy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700&display=swap" rel="stylesheet" />
   <style>
     body {
       margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
       background: #f6f7f4;
-      color: #1a1a1a;
+      color: #111827;
       display: flex;
       min-height: 100vh;
       align-items: center;
@@ -26,11 +29,23 @@
       box-shadow: 0 8px 28px rgba(0,0,0,.06);
       text-align: center;
     }
-    h1 { font-size: 1.25rem; margin: 0 0 8px; }
-    p { margin: 0 0 20px; color: #5b5b5b; font-size: .95rem; line-height: 1.4; }
+    h1 {
+      font-family: Manrope, system-ui, sans-serif;
+      font-size: 1.75rem;
+      font-weight: 700;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+      margin: 0 0 12px;
+    }
+    p {
+      margin: 0 0 24px;
+      color: #5c5c6b;
+      font-size: 1rem;
+      line-height: 1.5;
+    }
     #widget { min-height: 44px; display: flex; justify-content: center; }
-    .err { color: #b42318; font-size: .9rem; margin-top: 12px; }
-    .loading { color: #5b5b5b; font-size: .9rem; }
+    .err { color: #d4183d; font-size: 1rem; margin-top: 12px; line-height: 1.4; }
+    .loading { color: #5c5c6b; font-size: 1rem; }
   </style>
 </head>
 <body>

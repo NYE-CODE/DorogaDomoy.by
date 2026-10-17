@@ -13,7 +13,7 @@ export const landingHowItWorksLocales = {
         summary: 'Объявление, карта и связь с нашедшими',
         steps: [
           { title: 'Создайте объявление', desc: 'Заполните простую форму с фото и описанием вашего питомца. Это займёт всего 2 минуты!' },
-          { title: 'Следите за картой', desc: 'Отслеживайте находки в реальном времени и получайте уведомления о похожих животных поблизости.' },
+          { title: 'Следите за картой', desc: 'Смотрите объявления и находки рядом на карте — и связывайтесь с людьми напрямую.' },
           { title: 'Воссоединитесь с питомцем', desc: 'Свяжитесь с нашедшими напрямую через платформу — мы поможем организовать безопасную встречу.' },
         ],
       },
@@ -23,7 +23,7 @@ export const landingHowItWorksLocales = {
         summary: 'Находка, совпадения и возвращение домой',
         steps: [
           { title: 'Создайте объявление о находке', desc: 'Добавьте фото, место и краткое описание найденного животного — это займёт пару минут.' },
-          { title: 'Система ищет совпадения', desc: 'Мы подберём похожие объявления о пропаже и уведомим возможных владельцев.' },
+          { title: 'Система ищет совпадения', desc: 'На карте и в списке можно сразу увидеть похожие объявления о пропаже рядом.' },
           { title: 'Помогите вернуть питомца', desc: 'Свяжитесь с владельцем через платформу и помогите организовать встречу.' },
         ],
       },
@@ -52,7 +52,7 @@ export const landingHowItWorksLocales = {
         summary: 'Аб\'ява, карта і сувязь з тымі, хто знайшоў',
         steps: [
           { title: 'Стварыце аб\'яву', desc: 'Запоўніце простую форму з фота і апісаннем вашай жывёлы. Гэта займе ўсяго 2 хвіліны!' },
-          { title: 'Сачыце за картай', desc: 'Адсочвайце знаходкі ў рэальным часе і атрымлівайце апавяшчэнні пра падобных жывёл паблізу.' },
+          { title: 'Сачыце за картай', desc: 'Глядзіце аб\'явы і знаходкі паблізу на карце — і звязвайцеся з людзьмі напрамую.' },
           { title: 'Аб\'яднайцеся з жывёлай', desc: 'Звяжыцеся з тымі, хто знайшоў, напрамую праз платформу — мы дапаможам арганізаваць бяспечную сустрэчу.' },
         ],
       },
@@ -62,7 +62,7 @@ export const landingHowItWorksLocales = {
         summary: 'Знаходка, супадзенні і вяртанне дадому',
         steps: [
           { title: 'Стварыце аб\'яву пра знаходку', desc: 'Дадайце фота, месца і кароткае апісанне знойдзенай жывёлы — гэта займе пару хвілін.' },
-          { title: 'Сістэма шукае супадзенні', desc: 'Мы падбярэм падобныя аб\'явы пра знікненне і паведамім магчымых уладальнікаў.' },
+          { title: 'Сістэма шукае супадзенні', desc: 'На карце і ў спісе можна адразу ўбачыць падобныя аб\'явы пра знікненне паблізу.' },
           { title: 'Дапамажыце вярнуць жывёлу', desc: 'Звяжыцеся з уладальнікам праз платформу і дапамажыце арганізаваць сустрэчу.' },
         ],
       },
@@ -91,7 +91,7 @@ export const landingHowItWorksLocales = {
         summary: 'Listing, map, and contact with finders',
         steps: [
           { title: 'Create a listing', desc: 'Fill out a simple form with a photo and description of your pet. It takes just 2 minutes!' },
-          { title: 'Watch the map', desc: 'Track sightings in real time and get alerts about similar animals nearby.' },
+          { title: 'Watch the map', desc: 'Browse nearby listings and sightings on the map — and contact people directly.' },
           { title: 'Reunite with your pet', desc: 'Contact finders directly through the platform — we will help arrange a safe meeting.' },
         ],
       },
@@ -101,7 +101,7 @@ export const landingHowItWorksLocales = {
         summary: 'Found report, matches, and reunion',
         steps: [
           { title: 'Post a found listing', desc: 'Add a photo, location, and a short description of the animal — it only takes a couple of minutes.' },
-          { title: 'We look for matches', desc: 'We match similar lost listings and notify possible owners.' },
+          { title: 'We look for matches', desc: 'On the map and in the list you can immediately see similar lost listings nearby.' },
           { title: 'Help reunite the pet', desc: 'Contact the owner through the platform and help arrange a meeting.' },
         ],
       },

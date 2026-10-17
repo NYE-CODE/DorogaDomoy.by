@@ -14,14 +14,16 @@ import {
   landingContainerWide,
   landingH2,
   landingLeadCenter,
+  landingOutlineHeroCtaClass,
   landingPanel,
-  landingPrimaryCtaClass,
   landingSectionAlt,
   landingSectionHeader,
   landingSectionY,
 } from "./landing-section-styles";
 
 const DEFAULT_PHOTO = "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&h=400&fit=crop";
+
+const PREVIEW_COUNT = 4;
 
 function trackAnnouncementsClick(action: "card_open" | "view_all", targetId?: string) {
   trackYmGoal("announcements_click", {
@@ -40,8 +42,8 @@ export function Announcements() {
   useEffect(() => {
     setLoading(true);
     petsApi
-      .list({ moderation_status: "approved" as const, is_archived: false, limit: 500 })
-      .then((list) => setPets(list.slice(0, 8)))
+      .list({ moderation_status: "approved" as const, is_archived: false, limit: PREVIEW_COUNT })
+      .then((list) => setPets(list.slice(0, PREVIEW_COUNT)))
       .catch(() => setPets([]))
       .finally(() => setLoading(false));
   }, []);
@@ -90,6 +92,8 @@ export function Announcements() {
                       src={announcement.image}
                       alt={announcement.petType}
                       className="h-52 w-full object-cover"
+                      loading="lazy"
+                      decoding="async"
                     />
                     <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
                     <div className="absolute left-3 right-3 top-3 flex items-start justify-between gap-2">
@@ -128,7 +132,7 @@ export function Announcements() {
                 </Link>
                 <div className="pointer-events-none absolute left-0 right-0 top-0 z-[5] h-52">
                   <div className="pointer-events-auto absolute bottom-3 right-3 z-[6]">
-                    <FavoriteHeartButton petId={announcement.id} size="sm" className="!p-1.5" />
+                    <FavoriteHeartButton petId={announcement.id} size="sm" />
                   </div>
                 </div>
               </div>
@@ -140,7 +144,7 @@ export function Announcements() {
           <Button asChild>
             <Link
               to="/search"
-              className={landingPrimaryCtaClass}
+              className={landingOutlineHeroCtaClass}
               onClick={() => trackAnnouncementsClick("view_all")}
             >
               {copy.viewAll}

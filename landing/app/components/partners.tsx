@@ -9,11 +9,10 @@ import {
   landingContainerNarrow,
   landingH2,
   landingLeadCenter,
+  landingOutlineHeroCtaClass,
   landingPanel,
-  landingPrimaryCtaClass,
   landingSectionBase,
   landingSectionHeader,
-  landingSectionY,
 } from "./landing-section-styles";
 
 function resolveLogoUrl(url?: string | null): string | null {
@@ -34,6 +33,8 @@ function PartnerTile({ partner }: { partner: Partner }) {
             src={logoUrl}
             alt=""
             className="max-h-12 max-w-[132px] object-contain grayscale opacity-85 transition-[filter,opacity] duration-300 group-hover:grayscale-0 group-hover:opacity-100"
+            loading="lazy"
+            decoding="async"
             onError={() => setLogoFailed(true)}
           />
           <span className="mt-2 line-clamp-2 text-center text-xs font-medium text-muted-foreground">
@@ -77,7 +78,7 @@ export function Partners() {
   }, []);
 
   return (
-    <section id="partners" className={cn(landingSectionBase, landingSectionY)}>
+    <section id="partners" className={cn(landingSectionBase, "landing-section-y-tight")}>
       <div className={landingContainerNarrow}>
         <div className={landingSectionHeader}>
           <h2 className={landingH2}>{t.landing.partners.title}</h2>
@@ -105,19 +106,16 @@ export function Partners() {
         ) : null}
 
         <div className="text-center">
-          <div className={cn(landingPanel, "mx-auto max-w-2xl border-primary/20 bg-primary p-8 md:p-10")}>
-            <h3 className="mb-2 text-xl font-bold text-primary-foreground md:text-2xl">
+          <div className={cn(landingPanel, "mx-auto max-w-2xl p-6 md:p-8")}>
+            <h3 className="mb-2 text-lg font-semibold text-foreground md:text-xl">
               {t.landing.partners.ctaTitle}
             </h3>
-            <p className="mx-auto mb-6 max-w-lg text-sm leading-relaxed text-primary-foreground/95 md:text-base">
+            <p className="mx-auto mb-5 max-w-lg text-sm leading-relaxed text-muted-foreground md:text-base">
               {t.landing.partners.ctaSubtitle}
             </p>
             <a
               href="mailto:contact@dorogadomoy.by"
-              className={cn(
-                landingPrimaryCtaClass,
-                "inline-flex bg-primary-foreground text-primary hover:bg-primary-foreground/95",
-              )}
+              className={cn(landingOutlineHeroCtaClass, "inline-flex")}
             >
               {t.landing.partners.ctaButton}
             </a>

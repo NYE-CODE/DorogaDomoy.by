@@ -11,13 +11,13 @@ import {
   landingContainerWide,
   landingH2,
   landingLeadCenter,
-  landingPrimaryCtaClass,
+  landingOutlineHeroCtaClass,
   landingSectionBase,
   landingSectionHeader,
   landingSectionY,
 } from "./landing-section-styles";
 
-const PREVIEW_COUNT = 8;
+const PREVIEW_COUNT = 4;
 
 function trackShelterPetsClick(action: "card_open" | "view_all", targetId?: string) {
   trackYmGoal("shelter_pets_click", {
@@ -75,7 +75,7 @@ export function ShelterPets() {
           <Button asChild>
             <Link
               to="/shelters?tab=pets"
-              className={landingPrimaryCtaClass}
+              className={landingOutlineHeroCtaClass}
               onClick={() => trackShelterPetsClick("view_all")}
             >
               {copy.viewAll}

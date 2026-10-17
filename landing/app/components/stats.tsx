@@ -40,7 +40,7 @@ export function Stats() {
       value:
         stats
           ? ((stats.searching ?? 0) + (stats.found ?? 0)).toLocaleString("ru")
-          : "0",
+          : "—",
       label:
         (t.landing.help as { statsActiveAds?: string }).statsActiveAds ??
         "Активных объявлений",
@@ -52,21 +52,21 @@ export function Stats() {
       value:
         stats && stats.users_count != null
           ? stats.users_count.toLocaleString("ru")
-          : "50,000+",
+          : "—",
       label: t.landing.help.statsUsers,
       iconClass: landingIconChip,
     },
     {
       key: "cities",
       icon: MapPin,
-      value: stats ? (stats.cities_count ?? 0).toLocaleString("ru") : "200+",
+      value: stats ? (stats.cities_count ?? 0).toLocaleString("ru") : "—",
       label: t.landing.help.statsCities,
       iconClass: landingIconChip,
     },
     {
       key: "success",
       icon: TrendingUp,
-      value: stats ? (stats.found_pets ?? 0).toLocaleString("ru") : "0",
+      value: stats ? (stats.found_pets ?? 0).toLocaleString("ru") : "—",
       label: t.landing.help.statsSuccess,
       iconClass: cn(landingIconChip, petScenarioStatsIconClass.found),
     },

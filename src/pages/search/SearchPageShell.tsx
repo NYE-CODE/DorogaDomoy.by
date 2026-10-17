@@ -17,6 +17,7 @@ import {
   saveSearchLayoutMode,
   type SearchLayoutMode,
 } from '@/shared/lib/home-route';
+import { readSearchPageQuery } from './search-query';
 import { readSearchView, writeSearchView, type SearchView } from './search-storage';
 import { useSearchCitySetup } from './use-search-city-setup';
 import { SEARCH_PETS_FETCH_LIMIT, useSearchPetsData } from './use-search-pets-data';
@@ -24,7 +25,7 @@ import { SearchListTitleBlock, SearchPageMainBody } from './search-page-main-bod
 
 export default function SearchPage() {
   const { isLoading } = useAuth();
-  const { selectedCity, saveCity, clearCity } = useCity();
+  const { selectedCity, saveCity, clearCity, setSelectedCity } = useCity();
   const { t } = useI18n();
   const routerNavigate = useNavigate();
   const isMobile = useIsMobile();
@@ -35,9 +36,14 @@ export default function SearchPage() {
     writeSearchView(v);
   }, []);
 
-  const [filters, setFilters] = useState<FilterState>(EMPTY_FILTER_STATE);
+  const [pageQuery] = useState(() => readSearchPageQuery(window.location.search));
+  const [filters, setFilters] = useState<FilterState>({
+    ...EMPTY_FILTER_STATE,
+    statuses: pageQuery.statuses,
+    animalType: pageQuery.animalType,
+  });
   const pets = useSearchPetsData(view, filters);
-  const city = useSearchCitySetup(saveCity, clearCity);
+  const city = useSearchCitySetup(saveCity, clearCity, pageQuery.cityName, setSelectedCity);
 
   const [layoutMode, setLayoutMode] = useState<SearchLayoutMode>(() => readSearchLayoutMode());
   const handleLayoutModeChange = useCallback((mode: SearchLayoutMode) => {
@@ -51,10 +57,16 @@ export default function SearchPage() {
 
   const mapDisplayPets = useMemo(() => {
     // Always drop archived — mapPets may stay stale after archive until reload.
-    const active = sourcePets.filter((p) => !p.isArchived && p.moderationStatus === 'approved');
+    let active = sourcePets.filter((p) => !p.isArchived && p.moderationStatus === 'approved');
+    if (filters.animalType !== 'all') {
+      active = active.filter((p) => p.animalType === filters.animalType);
+    }
+    if (filters.statuses.length > 0) {
+      active = active.filter((p) => filters.statuses.includes(p.status));
+    }
     if (filters.colors.length === 0) return active;
     return active.filter((p) => p.colors.some((c) => filters.colors.includes(c)));
-  }, [sourcePets, filters.colors]);
+  }, [sourcePets, filters.animalType, filters.statuses, filters.colors]);
 
   const listDisplayPets = useMemo(() => {
     if (!selectedCity.trim()) return mapDisplayPets;
@@ -140,7 +152,7 @@ export default function SearchPage() {
     <div className="flex min-h-screen flex-col bg-background dark:bg-background">
       {view === 'main' && <Header selectedCity={selectedCity} onCityClick={() => city.setShowCityModal(true)} />}
 
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+      <main id="main-content" tabIndex={-1} className="flex min-h-0 min-w-0 flex-1 flex-col outline-none">
         {searchToolbar}
         <SearchPageMainBody
           view={view}
@@ -157,7 +169,7 @@ export default function SearchPage() {
           onPetClick={openPetDetail}
           onBoundsChange={pets.setMapBounds}
         />
-      </div>
+      </main>
 
       {view === 'main' && !isMobile && <Footer />}
 

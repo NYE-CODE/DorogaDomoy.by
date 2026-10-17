@@ -69,6 +69,17 @@
     }
   }
 
+  /** Лендинг: вторичные секции (media / partners) — плотнее. */
+  .landing-section-y-tight {
+    padding-block: var(--space-10);
+  }
+
+  @media (min-width: 768px) {
+    .landing-section-y-tight {
+      padding-block: var(--space-12);
+    }
+  }
+
   /** Лендинг: hero (64 → 96px). */
   .landing-hero-y {
     padding-block: var(--space-16);

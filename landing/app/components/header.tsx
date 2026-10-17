@@ -7,9 +7,10 @@ import { MobileMenuDrawer } from "../../../components/layout/MobileMenuDrawer";
 import { useAuth } from "../../../context/AuthContext";
 import { useI18n } from "../../../context/I18nContext";
 import { useCityOptional } from "../../../context/CityContext";
-import { landingContainerWide, landingHeaderPrimaryCtaClass } from "./landing-section-styles";
+import { landingContainerWide, landingHeaderPrimaryCtaClass, landingOutlineHeroCtaClass } from "./landing-section-styles";
 import { getLogoHref } from "@/shared/lib/home-route";
 import { trackYmGoal } from "../../../utils/ym";
+import { cn } from "./ui/utils";
 
 function trackHeaderNavClick(target: string) {
   trackYmGoal("header_nav_click", { target });
@@ -19,6 +20,8 @@ interface HeaderProps {
   selectedCity?: string;
   onCityClick?: () => void;
   showCitySelector?: boolean;
+  /** На лендинге primary CTA живёт в hero — Create в шапке не дублируем брендом. */
+  compactActions?: boolean;
 }
 
 export function Header(props: HeaderProps = {}) {
@@ -26,6 +29,7 @@ export function Header(props: HeaderProps = {}) {
     selectedCity: propSelectedCity,
     onCityClick,
     showCitySelector = true,
+    compactActions = false,
   } = props || {};
   const cityContext = useCityOptional();
   const selectedCityFromContext = cityContext?.selectedCity ?? '';
@@ -94,16 +98,18 @@ export function Header(props: HeaderProps = {}) {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex gap-4 items-center">
-            <Button asChild>
-              <Link
-                to="/create"
-                className={`${landingHeaderPrimaryCtaClass} shrink-0`}
-                onClick={() => trackHeaderNavClick("create_ad")}
-              >
-                <span className="text-xl leading-none">+</span>
-                <span>{t.landing.header.createAd}</span>
-              </Link>
-            </Button>
+            {!compactActions && (
+              <Button asChild>
+                <Link
+                  to="/create"
+                  className={`${landingHeaderPrimaryCtaClass} shrink-0`}
+                  onClick={() => trackHeaderNavClick("create_ad")}
+                >
+                  <span className="text-xl leading-none">+</span>
+                  <span>{t.landing.header.createAd}</span>
+                </Link>
+              </Button>
+            )}
             
             {showCitySelector && (
               <button
@@ -192,8 +198,15 @@ export function Header(props: HeaderProps = {}) {
                   )}
                 </>
               ) : (
-                <button type="button" onClick={openAuthModal} className={landingHeaderPrimaryCtaClass}>
-                  <User size={18} className="text-primary-foreground" />
+                <button
+                  type="button"
+                  onClick={openAuthModal}
+                  className={cn(
+                    landingOutlineHeroCtaClass,
+                    "inline-flex shrink-0 items-center gap-2",
+                  )}
+                >
+                  <User size={18} aria-hidden />
                   <span className="hidden lg:inline">{t.landing.header.login}</span>
                 </button>
               )}

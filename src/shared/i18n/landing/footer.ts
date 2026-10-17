@@ -1,7 +1,8 @@
 /** Landing — `footer` (ru / be / en). */
 export const landingFooterLocales = {
   ru: {
-    about: 'Экосистема помощи животным в Беларуси: поиск, приюты, питомцы в поиске дома и поддержка сообщества',
+    about: 'Поиск пропавших и найденных животных в Беларуси: объявления с фото, карта по городам, приюты и советы.',
+    searchGuide: 'Как искать пропавшее животное',
     contactsTitle: 'КОНТАКТЫ',
     telegramGroup: 'Telegram-группа',
     supportBot: 'Бот поддержки',
@@ -23,7 +24,8 @@ export const landingFooterLocales = {
     forPets: 'для питомцев Беларуси',
   },
   be: {
-    about: 'Экасістэма дапамогі жывёлам у Беларусі: пошук, прытулкі, гадаванцы ў пошуку дома і падтрымка супольнасці',
+    about: 'Пошук зніклых і знойдзеных жывёл у Беларусі: аб\'явы з фота, карта па гарадах, прытулкі і парады.',
+    searchGuide: 'Як шукаць зніклую жывёлу',
     contactsTitle: 'КАНТАКТЫ',
     telegramGroup: 'Telegram-група',
     supportBot: 'Бот падтрымкі',
@@ -45,7 +47,8 @@ export const landingFooterLocales = {
     forPets: 'для хатніх жывёл Беларусі',
   },
   en: {
-    about: 'Animal help ecosystem in Belarus: search, shelters, adoptable pets, and community support.',
+    about: 'Search for lost and found pets in Belarus: photo listings, a city map, shelters, and advice.',
+    searchGuide: 'How to search for a lost pet',
     contactsTitle: 'CONTACTS',
     telegramGroup: 'Telegram group',
     supportBot: 'Support bot',

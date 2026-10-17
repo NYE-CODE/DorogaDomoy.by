@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { City, DEFAULT_CITY, findClosestCity } from '@/shared/lib/cities';
+import { City, DEFAULT_CITY, findCityByName, findClosestCity } from '@/shared/lib/cities';
 import { reverseGeocodeLocality } from '@/shared/lib/geocode';
 import {
   BELARUS_CENTER,
@@ -11,13 +11,22 @@ import {
   saveUserLocation,
 } from './search-storage';
 
-export function useSearchCitySetup(saveCity: (lat: number, lng: number, name: string) => void, clearCity: () => void) {
+export function useSearchCitySetup(
+  saveCity: (lat: number, lng: number, name: string) => void,
+  clearCity: () => void,
+  queryCityName = '',
+  setSelectedCity?: (city: string) => void,
+) {
   const savedLoc = getSavedUserLocation();
   const initialSavedLocRef = useRef(savedLoc);
-  const cityConfirmed = isCityConfirmed();
+  const queryCity = queryCityName.trim() ? findCityByName(queryCityName) : undefined;
+  const hasQueryCity = queryCityName.trim().length > 0;
+  const cityConfirmed = isCityConfirmed() || hasQueryCity;
 
-  const [mapCenter, setMapCenter] = useState<[number, number]>(initialMapCenter(savedLoc, cityConfirmed));
-  const [mapZoom, setMapZoom] = useState(initialMapZoom(savedLoc, cityConfirmed));
+  const [mapCenter, setMapCenter] = useState<[number, number]>(
+    queryCity ? queryCity.coordinates : initialMapCenter(savedLoc, cityConfirmed),
+  );
+  const [mapZoom, setMapZoom] = useState(queryCity ? queryCity.zoom || 12 : initialMapZoom(savedLoc, cityConfirmed));
   const [showCityModal, setShowCityModal] = useState(false);
   const [showCityDetectPopup, setShowCityDetectPopup] = useState(false);
   const [detectedCityName, setDetectedCityName] = useState('');
@@ -64,6 +73,7 @@ export function useSearchCitySetup(saveCity: (lat: number, lng: number, name: st
   }, [cityConfirmed]);
 
   useEffect(() => {
+    if (hasQueryCity) return;
     const initialSavedLoc = initialSavedLocRef.current;
     if (!initialSavedLoc?.city || !initialSavedLoc.city.includes(',')) return;
 
@@ -77,7 +87,7 @@ export function useSearchCitySetup(saveCity: (lat: number, lng: number, name: st
     return () => {
       cancelled = true;
     };
-  }, [saveCity]);
+  }, [saveCity, hasQueryCity]);
 
   const confirmCity = (city: City) => {
     saveCity(city.coordinates[0], city.coordinates[1], city.name);
@@ -85,6 +95,17 @@ export function useSearchCitySetup(saveCity: (lat: number, lng: number, name: st
     setMapZoom(city.zoom || 12);
     saveUserLocation({ lat: city.coordinates[0], lng: city.coordinates[1] }, city.name);
   };
+
+  useEffect(() => {
+    const name = queryCityName.trim();
+    if (!name) return;
+    const known = findCityByName(name);
+    if (known) {
+      confirmCity(known);
+      return;
+    }
+    setSelectedCity?.(name);
+  }, [queryCityName]);
 
   const handleCityModalSelect = (city: City | null) => {
     if (city) {

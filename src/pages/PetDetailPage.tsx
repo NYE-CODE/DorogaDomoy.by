@@ -226,7 +226,7 @@ function PetDetailPageContent({
 
   return (
     <>
-      <div className="min-h-screen bg-background pt-8 pb-24 md:py-8">
+      <main id="main-content" tabIndex={-1} className="min-h-screen bg-background pt-8 pb-24 outline-none md:py-8">
         <div className="page-container">
           <div className="mb-6">
             <Link
@@ -330,7 +330,7 @@ function PetDetailPageContent({
             <SimilarPetsSection petId={pet.id} className="mt-8" limit={6} />
           )}
         </div>
-      </div>
+      </main>
 
       {showFlyerModal && (
         <PetDetailFlyerModal

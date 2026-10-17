@@ -17,9 +17,9 @@ export function getArchiveReasonBadge(pet: Pet, t: PetDetailT): ArchiveBadgeStyl
   if (!pet.isArchived || !pet.archiveReason) return null;
 
   let icon: ReactNode = null;
-  let bgColor = 'bg-green-50 dark:bg-green-900/20';
-  let textColor = 'text-green-700 dark:text-green-400';
-  let borderColor = 'border-green-200 dark:border-green-800';
+  let bgColor = 'bg-success/10 dark:bg-success/20';
+  let textColor = 'text-success';
+  let borderColor = 'border-success/30';
 
   const returnedLabels = [
     t.deleteReason.reasons.returned,
@@ -44,14 +44,14 @@ export function getArchiveReasonBadge(pet: Pet, t: PetDetailT): ArchiveBadgeStyl
     icon = <Home className="w-4 h-4" />;
   } else if (adoptedLabels.some((label) => pet.archiveReason === label)) {
     icon = <Heart className="w-4 h-4" />;
-    bgColor = 'bg-pink-50 dark:bg-pink-900/20';
-    textColor = 'text-pink-700 dark:text-pink-400';
-    borderColor = 'border-pink-200 dark:border-pink-800';
+    bgColor = 'bg-lost-soft dark:bg-lost/20';
+    textColor = 'text-lost-foreground dark:text-lost';
+    borderColor = 'border-lost-border';
   } else if (transferredLabels.some((label) => pet.archiveReason === label)) {
     icon = <Building2 className="w-4 h-4" />;
-    bgColor = 'bg-green-50 dark:bg-green-900/20';
-    textColor = 'text-green-700 dark:text-green-400';
-    borderColor = 'border-border';
+    bgColor = 'bg-shelter-soft dark:bg-shelter/20';
+    textColor = 'text-shelter-foreground dark:text-shelter';
+    borderColor = 'border-shelter-border';
   }
 
   return { icon, bgColor, textColor, borderColor };

@@ -36,7 +36,7 @@ export function FavoriteHeartButton({
       aria-label={label}
       aria-pressed={active}
       className={cn(
-        'inline-flex shrink-0 items-center justify-center rounded-full border border-white/90 bg-black/35 p-1.5 text-white shadow-md backdrop-blur-sm transition-colors',
+        'inline-flex size-11 shrink-0 items-center justify-center rounded-full border border-white/90 bg-black/35 text-white shadow-md backdrop-blur-sm transition-colors',
         'hover:bg-black/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-transparent',
         'disabled:pointer-events-none disabled:opacity-50',
         active && 'bg-rose-500/90 text-white border-rose-200/80 hover:bg-rose-600/90',

@@ -11,7 +11,6 @@ import {
   landingPanel,
   landingSectionAlt,
   landingSectionHeader,
-  landingSectionY,
 } from "./landing-section-styles";
 import { cn } from "./ui/utils";
 import { interactiveTransitionClass } from "@/shared/styles/interactive-classes";
@@ -59,7 +58,7 @@ export function Media() {
 
   if (loading) {
     return (
-      <section id="media" className={cn(landingSectionAlt, landingSectionY)}>
+      <section id="media" className={cn(landingSectionAlt, "landing-section-y-tight")}>
         <div className={landingContainerWide}>
           <div className={landingSectionHeader}>
             <h2 className={landingH2}>{t.landing.media.title}</h2>
@@ -72,7 +71,7 @@ export function Media() {
 
   if (articles.length === 0) {
     return (
-      <section id="media" className={cn(landingSectionAlt, landingSectionY)}>
+      <section id="media" className={cn(landingSectionAlt, "landing-section-y-tight")}>
         <div className={landingContainerWide}>
           <div className={landingSectionHeader}>
             <h2 className={landingH2}>{t.landing.media.title}</h2>
@@ -84,7 +83,7 @@ export function Media() {
   }
 
   return (
-    <section id="media" className={cn(landingSectionAlt, landingSectionY)}>
+    <section id="media" className={cn(landingSectionAlt, "landing-section-y-tight")}>
       <div className={landingContainerWide}>
         <div className={landingSectionHeader}>
           <h2 className={landingH2}>{t.landing.media.title}</h2>
@@ -104,6 +103,8 @@ export function Media() {
                           src={logoUrl}
                           alt=""
                           className="max-h-10 max-w-[120px] object-contain"
+                          loading="lazy"
+                          decoding="async"
                           onError={(e) => {
                             e.currentTarget.style.display = "none";
                             const fallback = e.currentTarget.nextElementSibling;

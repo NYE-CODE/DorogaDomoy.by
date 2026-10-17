@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Поиск пропавших животных в Беларуси — найти потерявшуюся собаку или кошку | DorogaDomoy.by</title>
+    <meta
+      name="description"
+      content="DorogaDomoy.by помогает найти пропавшую собаку или потерявшегося кота в Беларуси: объявления, карта по городам, контакты и находки. Смотреть можно без регистрации."
+    />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <link rel="canonical" href="https://dorogadomoy.by/poisk-propavshih-zhivotnyh/" />
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <meta name="theme-color" content="#FF9800" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "name": "Поиск пропавших животных в Беларуси",
+        "url": "https://dorogadomoy.by/poisk-propavshih-zhivotnyh/",
+        "description": "Сервис для поиска пропавших и найденных домашних животных в Беларуси.",
+        "inLanguage": "ru",
+        "isPartOf": {
+          "@type": "WebSite",
+          "name": "DorogaDomoy.by",
+          "url": "https://dorogadomoy.by/"
+        }
+      }
+    </script>
+    <style>
+      :root {
+        color-scheme: light;
+        --brand: #ff9800;
+        --brand-dark: #f57c00;
+        --ink: #111827;
+        --muted: #5c5c6b;
+        --line: #e7e5e4;
+        --surface: #fff4e5;
+        --bg: #ffffff;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        color: var(--ink);
+        background: var(--bg);
+        line-height: 1.6;
+      }
+      a { color: #c2410c; }
+      a:hover { color: var(--brand-dark); }
+      .wrap { width: min(44rem, calc(100% - 2rem)); margin: 0 auto; }
+      header {
+        border-bottom: 1px solid var(--line);
+        background: #fff;
+      }
+      .bar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.75rem 1rem;
+        padding: 0.85rem 0;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: inherit;
+        text-decoration: none;
+        font-weight: 700;
+      }
+      .brand img { width: 2.5rem; height: 2.5rem; }
+      .actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 2.5rem;
+        padding: 0.4rem 0.9rem;
+        border-radius: 999px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.95rem;
+        white-space: nowrap;
+      }
+      .btn-primary { background: var(--brand); color: #fff; }
+      .btn-primary:hover { background: var(--brand-dark); color: #fff; }
+      .btn-ghost { color: var(--ink); background: var(--surface); }
+      @media (max-width: 520px) {
+        .actions { width: 100%; }
+      }
+      h1 {
+        font-size: clamp(1.8rem, 4vw, 2.4rem);
+        line-height: 1.2;
+        letter-spacing: -0.02em;
+        margin: 2rem 0 1rem;
+      }
+      h2 { font-size: 1.35rem; line-height: 1.3; margin: 2.25rem 0 0.75rem; }
+      p, li { font-size: 1.05rem; }
+      .lead { font-size: 1.15rem; color: var(--muted); }
+      .panel {
+        background: var(--surface);
+        border-radius: 1rem;
+        padding: 1rem 1.1rem;
+        margin: 1.5rem 0;
+      }
+      ol, ul { padding-left: 1.2rem; }
+      li + li { margin-top: 0.45rem; }
+      .cities {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+        gap: 0.75rem;
+        margin: 1rem 0 0;
+        padding: 0;
+        list-style: none;
+      }
+      .cities li {
+        margin: 0;
+        border: 1px solid var(--line);
+        border-radius: 0.9rem;
+        padding: 0.9rem 1rem;
+      }
+      .cities h3 { margin: 0 0 0.35rem; font-size: 1.05rem; }
+      .cities p { margin: 0 0 0.55rem; color: var(--muted); font-size: 0.95rem; }
+      footer {
+        margin-top: 3rem;
+        border-top: 1px solid var(--line);
+        padding: 1.5rem 0 2.5rem;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+      footer nav { display: flex; flex-wrap: wrap; gap: 0.75rem 1rem; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap bar">
+        <a class="brand" href="/">
+          <img src="/logo.png" alt="" width="40" height="40" />
+          <span>DorogaDomoy.by</span>
+        </a>
+        <div class="actions">
+          <a class="btn btn-ghost" href="/search">Смотреть объявления</a>
+          <a class="btn btn-primary" href="/create">Сообщить о пропаже</a>
+        </div>
+      </div>
+    </header>
+    <main class="wrap">
+      <h1>Поиск пропавших животных в Беларуси — найти потерявшуюся собаку или кошку</h1>
+      <p class="lead">
+        DorogaDomoy.by — сервис для помощи в поиске потерявшихся домашних животных в Беларуси.
+        Здесь можно смотреть объявления о пропавших питомцах, проверять находки и рассказать о своей собаке или кошке.
+      </p>
+      <p>
+        Если пропала собака, потерялся кот или нужно найти потерянного питомца, откройте
+        <a href="/search">карту объявлений</a>. Объявления о пропавших животных в Беларуси и сообщения о найденных
+        животных собраны в одном списке: город, фотография, описание и контакты человека, с которым можно связаться.
+        Смотреть объявления можно без регистрации и без установки приложения.
+      </p>
+
+      <h2>Как разместить объявление</h2>
+      <ol>
+        <li>Откройте форму «Сообщить о пропаже» и войдите в аккаунт. Публикация бесплатная.</li>
+        <li>Добавьте фотографию собаки, кошки или другого питомца.</li>
+        <li>Укажите вид, приметы и в описании — когда животное пропало или было найдено.</li>
+        <li>Укажите город и адрес или точку на карте.</li>
+        <li>Оставьте телефон или другой контакт. Его увидят на странице объявления.</li>
+      </ol>
+      <p>
+        После модерации объявление появляется на карте. Нашедший человек может открыть его и написать вам.
+        Если вы сами нашли животное, создайте объявление о находке: владельцы смотрят те же
+        <a href="/search?status=found">объявления о найденных питомцах</a>.
+      </p>
+      <div class="panel">
+        <p>
+          Частые запросы на карте:
+          <a href="/search?animal=dog&amp;status=searching">пропала собака</a>,
+          <a href="/search?animal=cat&amp;status=searching">потерялся кот</a>,
+          <a href="/search?status=searching">все пропавшие</a>,
+          <a href="/search?status=found">все найденные</a>.
+        </p>
+      </div>
+
+      <h2>Города Беларуси</h2>
+      <p>
+        Сервис работает по всей Беларуси. Ниже — областные центры. В каждом городе показаны те объявления,
+        которые уже разместили жители. Другие населённые пункты выбираются на карте.
+      </p>
+      <ul class="cities">
+        <li>
+          <h3>Минск</h3>
+          <p>Пропавшие и найденные собаки и кошки в Минске.</p>
+          <a href="/search?city=%D0%9C%D0%B8%D0%BD%D1%81%D0%BA">Объявления в Минске</a>
+        </li>
+        <li>
+          <h3>Брест</h3>
+          <p>Объявления о пропавших животных в Бресте.</p>
+          <a href="/search?city=%D0%91%D1%80%D0%B5%D1%81%D1%82">Объявления в Бресте</a>
+        </li>
+        <li>
+          <h3>Гродно</h3>
+          <p>Поиск потерявшегося питомца в Гродно.</p>
+          <a href="/search?city=%D0%93%D1%80%D0%BE%D0%B4%D0%BD%D0%BE">Объявления в Гродно</a>
+        </li>
+        <li>
+          <h3>Гомель</h3>
+          <p>Пропавшие и найденные животные в Гомеле.</p>
+          <a href="/search?city=%D0%93%D0%BE%D0%BC%D0%B5%D0%BB%D1%8C">Объявления в Гомеле</a>
+        </li>
+        <li>
+          <h3>Витебск</h3>
+          <p>Объявления о потерявшихся питомцах в Витебске.</p>
+          <a href="/search?city=%D0%92%D0%B8%D1%82%D0%B5%D0%B1%D1%81%D0%BA">Объявления в Витебске</a>
+        </li>
+        <li>
+          <h3>Могилёв</h3>
+          <p>Поиск собаки или кошки в Могилёве.</p>
+          <a href="/search?city=%D0%9C%D0%BE%D0%B3%D0%B8%D0%BB%D1%91%D0%B2">Объявления в Могилёве</a>
+        </li>
+      </ul>
+
+      <h2>Что ещё есть на сайте</h2>
+      <ul>
+        <li><a href="/shelters">Каталог приютов</a> — питомцы, которым нужен дом.</li>
+        <li><a href="/blog">Блог</a> — материалы о поиске животных.</li>
+        <li><a href="/terms">Правила размещения</a> и <a href="/privacy">политика конфиденциальности</a>.</li>
+      </ul>
+      <p>
+        DorogaDomoy.by — поиск пропавших и найденных животных в Беларуси.
+        Если у вас пропал питомец, проверьте объявления и сообщите о пропаже на сайте.
+      </p>
+    </main>
+    <footer>
+      <div class="wrap">
+        <nav aria-label="Разделы сайта">
+          <a href="/">Главная</a>
+          <a href="/search">Карта объявлений</a>
+          <a href="/shelters">Приюты</a>
+          <a href="/blog">Блог</a>
+          <a href="mailto:contact@dorogadomoy.by">contact@dorogadomoy.by</a>
+        </nav>
+      </div>
+    </footer>
+  </body>
+</html>

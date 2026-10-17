@@ -40,7 +40,7 @@ export const landingPetsFeatureLocales = {
       },
     ],
     ctaButton: 'Добавить питомца бесплатно',
-    ctaSub: 'Присоединяйтесь к тысячам владельцев, которые уже защитили своих питомцев',
+    ctaSub: 'Создайте профиль питомца и QR для ошейника — бесплатно',
   },
   be: {
     title: 'Абараніце свайго любімца загадзя',
@@ -82,7 +82,7 @@ export const landingPetsFeatureLocales = {
       },
     ],
     ctaButton: 'Дадаць жывёлу бясплатна',
-    ctaSub: 'Далучайцеся да тысяч уладальнікаў, якія ўжо абаранілі сваіх любімцаў',
+    ctaSub: 'Стварыце профіль жывёлы і QR для аброі — бясплатна',
   },
   en: {
     title: 'Protect your pet in advance',
@@ -124,6 +124,6 @@ export const landingPetsFeatureLocales = {
       },
     ],
     ctaButton: 'Add a pet for free',
-    ctaSub: 'Join thousands of owners who have already protected their pets',
+    ctaSub: 'Create a pet profile and collar QR — free',
   },
 } as const;

@@ -19,8 +19,7 @@ import {
   landingIconChipPrimary,
   landingLeadWideCenter,
   landingPanel,
-  landingPathAccentBorder,
-  landingPrimaryCtaClass,
+  landingOutlineHeroCtaClass,
   landingSectionBase,
   landingSectionHeader,
   landingSectionY,
@@ -67,11 +66,7 @@ export function PetsFeature() {
               return (
                 <li
                   key={feature.title}
-                  className={cn(
-                    "flex gap-4 rounded-lg border border-border bg-card p-4 sm:p-5",
-                    landingPathAccentBorder.medallion,
-                    "border-l-[3px] sm:border-l-[3px] sm:border-t-0",
-                  )}
+                  className="flex gap-4 rounded-lg border border-border bg-medallion-soft/40 p-4 sm:p-5"
                 >
                   <span className={landingIconChipPrimary}>
                     <Icon size={20} aria-hidden />
@@ -121,7 +116,7 @@ export function PetsFeature() {
             <button
               type="button"
               onClick={() => runWhenAuthed(() => navigate("/my-pets"))}
-              className={`${landingPrimaryCtaClass} gap-3`}
+              className={`${landingOutlineHeroCtaClass} gap-3`}
             >
               <Heart size={22} className="shrink-0" aria-hidden />
               <span>{p.ctaButton}</span>

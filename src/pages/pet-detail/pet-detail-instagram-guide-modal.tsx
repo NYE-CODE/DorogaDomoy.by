@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Copy, Download, X } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Pet } from '@/entities/pet/model/types';
@@ -21,6 +22,14 @@ export function PetDetailInstagramGuideModal({
   shareBundle,
   onClose,
 }: PetDetailInstagramGuideModalProps) {
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [onClose]);
+
   return (
     <div
       className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/50"
@@ -30,7 +39,7 @@ export function PetDetailInstagramGuideModal({
       onClick={onClose}
     >
       <div
-        className="bg-white dark:bg-card rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto border border-border"
+        className="bg-card rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto border border-border"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-6">
@@ -41,10 +50,10 @@ export function PetDetailInstagramGuideModal({
             <button
               type="button"
               onClick={onClose}
-              className="p-1 rounded-lg text-muted-foreground/80 hover:text-muted-foreground dark:hover:text-muted-foreground/50 hover:bg-muted shrink-0"
+              className="inline-flex size-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground/80 hover:text-muted-foreground dark:hover:text-muted-foreground/50 hover:bg-muted"
               aria-label={t.common.close}
             >
-              <X size={22} />
+              <X size={22} aria-hidden />
             </button>
           </div>
           <p className="text-sm text-muted-foreground mb-4">
@@ -117,7 +126,7 @@ export function PetDetailInstagramGuideModal({
           <div className="mt-6 flex flex-col sm:flex-row gap-2">
             <button
               type="button"
-              className="flex-1 h-12 rounded-lg bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 text-white text-sm font-semibold hover:opacity-95 transition-opacity"
+              className="flex-1 h-12 rounded-lg bg-foreground text-background text-sm font-semibold transition-opacity hover:opacity-90"
               onClick={() =>
                 window.open(
                   `https://www.instagram.com${instagramGuide.openPath}`,

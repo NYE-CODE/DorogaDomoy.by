@@ -20,7 +20,7 @@ async function loadBitmapFromBlob(blob: Blob): Promise<ImageBitmap | null> {
     try {
       return await createImageBitmap(blob);
     } catch {
-      /* ниже — запасной путь через <img> */
+      /* ниже — запасной путь через Image + object URL */
     }
   }
   return null;

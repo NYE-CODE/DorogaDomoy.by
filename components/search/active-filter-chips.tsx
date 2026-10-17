@@ -87,16 +87,17 @@ export function ActiveFilterChips({
           key={chip.key}
           type="button"
           onClick={chip.onRemove}
-          className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium text-foreground transition-colors hover:bg-accent"
+          className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-border bg-muted px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-accent"
+          aria-label={`${labels.reset}: ${chip.label}`}
         >
           <span>{chip.label}</span>
-          <X className="size-3.5 text-muted-foreground" />
+          <X className="size-3.5 text-muted-foreground" aria-hidden />
         </button>
       ))}
       <button
         type="button"
         onClick={onReset}
-        className="text-xs font-medium text-primary transition-colors hover:text-primary/80"
+        className="inline-flex min-h-11 items-center px-2 text-xs font-medium text-primary transition-colors hover:text-primary/80"
       >
         {labels.reset}
       </button>

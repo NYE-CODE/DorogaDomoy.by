@@ -187,7 +187,7 @@ export function ProfileNotificationsTab({
                 <label className="font-medium text-black dark:text-white">{t.notifications.radius}</label>
                 <span className="text-[#FF9800] font-bold">{localRadius} {t.notifications.km}</span>
               </div>
-              <input type="range" min={1} max={10} step={0.5} value={localRadius} onChange={(e) => { const v = parseFloat(e.target.value); setLocalRadius(Number.isFinite(v) ? v : 1); }} className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-[#FF9800] [&::-webkit-slider-runnable-track]:bg-[length:100%_100%]" style={{ background: `linear-gradient(to right, rgb(255, 152, 0) 0%, rgb(255, 152, 0) ${((Number.isFinite(localRadius) ? localRadius : 1) - 1) / 9 * 100}%, rgb(229, 231, 235) ${((Number.isFinite(localRadius) ? localRadius : 1) - 1) / 9 * 100}%, rgb(229, 231, 235) 100%)` }} />
+              <input type="range" min={1} max={10} step={0.5} value={localRadius} onChange={(e) => { const v = parseFloat(e.target.value); setLocalRadius(Number.isFinite(v) ? v : 1); }} className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-[#FF9800] [&::-webkit-slider-runnable-track]:bg-[length:100%_100%]" style={{ background: `linear-gradient(to right, #ff9800 0%, #ff9800 ${((Number.isFinite(localRadius) ? localRadius : 1) - 1) / 9 * 100}%, #e5e7eb ${((Number.isFinite(localRadius) ? localRadius : 1) - 1) / 9 * 100}%, #e5e7eb 100%)` }} />
               <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
                 <span>1 {t.notifications.km}</span>
                 <span>5 {t.notifications.km}</span>
@@ -252,7 +252,7 @@ export function ProfileNotificationsTab({
                       }}
                       className="h-2 w-full cursor-pointer appearance-none rounded-lg accent-[#FF9800] dark:bg-gray-600"
                       style={{
-                        background: `linear-gradient(to right, rgb(255, 152, 0) 0%, rgb(255, 152, 0) ${((Number.isFinite(localWatchRadius) ? localWatchRadius : 5) - 1) / 19 * 100}%, rgb(229, 231, 235) ${((Number.isFinite(localWatchRadius) ? localWatchRadius : 5) - 1) / 19 * 100}%, rgb(229, 231, 235) 100%)`,
+                        background: `linear-gradient(to right, #ff9800 0%, #ff9800 ${((Number.isFinite(localWatchRadius) ? localWatchRadius : 5) - 1) / 19 * 100}%, #e5e7eb ${((Number.isFinite(localWatchRadius) ? localWatchRadius : 5) - 1) / 19 * 100}%, #e5e7eb 100%)`,
                       }}
                     />
                     <div className="mt-2 flex justify-between text-xs text-gray-500 dark:text-gray-400">

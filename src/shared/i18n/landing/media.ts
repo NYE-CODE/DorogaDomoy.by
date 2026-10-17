@@ -2,19 +2,19 @@
 export const landingMediaLocales = {
   ru: {
     title: 'СМИ о нас',
-    subtitle: 'Нас заметили ведущие издания',
+    subtitle: 'Публикации и упоминания платформы',
     loading: 'Загрузка...',
     empty: 'Публикаций пока нет.',
   },
   be: {
     title: 'СМІ пра нас',
-    subtitle: 'Нас заўважылі вядучыя выданні',
+    subtitle: 'Публікацыі і згадкі платформы',
     loading: 'Загрузка...',
     empty: 'Публікацый пакуль няма.',
   },
   en: {
     title: 'Media about us',
-    subtitle: 'Leading publications have noticed us',
+    subtitle: 'Articles and mentions of the platform',
     loading: 'Loading...',
     empty: 'No publications yet.',
   },

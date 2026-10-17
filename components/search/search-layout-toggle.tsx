@@ -34,7 +34,7 @@ export function SearchLayoutToggle({ mode, onChange }: SearchLayoutToggleProps) 
             aria-checked={selected}
             title={label}
             onClick={() => onChange(id)}
-            className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors sm:px-3 ${
+            className={`inline-flex min-h-11 items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors sm:px-3.5 ${
               selected
                 ? 'bg-card text-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground'

@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Check, Copy, Image, Share2, X } from 'lucide-react';
 import { cn } from '@/shared/ui/utils';
 import { appPrimaryCtaClass } from '@/shared/styles/cta-classes';
@@ -31,6 +32,15 @@ export function PetDetailShareMenu({
   onCopyPostText,
   onCopyLinkOnly,
 }: PetDetailShareMenuProps) {
+  useEffect(() => {
+    if (!showShareMenu) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setShowShareMenu(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [showShareMenu, setShowShareMenu]);
+
   return (
     <div className="relative flex min-w-0 gap-2" ref={shareMenuRef}>
       <Button
@@ -47,7 +57,14 @@ export function PetDetailShareMenu({
         <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-[min(70vh,520px)] overflow-hidden overflow-y-auto rounded-md border border-border bg-card shadow-lg">
           <div className="px-4 py-2.5 border-b border-border/60 dark:border-border flex items-center justify-between sticky top-0 bg-card z-10">
             <span className="text-sm font-semibold text-foreground">{t.petDetail.share}</span>
-            <button type="button" onClick={() => setShowShareMenu(false)} className="p-1 hover:bg-accent dark:hover:bg-accent rounded-lg"><X className="w-4 h-4 text-muted-foreground/80" /></button>
+            <button
+              type="button"
+              onClick={() => setShowShareMenu(false)}
+              className="inline-flex size-11 items-center justify-center rounded-lg hover:bg-accent dark:hover:bg-accent"
+              aria-label={t.common.close}
+            >
+              <X className="size-4 text-muted-foreground/80" aria-hidden />
+            </button>
           </div>
           <div className="py-1">
             <button type="button" onClick={onShareTelegram} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent dark:hover:bg-accent transition-colors text-left">
@@ -77,13 +94,13 @@ export function PetDetailShareMenu({
             <div className="border-t border-border/60 dark:border-border my-1" />
             <button type="button" onClick={onCopyPostText} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent dark:hover:bg-accent transition-colors text-left">
               <span className="w-8 h-8 flex items-center justify-center rounded-full bg-muted shrink-0">
-                {copiedKind === 'full' ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4 text-muted-foreground" />}
+                {copiedKind === 'full' ? <Check className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4 text-muted-foreground" />}
               </span>
               <span className="text-sm text-foreground/90">{t.petDetail.shareCopyFull}</span>
             </button>
             <button type="button" onClick={onCopyLinkOnly} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent dark:hover:bg-accent transition-colors text-left">
               <span className="w-8 h-8 flex items-center justify-center rounded-full bg-muted shrink-0">
-                {copiedKind === 'link' ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4 text-muted-foreground" />}
+                {copiedKind === 'link' ? <Check className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4 text-muted-foreground" />}
               </span>
               <span className="text-sm text-foreground/90">{t.petDetail.shareCopyLinkOnly}</span>
             </button>

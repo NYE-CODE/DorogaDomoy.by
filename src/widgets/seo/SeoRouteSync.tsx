@@ -115,7 +115,7 @@ export function SeoRouteSync() {
     }
 
     applySeo({
-      title: 'DorogaDomoy.by — экосистема помощи животным',
+      title: 'DorogaDomoy.by — поиск пропавших и найденных животных в Беларуси',
       description: SEO_HOME_DESCRIPTION,
       canonicalUrl: canonical,
       robots,

@@ -23,6 +23,21 @@ logs/
 Thumbs.db
 .idea/
 .vscode/
+.cursor/
+
+## Impeccable (local tool state)
+.impeccable/
+
+# impeccable-ignore-start
+**/.impeccable/live/manual-edit-apply-transaction.json
+**/.impeccable/live/manual-edit-events.jsonl
+**/.impeccable/live/manual-edit-evidence/
+**/.impeccable/live/pending-manual-edits.json
+**/.impeccable/live/deferred-svelte-component-accepts.json
+**/.impeccable/live/*.png
+**/.impeccable/live/inject-journal.json
+**/.impeccable/config.local.json
+# impeccable-ignore-end
 
 ## TypeScript
 *.tsbuildinfo

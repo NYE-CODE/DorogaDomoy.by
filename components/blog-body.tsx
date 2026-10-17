@@ -44,7 +44,7 @@ export function BlogBody({ markdown }: BlogBodyProps) {
           ),
           li: ({ children }) => <li className="leading-relaxed">{children}</li>,
           blockquote: ({ children }) => (
-            <blockquote className="border-l-4 border-primary/40 pl-4 my-6 italic text-muted-foreground">
+            <blockquote className="my-6 rounded-lg bg-primary-surface/80 px-4 py-3 italic text-muted-foreground">
               {children}
             </blockquote>
           ),

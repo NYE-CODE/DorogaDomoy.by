@@ -97,7 +97,13 @@ export function ShelterPetCard({ pet, onClick, compact = false }: ShelterPetCard
         </div>
         <div className="relative flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted">
           {pet.photos?.[0] ? (
-            <img src={pet.photos[0]} alt={t.shelterPet.photoAlt.replace('{name}', name).replace('{n}', '1')} className="size-full object-cover object-center" />
+            <img
+              src={pet.photos[0]}
+              alt={t.shelterPet.photoAlt.replace('{name}', name).replace('{n}', '1')}
+              className="size-full object-cover object-center"
+              loading="lazy"
+              decoding="async"
+            />
           ) : (
             <PawPrint className="size-10 text-muted-foreground opacity-35" aria-hidden />
           )}
@@ -135,7 +141,13 @@ export function ShelterPetCard({ pet, onClick, compact = false }: ShelterPetCard
           <FavoriteHeartButton petId={pet.id} size="sm" className="!p-1.5" />
         </div>
         {pet.photos?.[0] ? (
-          <img src={pet.photos[0]} alt="" className="size-full object-cover object-center transition-transform duration-500 group-hover:scale-[1.03]" />
+          <img
+            src={pet.photos[0]}
+            alt=""
+            className="size-full object-cover object-center transition-transform duration-500 group-hover:scale-[1.03]"
+            loading="lazy"
+            decoding="async"
+          />
         ) : (
           <PawPrint className="size-16 text-muted-foreground opacity-35" aria-hidden />
         )}

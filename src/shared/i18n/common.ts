@@ -18,6 +18,10 @@ export const commonLocales = {
     all: 'Все',
     characters: 'символов',
     skipToContent: 'Перейти к содержимому',
+    photoPrev: 'Предыдущее фото',
+    photoNext: 'Следующее фото',
+    photoN: 'Фото {n}',
+    scrollToTop: 'Наверх',
     home: 'Главная',
     toasts: {
       adArchived: 'Объявление перемещено в архив',
@@ -73,6 +77,10 @@ export const commonLocales = {
     all: 'Усе',
     characters: 'сімвалаў',
     skipToContent: 'Перайсці да змесціва',
+    photoPrev: 'Папярэдняе фота',
+    photoNext: 'Наступнае фота',
+    photoN: 'Фота {n}',
+    scrollToTop: 'Уверх',
     home: 'Галоўная',
     toasts: {
       adArchived: 'Аб\'ява перанесена ў архіў',
@@ -128,6 +136,10 @@ export const commonLocales = {
     all: 'All',
     characters: 'characters',
     skipToContent: 'Skip to content',
+    photoPrev: 'Previous photo',
+    photoNext: 'Next photo',
+    photoN: 'Photo {n}',
+    scrollToTop: 'Back to top',
     home: 'Home',
     toasts: {
       adArchived: 'Listing moved to archive',

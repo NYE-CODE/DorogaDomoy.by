@@ -1,7 +1,7 @@
 /** Landing — `header` (ru / be / en). */
 export const landingHeaderLocales = {
   ru: {
-    tagline: 'Дорога Домой — экосистема помощи животным',
+    tagline: 'Поиск пропавших животных в Беларуси',
     createAd: 'Создать объявление',
     myAds: 'Мои объявления',
     myPets: 'Мои питомцы',
@@ -20,7 +20,7 @@ export const landingHeaderLocales = {
     shelters: 'Приюты',
   },
   be: {
-    tagline: 'Дарога Дадому — экасістэма дапамогі жывёлам',
+    tagline: 'Пошук зніклых жывёл у Беларусі',
     createAd: 'Стварыць аб\'яву',
     myAds: 'Мае аб\'явы',
     myPets: 'Мае жывёлы',
@@ -39,7 +39,7 @@ export const landingHeaderLocales = {
     shelters: 'Прыюты',
   },
   en: {
-    tagline: 'Doroga Domoy — animal help ecosystem',
+    tagline: 'Lost and found pets in Belarus',
     createAd: 'Create ad',
     myAds: 'My ads',
     myPets: 'My pets',

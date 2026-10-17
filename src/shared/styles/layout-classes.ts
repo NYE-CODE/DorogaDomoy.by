@@ -19,6 +19,7 @@ export const pageSectionY = 'page-section-y';
 
 /** Лендинг: секция / hero. */
 export const landingSectionY = 'landing-section-y';
+export const landingSectionYTight = 'landing-section-y-tight';
 export const landingHeroY = 'landing-hero-y';
 
 /** Стек блоков с gap 24px. */
