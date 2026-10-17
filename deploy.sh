@@ -105,14 +105,21 @@ echo "==> 8. Копирование dist/ в frontend/"
 mkdir -p "$FRONTEND_DIR"
 rsync -av --delete dist/ "$FRONTEND_DIR/"
 
-# 7. Перезапуск backend
+# 7. Перезапуск backend и ожидание, пока /health начнёт отвечать
 echo "==> 9. Перезапуск dorogadomoy"
 sudo systemctl restart dorogadomoy
-sleep 2
-if systemctl is-active --quiet dorogadomoy; then
+backend_ready=0
+for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
+  if curl -sf "http://127.0.0.1:8000/health" | grep -q '"status"'; then
+    backend_ready=1
+    break
+  fi
+  sleep 1
+done
+if [ "$backend_ready" -eq 1 ] && systemctl is-active --quiet dorogadomoy; then
   echo "    Backend запущен"
 else
-  echo "    ОШИБКА: backend не запустился. Проверьте: journalctl -u dorogadomoy -n 50"
+  echo "    ОШИБКА: backend не ответил на http://127.0.0.1:8000/health. Проверьте: journalctl -u dorogadomoy -n 50"
   exit 1
 fi
 
@@ -126,15 +133,17 @@ sudo systemctl reload nginx
 
 # 9. Smoke tests
 echo "==> 12. Smoke tests ($SMOKE_BASE_URL)"
-if curl -sf "$SMOKE_BASE_URL/health" | grep -q '"status"'; then
+HEALTH_BODY="$(curl -sS "$SMOKE_BASE_URL/health" || true)"
+if echo "$HEALTH_BODY" | grep -q '"status"'; then
   echo "    /health: ok"
 else
-  echo "    /health: FAIL"
+  echo "    /health: FAIL (ответ не JSON со status; nginx должен проксировать /health на backend)"
 fi
-if curl -sf "$SMOKE_BASE_URL/api/v1/feature-flags" >/dev/null; then
+FLAGS_CODE="$(curl -s -o /dev/null -w "%{http_code}" "$SMOKE_BASE_URL/api/v1/feature-flags" || true)"
+if [ "$FLAGS_CODE" = "200" ]; then
   echo "    /api/v1/feature-flags: ok"
 else
-  echo "    /api/v1/feature-flags: FAIL"
+  echo "    /api/v1/feature-flags: FAIL HTTP ${FLAGS_CODE:-none}"
 fi
 SW_CT="$(curl -sI "$SMOKE_BASE_URL/sw.js" | tr -d '\r' | awk -F': ' 'tolower($1)=="content-type"{print $2}')"
 if echo "$SW_CT" | grep -qi 'javascript'; then
