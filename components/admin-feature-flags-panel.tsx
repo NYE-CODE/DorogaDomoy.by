@@ -13,6 +13,7 @@ export function AdminFeatureFlagsPanel() {
     ff_landing_show_stats: true,
     ff_landing_show_pets_feature: true,
     ff_landing_show_faq: true,
+    ff_landing_show_mobile_app: false,
     ff_partner_ads_enabled: false,
     ff_reward_enabled: true,
     ff_reward_money_enabled: true,
@@ -29,6 +30,7 @@ export function AdminFeatureFlagsPanel() {
           ff_landing_show_stats: ff.ff_landing_show_stats === 'true',
           ff_landing_show_pets_feature: (ff.ff_landing_show_pets_feature ?? 'true') === 'true',
           ff_landing_show_faq: (ff.ff_landing_show_faq ?? 'true') === 'true',
+          ff_landing_show_mobile_app: (ff.ff_landing_show_mobile_app ?? 'false') === 'true',
           ff_partner_ads_enabled: (ff.ff_partner_ads_enabled ?? 'false') === 'true',
           ff_reward_enabled: (ff.ff_reward_enabled ?? 'true') === 'true',
           ff_reward_money_enabled: (ff.ff_reward_money_enabled ?? 'true') === 'true',
@@ -49,6 +51,7 @@ export function AdminFeatureFlagsPanel() {
         ff_landing_show_stats: featureFlags.ff_landing_show_stats,
         ff_landing_show_pets_feature: featureFlags.ff_landing_show_pets_feature,
         ff_landing_show_faq: featureFlags.ff_landing_show_faq,
+        ff_landing_show_mobile_app: featureFlags.ff_landing_show_mobile_app,
         ff_partner_ads_enabled: featureFlags.ff_partner_ads_enabled,
         ff_reward_enabled: featureFlags.ff_reward_enabled,
         ff_reward_money_enabled: featureFlags.ff_reward_money_enabled,
@@ -100,6 +103,18 @@ export function AdminFeatureFlagsPanel() {
             <Switch
               checked={featureFlags.ff_landing_show_faq}
               onCheckedChange={(v) => setFeatureFlags((f) => ({ ...f, ff_landing_show_faq: v }))}
+            />
+          </div>
+          <div className="flex items-center justify-between gap-4 pt-4 border-t border-border dark:border-border">
+            <div>
+              <p className="text-sm font-medium text-foreground/90">{ap.featureFlags.ffMobileApp}</p>
+              <p className="text-xs text-muted-foreground mt-1">{ap.featureFlags.ffMobileAppDesc}</p>
+            </div>
+            <Switch
+              checked={featureFlags.ff_landing_show_mobile_app}
+              onCheckedChange={(v) =>
+                setFeatureFlags((f) => ({ ...f, ff_landing_show_mobile_app: v }))
+              }
             />
           </div>
         </div>

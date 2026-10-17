@@ -639,6 +639,7 @@ class PlatformSettingsUpdate(BaseModel):
     telegram_blog_chat_id: Optional[str] = Field(None, max_length=64)
     telegram_blog_public_username: Optional[str] = Field(None, max_length=64)
     help_volunteer_url: Optional[str] = Field(None, max_length=2000)
+    mobile_app_play_url: Optional[str] = Field(None, max_length=2000)
 
     @field_validator("help_volunteer_url", mode="before")
     @classmethod
@@ -648,6 +649,15 @@ class PlatformSettingsUpdate(BaseModel):
         from url_safety import validate_external_url
 
         return validate_external_url(str(v), allow_empty=True)
+
+    @field_validator("mobile_app_play_url", mode="before")
+    @classmethod
+    def sanitize_mobile_app_play_url(cls, v):
+        if v is None:
+            return None
+        from url_safety import validate_https_url
+
+        return validate_https_url(str(v), allow_empty=True)
 
     @field_validator(
         "require_moderation",

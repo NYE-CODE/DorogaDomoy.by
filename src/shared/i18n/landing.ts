@@ -11,6 +11,7 @@ import { landingBlogLocales } from './landing/blog';
 import { landingSheltersLocales } from './landing/shelters';
 import { landingHeaderLocales } from './landing/header';
 import { landingFooterLocales } from './landing/footer';
+import { landingMobileAppLocales } from './landing/mobileApp';
 
 export const landingLocales = {
   ru: {
@@ -20,6 +21,7 @@ export const landingLocales = {
     faq: landingFaqLocales.ru,
     help: landingHelpLocales.ru,
     petsFeature: landingPetsFeatureLocales.ru,
+    mobileApp: landingMobileAppLocales.ru,
     announcements: landingAnnouncementsLocales.ru,
     shelterPets: landingShelterPetsLocales.ru,
     blog: landingBlogLocales.ru,
@@ -34,6 +36,7 @@ export const landingLocales = {
     faq: landingFaqLocales.be,
     help: landingHelpLocales.be,
     petsFeature: landingPetsFeatureLocales.be,
+    mobileApp: landingMobileAppLocales.be,
     announcements: landingAnnouncementsLocales.be,
     shelterPets: landingShelterPetsLocales.be,
     blog: landingBlogLocales.be,
@@ -48,6 +51,7 @@ export const landingLocales = {
     faq: landingFaqLocales.en,
     help: landingHelpLocales.en,
     petsFeature: landingPetsFeatureLocales.en,
+    mobileApp: landingMobileAppLocales.en,
     announcements: landingAnnouncementsLocales.en,
     shelterPets: landingShelterPetsLocales.en,
     blog: landingBlogLocales.en,

@@ -4,6 +4,7 @@ import { AdminDashboardPanel } from '../admin-dashboard-panel';
 import { AdminFaqPanel } from '../admin-faq-panel';
 import { AdminFeatureFlagsPanel } from '../admin-feature-flags-panel';
 import { AdminHelpSectionPanel } from '../admin-help-section-panel';
+import { AdminMobileAppPanel } from '../admin-mobile-app-panel';
 import { AdminMediaPanel } from '../admin-media-panel';
 import { AdminPartnersPanel } from '../admin-partners-panel';
 import { AdminPartnerAdsPanel } from '../admin-partner-ads-panel';
@@ -225,6 +226,7 @@ export function AdminPanelTabContent({
         />
       )}
       {activeTab === 'helpSection' && <AdminHelpSectionPanel />}
+      {activeTab === 'mobileApp' && <AdminMobileAppPanel />}
       {activeTab === 'featureFlags' && <AdminFeatureFlagsPanel />}
       {activeTab === 'telegramBlog' && <AdminTelegramBlogPanel />}
       {activeTab === 'settings' && <AdminSettingsPanel />}

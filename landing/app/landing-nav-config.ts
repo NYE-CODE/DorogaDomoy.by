@@ -4,6 +4,7 @@ import type { FeatureFlagsState } from "../../context/FeatureFlagsContext";
 export type LandingNavHash =
   | "stats"
   | "pets-feature"
+  | "mobile-app"
   | "announcements"
   | "shelter-pets"
   | "media"
@@ -14,6 +15,7 @@ export type LandingNavFlagKey = Pick<
   FeatureFlagsState,
   | "ff_landing_show_stats"
   | "ff_landing_show_pets_feature"
+  | "ff_landing_show_mobile_app"
   | "ff_landing_show_faq"
 >;
 
@@ -32,6 +34,7 @@ export const LANDING_NAV_ITEMS: readonly LandingNavItemDef[] = [
   { hash: "shelter-pets" },
   { hash: "stats", requiredFlag: "ff_landing_show_stats" },
   { hash: "pets-feature", requiredFlag: "ff_landing_show_pets_feature" },
+  { hash: "mobile-app", requiredFlag: "ff_landing_show_mobile_app" },
   { hash: "media" },
   { hash: "partners" },
   { hash: "faq", requiredFlag: "ff_landing_show_faq" },

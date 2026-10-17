@@ -11,6 +11,8 @@ export interface PlatformSettings {
   /** Публичный username канала без @ — для ссылок на пост и комментарии */
   telegram_blog_public_username?: string;
   help_volunteer_url?: string;
+  /** Ссылка на Google Play для баннера на лендинге */
+  mobile_app_play_url?: string;
 }
 
 export const settingsApi = {

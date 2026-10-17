@@ -17,7 +17,15 @@ router = APIRouter(prefix="/settings", tags=["settings"])
 DEFAULTS = PLATFORM_SETTINGS_DEFAULTS
 
 # Публично: без Telegram chat id / username и других внутренних полей
-SETTINGS_PUBLIC_KEYS = frozenset({"require_moderation", "auto_archive_days", "max_photos", "listing_reminder_days"})
+SETTINGS_PUBLIC_KEYS = frozenset(
+    {
+        "require_moderation",
+        "auto_archive_days",
+        "max_photos",
+        "listing_reminder_days",
+        "mobile_app_play_url",
+    }
+)
 
 
 def _get_all(db: Session) -> dict:

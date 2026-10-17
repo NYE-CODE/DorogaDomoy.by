@@ -28,6 +28,8 @@ function landingNavLabel(hash: LandingNavHash, t: (typeof translations)["ru"]): 
       return t.landing.help.statsTitle;
     case "pets-feature":
       return f.sectionPets;
+    case "mobile-app":
+      return f.mobileApp;
     case "announcements":
       return f.ads;
     case "shelter-pets":

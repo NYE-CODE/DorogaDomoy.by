@@ -12,6 +12,7 @@ export type AdminTab =
   | 'partners'
   | 'partnerAds'
   | 'helpSection'
+  | 'mobileApp'
   | 'featureFlags'
   | 'telegramBlog'
   | 'faq'
@@ -33,6 +34,7 @@ export const TAB_PRIMARY: Record<AdminTab, AdminPrimarySection> = {
   partners: 'landing',
   partnerAds: 'landing',
   helpSection: 'landing',
+  mobileApp: 'landing',
   faq: 'landing',
   users: 'petSearch',
   profilePets: 'petSearch',
@@ -51,7 +53,7 @@ export const TAB_PRIMARY: Record<AdminTab, AdminPrimarySection> = {
 
 export const TABS_BY_PRIMARY: Record<AdminPrimarySection, AdminTab[]> = {
   dashboard: ['dashboard'],
-  landing: ['media', 'partners', 'partnerAds', 'helpSection', 'faq'],
+  landing: ['media', 'partners', 'partnerAds', 'helpSection', 'mobileApp', 'faq'],
   petSearch: ['users', 'profilePets', 'pets', 'moderation', 'reports', 'rewards'],
   shelter: ['sheltersCatalog', 'sheltersModeration'],
   blog: ['blog', 'blogCategories', 'telegramBlog'],

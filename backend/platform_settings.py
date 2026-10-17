@@ -17,6 +17,8 @@ PLATFORM_SETTINGS_DEFAULTS = {
     "telegram_blog_public_username": "",
     # Секция «Как нам помочь» на лендинге
     "help_volunteer_url": "",
+    # Ссылка на приложение в Google Play (баннер на лендинге)
+    "mobile_app_play_url": "",
 }
 
 FEATURE_FLAG_DEFAULTS = {
@@ -24,6 +26,7 @@ FEATURE_FLAG_DEFAULTS = {
     "ff_landing_show_help": "true",
     "ff_landing_show_pets_feature": "true",
     "ff_landing_show_faq": "true",
+    "ff_landing_show_mobile_app": "false",
     # Награды за помощь в поиске
     "ff_reward_enabled": "true",
     "ff_reward_money_enabled": "true",

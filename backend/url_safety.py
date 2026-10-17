@@ -41,11 +41,7 @@ def _host_allowed(hostname: str, allowed: frozenset[str] | None) -> bool:
     return False
 
 
-def validate_external_url(url: str, *, allow_empty: bool = False) -> str:
-    """
-    Строгая проверка для записи через API.
-    Возвращает нормализованный URL или ValueError.
-    """
+def _validate_url_basics(url: str, *, allow_empty: bool = False) -> str:
     s = (url or "").strip()
     if not s:
         if allow_empty:
@@ -62,13 +58,35 @@ def validate_external_url(url: str, *, allow_empty: bool = False) -> str:
         raise ValueError("Некорректный адрес ссылки")
     if re.search(r"[\s\x00-\x1f]", s):
         raise ValueError("Недопустимые символы в ссылке")
+    return s
 
+
+def validate_external_url(url: str, *, allow_empty: bool = False) -> str:
+    """
+    Строгая проверка для записи через API.
+    Возвращает нормализованный URL или ValueError.
+    """
+    s = _validate_url_basics(url, allow_empty=allow_empty)
+    if not s:
+        return ""
+
+    parsed = urlparse(s)
     allowed = help_external_url_hosts()
-    if not _host_allowed(parsed.hostname, allowed):
+    if not _host_allowed(parsed.hostname or "", allowed):
         raise ValueError(
             "Домен ссылки не входит в разрешённый список (HELP_EXTERNAL_URL_HOSTS)"
         )
 
+    return s
+
+
+def validate_https_url(url: str, *, allow_empty: bool = False) -> str:
+    """HTTPS-ссылка без доменного allowlist (например Google Play)."""
+    s = _validate_url_basics(url, allow_empty=allow_empty)
+    if not s:
+        return ""
+    if urlparse(s).scheme.lower() != "https":
+        raise ValueError("Ссылка должна начинаться с https://")
     return s
 
 

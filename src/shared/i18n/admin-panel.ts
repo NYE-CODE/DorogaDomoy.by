@@ -19,6 +19,7 @@ import { adminPanelPartnersLocales } from './admin-panel/partners';
 import { adminPanelPartnerAdsLocales } from './admin-panel/partnerAds';
 import { adminPanelFaqLocales } from './admin-panel/faq';
 import { adminPanelHelpSectionLocales } from './admin-panel/helpSection';
+import { adminPanelMobileAppLocales } from './admin-panel/mobileApp';
 import { adminPanelFeatureFlagsLocales } from './admin-panel/featureFlags';
 import { adminPanelSettingsLocales } from './admin-panel/settings';
 import { adminPanelModerationLocales } from './admin-panel/moderation';
@@ -45,6 +46,7 @@ export const adminPanelLocales = {
     partnerAds: adminPanelPartnerAdsLocales.ru,
     faq: adminPanelFaqLocales.ru,
     helpSection: adminPanelHelpSectionLocales.ru,
+    mobileApp: adminPanelMobileAppLocales.ru,
     featureFlags: adminPanelFeatureFlagsLocales.ru,
     settings: adminPanelSettingsLocales.ru,
     moderation: adminPanelModerationLocales.ru,
@@ -70,6 +72,7 @@ export const adminPanelLocales = {
     partnerAds: adminPanelPartnerAdsLocales.be,
     faq: adminPanelFaqLocales.be,
     helpSection: adminPanelHelpSectionLocales.be,
+    mobileApp: adminPanelMobileAppLocales.be,
     featureFlags: adminPanelFeatureFlagsLocales.be,
     settings: adminPanelSettingsLocales.be,
     moderation: adminPanelModerationLocales.be,
@@ -95,6 +98,7 @@ export const adminPanelLocales = {
     partnerAds: adminPanelPartnerAdsLocales.en,
     faq: adminPanelFaqLocales.en,
     helpSection: adminPanelHelpSectionLocales.en,
+    mobileApp: adminPanelMobileAppLocales.en,
     featureFlags: adminPanelFeatureFlagsLocales.en,
     settings: adminPanelSettingsLocales.en,
     moderation: adminPanelModerationLocales.en,
