@@ -1,4 +1,4 @@
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Heart } from 'lucide-react';
 import type { Pet } from '@/entities/pet/model/types';
 import { petScenarioDetailBannerClass } from '@/shared/lib/pet-helpers';
 import type { PetDetailT } from './pet-detail-archive-badge';
@@ -15,24 +15,31 @@ export function PetDetailStatusBanners({
   if (isShelterPet || pet.isArchived) return null;
 
   if (pet.status === 'searching') {
+    const c = petScenarioDetailBannerClass.lost;
     return (
-      <div className={petScenarioDetailBannerClass.lost.box}>
-        <AlertCircle size={24} className="mt-0.5 shrink-0 text-rose-600 dark:text-rose-400" aria-hidden />
-        <div>
-          <p className="mb-1 font-semibold text-rose-800 dark:text-rose-200">{t.petDetail.lostBannerTitle}</p>
-          <p className="text-muted-foreground text-sm leading-relaxed">{t.petDetail.lostBannerBody}</p>
+      <div className={c.box} role="status">
+        <AlertCircle className={c.icon} aria-hidden />
+        <div className="min-w-0 flex-1">
+          <p className={c.title}>{t.petDetail.lostBannerTitle}</p>
+          <p className="text-sm leading-relaxed text-lost-foreground/80">
+            {t.petDetail.lostBannerBody}
+          </p>
         </div>
+        <Heart className="hidden size-5 shrink-0 text-lost/50 sm:block" aria-hidden />
       </div>
     );
   }
 
   if (pet.status === 'found') {
+    const c = petScenarioDetailBannerClass.found;
     return (
-      <div className={petScenarioDetailBannerClass.found.box}>
-        <AlertCircle size={24} className="mt-0.5 shrink-0 text-sky-600 dark:text-sky-400" aria-hidden />
-        <div>
-          <p className="mb-1 font-semibold text-sky-900 dark:text-sky-200">{t.petDetail.foundBannerTitle}</p>
-          <p className="text-muted-foreground text-sm leading-relaxed">{t.petDetail.foundBannerBody}</p>
+      <div className={c.box} role="status">
+        <AlertCircle className={c.icon} aria-hidden />
+        <div className="min-w-0 flex-1">
+          <p className={c.title}>{t.petDetail.foundBannerTitle}</p>
+          <p className="text-sm leading-relaxed text-found-foreground/80">
+            {t.petDetail.foundBannerBody}
+          </p>
         </div>
       </div>
     );

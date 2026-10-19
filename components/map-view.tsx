@@ -135,9 +135,12 @@ export default function MapView({ pets, onPetClick, onBoundsChange, center = [53
             mapInstanceRef.current?.closePopup();
           }),
           {
-            offset: [0, -10],
-            closeButton: true,
+            offset: [0, -14],
+            closeButton: false,
             className: 'pet-preview-popup',
+            maxWidth: 280,
+            minWidth: 240,
+            autoPanPadding: [24, 24],
           },
         );
       } else {
@@ -147,8 +150,10 @@ export default function MapView({ pets, onPetClick, onBoundsChange, center = [53
 
         marker.bindTooltip(createPreviewNode(pet), {
           direction: 'top',
-          offset: [0, -10],
-          opacity: 0.95,
+          offset: [0, -14],
+          opacity: 1,
+          className: 'pet-preview-tooltip',
+          permanent: false,
         });
       }
 
@@ -164,8 +169,8 @@ export default function MapView({ pets, onPetClick, onBoundsChange, center = [53
   }, [pets, onPetClick, t]);
 
   return (
-    <div className="h-full w-full rounded-lg overflow-hidden border border-border">
-      <div ref={mapContainerRef} className="h-full w-full z-0" />
+    <div className="h-full w-full overflow-hidden rounded-3xl">
+      <div ref={mapContainerRef} className="z-0 h-full w-full" />
     </div>
   );
 }

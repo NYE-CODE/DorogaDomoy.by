@@ -1,6 +1,7 @@
 import { X } from "lucide-react";
 
 import { FilterState } from "../filters";
+import { cn } from "@/shared/ui/utils";
 
 function truncateChip(text: string, maxLen: number) {
   const t = text.trim();
@@ -12,25 +13,41 @@ interface ActiveFilterChipsProps {
   filters: FilterState;
   labels: {
     animalType: Record<string, string>;
-    daysAll: string;
-    daysLabel: (days: number) => string;
     color: Record<string, string>;
     status: Record<string, string>;
     reset: string;
-    /** Префикс для чипа активного текстового поиска */
     searchChip: string;
+    regionChip?: string;
   };
+  /** Выбранный город (из CityContext) */
+  city?: string;
+  onClearCity?: () => void;
   onRemove: (next: Partial<FilterState>) => void;
   onReset: () => void;
+  className?: string;
 }
 
 export function ActiveFilterChips({
   filters,
   labels,
+  city = "",
+  onClearCity,
   onRemove,
   onReset,
+  className,
 }: ActiveFilterChipsProps) {
   const chips: Array<{ key: string; label: string; onRemove: () => void }> = [];
+
+  const cityTrimmed = city.trim();
+  if (cityTrimmed && onClearCity) {
+    chips.push({
+      key: "city",
+      label: labels.regionChip
+        ? `${labels.regionChip}: ${cityTrimmed}`
+        : cityTrimmed,
+      onRemove: onClearCity,
+    });
+  }
 
   const searchTrimmed = filters.searchQuery.trim();
   if (searchTrimmed) {
@@ -55,13 +72,6 @@ export function ActiveFilterChips({
       onRemove: () => onRemove({ breed: "" }),
     });
   }
-  if (filters.days !== "all") {
-    chips.push({
-      key: "days",
-      label: labels.daysLabel(filters.days),
-      onRemove: () => onRemove({ days: "all" }),
-    });
-  }
   filters.colors.forEach((color) => {
     chips.push({
       key: `color-${color}`,
@@ -81,13 +91,13 @@ export function ActiveFilterChips({
   if (chips.length === 0) return null;
 
   return (
-    <div className="mt-3 flex flex-wrap items-center gap-2">
+    <div className={cn("flex flex-wrap items-center gap-2", className)}>
       {chips.map((chip) => (
         <button
           key={chip.key}
           type="button"
           onClick={chip.onRemove}
-          className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-border bg-muted px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-accent"
+          className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground shadow-sm transition-colors hover:bg-landing-muted"
           aria-label={`${labels.reset}: ${chip.label}`}
         >
           <span>{chip.label}</span>
@@ -97,7 +107,7 @@ export function ActiveFilterChips({
       <button
         type="button"
         onClick={onReset}
-        className="inline-flex min-h-11 items-center px-2 text-xs font-medium text-primary transition-colors hover:text-primary/80"
+        className="inline-flex min-h-9 items-center px-2 text-xs font-medium text-primary transition-colors hover:text-primary/80"
       >
         {labels.reset}
       </button>

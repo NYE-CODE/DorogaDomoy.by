@@ -3,7 +3,7 @@ export const landingPetsFeatureLocales = {
   ru: {
     title: 'Защитите питомца',
     subtitle:
-      'Создайте профиль и получите бесплатный QR-код на ошейник. Если питомец потеряется — нашедший сразу свяжется с вами.',
+      'Профиль и QR-код на ошейник — бесплатно. Нашедший сразу увидит ваши контакты.',
     imageAlt: 'Собака с ошейником',
     benefitsLabel: 'Преимущества',
     stepsCount: '3 шага',
@@ -28,24 +28,24 @@ export const landingPetsFeatureLocales = {
     steps: [
       {
         title: 'Создайте профиль',
-        desc: 'Фото, кличка, порода и приметы в личном кабинете',
+        desc: 'Фото, кличка и приметы в кабинете.',
       },
       {
         title: 'Скачайте QR-код',
-        desc: 'Распечатайте и закрепите на ошейнике',
+        desc: 'Распечатайте и закрепите на ошейнике.',
       },
       {
         title: 'Будьте спокойны',
-        desc: 'Нашедший сразу увидит ваши контакты',
+        desc: 'Нашедший сразу увидит контакты.',
       },
     ],
-    ctaButton: 'Добавить питомца бесплатно',
+    ctaButton: 'Добавить питомца',
     ctaSub: 'Профиль и QR-код — бесплатно',
   },
   be: {
     title: 'Абараніце жывёлу',
     subtitle:
-      'Стварыце профіль і атрымайце бясплатны QR-код на аброю. Калі жывёла згубіцца — той, хто знойдзе, адразу звяжацца з вамі.',
+      'Профіль і QR-код на аброю — бясплатна. Той, хто знойдзе, адразу ўбачыць вашы кантакты.',
     imageAlt: 'Сабака з аброяй',
     benefitsLabel: 'Перавагі',
     stepsCount: '3 крокі',
@@ -70,24 +70,24 @@ export const landingPetsFeatureLocales = {
     steps: [
       {
         title: 'Стварыце профіль',
-        desc: 'Фота, мянушка, парода і прыкметы ў асабістым кабінеце',
+        desc: 'Фота, мянушка і прыкметы ў кабінеце.',
       },
       {
         title: 'Спампуйце QR-код',
-        desc: 'Раздрукуйце і замацуйце на аброі',
+        desc: 'Раздрукуйце і замацуйце на аброі.',
       },
       {
         title: 'Будзьце спакойныя',
-        desc: 'Той, хто знойдзе, адразу ўбачыць вашы кантакты',
+        desc: 'Той, хто знойдзе, адразу ўбачыць кантакты.',
       },
     ],
-    ctaButton: 'Дадаць жывёлу бясплатна',
+    ctaButton: 'Дадаць жывёлу',
     ctaSub: 'Профіль і QR-код — бясплатна',
   },
   en: {
     title: 'Protect your pet',
     subtitle:
-      'Create a profile and get a free collar QR code. If your pet gets lost, the finder can reach you right away.',
+      'A free profile and collar QR code. If your pet is found, they can reach you right away.',
     imageAlt: 'Dog with a collar',
     benefitsLabel: 'Benefits',
     stepsCount: '3 steps',
@@ -112,18 +112,18 @@ export const landingPetsFeatureLocales = {
     steps: [
       {
         title: 'Create a profile',
-        desc: 'Photo, name, breed, and marks in your account',
+        desc: 'Photo, name, and marks in your account.',
       },
       {
-        title: 'Download the QR code',
-        desc: 'Print it and attach it to the collar',
+        title: 'Download the QR',
+        desc: 'Print it and attach it to the collar.',
       },
       {
         title: 'Stay calm',
-        desc: 'The finder sees your contacts right away',
+        desc: 'The finder sees your contacts right away.',
       },
     ],
-    ctaButton: 'Add a pet for free',
+    ctaButton: 'Add a pet',
     ctaSub: 'Profile and QR code — free',
   },
 } as const;

@@ -7,10 +7,13 @@ import { API_BASE } from "../../../api/client";
 import {
   landingContainerWide,
   landingH2,
+  landingH3,
   landingLeadCenter,
+  landingMuted,
   landingPanel,
-  landingSectionAlt,
+  landingSectionBase,
   landingSectionHeader,
+  landingSectionY,
 } from "./landing-section-styles";
 import { cn } from "./ui/utils";
 import { interactiveTransitionClass } from "@/shared/styles/interactive-classes";
@@ -29,6 +32,14 @@ function resolveLogoUrl(url?: string | null): string | null {
   if (url.startsWith("http") || url.startsWith("data:")) return url;
   return `${API_BASE}${url}`;
 }
+
+const navBtnClass = cn(
+  "rounded-lg border border-border bg-card p-3 text-muted-foreground",
+  "transition-colors hover:border-landing-dark hover:text-landing-dark",
+  "disabled:cursor-not-allowed disabled:opacity-30",
+  "disabled:hover:border-border disabled:hover:text-muted-foreground",
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+);
 
 export function Media() {
   const { t } = useI18n();
@@ -58,7 +69,7 @@ export function Media() {
 
   if (loading) {
     return (
-      <section id="media" className={cn(landingSectionAlt, "landing-section-y-tight")}>
+      <section id="media" className={cn(landingSectionBase, landingSectionY)}>
         <div className={landingContainerWide}>
           <div className={landingSectionHeader}>
             <h2 className={landingH2}>{t.landing.media.title}</h2>
@@ -71,7 +82,7 @@ export function Media() {
 
   if (articles.length === 0) {
     return (
-      <section id="media" className={cn(landingSectionAlt, "landing-section-y-tight")}>
+      <section id="media" className={cn(landingSectionBase, landingSectionY)}>
         <div className={landingContainerWide}>
           <div className={landingSectionHeader}>
             <h2 className={landingH2}>{t.landing.media.title}</h2>
@@ -83,7 +94,7 @@ export function Media() {
   }
 
   return (
-    <section id="media" className={cn(landingSectionAlt, "landing-section-y-tight")}>
+    <section id="media" className={cn(landingSectionBase, landingSectionY)}>
       <div className={landingContainerWide}>
         <div className={landingSectionHeader}>
           <h2 className={landingH2}>{t.landing.media.title}</h2>
@@ -91,18 +102,18 @@ export function Media() {
         </div>
 
         <div className="relative">
-          <div className="grid gap-6 md:grid-cols-3 md:gap-8">
+          <div className="grid gap-5 md:grid-cols-3 md:gap-6">
             {visibleArticles.map((article) => {
               const logoUrl = resolveLogoUrl(article.logo_url);
               const content = (
                 <>
-                  <div className="mb-6">
+                  <div className="mb-4 min-h-10">
                     {logoUrl ? (
-                      <div className="inline-block px-4 py-2 flex items-center justify-center min-h-[48px]">
+                      <div className="flex min-h-10 items-center">
                         <img
                           src={logoUrl}
                           alt=""
-                          className="max-h-10 max-w-[120px] object-contain"
+                          className="max-h-9 max-w-[7.5rem] object-contain"
                           loading="lazy"
                           decoding="async"
                           onError={(e) => {
@@ -111,25 +122,22 @@ export function Media() {
                             if (fallback) (fallback as HTMLElement).style.display = "block";
                           }}
                         />
-                        <span className="font-bold text-lg text-foreground hidden" style={{ display: "none" }}>
+                        <span className="hidden text-base font-semibold text-foreground">
                           {article.title.slice(0, 20)}
                         </span>
                       </div>
                     ) : (
-                      <div className="inline-block px-4 py-2">
-                        <span className="font-bold text-lg text-foreground">{article.title.slice(0, 30)}</span>
-                      </div>
+                      <span className="text-base font-semibold text-foreground">
+                        {article.title.slice(0, 30)}
+                      </span>
                     )}
                   </div>
 
-                  <h3
-                    className="text-lg text-foreground mb-6 leading-relaxed font-medium line-clamp-3"
-                    title={article.title}
-                  >
+                  <h3 className={cn(landingH3, "mb-4 line-clamp-3")} title={article.title}>
                     {article.title}
                   </h3>
 
-                  <p className="text-sm text-muted-foreground">{formatMediaDate(article.published_at)}</p>
+                  <p className={landingMuted}>{formatMediaDate(article.published_at)}</p>
                 </>
               );
 
@@ -143,7 +151,7 @@ export function Media() {
                     className={cn(
                       landingPanel,
                       interactiveTransitionClass,
-                      "block p-6 hover:bg-muted/20 md:p-7",
+                      "block p-5 hover:bg-muted/30 sm:p-6",
                     )}
                   >
                     {content}
@@ -152,10 +160,7 @@ export function Media() {
               }
 
               return (
-                <div
-                  key={article.id}
-                  className={cn(landingPanel, "p-6 md:p-7")}
-                >
+                <div key={article.id} className={cn(landingPanel, "p-5 sm:p-6")}>
                   {content}
                 </div>
               );
@@ -168,12 +173,12 @@ export function Media() {
                 type="button"
                 onClick={handlePrev}
                 disabled={currentIndex === 0}
-                className="rounded-lg border border-border bg-card p-3 text-muted-foreground transition-all hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:border-border disabled:hover:text-muted-foreground"
+                className={navBtnClass}
               >
-                <ChevronLeft size={24} />
+                <ChevronLeft size={20} aria-hidden />
               </button>
 
-              <span className="text-muted-foreground font-medium">
+              <span className="min-w-12 text-center text-sm font-medium tabular-nums text-muted-foreground">
                 {currentIndex + 1} / {maxIndex + 1}
               </span>
 
@@ -181,9 +186,9 @@ export function Media() {
                 type="button"
                 onClick={handleNext}
                 disabled={currentIndex === maxIndex}
-                className="rounded-lg border border-border bg-card p-3 text-muted-foreground transition-all hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:border-border disabled:hover:text-muted-foreground"
+                className={navBtnClass}
               >
-                <ChevronRight size={24} />
+                <ChevronRight size={20} aria-hidden />
               </button>
             </div>
           )}

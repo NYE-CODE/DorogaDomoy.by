@@ -7,7 +7,6 @@ import { useI18n } from '../context/I18nContext';
 import { RewardBadge, getRewardBadgeMeta } from './reward-badge';
 import { FavoriteHeartButton } from './favorite-heart-button';
 import { cn } from './ui/utils';
-import { typoH4 } from '@/shared/styles/typography-classes';
 import { activateOnKeyboard, interactiveCardClass } from '@/shared/styles/interaction-classes';
 import {
   formatArchiveReasonLabel,
@@ -146,10 +145,16 @@ export function PetCard({
   };
 
   if (compact) {
-    const photoUrl = pet.photos[0] || 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&h=400&fit=crop';
-    const colorStr = pet.colors.length ? pet.colors.map(c => t.pet.color[c as keyof typeof t.pet.color]).join(', ') : '—';
+    const photoUrl =
+      pet.photos[0] ||
+      'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&h=400&fit=crop';
+    const colorStr = pet.colors.length
+      ? pet.colors.map((c) => t.pet.color[c as keyof typeof t.pet.color]).join(', ')
+      : '—';
     const breedStr = pet.breed?.trim() || t.landing.announcements.breedDefault;
     const photoAlt = `${t.pet.animalType[pet.animalType]}${pet.breed ? `, ${pet.breed}` : ''}, ${pet.city}`;
+    const hasReward = Boolean(getRewardBadgeMeta(pet));
+
     return (
       <div
         role="button"
@@ -158,51 +163,58 @@ export function PetCard({
         onKeyDown={activateOnKeyboard(onClick)}
         className={cn(
           interactiveCardClass,
-          'group relative flex items-start gap-3 overflow-hidden rounded-lg border border-border/70 bg-card p-3 shadow-sm',
-          'transition-all duration-300 hover:-translate-y-0.5 hover:border-border hover:shadow-md',
+          'group relative overflow-hidden rounded-2xl border border-border bg-card shadow-card',
+          'transition-all duration-300 hover:-translate-y-0.5 hover:border-border',
         )}
       >
-        {showFavoriteToggle && (
-          <div className="absolute right-2 top-2 z-10">
-            <FavoriteHeartButton petId={pet.id} size="sm" className="!p-1.5" />
-          </div>
-        )}
-
-        <div className="relative size-24 shrink-0 overflow-hidden rounded-md border border-border bg-muted sm:size-[6.5rem]">
+        <div className="relative overflow-hidden">
           <img
             src={photoUrl}
             alt={photoAlt}
             loading="lazy"
             decoding="async"
-            className="size-full object-cover object-center transition-transform duration-500 group-hover:scale-[1.03]"
+            className="h-52 w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
           />
-          <span
-            className={cn(
-              'absolute left-1.5 top-1.5 z-[2] inline-flex max-w-[calc(100%-0.75rem)] truncate rounded-full px-2 py-0.5 text-[0.65rem] font-semibold sm:text-xs',
-              petStatusPhotoPillClass[pet.status],
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+          <div className="absolute left-3 right-3 top-3 flex items-start justify-between gap-2">
+            {!hideStatusBadge ? (
+              <span
+                className={cn(
+                  'inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold',
+                  petStatusPhotoPillClass[pet.status],
+                )}
+              >
+                {t.pet.status[pet.status]}
+              </span>
+            ) : (
+              <span />
             )}
-          >
-            {t.pet.status[pet.status]}
-          </span>
-        </div>
-
-        <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5 pr-8">
-          <h3 className={cn(typoH4, 'line-clamp-1 leading-tight')}>
-            {t.pet.animalType[pet.animalType]} <span className="font-medium text-muted-foreground">·</span>{' '}
-            <span className="font-medium">{breedStr}</span>
-          </h3>
-          {getRewardBadgeMeta(pet) ? (
-            <div className="min-w-0 w-full">
-              <RewardBadge pet={pet} compact compactWrap />
+            {hasReward ? (
+              <RewardBadge
+                pet={pet}
+                compact
+                className="rounded-full px-2.5 py-1 text-xs shadow-sm"
+              />
+            ) : null}
+          </div>
+          {showFavoriteToggle ? (
+            <div className="absolute bottom-3 right-3 z-10" onClick={(e) => e.stopPropagation()}>
+              <FavoriteHeartButton petId={pet.id} size="sm" />
             </div>
           ) : null}
-          <p className="line-clamp-1 text-xs text-muted-foreground sm:text-sm">{colorStr}</p>
-          <div className="flex flex-col gap-1.5">
-            <span className="flex max-w-full items-center gap-1.5 self-start rounded-md bg-muted/70 px-2.5 py-1 text-xs text-muted-foreground">
-              <MapPin size={12} className="shrink-0 opacity-80" aria-hidden />
+        </div>
+
+        <div className="p-4 md:p-5">
+          <h3 className="mb-1 line-clamp-1 text-lg font-semibold leading-tight text-foreground">
+            {t.pet.animalType[pet.animalType]} {breedStr}
+          </h3>
+          <p className="mb-3 line-clamp-1 text-sm text-muted-foreground">{colorStr}</p>
+          <div className="flex flex-col gap-2">
+            <div className="flex max-w-full items-center gap-1.5 self-start rounded-md bg-muted/70 px-2.5 py-1 text-xs text-muted-foreground">
+              <MapPin size={14} className="shrink-0" aria-hidden />
               <span className="min-w-0 truncate">{pet.city}</span>
-            </span>
-            <span
+            </div>
+            <div
               className={cn(
                 'flex items-center gap-1.5 self-start rounded-md px-2.5 py-1 text-xs',
                 pet.status === 'searching' && !pet.isArchived
@@ -210,9 +222,9 @@ export function PetCard({
                   : 'bg-muted/70 text-muted-foreground',
               )}
             >
-              <Clock size={12} className="shrink-0 opacity-80" aria-hidden />
-              {formatRelativeTime(pet.publishedAt)}
-            </span>
+              <Clock size={14} className="shrink-0" aria-hidden />
+              <span>{formatRelativeTime(pet.publishedAt)}</span>
+            </div>
           </div>
         </div>
       </div>

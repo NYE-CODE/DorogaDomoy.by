@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { SlidersHorizontal } from 'lucide-react';
 import { useLocation, useNavigate, useParams } from 'react-router';
 import { useAuth } from '@/app/providers/AuthContext';
 import { useCity } from '@/app/providers/CityContext';
@@ -7,11 +8,24 @@ import { Header } from '@/widgets/layout/Header';
 import { Footer } from '@/widgets/layout/Footer';
 import { CitySelectModal } from '../../../components/city-select-modal';
 import { CityDetectPopup } from '../../../components/city-detect-popup';
-import { EMPTY_FILTER_STATE, Filters, type FilterState } from '../../../components/filters';
+import {
+  EMPTY_FILTER_STATE,
+  Filters,
+  SearchQueryInput,
+  countActiveFilters,
+  type FilterState,
+} from '../../../components/filters';
 import { useIsMobile } from '@/shared/ui/use-mobile';
 import { PageLoader } from '@/shared/ui/page-loader';
 import { ActiveFilterChips } from '../../../components/search/active-filter-chips';
 import { SearchLayoutToggle } from '../../../components/search/search-layout-toggle';
+import { SearchSortSelect } from '../../../components/search/search-sort-select';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/shared/ui/dialog';
 import {
   readSearchLayoutMode,
   saveSearchLayoutMode,
@@ -28,12 +42,27 @@ import {
   SEO_SEARCH_TITLE,
   truncateMetaDescription,
 } from '@/shared/lib/seo';
+import { getPaginationMeta, paginateArray } from '@/shared/lib/pagination';
 import { readSearchPageQuery } from './search-query';
 import { readSearchView, writeSearchView, type SearchView } from './search-storage';
 import { useSearchCitySetup } from './use-search-city-setup';
 import { SEARCH_PETS_FETCH_LIMIT, useSearchPetsData } from './use-search-pets-data';
+import {
+  SEARCH_LIST_PAGE_SIZE,
+  filterSearchPets,
+  sortSearchPets,
+  type SearchSortMode,
+} from './search-list-helpers';
 import { SearchListTitleBlock, SearchPageMainBody } from './search-page-main-body';
+import { cn } from '@/shared/ui/utils';
 
+/**
+ * Каркас магазина:
+ * Header
+ * page-container → топбар (поиск / чипы / toggle / счётчик)
+ *               → ряд: sidebar фильтров | контент (сетка или карта)
+ * Footer (list)
+ */
 export default function SearchPage() {
   const { isLoading } = useAuth();
   const { selectedCity, saveCity, clearCity, setSelectedCity } = useCity();
@@ -112,28 +141,84 @@ export default function SearchPage() {
     saveSearchLayoutMode(mode);
   }, []);
 
-  const approvedAllPets = pets.allPets.filter((p) => !p.isArchived && p.moderationStatus === 'approved');
-  const sourcePets =
-    view === 'main' ? (pets.mapBounds && pets.mapPetsLoaded ? pets.mapPets : approvedAllPets) : pets.allPets;
+  const [sortMode, setSortMode] = useState<SearchSortMode>('newest');
+  const [listPage, setListPage] = useState(1);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const activeFilterCount =
+    countActiveFilters(filters) + (selectedCity.trim() ? 1 : 0);
 
-  const mapDisplayPets = useMemo(() => {
-    // Always drop archived — mapPets may stay stale after archive until reload.
-    let active = sourcePets.filter((p) => !p.isArchived && p.moderationStatus === 'approved');
-    if (filters.animalType !== 'all') {
-      active = active.filter((p) => p.animalType === filters.animalType);
-    }
-    if (filters.statuses.length > 0) {
-      active = active.filter((p) => filters.statuses.includes(p.status));
-    }
-    if (filters.colors.length === 0) return active;
-    return active.filter((p) => p.colors.some((c) => filters.colors.includes(c)));
-  }, [sourcePets, filters.animalType, filters.statuses, filters.colors]);
+  const handleClearCity = useCallback(() => {
+    city.handleCityModalSelect(null);
+  }, [city]);
 
-  const listDisplayPets = useMemo(() => {
-    if (!selectedCity.trim()) return mapDisplayPets;
-    const cityLower = selectedCity.toLowerCase().trim();
-    return mapDisplayPets.filter((p) => p.city.toLowerCase().includes(cityLower));
-  }, [mapDisplayPets, selectedCity]);
+  const approvedAllPets = useMemo(
+    () => pets.allPets.filter((p) => !p.isArchived && p.moderationStatus === 'approved'),
+    [pets.allPets],
+  );
+
+  /** Список — все объявления; карта — объявления в viewport (когда уже подгружены). */
+  const sourcePets = useMemo(() => {
+    if (view !== 'main') return pets.allPets;
+    if (layoutMode === 'map' && pets.mapBounds && pets.mapPetsLoaded) return pets.mapPets;
+    return approvedAllPets;
+  }, [
+    view,
+    layoutMode,
+    pets.allPets,
+    pets.mapPets,
+    pets.mapBounds,
+    pets.mapPetsLoaded,
+    approvedAllPets,
+  ]);
+
+  const filteredPets = useMemo(
+    () => filterSearchPets(sourcePets, filters, selectedCity),
+    [sourcePets, filters, selectedCity],
+  );
+
+  const sortedPets = useMemo(
+    () => sortSearchPets(filteredPets, sortMode),
+    [filteredPets, sortMode],
+  );
+
+  const listPagination = useMemo(
+    () =>
+      getPaginationMeta({
+        page: listPage,
+        pageSize: SEARCH_LIST_PAGE_SIZE,
+        totalItems: sortedPets.length,
+      }),
+    [listPage, sortedPets.length],
+  );
+
+  const listPagePets = useMemo(
+    () =>
+      paginateArray(sortedPets, {
+        page: listPagination.page,
+        pageSize: SEARCH_LIST_PAGE_SIZE,
+        totalItems: sortedPets.length,
+      }),
+    [sortedPets, listPagination.page],
+  );
+
+  /** Карта показывает все отфильтрованные; список — текущую страницу. */
+  const mapDisplayPets = sortedPets;
+  const listDisplayPets = layoutMode === 'list' ? listPagePets : sortedPets;
+
+  useEffect(() => {
+    setListPage(1);
+  }, [filters, selectedCity, sortMode, layoutMode]);
+
+  useEffect(() => {
+    if (listPage !== listPagination.page) {
+      setListPage(listPagination.page);
+    }
+  }, [listPage, listPagination.page]);
+
+  const handleListPageChange = useCallback((page: number) => {
+    setListPage(page);
+    document.getElementById('main-content')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
 
   const statistics = useMemo(() => {
     const activePets = sourcePets.filter((p) => !p.isArchived);
@@ -145,7 +230,7 @@ export default function SearchPage() {
   }, [sourcePets]);
 
   const resultsMayBeTruncated =
-    (view === 'main' && pets.mapBounds && pets.mapPetsLoaded
+    (layoutMode === 'map' && pets.mapBounds && pets.mapPetsLoaded
       ? pets.mapMayBeTruncated
       : pets.listMayBeTruncated) || false;
 
@@ -163,76 +248,179 @@ export default function SearchPage() {
   const filterChipLabels = useMemo(
     () => ({
       animalType: t.pet.animalType as Record<string, string>,
-      daysAll: t.common.all,
-      daysLabel: (days: number) => `${t.filters.period}: ${days}`,
       color: t.pet.color as Record<string, string>,
       status: t.pet.status as Record<string, string>,
       reset: t.filters.reset,
       searchChip: t.filters.searchChip,
+      regionChip: t.filters.regionChip,
     }),
     [t],
   );
 
+  const handleResetAllFilters = useCallback(() => {
+    setFilters(EMPTY_FILTER_STATE);
+    handleClearCity();
+  }, [handleClearCity]);
+
   if (isLoading || pets.dataLoading) {
     return (
-      <div className="flex min-h-screen flex-col bg-background dark:bg-background">
-        {view === 'main' && <Header selectedCity={selectedCity} onCityClick={() => city.setShowCityModal(true)} />}
+      <div className="flex min-h-screen flex-col bg-landing">
+        {view === 'main' && <Header showCitySelector={false} />}
         <PageLoader label={t.common.loading} className="min-h-0 flex-1" />
       </div>
     );
   }
 
-  const searchToolbar =
-    view === 'main' ? (
-      <div className="shrink-0 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
-        <div className="page-container space-y-3 px-4 py-3 sm:px-6">
-          <Filters filters={filters} onFiltersChange={setFilters} variant="page" />
-          <ActiveFilterChips
-            filters={filters}
-            labels={filterChipLabels}
-            onRemove={(next) => setFilters((prev) => ({ ...prev, ...next }))}
-            onReset={() => setFilters(EMPTY_FILTER_STATE)}
+  if (view !== 'main') {
+    return (
+      <div className="flex min-h-screen flex-col bg-landing">
+        <main id="main-content" tabIndex={-1} className="outline-none">
+          <SearchPageMainBody
+            view={view}
+            isMobile={isMobile}
+            layoutMode={layoutMode}
+            selectedCity={selectedCity}
+            hasActiveFilters={activeFilterCount > 0}
+            listDisplayPets={listDisplayPets}
+            mapDisplayPets={mapDisplayPets}
+            listPage={listPagination.page}
+            listTotalPages={listPagination.totalPages}
+            onListPageChange={handleListPageChange}
+            onResetFilters={handleResetAllFilters}
+            mapCenter={city.mapCenter}
+            mapZoom={city.mapZoom}
+            t={t}
+            onViewChange={setView}
+            onLayoutModeChange={handleLayoutModeChange}
+            onPetClick={openPetDetail}
+            onBoundsChange={pets.setMapBounds}
           />
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <SearchListTitleBlock
-              selectedCity={selectedCity}
-              listDisplayPets={listDisplayPets}
-              mapDisplayPets={mapDisplayPets}
-              statistics={statistics}
-              resultsMayBeTruncated={resultsMayBeTruncated}
-              fetchLimit={SEARCH_PETS_FETCH_LIMIT}
-              t={t}
-            />
-            <SearchLayoutToggle mode={layoutMode} onChange={handleLayoutModeChange} />
-          </div>
-        </div>
+        </main>
       </div>
-    ) : null;
+    );
+  }
 
   return (
-    <div className="flex min-h-screen flex-col bg-background dark:bg-background">
-      {view === 'main' && <Header selectedCity={selectedCity} onCityClick={() => city.setShowCityModal(true)} />}
+    <div className="flex min-h-screen flex-col bg-landing">
+      <Header showCitySelector={false} />
 
-      <main id="main-content" tabIndex={-1} className="flex min-h-0 min-w-0 flex-1 flex-col outline-none">
-        {searchToolbar}
-        <SearchPageMainBody
-          view={view}
-          isMobile={isMobile}
-          layoutMode={layoutMode}
-          selectedCity={selectedCity}
-          listDisplayPets={listDisplayPets}
-          mapDisplayPets={mapDisplayPets}
-          mapCenter={city.mapCenter}
-          mapZoom={city.mapZoom}
-          t={t}
-          onViewChange={setView}
-          onLayoutModeChange={handleLayoutModeChange}
-          onPetClick={openPetDetail}
-          onBoundsChange={pets.setMapBounds}
-        />
+      <main id="main-content" tabIndex={-1} className="flex-1 outline-none">
+        <div className="page-container py-5 sm:py-6 lg:py-8">
+          {/* Поиск */}
+          <div className="mb-6 flex flex-wrap items-center gap-2 sm:mb-8 sm:gap-3">
+            <SearchQueryInput filters={filters} onFiltersChange={setFilters} />
+            <button
+              type="button"
+              onClick={() => setMobileFiltersOpen(true)}
+              className={cn(
+                'inline-flex min-h-12 shrink-0 items-center gap-1.5 rounded-3xl border border-border bg-card px-4 py-2.5 text-sm font-medium text-foreground shadow-search transition-colors hover:bg-landing-muted lg:hidden',
+              )}
+            >
+              <SlidersHorizontal className="size-4 shrink-0" aria-hidden />
+              <span>{t.filters.filters}</span>
+              {activeFilterCount > 0 ? (
+                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-semibold text-primary-foreground">
+                  {activeFilterCount}
+                </span>
+              ) : null}
+            </button>
+          </div>
+
+          {/* Sidebar + результаты */}
+          <div className="flex items-start gap-6 lg:gap-8">
+            <aside className="sticky top-24 hidden w-64 shrink-0 self-start lg:block xl:w-72">
+              <div className="overflow-hidden rounded-3xl bg-landing-muted/80">
+                <Filters
+                  filters={filters}
+                  onFiltersChange={setFilters}
+                  variant="sidebar"
+                  hideSearch
+                  selectedCity={selectedCity}
+                  onCityClick={() => city.setShowCityModal(true)}
+                  onClearCity={handleClearCity}
+                />
+              </div>
+            </aside>
+
+            <section className="min-w-0 flex-1 space-y-4 sm:space-y-5">
+              <ActiveFilterChips
+                filters={filters}
+                labels={filterChipLabels}
+                city={selectedCity}
+                onClearCity={handleClearCity}
+                onRemove={(next) => setFilters((prev) => ({ ...prev, ...next }))}
+                onReset={handleResetAllFilters}
+              />
+
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <SearchListTitleBlock
+                  selectedCity={selectedCity}
+                  resultCount={sortedPets.length}
+                  mapDisplayPets={mapDisplayPets}
+                  statistics={statistics}
+                  resultsMayBeTruncated={resultsMayBeTruncated}
+                  fetchLimit={SEARCH_PETS_FETCH_LIMIT}
+                  t={t}
+                />
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                  {layoutMode === 'list' ? (
+                    <SearchSortSelect value={sortMode} onChange={setSortMode} />
+                  ) : null}
+                  <SearchLayoutToggle mode={layoutMode} onChange={handleLayoutModeChange} />
+                </div>
+              </div>
+
+              <SearchPageMainBody
+                view={view}
+                isMobile={isMobile}
+                layoutMode={layoutMode}
+                selectedCity={selectedCity}
+                hasActiveFilters={activeFilterCount > 0}
+                listDisplayPets={listDisplayPets}
+                mapDisplayPets={mapDisplayPets}
+                listPage={listPagination.page}
+                listTotalPages={listPagination.totalPages}
+                onListPageChange={handleListPageChange}
+                onResetFilters={handleResetAllFilters}
+                mapCenter={city.mapCenter}
+                mapZoom={city.mapZoom}
+                t={t}
+                onViewChange={setView}
+                onLayoutModeChange={handleLayoutModeChange}
+                onPetClick={openPetDetail}
+                onBoundsChange={pets.setMapBounds}
+              />
+            </section>
+          </div>
+        </div>
       </main>
 
-      {view === 'main' && !isMobile && <Footer />}
+      {!isMobile && <Footer />}
+
+      <Dialog open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
+        <DialogContent
+          showCloseButton={false}
+          className="flex max-h-[90dvh] flex-col gap-0 overflow-hidden p-0 sm:max-w-md"
+        >
+          <DialogHeader className="sr-only">
+            <DialogTitle>{t.filters.filters}</DialogTitle>
+          </DialogHeader>
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <Filters
+              filters={filters}
+              onFiltersChange={setFilters}
+              variant="sidebar"
+              hideSearch
+              selectedCity={selectedCity}
+              onCityClick={() => {
+                setMobileFiltersOpen(false);
+                city.setShowCityModal(true);
+              }}
+              onClearCity={handleClearCity}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <CitySelectModal
         open={city.showCityModal}

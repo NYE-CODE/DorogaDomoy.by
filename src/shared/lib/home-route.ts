@@ -1,7 +1,7 @@
-﻿/** Режим отображения поиска: карта+список, только список или только карта. */
+﻿/** Режим отображения поиска: список или карта. */
 export const SEARCH_LAYOUT_STORAGE_KEY = 'dorogadomoy-search-layout';
 
-export type SearchLayoutMode = 'split' | 'list' | 'map';
+export type SearchLayoutMode = 'list' | 'map';
 
 /** Основной маршрут приложения после «домой» (не маркетинговый `/`). */
 export function getHomePath(): '/search' {
@@ -14,13 +14,15 @@ export function getLogoHref(): '/' {
 }
 
 export function readSearchLayoutMode(): SearchLayoutMode {
-  if (typeof window === 'undefined') return 'split';
+  if (typeof window === 'undefined') return 'list';
   try {
     const saved = window.localStorage.getItem(SEARCH_LAYOUT_STORAGE_KEY);
-    if (saved === 'list' || saved === 'map' || saved === 'split') return saved;
-    return 'split';
+    if (saved === 'list' || saved === 'map') return saved;
+    /* Миграция со старого split */
+    if (saved === 'split') return 'list';
+    return 'list';
   } catch {
-    return 'split';
+    return 'list';
   }
 }
 

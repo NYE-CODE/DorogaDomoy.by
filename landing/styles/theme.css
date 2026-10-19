@@ -35,6 +35,16 @@
   --radius-xl: var(--radius-xl);
   --radius-2xl: var(--radius-2xl);
   --radius-3xl: var(--radius-3xl);
+  --shadow-card: var(--shadow-card);
+  --shadow-search: var(--shadow-search);
+  --color-landing-dark: var(--color-landing-dark);
+  --color-on-landing-dark: var(--color-on-landing-dark);
+  --color-on-landing-dark-muted: var(--color-on-landing-dark-muted);
+  --color-landing: var(--color-landing);
+  --color-landing-muted: var(--color-landing-muted);
+  --color-bg-landing-dark: var(--color-bg-landing-dark);
+  --color-bg-landing: var(--color-bg-landing);
+  --color-bg-landing-muted: var(--color-bg-landing-muted);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);

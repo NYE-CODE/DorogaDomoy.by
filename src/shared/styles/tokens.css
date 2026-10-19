@@ -66,7 +66,23 @@
 
   --color-bg-input: #f3f3f5;
 
-  --color-bg-landing-dark: #15120f;
+  /* Лендинг: тёмный лесной блок (карта/футер). Не путать со scenario-shelter. */
+  --color-bg-landing-dark: #1a3026;
+
+  --color-landing-dark: var(--color-bg-landing-dark);
+
+  --color-on-landing-dark: #f5f5f4;
+
+  --color-on-landing-dark-muted: rgba(245, 245, 244, 0.72);
+
+  /* Тёплый off-white лендинга (не cream #F4F1EA). Базовый app остаётся нейтральным. */
+  --color-bg-landing: #f9f8f6;
+
+  --color-bg-landing-muted: #f1f0ed;
+
+  --color-landing: var(--color-bg-landing);
+
+  --color-landing-muted: var(--color-bg-landing-muted);
 
   --color-bg-contact: #fafafa;
 
@@ -335,9 +351,11 @@
 
   --radius-xl: 10px;
 
-  --radius-2xl: 12px;
+  /* Крупные карточки / модалки — как в DESIGN.md и ux-guidelines (16px) */
+  --radius-2xl: 16px;
 
-  --radius-3xl: 14px;
+  /* Search bar, hero media, мягкие крупные поверхности */
+  --radius-3xl: 20px;
 
   --radius-full: 9999px;
 
@@ -352,6 +370,11 @@
   --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
 
   --shadow-lg: 0 12px 24px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.04);
+
+  /* Карточки лендинга / search — мягче и с лёгким лесным оттенком */
+  --shadow-card: 0 2px 12px rgba(26, 48, 38, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+
+  --shadow-search: 0 4px 24px rgba(26, 48, 38, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
 
   --shadow-print-sheet: 0 8px 40px rgba(0, 0, 0, 0.08);
 
@@ -493,6 +516,24 @@
 
   --color-primary-light-glow: color-mix(in srgb, var(--color-primary-light) 25%, transparent);
 
+}
+
+
+
+/**
+ * Лендинг: чуть теплее surfaces. Не затрагивает app вне .landing-theme.
+ * Base/card остаются белыми для контраста карточек.
+ */
+.landing-theme {
+  --color-bg-subtle: var(--color-bg-landing);
+
+  --color-bg-muted: var(--color-bg-landing-muted);
+
+  --color-bg-contact: var(--color-bg-landing);
+
+  --muted: var(--color-bg-muted);
+
+  --accent: color-mix(in srgb, var(--color-bg-landing-muted) 85%, #e5e3df);
 }
 
 

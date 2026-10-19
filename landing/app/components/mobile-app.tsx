@@ -1,17 +1,16 @@
 import { useEffect, useState } from "react";
 import QRCode from "react-qr-code";
-import { Smartphone } from "lucide-react";
 import { useI18n } from "../../../context/I18nContext";
 import { settingsApi } from "../../../api/client";
 import { safeExternalUrl } from "../../../utils/safe-external-url";
-import { Button } from "./ui/button";
+import { LandingCta } from "./landing-cta";
 import { cn } from "./ui/utils";
 import {
   landingContainerWide,
   landingH2,
   landingLead,
-  landingPanel,
-  landingSectionAlt,
+  landingMuted,
+  landingSectionBase,
   landingSectionY,
 } from "./landing-section-styles";
 
@@ -44,36 +43,24 @@ export function MobileApp() {
   };
 
   return (
-    <section id="mobile-app" className={cn(landingSectionAlt, landingSectionY)}>
+    <section id="mobile-app" className={cn(landingSectionBase, landingSectionY)}>
       <div className={landingContainerWide}>
-        <div
-          className={cn(
-            landingPanel,
-            "grid items-center gap-8 p-6 sm:p-8 lg:grid-cols-[1.2fr_auto] lg:gap-12 lg:p-10",
-          )}
-        >
-          <div className="min-w-0 text-center lg:text-left">
-            <div className="mb-4 inline-flex items-center justify-center rounded-lg bg-primary/10 p-3 text-primary lg:justify-start">
-              <Smartphone size={28} aria-hidden />
+        <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
+          <div className="min-w-0 max-w-md space-y-3 text-left">
+            <h2 className={cn(landingH2, "mb-0")}>{m.title}</h2>
+            <p className={landingLead}>{m.subtitle}</p>
+            <div className="pt-4">
+              <LandingCta type="button" showArrow onClick={openStore}>
+                {m.cta}
+              </LandingCta>
             </div>
-            <h2 className={cn(landingH2, "mb-3")}>{m.title}</h2>
-            <p className={cn(landingLead, "mx-auto max-w-xl lg:mx-0")}>{m.subtitle}</p>
-            <Button
-              type="button"
-              className="mt-6 h-12 rounded-lg px-6 text-base font-semibold"
-              onClick={openStore}
-            >
-              {m.cta}
-            </Button>
           </div>
 
-          <div className="mx-auto flex w-full max-w-[220px] flex-col items-center gap-3">
-            <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
+          <div className="mx-auto flex w-full max-w-[13.5rem] flex-col items-center gap-3 lg:mx-0 lg:justify-self-end">
+            <div className="rounded-2xl border border-border bg-card p-4 shadow-card">
               <QRCode value={safeUrl} size={168} level="M" aria-label={m.qrAlt} />
             </div>
-            <p className="text-center text-xs leading-snug text-muted-foreground sm:text-sm">
-              {m.qrHint}
-            </p>
+            <p className={cn(landingMuted, "text-center")}>{m.qrHint}</p>
           </div>
         </div>
       </div>

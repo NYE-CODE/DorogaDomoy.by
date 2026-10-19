@@ -1,6 +1,6 @@
 ﻿import { useParams, Link } from 'react-router';
 import { useState, useEffect, type Dispatch, type SetStateAction } from 'react';
-import { ChevronLeft, Download } from 'lucide-react';
+import { Activity, ChevronLeft, Download, Heart } from 'lucide-react';
 import type { Pet } from '@/entities/pet/model/types';
 import { toast } from 'sonner';
 import { petsApi, reportsApi, sightingsApi } from '@/shared/api/client';
@@ -23,7 +23,6 @@ import { useClickOutside } from '@/shared/hooks/useClickOutside';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { PageLoader } from '@/shared/ui/page-loader';
 import { Button } from '@/shared/ui/button';
-import { FavoriteHeartButton } from '../../components/favorite-heart-button';
 import { cn } from '@/shared/ui/utils';
 import { appOutlineCtaClass, appPrimaryCtaClass } from '@/shared/styles/cta-classes';
 import { getHomePath } from '@/shared/lib/home-route';
@@ -226,14 +225,20 @@ function PetDetailPageContent({
   const canAddSighting = !isShelterPet && pet.status === 'searching' && !pet.isArchived
     && !(currentUser && (pet.authorId === currentUser.id || (currentUser.id === 'user-demo' && pet.authorId === 'current-user')));
 
+  const marks = (pet.distinctiveMarks ?? []).map((m) => m.trim()).filter(Boolean);
+
   return (
     <>
-      <main id="main-content" tabIndex={-1} className="min-h-screen bg-background pt-8 pb-24 outline-none md:py-8">
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className="min-h-screen bg-landing pb-24 pt-6 outline-none md:py-8"
+      >
         <div className="page-container">
-          <div className="mb-6">
+          <div className="mb-5 sm:mb-6">
             <Link
               to={getHomePath()}
-              className="inline-flex items-center gap-1 text-muted-foreground transition-colors hover:text-primary"
+              className="inline-flex min-h-11 items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-primary"
             >
               <ChevronLeft size={20} aria-hidden />
               {t.petDetail.backToAds}
@@ -242,17 +247,16 @@ function PetDetailPageContent({
 
           <PetDetailStatusBanners pet={pet} isShelterPet={isShelterPet} t={t} />
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-6">
-              <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-3 lg:gap-10">
+            <div className="space-y-6 lg:col-span-2 lg:space-y-8">
+              <div className="overflow-hidden rounded-3xl border border-border bg-card shadow-card">
                 <ImageCarousel
                   photos={pet.photos}
                   alt={t.pet.animalType[pet.animalType]}
-                  overlay={<FavoriteHeartButton petId={pet.id} />}
                 />
               </div>
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
                 <PetDetailShareMenu
                   t={t}
                   showShareMenu={share.showShareMenu}
@@ -266,45 +270,82 @@ function PetDetailPageContent({
                   onCopyPostText={share.handleCopyPostText}
                   onCopyLinkOnly={share.handleCopyLinkOnly}
                 />
-                <div>
-                  <Button
-                    type="button"
-                    className={cn(appOutlineCtaClass, 'w-full')}
-                    onClick={() => setShowFlyerModal(true)}
-                  >
-                    <Download className="size-5" aria-hidden />
-                    {t.petDetail.downloadFlyer}
-                  </Button>
-                </div>
+                <Button
+                  type="button"
+                  className={cn(appOutlineCtaClass, 'w-full rounded-xl')}
+                  onClick={() => setShowFlyerModal(true)}
+                >
+                  <Download className="size-5" aria-hidden />
+                  {t.petDetail.downloadFlyer}
+                </Button>
               </div>
 
-              <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
-                <h2 className="typo-h2 mb-4">{t.pet.description}</h2>
-                <p className="whitespace-pre-line leading-relaxed text-muted-foreground">{pet.description}</p>
-              </div>
+              <section>
+                <div className="mb-3 flex items-center gap-2">
+                  <h2 className="font-display text-lg font-semibold text-foreground sm:text-xl">
+                    {t.pet.description}
+                  </h2>
+                  <Heart className="size-4 text-primary/70" aria-hidden />
+                </div>
+                <p className="max-w-prose whitespace-pre-line text-base leading-relaxed text-muted-foreground">
+                  {pet.description}
+                </p>
+              </section>
+
+              {marks.length > 0 ? (
+                <section className="relative overflow-hidden rounded-3xl border border-shelter-border bg-shelter-soft p-5 sm:p-6">
+                  <div className="relative z-[1]">
+                    <div className="mb-2 flex items-center gap-2">
+                      <Activity className="size-5 text-shelter" aria-hidden />
+                      <h2 className="font-display text-base font-semibold text-shelter-foreground sm:text-lg">
+                        {t.petDetail.marksTitle}
+                      </h2>
+                    </div>
+                    <ul className="list-disc space-y-1 pl-5 text-sm leading-relaxed text-shelter-foreground/90 sm:text-base">
+                      {marks.map((mark) => (
+                        <li key={mark}>{mark}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <svg
+                    className="pointer-events-none absolute -bottom-4 -right-4 size-28 text-shelter/15"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    aria-hidden
+                  >
+                    <path d="M12 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-4.5-2c.83 0 1.5-.67 1.5-1.5S8.33 5 7.5 5 6 5.67 6 6.5 6.67 8 7.5 8zm9 0c.83 0 1.5-.67 1.5-1.5S17.33 5 16.5 5 15 5.67 15 6.5 15.67 8 16.5 8zM8.5 14c.83 0 1.5-.67 1.5-1.5S9.33 11 8.5 11 7 11.67 7 12.5 7.67 14 8.5 14zm7 0c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5-1.5.67-1.5 1.5.67 1.5 1.5 1.5zM12 16c-2.33 0-7 1.17-7 3.5V21h14v-1.5c0-2.33-4.67-3.5-7-3.5z" />
+                  </svg>
+                </section>
+              ) : null}
 
               {(pet.registrationAuthority?.trim() || pet.registrationTokenNumber?.trim()) && (
-                <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
-                  <h2 className="typo-h2 mb-4">{t.petDetail.registrationTitle}</h2>
-                  <dl className="space-y-3 text-muted-foreground">
+                <section className="rounded-3xl border border-medallion-border bg-medallion-soft p-5 sm:p-6">
+                  <h2 className="font-display mb-4 text-lg font-semibold text-medallion-foreground">
+                    {t.petDetail.registrationTitle}
+                  </h2>
+                  <dl className="space-y-3 text-medallion-foreground/90">
                     {pet.registrationAuthority?.trim() ? (
                       <div>
-                        <dt className="text-xs font-semibold uppercase tracking-wide text-foreground/70">
+                        <dt className="text-xs font-semibold uppercase tracking-wide opacity-80">
                           {t.petDetail.registrationAuthority}
                         </dt>
-                        <dd className="mt-1 whitespace-pre-line leading-relaxed">{pet.registrationAuthority.trim()}</dd>
+                        <dd className="mt-1 whitespace-pre-line leading-relaxed">
+                          {pet.registrationAuthority.trim()}
+                        </dd>
                       </div>
                     ) : null}
                     {pet.registrationTokenNumber?.trim() ? (
                       <div>
-                        <dt className="text-xs font-semibold uppercase tracking-wide text-foreground/70">
+                        <dt className="text-xs font-semibold uppercase tracking-wide opacity-80">
                           {t.petDetail.registrationToken}
                         </dt>
-                        <dd className="mt-1 font-mono text-sm">{pet.registrationTokenNumber.trim()}</dd>
+                        <dd className="mt-1 font-mono text-sm">
+                          {pet.registrationTokenNumber.trim()}
+                        </dd>
                       </div>
                     ) : null}
                   </dl>
-                </div>
+                </section>
               )}
 
               {!isShelterPet && (
@@ -326,10 +367,10 @@ function PetDetailPageContent({
             />
           </div>
 
-          <PartnerAdSlot placement="pet-detail-bottom" className="mt-8" />
+          <PartnerAdSlot placement="pet-detail-bottom" className="mt-10" />
 
           {!isShelterPet && !pet.isArchived && pet.moderationStatus === 'approved' && (
-            <SimilarPetsSection petId={pet.id} className="mt-8" limit={6} />
+            <SimilarPetsSection petId={pet.id} className="mt-10" limit={6} />
           )}
         </div>
       </main>

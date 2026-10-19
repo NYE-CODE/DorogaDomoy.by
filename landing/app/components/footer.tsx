@@ -3,7 +3,7 @@ import { Mail, MessageCircle, Bot, Heart } from "lucide-react";
 import { Link } from "react-router";
 import { useI18n } from "../../../context/I18nContext";
 import type { translations } from "../../../i18n/translations";
-import { useFeatureFlags } from "../../../context/FeatureFlagsContext";
+import { useFeatureFlags } from "@/app/providers/FeatureFlagsContext";
 import { helpApi, type HelpDonationTier } from "../../../api/client";
 import { safeExternalUrl } from "../../../utils/safe-external-url";
 import {
@@ -11,7 +11,7 @@ import {
   type LandingNavHash,
   isLandingNavItemVisible,
 } from "../landing-nav-config";
-import { Button } from "./ui/button";
+import { LandingCta } from "./landing-cta";
 import {
   Dialog,
   DialogContent,
@@ -30,10 +30,12 @@ function landingNavLabel(hash: LandingNavHash, t: (typeof translations)["ru"]): 
       return f.sectionPets;
     case "mobile-app":
       return f.mobileApp;
-    case "announcements":
-      return f.ads;
     case "shelter-pets":
       return f.sectionShelterPets;
+    case "pets-nearby":
+      return f.sectionPetsNearby;
+    case "how-it-works":
+      return f.sectionHowItWorks;
     case "media":
       return t.landing.media.title;
     case "partners":
@@ -83,49 +85,53 @@ export function Footer() {
     setSupportOpen(false);
   };
 
-  /** Пункты только для секций, которые включены теми же флагами, что и в App.tsx */
-  const navLinks = LANDING_NAV_ITEMS.filter((item) =>
-    isLandingNavItemVisible(item, ff),
-  ).map((item) => ({
-    to: `/#${item.hash}`,
-    label: landingNavLabel(item.hash, t),
-  }));
+  /** Только секции, которые реально рендерятся (те же feature flags, что в App.tsx) */
+  const navLinks = useMemo(
+    () =>
+      LANDING_NAV_ITEMS.filter((item) => isLandingNavItemVisible(item, ff)).map(
+        (item) => ({
+          to: `/#${item.hash}`,
+          label: landingNavLabel(item.hash, t),
+        }),
+      ),
+    [ff, t],
+  );
 
   const linkClass =
-    "text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm";
+    "rounded-sm text-on-landing-dark-muted transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-landing-dark";
 
-  const colTitleClass = "mb-5 text-sm font-semibold text-foreground";
+  const colTitleClass = "mb-5 text-sm font-semibold text-on-landing-dark";
 
   return (
-    <footer className="border-t border-border bg-muted/35 dark:bg-muted/20">
+    <footer className="bg-landing-dark text-on-landing-dark">
       <div className={`${landingContainerWide} py-12 pb-24 md:pb-14`}>
         <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-3 lg:gap-12">
           <div>
             <div className="mb-5 flex items-center gap-3">
               <Link
                 to="/"
-                className="flex min-w-0 items-center gap-3 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="flex min-w-0 items-center gap-3 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-landing-dark"
               >
                 <img
                   src="/logo.png"
                   alt="DorogaDomoy.by"
                   className="h-10 w-10 shrink-0 object-contain"
                 />
-                <span className="text-xl font-bold tracking-tight text-foreground">
+                <span className="text-xl font-bold tracking-tight text-on-landing-dark">
                   DorogaDomoy.by
                 </span>
               </Link>
             </div>
-            <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">{f.about}</p>
-            <Button
+            <p className="max-w-sm text-sm leading-relaxed text-on-landing-dark-muted">{f.about}</p>
+            <LandingCta
               type="button"
-              variant="default"
-              className="mt-5 h-11 gap-2 rounded-lg font-medium"
+              variant="primaryOnDark"
+              className="mt-5"
               onClick={() => setSupportOpen(true)}
             >
               <Heart size={18} aria-hidden />
               {f.supportProject}
-            </Button>
+            </LandingCta>
           </div>
 
           <div>
@@ -179,7 +185,7 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-10 border-t border-border pt-8 text-center text-sm text-muted-foreground">
+        <div className="mt-10 border-t border-on-landing-dark/15 pt-8 text-center text-sm text-on-landing-dark-muted">
           <p>
             &copy; {new Date().getFullYear()} DorogaDomoy.by — {f.copyright}
           </p>
@@ -187,19 +193,19 @@ export function Footer() {
             <a href="/poisk-propavshih-zhivotnyh/" className={linkClass}>
               {f.searchGuide}
             </a>
-            <span className="text-border" aria-hidden>
+            <span className="text-on-landing-dark/30" aria-hidden>
               ·
             </span>
             <Link to="/terms" className={linkClass}>
               {f.rules}
             </Link>
-            <span className="text-border" aria-hidden>
+            <span className="text-on-landing-dark/30" aria-hidden>
               ·
             </span>
             <Link to="/privacy" className={linkClass}>
               {f.privacyPolicy}
             </Link>
-            <span className="text-border" aria-hidden>
+            <span className="text-on-landing-dark/30" aria-hidden>
               ·
             </span>
             <Link to="/delete-account" className={linkClass}>
@@ -220,15 +226,15 @@ export function Footer() {
           ) : (
             <div className="grid gap-2 pt-1">
               {sortedTiers.map((tier) => (
-                <Button
+                <LandingCta
                   key={tier.id}
                   type="button"
-                  variant="secondary"
-                  className="h-12 w-full justify-center text-base font-semibold"
+                  variant="outline"
+                  className="w-full"
                   onClick={() => handleDonationClick(tier)}
                 >
                   {tier.label}
-                </Button>
+                </LandingCta>
               ))}
             </div>
           )}

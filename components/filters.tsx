@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, SlidersHorizontal, ChevronDown, ChevronUp, RotateCcw, Plus, X, PawPrint, Cat, Dog, Bird } from 'lucide-react';
+import { Search, SlidersHorizontal, ChevronDown, ChevronUp, RotateCcw, Plus, X, PawPrint, Cat, Dog, Bird, MapPin } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { AnimalType, PetStatus, PetColor } from '../types/pet';
 import { activeStatuses, colorLabels, petStatusFilterSelectedClass } from '../utils/pet-helpers';
@@ -7,15 +7,14 @@ import { useIsMobile } from './ui/use-mobile';
 import { useI18n } from '../context/I18nContext';
 import { BreedCombobox } from './breed-combobox';
 import { CAT_BREEDS, DOG_BREEDS } from '../utils/breeds';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
+import { cn } from './ui/utils';
 
 export interface FilterState {
   animalType: AnimalType | 'all';
   breed: string;
   colors: PetColor[];
   statuses: PetStatus[];
-  days: number | 'all';
   searchQuery: string;
 }
 
@@ -24,12 +23,11 @@ export const EMPTY_FILTER_STATE: FilterState = {
   breed: '',
   colors: [],
   statuses: [],
-  days: 'all',
   searchQuery: '',
 };
 
 export function countAdvancedFilters(filters: FilterState): number {
-  return [filters.breed !== '', filters.colors.length > 0, filters.days !== 'all'].filter(Boolean).length;
+  return [filters.breed !== '', filters.colors.length > 0].filter(Boolean).length;
 }
 
 export function countActiveFilters(filters: FilterState): number {
@@ -38,7 +36,6 @@ export function countActiveFilters(filters: FilterState): number {
     filters.breed !== '',
     filters.colors.length > 0,
     filters.statuses.length > 0,
-    filters.days !== 'all',
     filters.searchQuery.trim() !== '',
   ].filter(Boolean).length;
 }
@@ -50,8 +47,42 @@ interface FiltersProps {
   /** Embedded mode: no outer card chrome, used inside drawers */
   embedded?: boolean;
   onClose?: () => void;
-  /** Layout variant: standalone panel, embedded, or full page */
-  variant?: 'standalone' | 'embedded' | 'page';
+  /** Layout variant: standalone panel, embedded, full page toolbar, or shop sidebar */
+  variant?: 'standalone' | 'embedded' | 'page' | 'sidebar';
+  /** Не показывать поле поиска (оно вынесено в топбар) */
+  hideSearch?: boolean;
+  /** Город из CityContext — выбор в сайдбаре /search */
+  selectedCity?: string;
+  onCityClick?: () => void;
+  onClearCity?: () => void;
+}
+
+/** Поле поиска для топбара страницы /search (стиль landing search shell). */
+export function SearchQueryInput({
+  filters,
+  onFiltersChange,
+  className,
+}: {
+  filters: FilterState;
+  onFiltersChange: (filters: FilterState) => void;
+  className?: string;
+}) {
+  const { t } = useI18n();
+  return (
+    <div className={`relative min-w-0 flex-1 ${className ?? ''}`}>
+      <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+      <input
+        type="search"
+        enterKeyHint="search"
+        autoComplete="off"
+        value={filters.searchQuery}
+        onChange={(e) => onFiltersChange({ ...filters, searchQuery: e.target.value })}
+        placeholder={t.filters.searchPlaceholder}
+        aria-label={t.filters.searchPlaceholder}
+        className="h-12 w-full rounded-3xl border border-border bg-card py-2.5 pl-11 pr-4 text-sm shadow-search outline-none ring-offset-background transition-shadow focus-visible:ring-2 focus-visible:ring-ring"
+      />
+    </div>
+  );
 }
 
 export function Filters({
@@ -61,11 +92,16 @@ export function Filters({
   embedded,
   onClose,
   variant = 'standalone',
+  hideSearch = false,
+  selectedCity = '',
+  onCityClick,
+  onClearCity,
 }: FiltersProps) {
   const isMobile = useIsMobile();
   const { t } = useI18n();
   const [isOpen, setIsOpen] = useState(!isMobile);
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const hasCityFilter = Boolean(selectedCity.trim());
 
   const animalTypeOptions: { value: AnimalType | 'all'; label: string; icon: LucideIcon }[] = [
     { value: 'all', label: t.common.all, icon: PawPrint },
@@ -81,18 +117,12 @@ export function Filters({
     other: t.filters.typeTooltipOther,
   };
 
-  const periodOptions: { value: number | 'all'; label: string }[] = [
-    { value: 'all', label: t.common.all },
-    { value: 7, label: t.filters.days7 },
-    { value: 30, label: t.filters.days30 },
-    { value: 90, label: t.filters.days90 },
-  ];
-
   const handleReset = () => {
     onFiltersChange(EMPTY_FILTER_STATE);
+    onClearCity?.();
   };
 
-  const activeFilterCount = countActiveFilters(filters);
+  const activeFilterCount = countActiveFilters(filters) + (hasCityFilter ? 1 : 0);
   const advancedFilterCount = countAdvancedFilters(filters);
 
   const toggleStatus = (status: PetStatus) => {
@@ -164,48 +194,26 @@ export function Filters({
 
   const advancedFiltersBody = (
     <div className="space-y-4 border-t border-border/60 pt-3">
-      <div className="grid gap-3 sm:grid-cols-2 sm:items-end">
-        <div className="min-w-0 space-y-1.5">
-          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            {t.filters.breedLabel}
-          </span>
-          {filters.animalType === 'cat' || filters.animalType === 'dog' ? (
-            <BreedCombobox
-              breeds={filters.animalType === 'cat' ? CAT_BREEDS : DOG_BREEDS}
-              value={filters.breed}
-              onChange={(breed) => onFiltersChange({ ...filters, breed })}
-              placeholder={t.filters.breedPlaceholder}
-            />
-          ) : (
-            <input
-              type="text"
-              value={filters.breed}
-              onChange={(e) => onFiltersChange({ ...filters, breed: e.target.value })}
-              placeholder={t.filters.breedPlaceholder}
-              className="h-10 w-full rounded-lg border border-border bg-card px-3 text-sm outline-none ring-offset-background transition-shadow focus-visible:ring-2 focus-visible:ring-ring"
-            />
-          )}
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            {t.filters.period}
-          </span>
-          <Select
-            value={filters.days === 'all' ? 'all' : String(filters.days)}
-            onValueChange={(v) => onFiltersChange({ ...filters, days: v === 'all' ? 'all' : Number(v) })}
-          >
-            <SelectTrigger className="h-10 w-full min-w-0 border-border bg-card">
-              <SelectValue placeholder={t.common.all} />
-            </SelectTrigger>
-            <SelectContent>
-              {periodOptions.map((opt) => (
-                <SelectItem key={String(opt.value)} value={opt.value === 'all' ? 'all' : String(opt.value)}>
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+      <div className="min-w-0 space-y-1.5">
+        <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          {t.filters.breedLabel}
+        </span>
+        {filters.animalType === 'cat' || filters.animalType === 'dog' ? (
+          <BreedCombobox
+            breeds={filters.animalType === 'cat' ? CAT_BREEDS : DOG_BREEDS}
+            value={filters.breed}
+            onChange={(breed) => onFiltersChange({ ...filters, breed })}
+            placeholder={t.filters.breedPlaceholder}
+          />
+        ) : (
+          <input
+            type="text"
+            value={filters.breed}
+            onChange={(e) => onFiltersChange({ ...filters, breed: e.target.value })}
+            placeholder={t.filters.breedPlaceholder}
+            className="h-10 w-full rounded-lg border border-border bg-card px-3 text-sm outline-none ring-offset-background transition-shadow focus-visible:ring-2 focus-visible:ring-ring"
+          />
+        )}
       </div>
 
       <div className="space-y-2">
@@ -234,26 +242,6 @@ export function Filters({
     <>
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:gap-x-6 sm:gap-y-3">
         {statusRow}
-        <div className="flex flex-col gap-1.5 sm:flex-1 sm:min-w-[140px]">
-          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            {t.filters.period}
-          </span>
-          <Select
-            value={filters.days === 'all' ? 'all' : String(filters.days)}
-            onValueChange={(v) => onFiltersChange({ ...filters, days: v === 'all' ? 'all' : Number(v) })}
-          >
-            <SelectTrigger className="h-10 w-full min-w-0 border-border bg-card">
-              <SelectValue placeholder={t.common.all} />
-            </SelectTrigger>
-            <SelectContent>
-              {periodOptions.map((opt) => (
-                <SelectItem key={String(opt.value)} value={opt.value === 'all' ? 'all' : String(opt.value)}>
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] sm:items-end">
@@ -303,21 +291,198 @@ export function Filters({
     </>
   );
 
-  const searchInput = (
-    <div className="relative min-w-0 flex-1">
-      <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-      <input
-        type="search"
-        enterKeyHint="search"
-        autoComplete="off"
-        value={filters.searchQuery}
-        onChange={(e) => onFiltersChange({ ...filters, searchQuery: e.target.value })}
-        placeholder={t.filters.searchPlaceholder}
-        aria-label={t.filters.searchPlaceholder}
-        className="h-11 w-full rounded-md border border-border bg-card py-2 pl-10 pr-4 text-sm shadow-sm outline-none ring-offset-background transition-shadow focus-visible:ring-2 focus-visible:ring-ring"
-      />
-    </div>
+  const searchInput = hideSearch ? null : (
+    <SearchQueryInput filters={filters} onFiltersChange={onFiltersChange} />
   );
+
+  if (variant === 'sidebar') {
+    const chipIdle =
+      'border-transparent bg-card/70 text-foreground hover:bg-card';
+    const chipActive = 'border-transparent bg-landing-dark text-on-landing-dark shadow-sm';
+
+    return (
+      <div
+        id="search-filters-panel"
+        className="flex h-full flex-col gap-5 p-5"
+        role="region"
+        aria-label={t.filters.filters}
+      >
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="font-display text-base font-semibold text-foreground">
+            {t.filters.filters}
+          </h2>
+          <div className="flex items-center gap-1">
+            {activeFilterCount > 0 && (
+              <button
+                type="button"
+                onClick={handleReset}
+                className="inline-flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-card hover:text-primary"
+                title={t.filters.reset}
+                aria-label={t.filters.reset}
+              >
+                <RotateCcw className="size-3.5" />
+                {t.filters.reset}
+              </button>
+            )}
+            {onClose && (
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-card hover:text-foreground lg:hidden"
+                aria-label={t.common.close}
+              >
+                <X className="size-5" />
+              </button>
+            )}
+          </div>
+        </div>
+        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto pb-2">
+          {onCityClick ? (
+            <div className="flex flex-col gap-1.5">
+              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {t.filters.region}
+              </span>
+              <button
+                type="button"
+                onClick={onCityClick}
+                className={cn(
+                  'flex min-h-11 w-full items-center gap-2 rounded-xl border border-transparent bg-card/70 px-3 py-2.5 text-left text-sm font-medium text-foreground transition-colors hover:bg-card',
+                  hasCityFilter && 'bg-landing-dark text-on-landing-dark hover:bg-landing-dark/90',
+                )}
+                aria-label={t.filters.region}
+              >
+                <MapPin
+                  className={cn(
+                    'size-4 shrink-0',
+                    hasCityFilter ? 'text-on-landing-dark' : 'text-primary',
+                  )}
+                  aria-hidden
+                />
+                <span className="min-w-0 flex-1 truncate">
+                  {hasCityFilter ? selectedCity.trim() : t.citySelect.allBelarus}
+                </span>
+                <ChevronDown className="size-4 shrink-0 opacity-70" aria-hidden />
+              </button>
+            </div>
+          ) : null}
+
+          <div className="flex flex-col gap-1.5">
+            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              {t.filters.status}
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {activeStatuses.map((status) => (
+                <button
+                  key={status}
+                  type="button"
+                  onClick={() => toggleStatus(status)}
+                  className={`min-h-10 rounded-full border px-3 py-2 text-sm transition-all ${
+                    filters.statuses.includes(status)
+                      ? petStatusFilterSelectedClass[status]
+                      : chipIdle
+                  }`}
+                >
+                  {(t.pet.status as Record<PetStatus, string>)[status]}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              {t.filters.type}
+            </span>
+            <div className="grid grid-cols-2 gap-1.5">
+              {animalTypeOptions
+                .filter((opt) => opt.value === 'dog' || opt.value === 'cat')
+                .map((opt) => (
+                  <Tooltip key={opt.value} delayDuration={280}>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        onClick={() => onFiltersChange({ ...filters, animalType: opt.value })}
+                        className={`flex min-h-11 w-full items-center justify-center gap-1.5 rounded-2xl border px-2 py-2.5 text-sm font-medium transition-all ${
+                          filters.animalType === opt.value ? chipActive : chipIdle
+                        }`}
+                      >
+                        <opt.icon size={16} className="shrink-0 opacity-90" aria-hidden />
+                        <span className="truncate">{opt.label}</span>
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent
+                      side="top"
+                      sideOffset={6}
+                      className="max-w-[min(280px,calc(100vw-2rem))]"
+                    >
+                      {animalTypeTooltips[opt.value]}
+                    </TooltipContent>
+                  </Tooltip>
+                ))}
+            </div>
+            <div className="grid grid-cols-2 gap-1.5">
+              {animalTypeOptions
+                .filter((opt) => opt.value === 'all' || opt.value === 'other')
+                .map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => onFiltersChange({ ...filters, animalType: opt.value })}
+                    className={`flex min-h-10 w-full items-center justify-center gap-1 rounded-full border px-2 py-2 text-xs font-medium transition-all ${
+                      filters.animalType === opt.value ? chipActive : chipIdle
+                    }`}
+                  >
+                    <opt.icon size={14} className="shrink-0 opacity-80" aria-hidden />
+                    <span className="truncate">{opt.label}</span>
+                  </button>
+                ))}
+            </div>
+          </div>
+
+          <div className="min-w-0 space-y-1.5">
+            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              {t.filters.breedLabel}
+            </span>
+            {filters.animalType === 'cat' || filters.animalType === 'dog' ? (
+              <BreedCombobox
+                breeds={filters.animalType === 'cat' ? CAT_BREEDS : DOG_BREEDS}
+                value={filters.breed}
+                onChange={(breed) => onFiltersChange({ ...filters, breed })}
+                placeholder={t.filters.breedPlaceholder}
+              />
+            ) : (
+              <input
+                type="text"
+                value={filters.breed}
+                onChange={(e) => onFiltersChange({ ...filters, breed: e.target.value })}
+                placeholder={t.filters.breedPlaceholder}
+                className="h-10 w-full rounded-xl border border-border bg-card px-3 text-sm outline-none ring-offset-background transition-shadow focus-visible:ring-2 focus-visible:ring-ring"
+              />
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              {t.filters.color}
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {(Object.keys(colorLabels) as PetColor[]).map((color) => (
+                <button
+                  key={color}
+                  type="button"
+                  onClick={() => toggleColor(color)}
+                  className={`min-h-9 rounded-full border px-3 py-1.5 text-xs font-medium transition-all sm:text-sm ${
+                    filters.colors.includes(color) ? chipActive : chipIdle
+                  }`}
+                >
+                  {(t.pet.color as Record<PetColor, string>)[color]}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (variant === 'page') {
     const moreFiltersControl = (
@@ -423,7 +588,7 @@ export function Filters({
     return (
       <div className="space-y-4 rounded-md border border-border bg-muted/20 p-3 sm:p-4">
         <div className="flex items-center justify-between gap-2">
-          {searchInput}
+          {searchInput ?? <span className="text-sm font-semibold">{t.filters.filters}</span>}
           {onClose && (
             <button
               type="button"

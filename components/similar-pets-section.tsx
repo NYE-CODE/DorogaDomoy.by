@@ -5,7 +5,6 @@ import { PetCard } from './pet-card';
 import { petsApi } from '@/shared/api/client';
 import { useI18n } from '@/app/providers/I18nContext';
 import { cn } from './ui/utils';
-import { typoH3 } from '@/shared/styles/typography-classes';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { Button } from '@/shared/ui/button';
 import {
@@ -99,7 +98,7 @@ export function SimilarPetsSection({
 
   if (loading) {
     return (
-      <div className={cn('rounded-lg border border-border bg-card p-6', className)}>
+      <div className={cn('rounded-3xl border border-border bg-card p-6 shadow-card', className)}>
         <div className="flex items-center justify-center py-8">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary/30 border-t-primary" />
         </div>
@@ -110,7 +109,7 @@ export function SimilarPetsSection({
   if (error) return null;
 
   return (
-    <section className={cn('rounded-lg border border-border bg-card shadow-sm', className)}>
+    <section className={cn('overflow-hidden rounded-3xl border border-border bg-card shadow-card', className)}>
       {highlightTopMatch && topMatch && (topMatch.matchPercent ?? 0) >= 55 && (
         <div className="border-b border-primary/20 bg-primary/5 px-6 py-4">
           <p className="text-sm text-foreground">
@@ -123,11 +122,13 @@ export function SimilarPetsSection({
           </Button>
         </div>
       )}
-      <div className="border-b border-border p-6">
+      <div className="border-b border-border px-5 py-5 sm:px-6">
         {showTitle && (
-          <div className="mb-2 flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" aria-hidden />
-            <h2 className={typoH3}>{t.similarPets.title}</h2>
+          <div className="mb-1.5 flex items-center gap-2">
+            <Sparkles className="size-5 text-primary" aria-hidden />
+            <h2 className="font-display text-lg font-semibold text-foreground sm:text-xl">
+              {t.similarPets.title}
+            </h2>
           </div>
         )}
         <p className="text-sm text-muted-foreground">{t.similarPets.subtitle}</p>
@@ -136,7 +137,7 @@ export function SimilarPetsSection({
       {items.length === 0 ? (
         <p className="p-6 text-sm text-muted-foreground">{t.similarPets.empty}</p>
       ) : (
-        <div className="grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-5 p-4 sm:grid-cols-2 sm:p-5 lg:grid-cols-3">
           {items.map((item) => {
             const percent = item.matchPercent ?? fallbackMatchPercent(item.score);
             const tooltipLines = buildSimilarPetTooltipLines(item, {

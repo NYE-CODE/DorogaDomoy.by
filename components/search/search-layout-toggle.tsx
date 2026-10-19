@@ -1,18 +1,23 @@
-import { Columns2, List, Map as MapIcon } from 'lucide-react';
+import { LayoutGrid, Map as MapIcon } from 'lucide-react';
 import { useI18n } from '../../context/I18nContext';
 import type { SearchLayoutMode } from '@/shared/lib/home-route';
+import { cn } from '@/shared/ui/utils';
 
 interface SearchLayoutToggleProps {
   mode: SearchLayoutMode;
   onChange: (mode: SearchLayoutMode) => void;
 }
 
-const MODES: { id: SearchLayoutMode; icon: typeof List; labelKey: 'mapAndList' | 'listOnly' | 'mapOnly' }[] = [
-  { id: 'split', icon: Columns2, labelKey: 'mapAndList' },
-  { id: 'list', icon: List, labelKey: 'listOnly' },
+const MODES: {
+  id: SearchLayoutMode;
+  icon: typeof LayoutGrid;
+  labelKey: 'listOnly' | 'mapOnly';
+}[] = [
+  { id: 'list', icon: LayoutGrid, labelKey: 'listOnly' },
   { id: 'map', icon: MapIcon, labelKey: 'mapOnly' },
 ];
 
+/** Toggle в стиле лендинга: активный — landing-dark. */
 export function SearchLayoutToggle({ mode, onChange }: SearchLayoutToggleProps) {
   const { t } = useI18n();
   const layout = t.app.searchLayout;
@@ -20,8 +25,8 @@ export function SearchLayoutToggle({ mode, onChange }: SearchLayoutToggleProps) 
   return (
     <div
       role="radiogroup"
-      aria-label={layout.mapAndList}
-      className="inline-flex shrink-0 rounded-md border border-border bg-muted/50 p-0.5"
+      aria-label={layout.modeGroup}
+      className="inline-flex shrink-0 rounded-full border border-border bg-card p-1 shadow-sm"
     >
       {MODES.map(({ id, icon: Icon, labelKey }) => {
         const selected = mode === id;
@@ -34,11 +39,12 @@ export function SearchLayoutToggle({ mode, onChange }: SearchLayoutToggleProps) 
             aria-checked={selected}
             title={label}
             onClick={() => onChange(id)}
-            className={`inline-flex min-h-11 items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors sm:px-3.5 ${
+            className={cn(
+              'inline-flex min-h-10 items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-medium transition-colors',
               selected
-                ? 'bg-card text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
+                ? 'bg-landing-dark text-on-landing-dark shadow-sm'
+                : 'text-muted-foreground hover:text-foreground',
+            )}
           >
             <Icon className="size-4 shrink-0" aria-hidden />
             <span className="hidden sm:inline">{label}</span>

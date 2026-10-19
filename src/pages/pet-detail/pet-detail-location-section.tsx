@@ -36,16 +36,19 @@ export function PetDetailLocationSection({
   const hasPoint = pet.location.lat !== 0 || pet.location.lng !== 0;
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
-      <div className="border-b border-border p-6">
-        <div className="mb-2 flex items-center gap-3">
-          <MapPin size={24} className="text-primary" aria-hidden />
-          <h2 className="typo-h2">{t.pet.location}</h2>
+    <section className="overflow-hidden rounded-3xl border border-border bg-card shadow-card">
+      <div className="border-b border-border px-5 py-5 sm:px-6">
+        <div className="mb-1 flex items-center gap-2.5">
+          <MapPin size={22} className="text-primary" aria-hidden />
+          <h2 className="font-display text-lg font-semibold text-foreground sm:text-xl">
+            {t.pet.location}
+          </h2>
         </div>
-        <p className="ml-9 text-muted-foreground">{pet.city}</p>
+        <p className="pl-8 text-sm text-muted-foreground sm:text-base">{pet.city}</p>
       </div>
+
       {canAddSighting && pet.status === 'searching' && !pet.isArchived && (
-        <div className="border-b border-border bg-primary/5 p-6 dark:bg-primary/10">
+        <div className="border-b border-border bg-primary/5 px-5 py-5 sm:px-6">
           <Button
             type="button"
             className={cn(appPrimaryCtaClass, 'mb-3 w-full')}
@@ -58,7 +61,8 @@ export function PetDetailLocationSection({
           </p>
         </div>
       )}
-      <div className="h-96 bg-muted/30">
+
+      <div className="relative h-80 bg-landing-muted sm:h-96">
         <Suspense
           fallback={
             <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
@@ -68,39 +72,43 @@ export function PetDetailLocationSection({
         >
           <SinglePetMap pet={pet} sightings={sightings} seenLabel={t.sightings.seenLabel} />
         </Suspense>
+        {hasPoint ? (
+          <div className="absolute bottom-4 right-4 z-[5]">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="rounded-full border border-border bg-card shadow-search"
+                >
+                  <MapPin className="size-4" aria-hidden />
+                  {t.petDetail.openInMaps}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <a
+                    href={externalMapWebUrl('yandex', pet.location.lat, pet.location.lng)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {t.petDetail.openInYandexMaps}
+                  </a>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <a
+                    href={externalMapWebUrl('google', pet.location.lat, pet.location.lng)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {t.petDetail.openInGoogleMaps}
+                  </a>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        ) : null}
       </div>
-      {hasPoint ? (
-        <div className="border-t border-border p-4">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button type="button" variant="outline" className="w-full">
-                <MapPin aria-hidden />
-                {t.petDetail.openInMaps}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="center" className="w-[var(--radix-dropdown-menu-trigger-width)]">
-              <DropdownMenuItem asChild>
-                <a
-                  href={externalMapWebUrl('yandex', pet.location.lat, pet.location.lng)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {t.petDetail.openInYandexMaps}
-                </a>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <a
-                  href={externalMapWebUrl('google', pet.location.lat, pet.location.lng)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {t.petDetail.openInGoogleMaps}
-                </a>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      ) : null}
-    </div>
+    </section>
   );
 }

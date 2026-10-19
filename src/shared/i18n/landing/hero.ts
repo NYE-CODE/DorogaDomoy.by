@@ -5,24 +5,24 @@ export const landingHeroLocales = {
     title: 'Дорога домой для питомцев —',
     titleHighlight: 'по всей Беларуси',
     subtitle:
-      'Карта объявлений, быстрая публикация и питомцы из приютов — чтобы скорее найти путь домой.',
+      'Смотрите объявления на карте или сообщите, если питомец потерялся или найден.',
     primaryCta: 'Открыть карту',
-    secondaryCta: 'Создать объявление',
+    secondaryCta: 'Потерял или нашёл',
     paths: {
       search: {
         title: 'Карта объявлений',
-        desc: 'Искать или сообщить о питомце',
+        desc: 'Смотреть пропавших и найденных рядом',
       },
       create: {
-        title: 'Потерялся или нашли',
+        title: 'Потерял или нашёл',
         desc: 'Опубликовать объявление за минуту',
       },
       shelter: {
         title: 'Питомцы из приютов',
-        desc: 'Познакомиться и забрать домой',
+        desc: 'познакомиться и забрать домой',
       },
     },
-    imageSearchAlt: 'Поиск питомцев на карте',
+    imageSearchAlt: 'Питомец на пути домой',
     imageShelterAlt: 'Питомцы из приютов',
   },
   be: {
@@ -30,24 +30,24 @@ export const landingHeroLocales = {
     title: 'Дарога дадому для жывёл —',
     titleHighlight: 'па ўсёй Беларусі',
     subtitle:
-      'Карта аб\'яў, хуткая публікацыя і жывёлы з прытулкаў — каб хутчэй знайсці шлях дадому.',
+      'Глядзіце аб\'явы на карце або паведаміце, калі жывёла згубілася ці знойдзена.',
     primaryCta: 'Адкрыць карту',
-    secondaryCta: 'Стварыць аб\'яву',
+    secondaryCta: 'Згубіў або знайшоў',
     paths: {
       search: {
         title: 'Карта аб\'яў',
-        desc: 'Шукаць або паведаміць пра жывёлу',
+        desc: 'Глядзець зніклых і знойдзеных побач',
       },
       create: {
-        title: 'Згубіўся ці знайшлі',
+        title: 'Згубіў або знайшоў',
         desc: 'Апублікаваць аб\'яву за хвіліну',
       },
       shelter: {
         title: 'Жывёлы з прытулкаў',
-        desc: 'Пазнаёміцца і забраць дадому',
+        desc: 'пазнаёміцца і забраць дадому',
       },
     },
-    imageSearchAlt: 'Пошук жывёл на карце',
+    imageSearchAlt: 'Жывёла на шляху дадому',
     imageShelterAlt: 'Жывёлы з прытулкаў',
   },
   en: {
@@ -55,13 +55,13 @@ export const landingHeroLocales = {
     title: 'The road home for pets —',
     titleHighlight: 'across Belarus',
     subtitle:
-      'A listings map, quick publishing, and shelter pets — so the way home is closer.',
+      'Browse listings on the map, or post if a pet is lost or found.',
     primaryCta: 'Open map',
-    secondaryCta: 'Create listing',
+    secondaryCta: 'Lost or found',
     paths: {
       search: {
         title: 'Listings map',
-        desc: 'Search or report a pet',
+        desc: 'See lost and found nearby',
       },
       create: {
         title: 'Lost or found',
@@ -69,10 +69,10 @@ export const landingHeroLocales = {
       },
       shelter: {
         title: 'Shelter pets',
-        desc: 'Meet and adopt',
+        desc: 'meet and take home',
       },
     },
-    imageSearchAlt: 'Pet search on the map',
+    imageSearchAlt: 'A pet on the way home',
     imageShelterAlt: 'Shelter pets',
   },
 } as const;

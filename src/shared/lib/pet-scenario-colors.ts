@@ -79,14 +79,14 @@ export const petScenarioDetailBannerClass: Record<
   { box: string; icon: string; title: string }
 > = {
   lost: {
-    box: 'mb-6 flex items-start gap-3 rounded-md border border-rose-500/35 bg-rose-50/80 p-4 dark:border-rose-500/40 dark:bg-rose-950/30',
-    icon: 'mt-0.5 shrink-0 text-rose-600 dark:text-rose-400',
-    title: 'mb-1 font-semibold text-rose-800 dark:text-rose-200',
+    box: 'mb-6 flex items-start gap-3 rounded-2xl border border-lost-border bg-lost-soft p-4 sm:items-center sm:p-5',
+    icon: 'mt-0.5 size-6 shrink-0 text-lost sm:mt-0',
+    title: 'mb-1 font-semibold text-lost-foreground',
   },
   found: {
-    box: 'mb-6 flex items-start gap-3 rounded-md border border-sky-500/35 bg-sky-50/80 p-4 dark:border-sky-500/40 dark:bg-sky-950/30',
-    icon: 'mt-0.5 shrink-0 text-sky-600 dark:text-sky-400',
-    title: 'mb-1 font-semibold text-sky-900 dark:text-sky-200',
+    box: 'mb-6 flex items-start gap-3 rounded-2xl border border-found-border bg-found-soft p-4 sm:items-center sm:p-5',
+    icon: 'mt-0.5 size-6 shrink-0 text-found sm:mt-0',
+    title: 'mb-1 font-semibold text-found-foreground',
   },
 };
 

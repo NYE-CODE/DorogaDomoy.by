@@ -1,5 +1,15 @@
+import type { ReactNode } from 'react';
 import { Link } from 'react-router';
-import { AlertCircle, Calendar, MapPin, MessageCircle, Send } from 'lucide-react';
+import {
+  AlertCircle,
+  Calendar,
+  MapPin,
+  MessageCircle,
+  Palette,
+  PawPrint,
+  Send,
+  User,
+} from 'lucide-react';
 import type { Pet } from '@/entities/pet/model/types';
 import { formatCalendarDate, formatRelativeTime, petStatusSoftPillClass } from '@/shared/lib/pet-helpers';
 import { cn } from '@/shared/ui/utils';
@@ -7,6 +17,7 @@ import { appMessengerCtaSizingClass, appOutlineCtaClass } from '@/shared/styles/
 import { Button } from '@/shared/ui/button';
 import { RewardBadge } from '../../../components/reward-badge';
 import { RevealPhoneButton } from '../../../components/reveal-phone-button';
+import { FavoriteHeartButton } from '../../../components/favorite-heart-button';
 import { PartnerAdSlot } from '@/features/partner-ads/PartnerAdSlot';
 import { formatArchiveReasonLabel } from '@/shared/lib/listing-expiry';
 import { type ArchiveBadgeStyle } from './pet-detail-archive-badge';
@@ -19,92 +30,127 @@ export interface PetDetailSidebarProps {
   onReport: () => void;
 }
 
-export function PetDetailSidebar({ pet, t, archiveBadge, onReport }: PetDetailSidebarProps) {
+function AttrRow({
+  icon,
+  label,
+  value,
+}: {
+  icon: ReactNode;
+  label: string;
+  value: string;
+}) {
   return (
-    <div className="space-y-6">
-      <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
-        <h2 className="typo-h2 mb-6">{t.pet.information}</h2>
-        <div className="space-y-4">
-          <div>
-            <div className="mb-1 text-sm text-muted-foreground">{t.filters.status}</div>
-            <div
-              className={cn(
-                'inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-medium',
-                petStatusSoftPillClass[pet.status],
-              )}
-            >
-              {pet.status === 'searching' ? t.pet.status.searching : t.pet.status.found}
-            </div>
+    <div className="flex items-start gap-3 py-2.5">
+      <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-landing-muted text-muted-foreground">
+        {icon}
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="text-xs text-muted-foreground">{label}</div>
+        <div className="font-medium leading-snug text-foreground">{value}</div>
+      </div>
+    </div>
+  );
+}
+
+export function PetDetailSidebar({ pet, t, archiveBadge, onReport }: PetDetailSidebarProps) {
+  const title =
+    pet.name?.trim() ||
+    [t.pet.animalType[pet.animalType], pet.breed?.trim()].filter(Boolean).join(' · ') ||
+    t.pet.animalType[pet.animalType];
+
+  const colorStr = pet.colors.length
+    ? pet.colors.map((c) => t.pet.color[c]).join(', ')
+    : t.pet.notSpecified;
+
+  return (
+    <aside className="space-y-5 lg:sticky lg:top-24 lg:self-start">
+      <div className="overflow-hidden rounded-3xl border border-border bg-card p-5 shadow-card sm:p-6">
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <h1 className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+            {title}
+          </h1>
+          <FavoriteHeartButton
+            petId={pet.id}
+            size="md"
+            className="border-border bg-landing-muted text-foreground shadow-sm hover:bg-muted"
+          />
+        </div>
+
+        <div className="mb-5 flex flex-wrap items-center gap-2">
+          <span
+            className={cn(
+              'inline-flex items-center rounded-full px-3 py-1 text-sm font-medium',
+              petStatusSoftPillClass[pet.status],
+            )}
+          >
+            {pet.status === 'searching' ? t.pet.status.searching : t.pet.status.found}
+          </span>
+          {pet.status === 'searching' ? <RewardBadge pet={pet} compact /> : null}
+        </div>
+
+        <div className="divide-y divide-border/70">
+          <AttrRow
+            icon={<PawPrint className="size-4" aria-hidden />}
+            label={t.filters.type}
+            value={t.pet.animalType[pet.animalType]}
+          />
+          {pet.breed ? (
+            <AttrRow
+              icon={<PawPrint className="size-4" aria-hidden />}
+              label={t.pet.breedLabel}
+              value={pet.breed}
+            />
+          ) : null}
+          {pet.approximateAge ? (
+            <AttrRow
+              icon={<Calendar className="size-4" aria-hidden />}
+              label={t.pet.ageLabel}
+              value={pet.approximateAge}
+            />
+          ) : null}
+          <AttrRow
+            icon={<User className="size-4" aria-hidden />}
+            label={t.pet.genderLabel}
+            value={t.pet.gender[pet.gender]}
+          />
+          <AttrRow
+            icon={<Palette className="size-4" aria-hidden />}
+            label={t.pet.colorLabel}
+            value={colorStr}
+          />
+        </div>
+
+        <div className="mt-4 space-y-2 border-t border-border pt-4">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <MapPin className="size-4 shrink-0 text-primary" aria-hidden />
+            <span className="min-w-0 truncate">{pet.city}</span>
           </div>
-          {pet.status === 'searching' && (
-            <div>
-              <div className="mb-1 text-sm text-muted-foreground">Вознаграждение</div>
-              <RewardBadge pet={pet} />
-            </div>
-          )}
-          <div>
-            <div className="mb-1 text-sm text-muted-foreground">{t.pet.animalTypeLabel}</div>
-            <div className="font-medium text-foreground">{t.pet.animalType[pet.animalType]}</div>
-          </div>
-          {pet.breed && (
-            <div>
-              <div className="mb-1 text-sm text-muted-foreground">{t.pet.breedLabel}</div>
-              <div className="font-medium text-foreground">{pet.breed}</div>
-            </div>
-          )}
-          <div>
-            <div className="mb-1 text-sm text-muted-foreground">{t.pet.colorLabel}</div>
-            <div className="flex flex-wrap gap-2">
-              {pet.colors.map((c) => (
-                <span
-                  key={c}
-                  className="rounded-full bg-muted px-3 py-1 text-sm text-muted-foreground"
-                >
-                  {t.pet.color[c]}
-                </span>
-              ))}
-            </div>
-          </div>
-          <div>
-            <div className="mb-1 text-sm text-muted-foreground">{t.pet.genderLabel}</div>
-            <div className="font-medium text-foreground">{t.pet.gender[pet.gender]}</div>
-          </div>
-          {pet.approximateAge && (
-            <div>
-              <div className="mb-1 text-sm text-muted-foreground">{t.pet.ageLabel}</div>
-              <div className="font-medium text-foreground">{pet.approximateAge}</div>
-            </div>
-          )}
-          <div className="space-y-2 border-t border-border pt-4">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <MapPin className="size-[18px] shrink-0" aria-hidden />
-              <span>{pet.city}</span>
-            </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Calendar className="size-[18px] shrink-0" aria-hidden />
-              <span>
-                {formatCalendarDate(pet.publishedAt)}
-                <span className="mx-1.5 text-border">?</span>
-                {formatRelativeTime(pet.publishedAt)}
-              </span>
-            </div>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Calendar className="size-4 shrink-0" aria-hidden />
+            <span>
+              {formatCalendarDate(pet.publishedAt)}
+              <span className="mx-1.5 text-border">·</span>
+              {formatRelativeTime(pet.publishedAt)}
+            </span>
           </div>
         </div>
       </div>
 
       {!pet.isArchived && (
-        <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
-          <h2 className="typo-h2 mb-4">{t.pet.contacts}</h2>
-          <div className="mb-6 flex items-center gap-3">
+        <div className="overflow-hidden rounded-3xl border border-border bg-card p-5 shadow-card sm:p-6">
+          <h2 className="font-display mb-4 text-lg font-semibold text-foreground">
+            {t.pet.contacts}
+          </h2>
+          <div className="mb-5 flex items-center gap-3">
             <img
-              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(pet.authorName)}&size=48`}
+              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(pet.authorName)}&size=48&background=1a3026&color=f5f5f4`}
               alt=""
-              className="size-12 rounded-full object-cover"
+              className="size-12 rounded-full object-cover ring-2 ring-border"
             />
-            <div>
+            <div className="min-w-0">
               <Link
                 to={`/user/${pet.authorId}`}
-                className="font-medium text-foreground transition-colors hover:text-primary"
+                className="block truncate font-medium text-foreground transition-colors hover:text-primary"
               >
                 {pet.authorName}
               </Link>
@@ -145,8 +191,6 @@ export function PetDetailSidebar({ pet, t, archiveBadge, onReport }: PetDetailSi
                 </a>
               </Button>
             )}
-          </div>
-          <div className="mt-6 border-t border-border pt-6">
             <Button className={cn(appOutlineCtaClass, 'w-full')} asChild>
               <Link to={`/user/${pet.authorId}`}>{t.petDetail.viewAuthorAds}</Link>
             </Button>
@@ -155,12 +199,14 @@ export function PetDetailSidebar({ pet, t, archiveBadge, onReport }: PetDetailSi
       )}
 
       {pet.isArchived && (
-        <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
-          <div className="rounded-lg bg-muted/50 p-4 text-center">
+        <div className="overflow-hidden rounded-3xl border border-border bg-card p-5 shadow-card sm:p-6">
+          <div className="rounded-2xl bg-landing-muted/80 p-4 text-center">
             <p className="mb-3 text-sm text-muted-foreground">{t.petDetail.contactsHiddenArchived}</p>
             {archiveBadge && (
               <div className="flex justify-center">
-                <div className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border ${archiveBadge.bgColor} ${archiveBadge.borderColor} ${archiveBadge.textColor}`}>
+                <div
+                  className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 ${archiveBadge.bgColor} ${archiveBadge.borderColor} ${archiveBadge.textColor}`}
+                >
                   {archiveBadge.icon}
                   <span className="text-sm">
                     {formatArchiveReasonLabel(pet.archiveReason, t.myAds.expiredArchived)}
@@ -174,18 +220,14 @@ export function PetDetailSidebar({ pet, t, archiveBadge, onReport }: PetDetailSi
 
       <PartnerAdSlot placement="pet-detail-sidebar" compact />
 
-      <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
-        <Button
-          type="button"
-          variant="ghost"
-          size="lg"
-          className="h-auto w-full gap-2 py-3 text-muted-foreground hover:text-destructive"
-          onClick={onReport}
-        >
-          <AlertCircle className="size-5" aria-hidden />
-          {t.petDetail.report}
-        </Button>
-      </div>
-    </div>
+      <button
+        type="button"
+        onClick={onReport}
+        className="inline-flex w-full items-center justify-center gap-2 rounded-2xl px-3 py-3 text-sm text-muted-foreground transition-colors hover:bg-card hover:text-destructive"
+      >
+        <AlertCircle className="size-4" aria-hidden />
+        {t.petDetail.report}
+      </button>
+    </aside>
   );
 }

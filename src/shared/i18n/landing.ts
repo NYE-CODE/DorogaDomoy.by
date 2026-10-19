@@ -12,6 +12,8 @@ import { landingSheltersLocales } from './landing/shelters';
 import { landingHeaderLocales } from './landing/header';
 import { landingFooterLocales } from './landing/footer';
 import { landingMobileAppLocales } from './landing/mobileApp';
+import { landingPetsNearbyLocales } from './landing/petsNearby';
+import { landingHowItWorksLocales } from './landing/howItWorks';
 
 export const landingLocales = {
   ru: {
@@ -21,6 +23,8 @@ export const landingLocales = {
     faq: landingFaqLocales.ru,
     help: landingHelpLocales.ru,
     petsFeature: landingPetsFeatureLocales.ru,
+    petsNearby: landingPetsNearbyLocales.ru,
+    howItWorks: landingHowItWorksLocales.ru,
     mobileApp: landingMobileAppLocales.ru,
     announcements: landingAnnouncementsLocales.ru,
     shelterPets: landingShelterPetsLocales.ru,
@@ -36,6 +40,8 @@ export const landingLocales = {
     faq: landingFaqLocales.be,
     help: landingHelpLocales.be,
     petsFeature: landingPetsFeatureLocales.be,
+    petsNearby: landingPetsNearbyLocales.be,
+    howItWorks: landingHowItWorksLocales.be,
     mobileApp: landingMobileAppLocales.be,
     announcements: landingAnnouncementsLocales.be,
     shelterPets: landingShelterPetsLocales.be,
@@ -51,6 +57,8 @@ export const landingLocales = {
     faq: landingFaqLocales.en,
     help: landingHelpLocales.en,
     petsFeature: landingPetsFeatureLocales.en,
+    petsNearby: landingPetsNearbyLocales.en,
+    howItWorks: landingHowItWorksLocales.en,
     mobileApp: landingMobileAppLocales.en,
     announcements: landingAnnouncementsLocales.en,
     shelterPets: landingShelterPetsLocales.en,

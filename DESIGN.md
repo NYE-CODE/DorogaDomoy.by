@@ -26,7 +26,11 @@ colors:
   text-disabled: "#9ca3af"
   bg-base: "#ffffff"
   bg-subtle: "#f3f4f6"
-  bg-landing-dark: "#15120f"
+  bg-landing: "#f9f8f6"
+  bg-landing-muted: "#f1f0ed"
+  bg-landing-dark: "#1a3026"
+  on-landing-dark: "#f5f5f4"
+  on-landing-dark-muted: "rgba(245, 245, 244, 0.72)"
   border-default: "rgba(0, 0, 0, 0.06)"
   border-strong: "#eef0f3"
   track-muted: "#e5e7eb"
@@ -51,6 +55,7 @@ rounded:
   md: "6px"
   lg: "8px"
   2xl: "16px"
+  3xl: "20px"
   full: "9999px"
 spacing:
   sm: "8px"
@@ -86,11 +91,11 @@ components:
 - Четыре регистра: пропал / найден / приют / адресник
 - Круглый медальон 3px как атом фото и маркера карты
 - Manrope + Inter; `typo-engraved` точечно
-- Радиусы: `rounded-lg` (8) для controls, `rounded-2xl` (16) для крупных поверхностей
+- Радиусы: `rounded-lg` (8) для controls, `rounded-2xl` (16) для карточек, `rounded-3xl` (20) для search / hero media
 
 ## Colors
 
-Палитра: тёплый бренд-оранж + нейтрали + четыре сценарных регистра.
+Палитра: тёплый бренд-оранж + нейтрали + четыре сценарных регистра + лесной dark лендинга.
 
 ### Primary
 - **Дорога домой** (`#ff9800`): главный CTA, шаги визарда, FAB, пунктирный маршрут. Не смешивать со сценарным акцентом на одном элементе.
@@ -103,7 +108,9 @@ components:
 
 ### Neutral
 - Текст: `#111827` / `#374151` / muted `#5c5c6b` (не светлее для контента).
-- Фоны: белый base, subtle `#f3f4f6`; лендинг dark `#15120f`.
+- Фоны app: белый base, subtle `#f3f4f6`.
+- Лендинг: тёплый off-white `#f9f8f6` / muted `#f1f0ed` (не cream `#F4F1EA`); тёмный лесной `#1a3026` для карты и футера. Текст на dark: `#f5f5f4` / muted `rgba(245,245,244,0.72)`.
+- **Правило:** `landing-dark` ≠ `scenario-shelter`. Emerald остаётся только для бейджей/ободков приюта.
 
 ### Named Rules
 **The One CTA Rule.** На экране один `variant="default"` CTA брендового оранжа размера `cta`; остальное — outline/ghost.
@@ -133,10 +140,13 @@ Mobile-first от 360px; граница mobile/desktop — `md` / `useIsMobile()
 
 В основном плоские поверхности и тонкие границы (`--color-border-default`). Лёгкие тени допустимы на модалках и карточке Telegram-auth; без hard offset и glow.
 
+На лендинге: `--shadow-card` для карточек/панелей, `--shadow-search` для search bar (классы `shadow-card` / `shadow-search`). Оттенок тени чуть тянет в лесной, не в чистый чёрный.
+
 ## Shapes
 
 - Controls: `rounded-lg` (8px)
 - Cards / modals / map popups: `rounded-2xl` (16px)
+- Search bar / крупные hero-поверхности: `rounded-3xl` (20px)
 - Медальон и маркеры: полный круг + ободок 3px цвета регистра
 - «Ушко» жетона — только в церемониальных местах (QR-жетон, success, empty), не в списках и не на карте
 
@@ -151,10 +161,12 @@ Mobile-first от 360px; граница mobile/desktop — `md` / `useIsMobile()
 - Круг + 3px scenario/medallion border; та же геометрия, что маркер карты (`PetMedallion`)
 
 ### Cards / Containers
-- Крупные поверхности `rounded-2xl`; без вложенных «карточка в карточке» без нужды
+- Крупные поверхности `rounded-2xl` + на лендинге `shadow-card` (`landingPanel`); без вложенных «карточка в карточке» без нужды
+- Тёмные секции лендинга: `landingSectionDark` (`bg-landing-dark`)
 
 ### Inputs
 - `rounded-lg`, фон `--color-bg-input`, focus-visible ring через примитивы
+- Hero search: `landingSearchShell` (`rounded-3xl` + `shadow-search`)
 
 ## Do's and Don'ts
 

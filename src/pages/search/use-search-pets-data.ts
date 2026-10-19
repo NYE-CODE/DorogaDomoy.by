@@ -83,9 +83,6 @@ export function useSearchPetsData(view: SearchView, filters: FilterState) {
       if (currentFilters.breed.trim()) {
         params.breed = currentFilters.breed.trim();
       }
-      if (currentFilters.days !== 'all') {
-        params.days = currentFilters.days;
-      }
       if (currentFilters.searchQuery.trim()) {
         params.search = currentFilters.searchQuery.trim();
       }
@@ -110,15 +107,18 @@ export function useSearchPetsData(view: SearchView, filters: FilterState) {
         console.warn('[SearchPage] loadMapPets failed', err);
       })
       .finally(() => {
-        if (showLoading) setDataLoading(false);
+        if (showLoading && requestId === mapRequestSeqRef.current) {
+          setDataLoading(false);
+        }
       });
   }, []);
 
-  const didInitRef = useRef(false);
+  /** Первая загрузка списка. Без didInitRef — иначе Strict Mode абортит первый запрос и второй не стартует. */
   useEffect(() => {
-    if (didInitRef.current) return;
-    didInitRef.current = true;
-    loadAllPets(true);
+    void loadAllPets(true);
+    return () => {
+      listRequestAbortRef.current?.abort();
+    };
   }, [loadAllPets]);
 
   useEffect(() => {
@@ -129,9 +129,11 @@ export function useSearchPetsData(view: SearchView, filters: FilterState) {
       const now = Date.now();
       if (now - lastRefresh < THROTTLE_MS) return;
       lastRefresh = now;
-      const petsPromise =
-        viewRef.current === 'main' && mapBoundsRef.current ? loadMapPets(false) : loadAllPets(false);
-      petsPromise.then(() => {});
+      // Список всегда обновляем allPets; карту — только если есть bounds.
+      void loadAllPets(false);
+      if (viewRef.current === 'main' && mapBoundsRef.current) {
+        void loadMapPets(false);
+      }
     };
 
     const onVisibility = () => {
@@ -152,16 +154,16 @@ export function useSearchPetsData(view: SearchView, filters: FilterState) {
 
   useEffect(() => {
     if (view !== 'main') {
-      loadAllPets(false).then(() => {});
+      void loadAllPets(false);
       return;
     }
-    if (mapBoundsRef.current) loadMapPets(false).then(() => {});
+    if (mapBoundsRef.current) void loadMapPets(false);
   }, [view, loadMapPets, loadAllPets]);
 
   useEffect(() => {
     if (view !== 'main' || !mapBounds) return;
     const timer = setTimeout(() => {
-      loadMapPets(false).then(() => setMapPetsLoaded(true));
+      void loadMapPets(false).then(() => setMapPetsLoaded(true));
     }, 300);
     return () => clearTimeout(timer);
   }, [view, mapBounds, loadMapPets]);
@@ -169,17 +171,16 @@ export function useSearchPetsData(view: SearchView, filters: FilterState) {
   useEffect(() => {
     return () => {
       mapRequestAbortRef.current?.abort();
-      listRequestAbortRef.current?.abort();
     };
   }, []);
 
   useEffect(() => {
     if (view !== 'main' || !mapBoundsRef.current) return;
     const timer = setTimeout(() => {
-      loadMapPets(false).then(() => {});
+      void loadMapPets(false);
     }, 300);
     return () => clearTimeout(timer);
-  }, [view, filters.animalType, filters.breed, filters.days, filters.searchQuery, filters.statuses, loadMapPets]);
+  }, [view, filters.animalType, filters.breed, filters.searchQuery, filters.statuses, loadMapPets]);
 
   const listMayBeTruncated = allPets.length >= SEARCH_PETS_FETCH_LIMIT;
   const mapMayBeTruncated = mapPets.length >= SEARCH_PETS_FETCH_LIMIT;

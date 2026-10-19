@@ -13,6 +13,7 @@ import {
   landingContainerReadable,
   landingH2,
   landingLeadCenter,
+  landingMuted,
   landingPanel,
   landingSectionBase,
   landingSectionHeader,
@@ -68,7 +69,7 @@ export function FAQ() {
   }, [apiItems, locale, t.landing.faq.items]);
 
   return (
-    <section id="faq" className={`${landingSectionBase} ${landingSectionY}`}>
+    <section id="faq" className={cn(landingSectionBase, landingSectionY)}>
       <div className={landingContainerReadable}>
         <div className={landingSectionHeader}>
           <h2 className={landingH2}>{t.landing.faq.title}</h2>
@@ -87,20 +88,19 @@ export function FAQ() {
             <p className="sr-only">{t.landing.faq.loading}</p>
           </div>
         ) : (
-          <Accordion type="single" collapsible className="space-y-2.5">
+          <Accordion type="single" collapsible className="space-y-3">
             {faqs.map((faq, index) => (
               <AccordionItem
                 key={`faq-${index}`}
                 value={`item-${index}`}
-                className={cn(
-                  landingPanel,
-                  "overflow-hidden border-b-0 px-1 data-[state=open]:border-primary/30",
-                )}
+                className={cn(landingPanel, "overflow-hidden border-b-0 px-1")}
               >
-                <AccordionTrigger className="text-left text-base font-semibold text-foreground hover:no-underline py-4 px-4 md:px-5 [&[data-state=open]]:pb-2">
+                <AccordionTrigger className="px-4 py-4 text-left text-base font-semibold text-foreground hover:no-underline md:px-5 [&[data-state=open]]:pb-2">
                   <span className="pr-2 leading-snug">{faq.q}</span>
                 </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground text-sm md:text-base leading-relaxed px-4 md:px-5 pb-5 pt-0 whitespace-pre-wrap">
+                <AccordionContent
+                  className={cn(landingMuted, "whitespace-pre-wrap px-4 pb-5 pt-0 md:px-5 md:text-base")}
+                >
                   {faq.a}
                 </AccordionContent>
               </AccordionItem>
