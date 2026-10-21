@@ -1,7 +1,8 @@
 import { Link } from 'react-router';
 import { Building2, Globe, Mail, MapPin, MessageCircle, Send } from 'lucide-react';
 import type { ShelterResponse } from '@/shared/api/client';
-import { appMessengerCtaSizingClass, appOutlineCtaClass } from '@/shared/styles/cta-classes';
+import { appMessengerCtaSizingClass } from '@/shared/styles/cta-classes';
+import { surfaceCtaOutline, surfacePanel } from '@/shared/styles/surface-classes';
 import { shelterLogoSrc } from '@/shared/lib/shelter-public';
 import { Button } from '@/shared/ui/button';
 import { cn } from '@/shared/ui/utils';
@@ -32,12 +33,14 @@ export function ShelterPetDetailContactsSection({
   const shelterLogoUrl = shelter ? shelterLogoSrc(shelter.logo_url) : undefined;
 
   return (
-    <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
-      <h2 className="typo-h2 mb-4">{t.landing.shelters.detailContacts}</h2>
+    <div className={cn(surfacePanel, 'p-5 sm:p-6')}>
+      <h2 className="mb-4 font-display text-lg font-semibold text-foreground sm:text-xl">
+        {t.landing.shelters.detailContacts}
+      </h2>
       {shelter ? (
-        <div className="mb-4 rounded-md border border-border/70 bg-muted/30 p-3 text-sm">
+        <div className="mb-5 rounded-2xl bg-landing-muted/60 p-3.5 text-sm">
           <div className="flex gap-3">
-            <div className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border/60 bg-background">
+            <div className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-card">
               {shelterLogoUrl ? (
                 <img
                   src={shelterLogoUrl}
@@ -49,14 +52,14 @@ export function ShelterPetDetailContactsSection({
               )}
             </div>
             <div className="min-w-0 flex-1 space-y-1.5">
-              <p className="font-semibold leading-snug">{shelter.name}</p>
+              <p className="font-semibold leading-snug text-foreground">{shelter.name}</p>
               <p className="flex items-start gap-1.5 text-muted-foreground">
-                <MapPin className="size-4 shrink-0 mt-0.5 text-muted-foreground" aria-hidden />
-                <span>{shelterLocationLine || '?'}</span>
+                <MapPin className="mt-0.5 size-4 shrink-0 text-shelter" aria-hidden />
+                <span>{shelterLocationLine || '—'}</span>
               </p>
               <Link
                 to={`/shelters/${shelter.id}`}
-                className="inline-flex items-center gap-1 font-medium text-primary hover:text-primary/80"
+                className="inline-flex items-center gap-1 font-medium text-shelter transition-colors hover:text-shelter-foreground"
               >
                 {t.backQuickMenu.shelterPage}
               </Link>
@@ -67,33 +70,43 @@ export function ShelterPetDetailContactsSection({
       <div className="space-y-3">
         {displayPhone ? <RevealPhoneButton phone={displayPhone} /> : null}
         {displayTelegram ? (
-          <Button className={cn(appMessengerCtaSizingClass, 'w-full border-0 bg-telegram text-white hover:bg-telegram-hover')} asChild>
-            <a href={`https://t.me/${displayTelegram.replace('@', '')}`} target="_blank" rel="noopener noreferrer">
-              <Send className="size-5" />
+          <Button
+            className={cn(appMessengerCtaSizingClass, 'w-full rounded-full border-0 bg-telegram text-white hover:bg-telegram-hover')}
+            asChild
+          >
+            <a
+              href={`https://t.me/${displayTelegram.replace('@', '')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Send className="size-5" aria-hidden />
               Telegram
             </a>
           </Button>
         ) : null}
         {displayViber ? (
-          <Button className={cn(appMessengerCtaSizingClass, 'w-full border-0 bg-viber text-white hover:bg-viber-hover')} asChild>
+          <Button
+            className={cn(appMessengerCtaSizingClass, 'w-full rounded-full border-0 bg-viber text-white hover:bg-viber-hover')}
+            asChild
+          >
             <a href={`viber://chat?number=${displayViber.replace('+', '')}`}>
-              <MessageCircle className="size-5" />
+              <MessageCircle className="size-5" aria-hidden />
               Viber
             </a>
           </Button>
         ) : null}
         {displayEmail ? (
-          <Button className={cn(appOutlineCtaClass, 'w-full')} asChild>
+          <Button className={cn(surfaceCtaOutline, 'w-full')} asChild>
             <a href={`mailto:${displayEmail}`}>
-              <Mail className="size-5" />
+              <Mail className="size-5" aria-hidden />
               {displayEmail}
             </a>
           </Button>
         ) : null}
         {displayWebsiteUrl ? (
-          <Button className={cn(appOutlineCtaClass, 'w-full')} asChild>
+          <Button className={cn(surfaceCtaOutline, 'w-full')} asChild>
             <a href={displayWebsiteUrl} target="_blank" rel="noopener noreferrer">
-              <Globe className="size-5" />
+              <Globe className="size-5" aria-hidden />
               Открыть сайт
             </a>
           </Button>
@@ -103,7 +116,10 @@ export function ShelterPetDetailContactsSection({
             {shelter ? (
               <>
                 У организации нет прямых контактов — напишите через{' '}
-                <Link to={`/shelters/${shelter.id}`} className="font-medium text-primary underline-offset-4 hover:underline">
+                <Link
+                  to={`/shelters/${shelter.id}`}
+                  className="font-medium text-shelter underline-offset-4 hover:underline"
+                >
                   {t.backQuickMenu.shelterPage}
                 </Link>
                 .

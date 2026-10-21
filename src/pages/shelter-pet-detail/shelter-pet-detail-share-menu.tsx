@@ -45,13 +45,14 @@ export function ShelterPetDetailShareMenu({
       </Button>
 
       {showShareMenu ? (
-        <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-[min(70vh,520px)] overflow-hidden overflow-y-auto rounded-md border border-border bg-card shadow-lg">
-          <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border/60 bg-card px-4 py-2.5 dark:border-border">
+        <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-[min(70vh,520px)] overflow-hidden overflow-y-auto rounded-2xl border border-border bg-card shadow-card">
+          <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border/60 bg-card px-4 py-2.5">
             <span className="text-sm font-semibold text-foreground">{t.petDetail.share}</span>
             <button
               type="button"
               onClick={() => setShowShareMenu(false)}
-              className="rounded-lg p-1 hover:bg-accent dark:hover:bg-accent"
+              className="inline-flex size-11 items-center justify-center rounded-lg hover:bg-landing-muted"
+              aria-label={t.common.close}
             >
               <X className="h-4 w-4 text-muted-foreground/80" />
             </button>

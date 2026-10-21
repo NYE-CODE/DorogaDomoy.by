@@ -10,9 +10,12 @@ export const iconButtonClass = `${interactiveTransitionClass} ${focusRingClass} 
 
 export const ghostSurfaceHoverClass = 'hover:bg-muted/60 dark:hover:bg-muted/40';
 
-export const pageSurfaceClass = 'bg-muted/30 dark:bg-background';
+/** Фон страницы — синхронно с surfacePage. */
+export const pageSurfaceClass = 'bg-landing';
 
+/** Панель контента — синхронно с surfacePanel. */
 export const cardSurfaceClass =
-  'bg-card border border-border rounded-md shadow-sm';
+  'overflow-hidden rounded-2xl border border-border bg-card shadow-card';
 
-export const mutedPanelClass = 'bg-muted/50 dark:bg-muted/30 border border-border/60 rounded-md';
+/** Мягкий колодец — синхронно с surfaceMutedWell. */
+export const mutedPanelClass = 'overflow-hidden rounded-3xl bg-landing-muted/80';

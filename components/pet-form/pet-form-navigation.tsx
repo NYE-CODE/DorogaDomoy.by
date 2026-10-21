@@ -1,6 +1,8 @@
 import { ChevronLeft } from 'lucide-react';
 import type { PetFormData } from './pet-form-types';
 import type { PetFormT } from './pet-form-validation';
+import { cn } from '@/shared/lib/classNames';
+import { surfaceCtaPrimary } from '@/shared/styles/surface-classes';
 
 export interface PetFormNavigationProps {
   variant: 'modal' | 'page';
@@ -29,17 +31,28 @@ export function PetFormNavigation({
   onNext,
   onTryProceed,
 }: PetFormNavigationProps) {
+  const primaryLabel =
+    step < totalSteps
+      ? variant === 'page'
+        ? t.petForm.nextStep
+        : t.common.next
+      : submitting
+        ? t.common.loading
+        : isEditing
+          ? t.common.save
+          : t.petForm.createAd;
+
   return (
-    <div className="flex items-center justify-between mt-8 pt-5 border-t border-border/60 dark:border-border">
+    <div className="mt-8 flex items-center justify-between gap-3 border-t border-border/60 pt-6">
       {variant === 'page' ? (
         <div />
       ) : step > 1 ? (
         <button
           type="button"
           onClick={onBack}
-          className="flex items-center gap-1.5 px-4 py-3 text-sm text-muted-foreground hover:bg-accent dark:hover:bg-accent rounded-lg transition-colors"
+          className="inline-flex items-center gap-1.5 rounded-full px-4 py-3 text-sm text-muted-foreground transition-colors hover:bg-landing-muted hover:text-foreground"
         >
-          <ChevronLeft className="w-4 h-4" />
+          <ChevronLeft className="size-4" aria-hidden />
           {t.common.back}
         </button>
       ) : (
@@ -55,17 +68,20 @@ export function PetFormNavigation({
             onTryProceed();
             if (canProceed) onNext();
           }}
-          className={`flex items-center justify-center gap-1.5 px-6 py-3 text-white font-medium rounded-lg transition-colors ${variant === 'page' ? 'w-full h-12 bg-primary hover:bg-primary-hover text-lg' : 'bg-primary hover:bg-primary/90 text-sm'}`}
+          className={cn(
+            surfaceCtaPrimary,
+            variant === 'page' ? 'w-full' : 'w-auto min-w-[8rem] px-6 text-sm',
+          )}
         >
-          {variant === 'page' ? t.petForm.nextStep : t.common.next}
+          {primaryLabel}
         </button>
       ) : (
         <button
           type="submit"
           disabled={submitting || (!isEditing && !formData.agreeToPrivacy)}
-          className="w-full h-12 bg-primary hover:bg-primary-hover text-white text-lg font-medium rounded-lg disabled:bg-muted dark:disabled:bg-muted/80 disabled:cursor-not-allowed transition-colors"
+          className={cn(surfaceCtaPrimary, 'w-full')}
         >
-          {submitting ? t.common.loading : isEditing ? t.common.save : t.petForm.createAd}
+          {primaryLabel}
         </button>
       )}
     </div>

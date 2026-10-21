@@ -5,57 +5,56 @@ export type ShelterPetMobileTab = 'about' | 'fundraising' | 'fundraising_history
 export interface ShelterPetDetailMobileTabsProps {
   mobileTab: ShelterPetMobileTab;
   setMobileTab: (tab: ShelterPetMobileTab) => void;
+  aboutLabel?: string;
+  fundraisingLabel?: string;
+  historyLabel?: string;
 }
 
-export function ShelterPetDetailMobileTabs({ mobileTab, setMobileTab }: ShelterPetDetailMobileTabsProps) {
+const DEFAULT_LABELS = {
+  about: 'О питомце',
+  fundraising: 'Сбор',
+  history: 'История сборов',
+} as const;
+
+export function ShelterPetDetailMobileTabs({
+  mobileTab,
+  setMobileTab,
+  aboutLabel = DEFAULT_LABELS.about,
+  fundraisingLabel = DEFAULT_LABELS.fundraising,
+  historyLabel = DEFAULT_LABELS.history,
+}: ShelterPetDetailMobileTabsProps) {
+  const tabs: { id: ShelterPetMobileTab; label: string }[] = [
+    { id: 'about', label: aboutLabel },
+    { id: 'fundraising', label: fundraisingLabel },
+    { id: 'fundraising_history', label: historyLabel },
+  ];
+
   return (
     <div
-      className="flex gap-1 rounded-md border border-border bg-background p-1 lg:hidden"
+      className="inline-flex w-full rounded-full border border-border bg-card p-1 shadow-sm lg:hidden"
       role="tablist"
       aria-label="Разделы карточки питомца"
     >
-      <button
-        type="button"
-        role="tab"
-        aria-selected={mobileTab === 'about'}
-        onClick={() => setMobileTab('about')}
-        className={cn(
-          'min-w-0 flex-1 rounded-lg px-2 py-2.5 text-center text-xs font-medium transition-colors sm:text-sm',
-          mobileTab === 'about'
-            ? 'bg-primary text-primary-foreground'
-            : 'text-muted-foreground hover:bg-muted',
-        )}
-      >
-        О питомце
-      </button>
-      <button
-        type="button"
-        role="tab"
-        aria-selected={mobileTab === 'fundraising'}
-        onClick={() => setMobileTab('fundraising')}
-        className={cn(
-          'min-w-0 flex-1 rounded-lg px-2 py-2.5 text-center text-xs font-medium transition-colors sm:text-sm',
-          mobileTab === 'fundraising'
-            ? 'bg-primary text-primary-foreground'
-            : 'text-muted-foreground hover:bg-muted',
-        )}
-      >
-        Сбор
-      </button>
-      <button
-        type="button"
-        role="tab"
-        aria-selected={mobileTab === 'fundraising_history'}
-        onClick={() => setMobileTab('fundraising_history')}
-        className={cn(
-          'min-w-0 flex-1 rounded-lg px-2 py-2.5 text-center text-xs font-medium transition-colors sm:text-sm',
-          mobileTab === 'fundraising_history'
-            ? 'bg-primary text-primary-foreground'
-            : 'text-muted-foreground hover:bg-muted',
-        )}
-      >
-        История сборов
-      </button>
+      {tabs.map(({ id, label }) => {
+        const selected = mobileTab === id;
+        return (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            aria-selected={selected}
+            onClick={() => setMobileTab(id)}
+            className={cn(
+              'min-w-0 flex-1 rounded-full px-2.5 py-2.5 text-center text-xs font-medium transition-colors sm:text-sm',
+              selected
+                ? 'bg-landing-dark text-on-landing-dark shadow-sm'
+                : 'text-muted-foreground hover:text-foreground',
+            )}
+          >
+            <span className="line-clamp-1">{label}</span>
+          </button>
+        );
+      })}
     </div>
   );
 }

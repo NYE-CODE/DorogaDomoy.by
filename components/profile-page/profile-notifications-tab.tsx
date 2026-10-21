@@ -2,6 +2,12 @@ import { Bell, BellOff, Check, Copy, ExternalLink, Link2, MapPin, Save, Send, X 
 import { LocationPicker } from '../location-picker';
 import type { NotificationSettingsData } from '../../api/client';
 import type { useAuth } from '../../context/AuthContext';
+import { cn } from '@/shared/lib/classNames';
+import {
+  surfaceCtaOutline,
+  surfaceCtaPrimary,
+  surfaceSelectRow,
+} from '@/shared/styles/surface-classes';
 
 type AuthUser = ReturnType<typeof useAuth>['user'];
 
@@ -39,6 +45,46 @@ export interface ProfileNotificationsTabProps {
   onSaveNotifSettings: () => void;
 }
 
+function ToggleSwitch({
+  checked,
+  disabled,
+}: {
+  checked: boolean;
+  disabled?: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        'relative h-6 w-11 rounded-full transition-colors duration-200',
+        checked ? 'bg-primary' : 'bg-muted',
+        disabled && 'opacity-60',
+      )}
+      aria-hidden
+    >
+      <div
+        className={cn(
+          'absolute top-0.5 left-0.5 size-5 rounded-full bg-card shadow transition-transform duration-200',
+          checked ? 'translate-x-5' : 'translate-x-0',
+        )}
+      />
+    </div>
+  );
+}
+
+function SectionCard({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cn('rounded-2xl border border-border bg-card p-5 sm:p-6', className)}>
+      {children}
+    </div>
+  );
+}
+
 export function ProfileNotificationsTab({
   user,
   t,
@@ -68,105 +114,161 @@ export function ProfileNotificationsTab({
   onToggleSimilarMatches,
   onSaveNotifSettings,
 }: ProfileNotificationsTabProps) {
+  const radiusPct = ((Number.isFinite(localRadius) ? localRadius : 1) - 1) / 9 * 100;
+  const watchPct = ((Number.isFinite(localWatchRadius) ? localWatchRadius : 5) - 1) / 19 * 100;
+
   return (
     <div className="space-y-6">
-      <div className="border border-gray-200 dark:border-gray-700 rounded-md p-6">
-        <h3 className="font-bold text-black dark:text-white mb-2 flex items-center gap-2">
-          <Send className="w-5 h-5 text-[#FF9800]" />
+      <SectionCard>
+        <h3 className="mb-2 flex items-center gap-2 font-semibold text-foreground">
+          <Send className="size-5 text-primary" aria-hidden />
           {t.profile.telegram}
         </h3>
         {isTelegramLinked ? (
-          <div className="mt-4 bg-orange-50 dark:bg-orange-950/20 border border-[#FF9800] rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-[#FF9800] rounded-full flex items-center justify-center shrink-0">
-                  <Send className="w-5 h-5 text-white" />
+          <div className="mt-4 rounded-2xl border border-primary/25 bg-primary/5 p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary text-landing-dark">
+                  <Send className="size-5" aria-hidden />
                 </div>
-                <div>
-                  <div className="font-bold text-black dark:text-white">@{user?.telegramUsername}</div>
+                <div className="min-w-0">
+                  <div className="truncate font-semibold text-foreground">@{user?.telegramUsername}</div>
                   <div className="text-sm text-muted-foreground">
-                    {user?.telegramLinkedAt ? new Date(user.telegramLinkedAt).toLocaleDateString('ru-RU') : ''}
+                    {user?.telegramLinkedAt
+                      ? new Date(user.telegramLinkedAt).toLocaleDateString('ru-RU')
+                      : ''}
                   </div>
                 </div>
               </div>
-              <button type="button" onClick={() => void onUnlink()} className="text-red-600 hover:text-red-700 font-medium flex items-center gap-1">
-                <X className="w-4 h-4" />
+              <button
+                type="button"
+                onClick={() => void onUnlink()}
+                className="inline-flex shrink-0 items-center gap-1 font-medium text-destructive hover:underline"
+              >
+                <X className="size-4" aria-hidden />
                 {t.profile.unlink}
               </button>
             </div>
           </div>
         ) : linkCode ? (
-          <div className="mt-4 space-y-4 border border-primary/20 bg-blue-50/50 dark:bg-blue-900/10 rounded-lg p-4">
-            <p className="text-sm"><span className="font-semibold">1.</span> {t.profile.openBot} <a href={botUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-primary underline inline-flex items-center gap-1">@{botUrl.split('/').pop()} <ExternalLink className="w-3 h-3" /></a></p>
-            <p className="text-sm"><span className="font-semibold">2.</span> {t.profile.sendCommand}</p>
+          <div className="mt-4 space-y-4 rounded-2xl border border-primary/20 bg-primary/5 p-4">
+            <p className="text-sm">
+              <span className="font-semibold">1.</span> {t.profile.openBot}{' '}
+              <a
+                href={botUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 font-semibold text-primary underline"
+              >
+                @{botUrl.split('/').pop()} <ExternalLink className="size-3" aria-hidden />
+              </a>
+            </p>
+            <p className="text-sm">
+              <span className="font-semibold">2.</span> {t.profile.sendCommand}
+            </p>
             <div className="flex items-center gap-2">
-              <code className="flex-1 bg-card border border-primary/20 rounded-lg px-4 py-2.5 text-base font-mono font-bold text-center">/link {linkCode}</code>
-              <button type="button" onClick={onCopyCode} className="shrink-0 p-2.5 bg-card border border-primary/20 rounded-lg hover:bg-primary/10 transition-colors">{codeCopied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4 text-primary" />}</button>
+              <code className="flex-1 rounded-xl border border-primary/20 bg-card px-4 py-2.5 text-center font-mono text-base font-bold">
+                /link {linkCode}
+              </code>
+              <button
+                type="button"
+                onClick={onCopyCode}
+                className="shrink-0 rounded-xl border border-primary/20 bg-card p-2.5 transition-colors hover:bg-primary/10"
+              >
+                {codeCopied ? (
+                  <Check className="size-4 text-primary" aria-hidden />
+                ) : (
+                  <Copy className="size-4 text-primary" aria-hidden />
+                )}
+              </button>
             </div>
             <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground"><span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-pulse inline-block mr-1" /> {t.profile.waiting}</span>
-              <span className="font-mono text-gray-500">{formatTime(timeLeft)}</span>
+              <span className="text-muted-foreground">
+                <span className="mr-1 inline-block size-1.5 animate-pulse rounded-full bg-primary" />{' '}
+                {t.profile.waiting}
+              </span>
+              <span className="font-mono text-muted-foreground">{formatTime(timeLeft)}</span>
             </div>
             <div className="flex gap-2">
-              <button type="button" onClick={onCancelLinking} className="flex-1 px-3 py-3 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">{t.common.cancel}</button>
-              <button type="button" onClick={() => void onRequestLink()} className="flex-1 px-3 py-3 text-sm text-primary border border-primary/40 rounded-lg hover:bg-primary/10 transition-colors">{t.profile.newCode}</button>
+              <button type="button" onClick={onCancelLinking} className={cn(surfaceCtaOutline, 'flex-1 text-sm')}>
+                {t.common.cancel}
+              </button>
+              <button
+                type="button"
+                onClick={() => void onRequestLink()}
+                className={cn(surfaceCtaOutline, 'flex-1 border-primary/40 text-primary text-sm hover:bg-primary/10')}
+              >
+                {t.profile.newCode}
+              </button>
             </div>
           </div>
         ) : (
-          <button type="button" onClick={() => void onRequestLink()} disabled={isLinking} className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 border border-[#FF9800] text-[#FF9800] rounded-lg hover:bg-orange-50 dark:hover:bg-orange-950/20 transition-colors disabled:opacity-70">
-            <Link2 className="w-4 h-4" /> {t.profile.linkTelegram}
+          <button
+            type="button"
+            onClick={() => void onRequestLink()}
+            disabled={isLinking}
+            className={cn(surfaceCtaOutline, 'mt-4 border-primary/50 text-primary hover:bg-primary/10')}
+          >
+            <Link2 className="size-4" aria-hidden /> {t.profile.linkTelegram}
           </button>
         )}
-      </div>
+      </SectionCard>
 
-      <div className="border border-gray-200 dark:border-gray-700 rounded-md p-6">
-        <div className="flex items-start gap-3 mb-4">
-          <Bell className="w-5 h-5 text-[#FF9800] mt-0.5 shrink-0" />
+      <SectionCard>
+        <div className="mb-4 flex items-start gap-3">
+          <Bell className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />
           <div>
-            <h3 className="font-bold text-black dark:text-white mb-1">{t.notifications.title}</h3>
+            <h3 className="mb-1 font-semibold text-foreground">{t.notifications.title}</h3>
             <p className="text-sm text-muted-foreground">{t.notifications.description}</p>
           </div>
         </div>
 
         {!isTelegramLinked ? (
-          <div className="bg-orange-50 dark:bg-orange-950/20 border border-[#FF9800]/50 rounded-lg p-4">
+          <div className="rounded-2xl border border-primary/25 bg-primary/5 p-4">
             <div className="flex items-start gap-3">
-              <BellOff className="w-5 h-5 text-[#FF9800] shrink-0 mt-0.5" />
+              <BellOff className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />
               <div>
-                <h4 className="font-medium text-black dark:text-white mb-1">{t.notifications.telegramNotLinked}</h4>
+                <h4 className="mb-1 font-medium text-foreground">{t.notifications.telegramNotLinked}</h4>
                 <p className="text-sm text-muted-foreground">{t.notifications.telegramNotLinkedHint}</p>
               </div>
             </div>
           </div>
         ) : notifLoading ? (
-          <div className="flex items-center justify-center py-8"><div className="w-6 h-6 border-2 border-[#FF9800]/30 border-t-[#FF9800] rounded-full animate-spin" /></div>
+          <div className="flex items-center justify-center py-8">
+            <div className="size-6 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
+          </div>
         ) : (
           <>
             <div className="mb-6">
-              <label className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+              <label className={cn(surfaceSelectRow, 'justify-between')}>
                 <div>
-                  <div className="font-medium text-black dark:text-white">{t.notifications.telegramNotifications}</div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">{t.notifications.aboutNearby}</div>
+                  <div className="font-medium text-foreground">{t.notifications.telegramNotifications}</div>
+                  <div className="text-sm text-muted-foreground">{t.notifications.aboutNearby}</div>
                 </div>
                 <div className="relative">
-                  <input type="checkbox" checked={!!notifSettings?.notifications_enabled} onChange={() => void onToggleNotifications(!notifSettings?.notifications_enabled)} disabled={notifSaving} className="sr-only peer" />
-                  <div className={`w-11 h-6 rounded-full transition-colors duration-200 ${notifSettings?.notifications_enabled ? 'bg-[#FF9800]' : 'bg-gray-300 dark:bg-gray-600'}`}>
-                    <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${notifSettings?.notifications_enabled ? 'translate-x-5' : 'translate-x-0'}`} />
-                  </div>
+                  <input
+                    type="checkbox"
+                    checked={!!notifSettings?.notifications_enabled}
+                    onChange={() => void onToggleNotifications(!notifSettings?.notifications_enabled)}
+                    disabled={notifSaving}
+                    className="peer sr-only"
+                  />
+                  <ToggleSwitch checked={!!notifSettings?.notifications_enabled} disabled={notifSaving} />
                 </div>
               </label>
             </div>
+
             <div className="mb-6">
               <label
-                className={`flex items-center justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg transition-colors ${
-                  notifSettings?.notifications_enabled
-                    ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800'
-                    : 'opacity-60 cursor-not-allowed'
-                }`}
+                className={cn(
+                  surfaceSelectRow,
+                  'justify-between',
+                  !notifSettings?.notifications_enabled && 'cursor-not-allowed opacity-60 hover:bg-card',
+                )}
               >
                 <div>
-                  <div className="font-medium text-black dark:text-white">{t.notifications.similarMatches}</div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">{t.notifications.aboutSimilarMatches}</div>
+                  <div className="font-medium text-foreground">{t.notifications.similarMatches}</div>
+                  <div className="text-sm text-muted-foreground">{t.notifications.aboutSimilarMatches}</div>
                 </div>
                 <div className="relative">
                   <input
@@ -174,55 +276,77 @@ export function ProfileNotificationsTab({
                     checked={notifSettings?.notify_similar_matches !== false}
                     onChange={() => void onToggleSimilarMatches(!notifSettings?.notify_similar_matches)}
                     disabled={notifSaving || !notifSettings?.notifications_enabled}
-                    className="sr-only peer"
+                    className="peer sr-only"
                   />
-                  <div className={`w-11 h-6 rounded-full transition-colors duration-200 ${notifSettings?.notify_similar_matches !== false && notifSettings?.notifications_enabled ? 'bg-[#FF9800]' : 'bg-gray-300 dark:bg-gray-600'}`}>
-                    <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${notifSettings?.notify_similar_matches !== false && notifSettings?.notifications_enabled ? 'translate-x-5' : 'translate-x-0'}`} />
-                  </div>
+                  <ToggleSwitch
+                    checked={
+                      notifSettings?.notify_similar_matches !== false &&
+                      !!notifSettings?.notifications_enabled
+                    }
+                    disabled={notifSaving || !notifSettings?.notifications_enabled}
+                  />
                 </div>
               </label>
             </div>
+
             <div>
-              <div className="flex items-center justify-between mb-3">
-                <label className="font-medium text-black dark:text-white">{t.notifications.radius}</label>
-                <span className="text-[#FF9800] font-bold">{localRadius} {t.notifications.km}</span>
+              <div className="mb-3 flex items-center justify-between">
+                <label className="font-medium text-foreground">{t.notifications.radius}</label>
+                <span className="font-bold text-primary">
+                  {localRadius} {t.notifications.km}
+                </span>
               </div>
-              <input type="range" min={1} max={10} step={0.5} value={localRadius} onChange={(e) => { const v = parseFloat(e.target.value); setLocalRadius(Number.isFinite(v) ? v : 1); }} className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-[#FF9800] [&::-webkit-slider-runnable-track]:bg-[length:100%_100%]" style={{ background: `linear-gradient(to right, #ff9800 0%, #ff9800 ${((Number.isFinite(localRadius) ? localRadius : 1) - 1) / 9 * 100}%, #e5e7eb ${((Number.isFinite(localRadius) ? localRadius : 1) - 1) / 9 * 100}%, #e5e7eb 100%)` }} />
-              <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
+              <input
+                type="range"
+                min={1}
+                max={10}
+                step={0.5}
+                value={localRadius}
+                onChange={(e) => {
+                  const v = parseFloat(e.target.value);
+                  setLocalRadius(Number.isFinite(v) ? v : 1);
+                }}
+                className="h-2 w-full cursor-pointer appearance-none rounded-full accent-primary"
+                style={{
+                  background: `linear-gradient(to right, var(--color-primary) 0%, var(--color-primary) ${radiusPct}%, var(--color-bg-landing-muted) ${radiusPct}%, var(--color-bg-landing-muted) 100%)`,
+                }}
+              />
+              <div className="mt-2 flex justify-between text-xs text-muted-foreground">
                 <span>1 {t.notifications.km}</span>
                 <span>5 {t.notifications.km}</span>
                 <span>10 {t.notifications.km}</span>
               </div>
-              <p className="text-sm text-muted-foreground mt-3">{t.notifications.radiusHint}</p>
+              <p className="mt-3 text-sm text-muted-foreground">{t.notifications.radiusHint}</p>
             </div>
 
-            <div className="mt-8 border-t border-gray-200 dark:border-gray-600 pt-6">
+            <div className="mt-8 border-t border-border pt-6">
               <div className="mb-4 flex items-start gap-3">
-                <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-[#FF9800]" aria-hidden />
+                <MapPin className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />
                 <div>
-                  <h4 className="font-medium text-black dark:text-white">{t.notifications.watchZoneTitle}</h4>
+                  <h4 className="font-medium text-foreground">{t.notifications.watchZoneTitle}</h4>
                   <p className="mt-1 text-sm text-muted-foreground">{t.notifications.watchZoneHint}</p>
                 </div>
               </div>
               <label
-                className={`mb-4 flex items-center justify-between rounded-lg border border-gray-200 p-4 dark:border-gray-600 ${
-                  notifSettings?.notifications_enabled
-                    ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800'
-                    : 'cursor-not-allowed opacity-60'
-                }`}
+                className={cn(
+                  surfaceSelectRow,
+                  'mb-4 justify-between',
+                  !notifSettings?.notifications_enabled && 'cursor-not-allowed opacity-60 hover:bg-card',
+                )}
               >
-                <span className="font-medium text-black dark:text-white">{t.notifications.watchZoneTitle}</span>
+                <span className="font-medium text-foreground">{t.notifications.watchZoneTitle}</span>
                 <div className="relative">
                   <input
                     type="checkbox"
                     checked={localWatchEnabled}
                     onChange={() => setLocalWatchEnabled(!localWatchEnabled)}
                     disabled={notifSaving || !notifSettings?.notifications_enabled}
-                    className="sr-only peer"
+                    className="peer sr-only"
                   />
-                  <div className={`h-6 w-11 rounded-full transition-colors duration-200 ${localWatchEnabled && notifSettings?.notifications_enabled ? 'bg-[#FF9800]' : 'bg-gray-300 dark:bg-gray-600'}`}>
-                    <div className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 ${localWatchEnabled && notifSettings?.notifications_enabled ? 'translate-x-5' : 'translate-x-0'}`} />
-                  </div>
+                  <ToggleSwitch
+                    checked={localWatchEnabled && !!notifSettings?.notifications_enabled}
+                    disabled={notifSaving || !notifSettings?.notifications_enabled}
+                  />
                 </div>
               </label>
               {localWatchEnabled && notifSettings?.notifications_enabled && (
@@ -237,8 +361,10 @@ export function ProfileNotificationsTab({
                   />
                   <div>
                     <div className="mb-3 flex items-center justify-between">
-                      <label className="font-medium text-black dark:text-white">{t.notifications.watchZoneRadius}</label>
-                      <span className="font-bold text-[#FF9800]">{localWatchRadius} {t.notifications.km}</span>
+                      <label className="font-medium text-foreground">{t.notifications.watchZoneRadius}</label>
+                      <span className="font-bold text-primary">
+                        {localWatchRadius} {t.notifications.km}
+                      </span>
                     </div>
                     <input
                       type="range"
@@ -250,12 +376,12 @@ export function ProfileNotificationsTab({
                         const v = parseFloat(e.target.value);
                         setLocalWatchRadius(Number.isFinite(v) ? v : 5);
                       }}
-                      className="h-2 w-full cursor-pointer appearance-none rounded-lg accent-[#FF9800] dark:bg-gray-600"
+                      className="h-2 w-full cursor-pointer appearance-none rounded-full accent-primary"
                       style={{
-                        background: `linear-gradient(to right, #ff9800 0%, #ff9800 ${((Number.isFinite(localWatchRadius) ? localWatchRadius : 5) - 1) / 19 * 100}%, #e5e7eb ${((Number.isFinite(localWatchRadius) ? localWatchRadius : 5) - 1) / 19 * 100}%, #e5e7eb 100%)`,
+                        background: `linear-gradient(to right, var(--color-primary) 0%, var(--color-primary) ${watchPct}%, var(--color-bg-landing-muted) ${watchPct}%, var(--color-bg-landing-muted) 100%)`,
                       }}
                     />
-                    <div className="mt-2 flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                    <div className="mt-2 flex justify-between text-xs text-muted-foreground">
                       <span>1 {t.notifications.km}</span>
                       <span>10 {t.notifications.km}</span>
                       <span>20 {t.notifications.km}</span>
@@ -264,12 +390,25 @@ export function ProfileNotificationsTab({
                 </div>
               )}
             </div>
-            <button type="button" onClick={() => void onSaveNotifSettings()} disabled={notifSaving} className="w-full mt-6 flex items-center justify-center gap-2 h-12 bg-[#FF9800] text-white rounded-lg hover:bg-[#F57C00] transition-colors font-medium text-lg disabled:opacity-70">
-              {notifSaving ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <><Save className="w-5 h-5" /> {t.notifications.saveSettings}</>}
+
+            <button
+              type="button"
+              onClick={() => void onSaveNotifSettings()}
+              disabled={notifSaving}
+              className={cn(surfaceCtaPrimary, 'mt-6')}
+            >
+              {notifSaving ? (
+                <div className="size-5 animate-spin rounded-full border-2 border-landing-dark/30 border-t-landing-dark" />
+              ) : (
+                <>
+                  <Save className="size-5" aria-hidden />
+                  {t.notifications.saveSettings}
+                </>
+              )}
             </button>
           </>
         )}
-      </div>
+      </SectionCard>
     </div>
   );
 }

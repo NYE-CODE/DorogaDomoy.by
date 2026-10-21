@@ -1,8 +1,9 @@
 import { AlertCircle, User } from 'lucide-react';
 import { Link } from 'react-router';
 import { useI18n } from '../context/I18nContext';
-import { Button } from './ui/button';
 import { buildProfileContactsTo } from '@/shared/lib/profile-contacts-link';
+import { cn } from '@/shared/lib/classNames';
+import { surfaceCtaPrimary } from '@/shared/styles/surface-classes';
 
 interface CreateAdContactBannerProps {
   /** Куда вернуть пользователя после добавления контактов в профиле. */
@@ -16,21 +17,22 @@ export function CreateAdContactBanner({ returnPath }: CreateAdContactBannerProps
   return (
     <div
       role="status"
-      className="mb-6 flex flex-col gap-3 rounded-md border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/50 dark:bg-amber-950/30 sm:flex-row sm:items-center sm:justify-between"
+      className="mb-6 flex flex-col gap-4 rounded-2xl border border-primary/25 bg-primary/5 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5"
     >
       <div className="flex gap-3">
-        <AlertCircle className="mt-0.5 size-5 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden />
+        <AlertCircle className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />
         <div>
           <p className="text-sm font-medium text-foreground">{b.title}</p>
           <p className="mt-1 text-sm text-muted-foreground">{b.description}</p>
         </div>
       </div>
-      <Button type="button" size="sm" className="shrink-0" asChild>
-        <Link to={buildProfileContactsTo(returnPath)}>
-          <User className="size-4" />
-          {b.action}
-        </Link>
-      </Button>
+      <Link
+        to={buildProfileContactsTo(returnPath)}
+        className={cn(surfaceCtaPrimary, 'w-full shrink-0 sm:w-auto sm:px-6')}
+      >
+        <User className="size-4" aria-hidden />
+        {b.action}
+      </Link>
     </div>
   );
 }

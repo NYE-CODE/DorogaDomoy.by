@@ -88,7 +88,7 @@ export function ShelterPetCard({ pet, onClick, compact = false }: ShelterPetCard
         onKeyDown={activateOnKeyboard(onClick)}
         className={cn(
           interactiveCardClass,
-          'group relative flex items-start gap-3 overflow-hidden rounded-md border border-border bg-card p-3 shadow-sm',
+          'group relative flex items-start gap-3 overflow-hidden rounded-2xl border border-border bg-card p-3 shadow-card',
           // Голос «приют»: на hover карточка отвечает тёплой изумрудной рамкой-приглашением
           'hover:-translate-y-0.5 hover:border-shelter-border',
         )}
@@ -96,7 +96,7 @@ export function ShelterPetCard({ pet, onClick, compact = false }: ShelterPetCard
         <div className="absolute right-2 top-2 z-10">
           <FavoriteHeartButton petId={pet.id} size="sm" className="!p-1.5" />
         </div>
-        <div className="relative flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted">
+        <div className="relative flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-landing-muted">
           {pet.photos?.[0] ? (
             <img
               src={displayPhotoUrl(pet.photos[0], 256)}
@@ -133,11 +133,11 @@ export function ShelterPetCard({ pet, onClick, compact = false }: ShelterPetCard
       onKeyDown={activateOnKeyboard(onClick)}
       className={cn(
         interactiveCardClass,
-        'group flex h-full flex-col overflow-hidden rounded-md border border-border bg-card p-4 shadow-sm',
+        'group flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card p-4 shadow-card',
         'hover:-translate-y-0.5 hover:border-shelter-border',
       )}
     >
-      <div className="relative mb-3 flex aspect-square w-full items-center justify-center overflow-hidden rounded-md border border-border bg-muted">
+      <div className="relative mb-3 flex aspect-square w-full items-center justify-center overflow-hidden rounded-xl bg-landing-muted">
         <div className="absolute right-2 top-2 z-10">
           <FavoriteHeartButton petId={pet.id} size="sm" className="!p-1.5" />
         </div>
@@ -181,8 +181,8 @@ export function ShelterPetCard({ pet, onClick, compact = false }: ShelterPetCard
           {t.pet.breedLabel}: {pet.breed?.trim() || t.pet.notSpecified} · {t.pet.ageLabel}: {age}
         </p>
         <div className="mt-1 flex flex-col gap-1.5">
-          <span className="flex max-w-full items-center gap-1 self-start rounded-md bg-muted/80 px-[10px] py-[4px] text-xs text-muted-foreground">
-            <MapPin size={12} className="shrink-0 opacity-80" aria-hidden />
+          <span className="flex max-w-full items-center gap-1 self-start rounded-full bg-landing-muted px-2.5 py-1 text-xs text-muted-foreground">
+            <MapPin size={12} className="shrink-0 text-shelter opacity-90" aria-hidden />
             <span className="min-w-0 truncate">{pet.city || '—'}</span>
           </span>
         </div>

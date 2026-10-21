@@ -70,7 +70,7 @@ export function AddEditPetStepPhotos({
             type="button"
             onClick={onAiAnalyze}
             disabled={aiAnalyzing || isUploadingPhotos}
-            className="flex w-full items-center justify-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-sm font-medium text-primary transition-colors hover:bg-primary/10 disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-4 py-3 text-sm font-medium text-primary transition-colors hover:bg-primary/10 disabled:opacity-60"
           >
             <Sparkles className="h-4 w-4 shrink-0" aria-hidden />
             {aiAnalyzing ? t.petForm.aiAnalyzing : t.petForm.aiSuggestFromPhoto}

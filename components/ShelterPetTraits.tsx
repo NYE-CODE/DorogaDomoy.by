@@ -22,7 +22,7 @@ function TraitBar({ label, value, levelLabel }: { label: string; value: number; 
             key={n}
             className={cn(
               'h-1.5 flex-1 rounded-full transition-colors',
-              n <= value ? 'bg-primary' : 'bg-muted',
+              n <= value ? 'bg-primary' : 'bg-landing-muted',
             )}
           />
         ))}
@@ -47,32 +47,39 @@ export function ShelterPetTraits({ pet, className }: { pet: Pet; className?: str
   const compat = getCompatBadges(pet);
 
   return (
-    <div className={cn('rounded-lg border border-border bg-muted/20 px-3 py-3 dark:bg-muted/10', className)}>
-      <p className="mb-3 text-sm font-semibold text-foreground">{copy.sectionTitle}</p>
-      {scales.length > 0 && (
+    <section
+      className={cn(
+        'overflow-hidden rounded-3xl border border-border bg-card p-5 shadow-card sm:p-6',
+        className,
+      )}
+    >
+      <h2 className="font-display mb-4 text-lg font-semibold text-foreground sm:text-xl">
+        {copy.sectionTitle}
+      </h2>
+      {scales.length > 0 ? (
         <div className="space-y-3">
           {scales.map(({ def, value, label }) => (
             <TraitBar key={def.key} label={def.label} value={value} levelLabel={label} />
           ))}
         </div>
-      )}
-      {compat.length > 0 && (
-        <div className={cn('flex flex-wrap gap-1.5', scales.length > 0 && 'mt-3 pt-3 border-t border-border')}>
+      ) : null}
+      {compat.length > 0 ? (
+        <div className={cn('flex flex-wrap gap-1.5', scales.length > 0 && 'mt-4 border-t border-border pt-4')}>
           {compat.map((b) => (
             <span
               key={b.key}
               className={cn(
-                'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
+                'inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium',
                 b.value === 'yes'
-                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
-                  : 'bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300',
+                  ? 'border border-shelter-border bg-shelter-soft text-shelter-foreground'
+                  : 'bg-landing-muted text-muted-foreground',
               )}
             >
               {compatBadgeText(b, copy)}
             </span>
           ))}
         </div>
-      )}
-    </div>
+      ) : null}
+    </section>
   );
 }

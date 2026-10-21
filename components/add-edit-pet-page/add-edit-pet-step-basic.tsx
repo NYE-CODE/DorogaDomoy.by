@@ -1,35 +1,33 @@
+import { Bird, Cat, Dog, type LucideIcon } from 'lucide-react';
+import { BreedCombobox } from '../breed-combobox';
+import { cn } from '@/shared/lib/classNames';
 import type { ProfilePetFormData } from './add-edit-pet-form-types';
 import { getProfilePetBreedOptions } from './add-edit-pet-form-types';
+import {
+  profilePetField,
+  profilePetFieldLabel,
+  profilePetInput,
+  profilePetSegmentClass,
+  profilePetSegmentTrack,
+  profilePetTagClass,
+} from './add-edit-pet-form-styles';
 
-const speciesBtnClass = (active: boolean) =>
-  `flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors ${
-    active
-      ? 'bg-foreground text-background'
-      : 'bg-muted text-muted-foreground hover:bg-muted dark:bg-secondary dark:text-secondary-foreground dark:hover:bg-secondary/80'
-  }`;
-
-const toggleBtnClass = (active: boolean) =>
-  `px-6 py-3 rounded-lg font-medium transition-colors ${
-    active
-      ? 'bg-foreground text-background'
-      : 'bg-muted text-muted-foreground hover:bg-muted dark:bg-secondary dark:text-secondary-foreground dark:hover:bg-secondary/80'
-  }`;
-
-const colorBtnClass = (active: boolean) =>
-  `px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-    active
-      ? 'bg-foreground text-background'
-      : 'bg-muted text-muted-foreground hover:bg-muted dark:bg-secondary dark:text-secondary-foreground dark:hover:bg-secondary/80'
-  }`;
-
-const inputClass =
-  'w-full px-4 py-3 border border-border rounded-lg bg-white dark:bg-input-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent';
+const SPECIES_OPTIONS: {
+  value: 'cat' | 'dog' | 'other';
+  labelKey: 'speciesCat' | 'speciesDog' | 'speciesOther';
+  icon: LucideIcon;
+}[] = [
+  { value: 'cat', labelKey: 'speciesCat', icon: Cat },
+  { value: 'dog', labelKey: 'speciesDog', icon: Dog },
+  { value: 'other', labelKey: 'speciesOther', icon: Bird },
+];
 
 export interface AddEditPetStepBasicProps {
   formData: ProfilePetFormData;
   f: Record<string, string | readonly string[]>;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
   onSpeciesChange: (species: 'dog' | 'cat' | 'other') => void;
+  onBreedChange: (breed: string) => void;
   onGenderChange: (gender: 'male' | 'female') => void;
   onToggleColor: (color: string) => void;
 }
@@ -39,16 +37,17 @@ export function AddEditPetStepBasic({
   f,
   onInputChange,
   onSpeciesChange,
+  onBreedChange,
   onGenderChange,
   onToggleColor,
 }: AddEditPetStepBasicProps) {
   const breedOptions = getProfilePetBreedOptions(formData.species, f);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <label htmlFor="name" className="block text-sm font-semibold text-muted-foreground uppercase mb-3">
-          {f.labelName as string} <span className="text-red-500">*</span>
+    <div className="space-y-5">
+      <div className={profilePetField}>
+        <label htmlFor="name" className={profilePetFieldLabel}>
+          {f.labelName as string} <span className="text-destructive">*</span>
         </label>
         <input
           type="text"
@@ -56,31 +55,33 @@ export function AddEditPetStepBasic({
           name="name"
           value={formData.name}
           onChange={onInputChange}
-          className={inputClass}
+          className={profilePetInput}
           placeholder={f.placeholderName as string}
         />
       </div>
 
-      <div>
-        <label className="block text-sm font-semibold text-muted-foreground uppercase mb-3">
-          {f.labelSpecies as string} <span className="text-red-500">*</span>
+      <div className={profilePetField}>
+        <label className={profilePetFieldLabel}>
+          {f.labelSpecies as string} <span className="text-destructive">*</span>
         </label>
-        <div className="flex flex-wrap gap-3">
-          <button type="button" onClick={() => onSpeciesChange('cat')} className={speciesBtnClass(formData.species === 'cat')}>
-            {f.speciesCat as string}
-          </button>
-          <button type="button" onClick={() => onSpeciesChange('dog')} className={speciesBtnClass(formData.species === 'dog')}>
-            {f.speciesDog as string}
-          </button>
-          <button type="button" onClick={() => onSpeciesChange('other')} className={speciesBtnClass(formData.species === 'other')}>
-            {f.speciesOther as string}
-          </button>
+        <div className={cn(profilePetSegmentTrack, 'grid-cols-3')}>
+          {SPECIES_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => onSpeciesChange(opt.value)}
+              className={profilePetSegmentClass(formData.species === opt.value)}
+            >
+              <opt.icon size={15} className="shrink-0 opacity-80" aria-hidden />
+              <span className="truncate">{f[opt.labelKey] as string}</span>
+            </button>
+          ))}
         </div>
       </div>
 
-      <div>
-        <label htmlFor="breed" className="block text-sm font-semibold text-muted-foreground uppercase mb-3">
-          {f.labelBreed as string} <span className="text-red-500">*</span>
+      <div className={profilePetField}>
+        <label htmlFor="breed" className={profilePetFieldLabel}>
+          {f.labelBreed as string} <span className="text-destructive">*</span>
         </label>
         {formData.species === 'other' ? (
           <input
@@ -89,38 +90,45 @@ export function AddEditPetStepBasic({
             name="breed"
             value={formData.breed}
             onChange={onInputChange}
-            className={inputClass}
+            className={profilePetInput}
             placeholder={f.breedOtherPlaceholder as string}
           />
         ) : (
-          <select id="breed" name="breed" value={formData.breed} onChange={onInputChange} className={inputClass}>
-            <option value="">{f.selectBreed as string}</option>
-            {breedOptions.map((breed) => (
-              <option key={breed} value={breed}>
-                {breed}
-              </option>
-            ))}
-          </select>
+          <BreedCombobox
+            breeds={breedOptions}
+            value={formData.breed}
+            onChange={onBreedChange}
+            placeholder={f.selectBreed as string}
+            className="h-11 min-h-11 rounded-lg border-border bg-card py-0"
+          />
         )}
       </div>
 
-      <div>
-        <label className="block text-sm font-semibold text-muted-foreground uppercase mb-3">
-          {f.labelGender as string} <span className="text-red-500">*</span>
+      <div className={profilePetField}>
+        <label className={profilePetFieldLabel}>
+          {f.labelGender as string} <span className="text-destructive">*</span>
         </label>
-        <div className="flex gap-3">
-          <button type="button" onClick={() => onGenderChange('male')} className={toggleBtnClass(formData.gender === 'male')}>
+        <div className={cn(profilePetSegmentTrack, 'grid-cols-2')}>
+          <button
+            type="button"
+            onClick={() => onGenderChange('male')}
+            className={profilePetSegmentClass(formData.gender === 'male')}
+          >
             {f.genderMale as string}
           </button>
-          <button type="button" onClick={() => onGenderChange('female')} className={toggleBtnClass(formData.gender === 'female')}>
+          <button
+            type="button"
+            onClick={() => onGenderChange('female')}
+            className={profilePetSegmentClass(formData.gender === 'female')}
+          >
             {f.genderFemale as string}
           </button>
         </div>
       </div>
 
-      <div>
-        <label htmlFor="age" className="block text-sm font-semibold text-muted-foreground uppercase mb-3">
-          {f.labelAge as string} <span className="text-red-500">*</span>
+      <div className={profilePetField}>
+        <label htmlFor="age" className={profilePetFieldLabel}>
+          {f.labelAge as string} <span className="text-destructive">*</span>
         </label>
         <input
           type="number"
@@ -128,24 +136,22 @@ export function AddEditPetStepBasic({
           name="age"
           value={formData.age}
           onChange={onInputChange}
-          className={inputClass}
+          className={profilePetInput}
           placeholder={f.placeholderAge as string}
           min={0}
           max={30}
         />
       </div>
 
-      <div>
-        <label className="block text-sm font-semibold text-muted-foreground uppercase mb-3">
-          {f.labelColors as string}
-        </label>
-        <div className="flex flex-wrap gap-2">
+      <div className={profilePetField}>
+        <label className={profilePetFieldLabel}>{f.labelColors as string}</label>
+        <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
           {(f.colorOptions as readonly string[]).map((color) => (
             <button
               key={color}
               type="button"
               onClick={() => onToggleColor(color)}
-              className={colorBtnClass(formData.colors.includes(color))}
+              className={profilePetTagClass(formData.colors.includes(color))}
             >
               {color}
             </button>

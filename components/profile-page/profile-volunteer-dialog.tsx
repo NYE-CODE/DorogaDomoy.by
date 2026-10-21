@@ -32,15 +32,13 @@ export function ProfileVolunteerDialog({
       <DialogContent showCloseButton className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
-          <DialogDescription className="text-left">
-            {body}
-          </DialogDescription>
+          <DialogDescription className="text-left">{body}</DialogDescription>
         </DialogHeader>
         <DialogFooter className="gap-2 sm:gap-0">
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             {cancelLabel}
           </Button>
-          <Button type="button" className="bg-[#FF9800] hover:bg-[#F57C00]" onClick={() => void onConfirm()}>
+          <Button type="button" onClick={() => void onConfirm()}>
             {confirmLabel}
           </Button>
         </DialogFooter>

@@ -1,14 +1,13 @@
+import { cn } from '@/shared/lib/classNames';
 import type { ProfilePetFormData } from './add-edit-pet-form-types';
-
-const toggleBtnClass = (active: boolean) =>
-  `px-6 py-3 rounded-lg font-medium transition-colors ${
-    active
-      ? 'bg-foreground text-background'
-      : 'bg-muted text-muted-foreground hover:bg-muted dark:bg-secondary dark:text-secondary-foreground dark:hover:bg-secondary/80'
-  }`;
-
-const inputClass =
-  'w-full px-4 py-3 border border-border rounded-lg bg-white dark:bg-input-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent';
+import {
+  profilePetField,
+  profilePetFieldLabel,
+  profilePetInput,
+  profilePetSegmentClass,
+  profilePetSegmentTrack,
+  profilePetTagClass,
+} from './add-edit-pet-form-styles';
 
 export interface AddEditPetStepTemperamentProps {
   formData: ProfilePetFormData;
@@ -36,18 +35,16 @@ export function AddEditPetStepTemperament({
   onRespondsToNameChange,
 }: AddEditPetStepTemperamentProps) {
   return (
-    <div className="space-y-6">
-      <div>
-        <label className="block text-sm font-semibold text-muted-foreground uppercase mb-3">
-          {f.labelTemperament}
-        </label>
-        <div className="flex flex-wrap gap-3">
+    <div className="space-y-5">
+      <div className={profilePetField}>
+        <label className={profilePetFieldLabel}>{f.labelTemperament}</label>
+        <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
           {f.temperamentOptions.map((option) => (
             <button
               key={option.value}
               type="button"
               onClick={() => onTemperamentChange(option.value)}
-              className={toggleBtnClass(formData.temperament === option.value)}
+              className={profilePetTagClass(formData.temperament === option.value)}
             >
               {option.label}
             </button>
@@ -55,22 +52,28 @@ export function AddEditPetStepTemperament({
         </div>
       </div>
 
-      <div>
-        <label className="block text-sm font-semibold text-muted-foreground uppercase mb-3">
-          {f.labelRespondsToName}
-        </label>
-        <div className="flex gap-3">
-          <button type="button" onClick={() => onRespondsToNameChange('yes')} className={toggleBtnClass(formData.respondsToName === 'yes')}>
+      <div className={profilePetField}>
+        <label className={profilePetFieldLabel}>{f.labelRespondsToName}</label>
+        <div className={cn(profilePetSegmentTrack, 'grid-cols-2')}>
+          <button
+            type="button"
+            onClick={() => onRespondsToNameChange('yes')}
+            className={profilePetSegmentClass(formData.respondsToName === 'yes')}
+          >
             {f.yes}
           </button>
-          <button type="button" onClick={() => onRespondsToNameChange('no')} className={toggleBtnClass(formData.respondsToName === 'no')}>
+          <button
+            type="button"
+            onClick={() => onRespondsToNameChange('no')}
+            className={profilePetSegmentClass(formData.respondsToName === 'no')}
+          >
             {f.no}
           </button>
         </div>
       </div>
 
-      <div>
-        <label htmlFor="favoriteTreats" className="block text-sm font-semibold text-muted-foreground uppercase mb-3">
+      <div className={profilePetField}>
+        <label htmlFor="favoriteTreats" className={profilePetFieldLabel}>
           {f.labelTreats}
         </label>
         <input
@@ -79,13 +82,13 @@ export function AddEditPetStepTemperament({
           name="favoriteTreats"
           value={formData.favoriteTreats}
           onChange={onInputChange}
-          className={inputClass}
+          className={profilePetInput}
           placeholder={f.placeholderTreats}
         />
       </div>
 
-      <div>
-        <label htmlFor="favoriteWalks" className="block text-sm font-semibold text-muted-foreground uppercase mb-3">
+      <div className={profilePetField}>
+        <label htmlFor="favoriteWalks" className={profilePetFieldLabel}>
           {f.labelWalks}
         </label>
         <input
@@ -94,7 +97,7 @@ export function AddEditPetStepTemperament({
           name="favoriteWalks"
           value={formData.favoriteWalks}
           onChange={onInputChange}
-          className={inputClass}
+          className={profilePetInput}
           placeholder={f.placeholderWalks}
         />
       </div>

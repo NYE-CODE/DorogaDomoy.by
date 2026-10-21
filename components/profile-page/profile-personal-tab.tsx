@@ -1,13 +1,19 @@
 import { Camera, Check, Copy, Mail, MessageCircle, Phone, Save, User } from 'lucide-react';
 import { BELARUS_MOBILE_PHONE_PLACEHOLDER } from '../../utils/belarus-phone';
+import { cn } from '@/shared/lib/classNames';
+import {
+  surfaceCtaOutline,
+  surfaceCtaPrimary,
+  surfaceFieldLabel,
+  surfaceInput,
+} from '@/shared/styles/surface-classes';
 import { resolveAvatarUrl } from './profile-page-helpers';
 import type { ProfileRoleDraft, ProfileTranslations } from './profile-page-types';
 import type { useAuth } from '../../context/AuthContext';
 
 type AuthUser = ReturnType<typeof useAuth>['user'];
 
-const inputClass =
-  'w-full pl-10 pr-4 py-3 border border-border rounded-lg bg-background text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50';
+const iconInputClass = cn(surfaceInput, 'pl-10');
 
 export interface ProfilePersonalTabProps {
   user: AuthUser;
@@ -55,127 +61,147 @@ export function ProfilePersonalTab({
 }: ProfilePersonalTabProps) {
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-border">
+      <div className="flex flex-col items-center gap-6 border-b border-border pb-6 sm:flex-row">
         <div className="relative">
-          <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-gray-200 dark:border-gray-600 flex items-center justify-center bg-gradient-to-br from-[#FF9800]/20 to-orange-100 dark:from-orange-950/30 dark:to-gray-800">
+          <div className="flex size-32 items-center justify-center overflow-hidden rounded-full bg-landing-muted ring-[3px] ring-medallion">
             {user?.avatar ? (
-              <img src={resolveAvatarUrl(user.avatar)} alt={user.name || 'Avatar'} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              <img
+                src={resolveAvatarUrl(user.avatar)}
+                alt={user.name || 'Avatar'}
+                className="size-full object-cover"
+                referrerPolicy="no-referrer"
+              />
             ) : (
-              <User className="w-12 h-12 text-gray-400 dark:text-gray-500" />
+              <User className="size-12 text-muted-foreground" aria-hidden />
             )}
           </div>
-          <label htmlFor="avatar-upload" className="absolute bottom-0 right-0 w-10 h-10 bg-[#FF9800] rounded-full flex items-center justify-center cursor-pointer hover:bg-[#F57C00] transition-colors shadow-lg">
-            <Camera className="w-5 h-5 text-white" />
+          <label
+            htmlFor="avatar-upload"
+            className="absolute bottom-0 right-0 flex size-10 cursor-pointer items-center justify-center rounded-full bg-primary text-landing-dark shadow-card transition-colors hover:bg-primary-hover"
+          >
+            <Camera className="size-5" aria-hidden />
             <input id="avatar-upload" type="file" accept="image/*" className="hidden" onChange={onAvatarUpload} />
           </label>
         </div>
-        <div className="text-center sm:text-left flex-1">
-          <h3 className="font-bold text-black dark:text-white mb-1">
-            {t.profile.photoTitle}
-          </h3>
-          <p className="text-sm text-muted-foreground mb-3">
-            {t.profile.avatarHint}
-          </p>
-          <label htmlFor="avatar-upload-btn" className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium cursor-pointer dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600">
-            <Camera className="w-[18px] h-[18px]" />
+        <div className="flex-1 text-center sm:text-left">
+          <h3 className="mb-1 font-semibold text-foreground">{t.profile.photoTitle}</h3>
+          <p className="mb-3 text-sm text-muted-foreground">{t.profile.avatarHint}</p>
+          <label htmlFor="avatar-upload-btn" className={cn(surfaceCtaOutline, 'inline-flex w-auto cursor-pointer px-5')}>
+            <Camera className="size-[18px]" aria-hidden />
             {t.profile.uploadPhoto}
             <input id="avatar-upload-btn" type="file" accept="image/*" className="hidden" onChange={onAvatarUpload} />
           </label>
         </div>
       </div>
 
-      <div className="rounded-md border border-gray-200 dark:border-gray-700 p-4 bg-gray-50/60 dark:bg-gray-800/40">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div className="rounded-2xl border border-border bg-landing-muted/50 p-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <div className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-              {t.profile.helperIdLabel}
-            </div>
-            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              {t.profile.helperIdHint}
-            </div>
+            <div className="text-sm font-semibold text-foreground">{t.profile.helperIdLabel}</div>
+            <div className="mt-1 text-xs text-muted-foreground">{t.profile.helperIdHint}</div>
           </div>
           <button
             type="button"
-            onClick={() => { void onCopyHelperCode(); }}
-            className="inline-flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-white dark:hover:bg-gray-700 transition-colors"
+            onClick={() => {
+              void onCopyHelperCode();
+            }}
+            className={cn(surfaceCtaOutline, 'w-auto px-4 py-2 text-sm')}
             disabled={!user?.helperCode}
           >
-            {helperCopied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4 text-gray-500" />}
+            {helperCopied ? (
+              <Check className="size-4 text-primary" aria-hidden />
+            ) : (
+              <Copy className="size-4 text-muted-foreground" aria-hidden />
+            )}
             <span className="font-mono text-sm">{user?.helperCode ?? '—'}</span>
           </button>
         </div>
-        <div className="grid grid-cols-2 gap-3 mt-4">
-          <div className="rounded-lg bg-white dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 p-3">
-            <div className="text-xs text-gray-500 dark:text-gray-400">{t.profile.helperConfirmedCountLabel}</div>
-            <div className="text-xl font-bold text-gray-900 dark:text-white">{user?.helperConfirmedCount ?? 0}</div>
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          <div className="rounded-xl border border-border bg-card p-3">
+            <div className="text-xs text-muted-foreground">{t.profile.helperConfirmedCountLabel}</div>
+            <div className="font-display text-xl font-bold text-foreground">
+              {user?.helperConfirmedCount ?? 0}
+            </div>
           </div>
-          <div className="rounded-lg bg-white dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 p-3">
-            <div className="text-xs text-gray-500 dark:text-gray-400">{t.profile.pointsBalanceLabel}</div>
-            <div className="text-xl font-bold text-gray-900 dark:text-white">{user?.pointsBalance ?? 0}</div>
+          <div className="rounded-xl border border-border bg-card p-3">
+            <div className="text-xs text-muted-foreground">{t.profile.pointsBalanceLabel}</div>
+            <div className="font-display text-xl font-bold text-foreground">
+              {user?.pointsBalance ?? 0}
+            </div>
           </div>
         </div>
       </div>
 
       <form onSubmit={onSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              {t.profile.nameLabel.replace(/\s*\*\s*$/, '').trim()} <span className="text-red-500">*</span>
+            <label className={surfaceFieldLabel}>
+              {t.profile.nameLabel.replace(/\s*\*\s*$/, '').trim()}{' '}
+              <span className="text-destructive">*</span>
             </label>
             <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
-              <input type="text" required value={name} onChange={(e) => setName(e.target.value)} placeholder={t.profile.namePlaceholder} className={inputClass} />
+              <User className="absolute left-3 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" aria-hidden />
+              <input
+                type="text"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder={t.profile.namePlaceholder}
+                className={iconInputClass}
+              />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              {t.profile.emailLabel?.replace(/\s*\*\s*$/, '').trim() || 'Email'} <span className="text-red-500">*</span>
+            <label className={surfaceFieldLabel}>
+              {t.profile.emailLabel?.replace(/\s*\*\s*$/, '').trim() || 'Email'}{' '}
+              <span className="text-destructive">*</span>
             </label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
-              <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="your@email.com" className={inputClass} />
+              <Mail className="absolute left-3 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" aria-hidden />
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="your@email.com"
+                className={iconInputClass}
+              />
             </div>
           </div>
 
           {user?.role === 'admin' && (
-            <div className="md:col-span-2 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-800/40 p-4">
-              <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                {t.profile.roleFieldLabel}
-              </div>
-              <div className="text-gray-900 dark:text-white font-medium">{t.profile.roles?.admin}</div>
+            <div className="rounded-2xl border border-border bg-landing-muted/50 p-4 md:col-span-2">
+              <div className="mb-1 text-sm font-medium text-muted-foreground">{t.profile.roleFieldLabel}</div>
+              <div className="font-medium text-foreground">{t.profile.roles?.admin}</div>
             </div>
           )}
 
           {user?.role === 'user' && (
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                {t.profile.roleFieldLabel}
-              </label>
+              <label className={surfaceFieldLabel}>{t.profile.roleFieldLabel}</label>
               <select
                 value={roleDraft}
                 onChange={(e) => setRoleDraft(e.target.value as ProfileRoleDraft)}
-                className="w-full max-w-md rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-3 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#FF9800]"
+                className={cn(surfaceInput, 'max-w-md')}
               >
                 <option value="user">{t.profile.roles?.user}</option>
                 <option value="volunteer">{t.profile.roles?.volunteer}</option>
               </select>
-              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{pr.roleUpgradeHint}</p>
+              <p className="mt-2 text-xs text-muted-foreground">{pr.roleUpgradeHint}</p>
             </div>
           )}
 
           {user?.role === 'volunteer' && (
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                {t.profile.roleFieldLabel}
-              </label>
+              <label className={surfaceFieldLabel}>{t.profile.roleFieldLabel}</label>
               <select
                 disabled
                 value="volunteer"
-                className="w-full max-w-md rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-900 px-3 py-3 text-gray-700 dark:text-gray-300 cursor-not-allowed opacity-90"
+                className={cn(surfaceInput, 'max-w-md cursor-not-allowed opacity-90')}
               >
                 <option value="volunteer">{t.profile.roles?.volunteer}</option>
               </select>
-              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+              <p className="mt-2 text-xs text-muted-foreground">
                 {user.registeredAsVolunteer
                   ? (pr.roleHintRegVolunteer ?? '')
                   : (pr.roleUpgradeHint ?? '')}
@@ -184,25 +210,48 @@ export function ProfilePersonalTab({
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              {t.profile.phone} <span className="text-red-500">*</span>
+            <label className={surfaceFieldLabel}>
+              {t.profile.phone} <span className="text-destructive">*</span>
             </label>
             <div className="relative">
-              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
-              <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={BELARUS_MOBILE_PHONE_PLACEHOLDER} className={inputClass} />
+              <Phone className="absolute left-3 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" aria-hidden />
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder={BELARUS_MOBILE_PHONE_PLACEHOLDER}
+                className={iconInputClass}
+              />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t.profile.viber}</label>
+            <label className={surfaceFieldLabel}>{t.profile.viber}</label>
             <div className="relative">
-              <MessageCircle className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
-              <input type="tel" value={viber} onChange={(e) => setViber(e.target.value)} placeholder={BELARUS_MOBILE_PHONE_PLACEHOLDER} className={inputClass} />
+              <MessageCircle className="absolute left-3 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" aria-hidden />
+              <input
+                type="tel"
+                value={viber}
+                onChange={(e) => setViber(e.target.value)}
+                placeholder={BELARUS_MOBILE_PHONE_PLACEHOLDER}
+                className={iconInputClass}
+              />
             </div>
           </div>
         </div>
-        <div className="flex justify-end pt-4">
-          <button type="submit" disabled={isSavingProfile} className="flex items-center justify-center gap-2 h-12 px-8 bg-[#FF9800] text-white rounded-lg hover:bg-[#F57C00] transition-colors font-medium text-lg disabled:opacity-70">
-            {isSavingProfile ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <><Save className="w-5 h-5" /> {t.profile.saveChanges}</>}
+        <div className="flex justify-end pt-2">
+          <button
+            type="submit"
+            disabled={isSavingProfile}
+            className={cn(surfaceCtaPrimary, 'w-full sm:w-auto sm:px-8')}
+          >
+            {isSavingProfile ? (
+              <div className="size-5 animate-spin rounded-full border-2 border-landing-dark/30 border-t-landing-dark" />
+            ) : (
+              <>
+                <Save className="size-5" aria-hidden />
+                {t.profile.saveChanges}
+              </>
+            )}
           </button>
         </div>
       </form>

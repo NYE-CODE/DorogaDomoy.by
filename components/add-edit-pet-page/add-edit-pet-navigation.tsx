@@ -1,3 +1,6 @@
+import { cn } from '@/shared/lib/classNames';
+import { surfaceCtaPrimary } from '@/shared/styles/surface-classes';
+
 export interface AddEditPetNavigationProps {
   currentStep: number;
   totalSteps: number;
@@ -21,30 +24,21 @@ export function AddEditPetNavigation({
   onNext,
   onSubmit,
 }: AddEditPetNavigationProps) {
+  const busy = isUploadingPhotos || isSubmitting;
+  const label =
+    currentStep < totalSteps ? nextLabel : isSubmitting ? submittingLabel : submitLabel;
+
   return (
-    <div className="mt-8 flex gap-4">
-      {currentStep < totalSteps ? (
-        <button
-          type="button"
-          onClick={onNext}
-          className="w-full h-12 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors font-medium text-lg"
-        >
-          {nextLabel}
-        </button>
-      ) : (
-        <button
-          type="button"
-          onClick={onSubmit}
-          disabled={isUploadingPhotos || isSubmitting}
-          className={`w-full h-12 text-white rounded-lg transition-colors font-medium text-lg ${
-            isUploadingPhotos || isSubmitting
-              ? 'bg-green-400 cursor-not-allowed'
-              : 'bg-green-600 hover:bg-green-700'
-          }`}
-        >
-          {isSubmitting ? submittingLabel : submitLabel}
-        </button>
-      )}
+    <div className="mt-8 flex items-center justify-between gap-3 border-t border-border/60 pt-6">
+      <div />
+      <button
+        type="button"
+        onClick={currentStep < totalSteps ? onNext : onSubmit}
+        disabled={currentStep >= totalSteps ? busy : false}
+        className={cn(surfaceCtaPrimary, 'w-full')}
+      >
+        {label}
+      </button>
     </div>
   );
 }

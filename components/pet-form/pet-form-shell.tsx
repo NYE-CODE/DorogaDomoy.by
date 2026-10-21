@@ -396,7 +396,7 @@ export function PetFormShell({
         {draftRestored && !isEditing ? (
           <div
             role="status"
-            className="mb-6 rounded-md border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-foreground"
+            className="mb-6 rounded-2xl border border-primary/25 bg-primary/5 px-4 py-3 text-sm text-foreground"
           >
             <p className="font-medium">{t.petForm.draftRestored}</p>
             {draftPhotoCount > 0 ? (
@@ -407,7 +407,7 @@ export function PetFormShell({
           </div>
         ) : null}
         {variant === 'page' && step >= 1 && currentStepDesc && (
-          <p className="text-muted-foreground mb-6">{currentStepDesc}</p>
+          <p className="mb-6 text-muted-foreground">{currentStepDesc}</p>
         )}
 
         {step === 1 && (

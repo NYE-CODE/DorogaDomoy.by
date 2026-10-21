@@ -1,6 +1,13 @@
 import { useState, type Dispatch, type SetStateAction } from 'react';
 import { Plus, X } from 'lucide-react';
 import type { AiFilledAdFields } from '@/shared/lib/ai-photo-analyze';
+import { cn } from '@/shared/lib/classNames';
+import {
+  surfaceChip,
+  surfaceChipActive,
+  surfaceFieldLabel,
+  surfaceInput,
+} from '@/shared/styles/surface-classes';
 import { AiFieldBadge } from './pet-form-ai-field-badge';
 import {
   MAX_DESCRIPTION,
@@ -61,8 +68,8 @@ export function PetFormStepDescription({
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-3">
-        <label className="text-sm font-semibold text-muted-foreground uppercase">
+      <div className="mb-3 flex items-center justify-between">
+        <label className={cn(surfaceFieldLabel, 'mb-0')}>
           {t.petForm.descriptionLabel}
           <AiFieldBadge show={aiFilledFields.description} label={t.petForm.aiFieldBadge} />
         </label>
@@ -97,19 +104,26 @@ export function PetFormStepDescription({
         placeholder={t.petForm.descriptionPlaceholder}
         rows={8}
         maxLength={MAX_DESCRIPTION}
-        className={variant === 'page' ? `w-full px-4 py-3 border rounded-lg bg-input-background dark:bg-input-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none ${errors.description ? 'border-destructive' : 'border-border'}` : `w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none ${errors.description ? 'border-destructive' : 'border-border dark:border-border'}`}
+        className={
+          variant === 'page'
+            ? cn(surfaceInput, 'resize-none', errors.description && 'border-destructive')
+            : cn(
+                'w-full resize-none rounded-lg border px-4 py-3 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary',
+                errors.description ? 'border-destructive' : 'border-border',
+              )
+        }
         required
       />
-      {errors.description && <p className="text-xs text-red-500 mt-1">{errors.description}</p>}
+      {errors.description && <p className="mt-1 text-xs text-destructive">{errors.description}</p>}
       {!errors.description &&
         formData.description.trim().length > 0 &&
         formData.description.trim().length < MIN_DESCRIPTION && (
-          <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">
+          <p className="mt-1 text-xs text-primary">
             {t.petForm.descriptionTooShortSearchHint}
           </p>
         )}
 
-      <div className="mt-4 rounded-lg border border-primary/20 bg-primary/5 p-4">
+      <div className="mt-4 rounded-2xl border border-primary/25 bg-primary/5 p-4">
         <p className="text-sm font-semibold text-foreground">
           {t.petForm.distinctiveMarksTitle}
           <AiFieldBadge show={aiFilledFields.distinctiveMarks} label={t.petForm.aiFieldBadge} />
@@ -119,12 +133,12 @@ export function PetFormStepDescription({
           <ul className="mt-3 flex flex-wrap gap-2">
             {formData.distinctiveMarks.map((mark) => (
               <li key={mark}>
-                <span className="inline-flex items-center gap-1 rounded-full bg-background px-3 py-1 text-xs font-medium text-foreground ring-1 ring-inset ring-primary/25">
+                <span className={cn(surfaceChip, surfaceChipActive, 'min-h-0 gap-1 px-3 py-1 text-xs')}>
                   {mark}
                   <button
                     type="button"
                     onClick={() => removeDistinctiveMark(mark)}
-                    className="rounded-full p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                    className="rounded-full p-0.5 opacity-80 hover:opacity-100"
                     aria-label={`${t.petForm.distinctiveMarksRemove}: ${mark}`}
                   >
                     <X className="size-3.5" aria-hidden />
@@ -150,15 +164,15 @@ export function PetFormStepDescription({
               maxLength={MAX_DISTINCTIVE_MARK_LEN}
               className={
                 variant === 'page'
-                  ? 'min-w-0 flex-1 rounded-lg border border-border bg-input-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary'
-                  : 'min-w-0 flex-1 rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:border-border'
+                  ? cn(surfaceInput, 'min-w-0 flex-1 py-2 text-sm')
+                  : 'min-w-0 flex-1 rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary'
               }
             />
             <button
               type="button"
               onClick={addDistinctiveMark}
               disabled={!canAddMark}
-              className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-11 shrink-0 items-center gap-1 rounded-full bg-primary px-4 text-sm font-semibold text-landing-dark transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Plus className="size-4" aria-hidden />
               {t.petForm.distinctiveMarksAdd}

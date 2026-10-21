@@ -3,20 +3,31 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router';
 import { useAuth } from '@/app/providers/AuthContext';
 import '../../landing/styles/theme-scoped.css';
 import { useI18n } from '@/app/providers/I18nContext';
-import { Header } from '@/widgets/layout/Header';
-import { Footer } from '@/widgets/layout/Footer';
 import { PetForm, PetFormData, PetFormStepInfo } from '../../components/pet-form';
-import { ChevronLeft, Search, HandHelping, Home, Plus, PawPrint, X } from 'lucide-react';
+import { Search, HandHelping, Home, Plus, PawPrint, X, ChevronLeft } from 'lucide-react';
 import { ContactRequiredModal } from '../../components/contact-required-modal';
 import { CreateAdContactBanner } from '../../components/create-ad-contact-banner';
+import { AdFormPageShell } from '../../components/ad-form-page-shell';
+import { AdFormStepHeader } from '../../components/ad-form-step-header';
 import { petsApi, profilePetsApi } from '@/shared/api/client';
 import { toast } from 'sonner';
 import { buildPrefillFromProfilePet } from '@/shared/lib/profile-pet-prefill';
 import { getHomePath } from '@/shared/lib/home-route';
-import { Button } from '@/shared/ui/button';
-import { RouteProgress } from '@/shared/ui/molecules';
+import { cn } from '@/shared/lib/classNames';
 import { profilePetToListCard, type ProfilePetListCard } from '../../utils/profile-pet-display';
 import { PageLoader } from '@/shared/ui/page-loader';
+import {
+  surfaceChoiceCard,
+  surfaceChoiceIconBrand,
+  surfaceChoiceIconFound,
+  surfaceChoiceIconLost,
+  surfaceChoiceIconMuted,
+  surfaceCtaOutline,
+  surfaceCtaPrimary,
+  surfaceEmpty,
+  surfaceIconButton,
+  surfacePage,
+} from '@/shared/styles/surface-classes';
 
 const MIN_DESCRIPTION = 20;
 
@@ -239,301 +250,256 @@ export default function CreateAdPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+      <div className={cn('flex min-h-screen items-center justify-center', surfacePage)}>
+        <div className="size-8 animate-spin rounded-full border-4 border-primary/30 border-t-primary" />
       </div>
     );
   }
 
   if (!isAuthenticated) {
     return (
-      <div className="landing-theme min-h-screen bg-muted/30 dark:bg-background flex flex-col items-center justify-center px-4">
-        <Header />
-        <main className="flex-1 flex flex-col items-center justify-center text-center">
-          <p className="text-lg text-muted-foreground mb-6">
-            {t.app.loginToCreate}
-          </p>
-          <button
-            onClick={openAuthModal}
-            className="px-6 py-3 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 font-medium"
-          >
+      <AdFormPageShell bare>
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <p className="mb-6 text-lg text-muted-foreground">{t.app.loginToCreate}</p>
+          <button type="button" onClick={openAuthModal} className={cn(surfaceCtaPrimary, 'w-auto px-8')}>
             {t.auth.login}
           </button>
-        </main>
-      </div>
+        </div>
+      </AdFormPageShell>
     );
   }
 
-  return (
-    <div className="landing-theme min-h-screen bg-muted/30 dark:bg-background flex flex-col">
-      <Header />
+  const stepHeader =
+    stepInfo && flowStep === 'form' ? (
+      <AdFormStepHeader
+        pageTitle={stepInfo.pageTitle}
+        stepLabel={`${t.petForm.step} ${stepInfo.step} ${t.petForm.of} ${stepInfo.totalSteps}: ${stepInfo.stepTitle}`}
+        totalSteps={stepInfo.totalSteps}
+        currentStep={stepInfo.step}
+        progressLabel={`${t.petForm.step} ${stepInfo.step} ${t.petForm.of} ${stepInfo.totalSteps}`}
+        backAriaLabel={t.common.back}
+        closeLabel={t.petForm.close}
+        onBack={stepInfo.step > 1 ? stepInfo.onBack : handleFormBack}
+        onClose={handleCloseForm}
+      />
+    ) : null;
 
-      {stepInfo && flowStep === 'form' && (
-        <section className="bg-white dark:bg-card border-b border-border px-4 sm:px-6 lg:px-8">
-          <div className="max-w-[736px] mx-auto py-4">
-            <div className="flex items-center gap-4 mb-4">
-              {stepInfo.step > 1 ? (
-                <button
-                  type="button"
-                  onClick={stepInfo.onBack}
-                  className="p-2 hover:bg-muted rounded-md transition-colors"
-                  aria-label={t.common.back}
-                >
-                  <ChevronLeft className="w-6 h-6 text-muted-foreground" />
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={handleFormBack}
-                  className="p-2 hover:bg-muted rounded-md transition-colors"
-                  aria-label={t.common.back}
-                >
-                  <ChevronLeft className="w-6 h-6 text-muted-foreground" />
-                </button>
-              )}
-              <div className="flex-1 min-w-0">
-                <h1 className="typo-h1 truncate">{stepInfo.pageTitle}</h1>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {t.petForm.step} {stepInfo.step} {t.petForm.of} {stepInfo.totalSteps}: {stepInfo.stepTitle}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={handleCloseForm}
-                className="text-muted-foreground hover:text-black dark:text-muted-foreground dark:hover:text-foreground whitespace-nowrap transition-colors"
-              >
-                {t.petForm.close}
-              </button>
+  return (
+    <AdFormPageShell
+      stepHeader={stepHeader}
+      overlay={
+        <ContactRequiredModal
+          open={showContactRequired}
+          returnPath={createReturnPath}
+          onClose={() => setShowContactRequired(false)}
+        />
+      }
+    >
+      {showContactBanner ? <CreateAdContactBanner returnPath={createReturnPath} /> : null}
+
+      {flowStep === 'scenario' && (
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <div className="mb-6 flex items-start justify-between gap-3">
+            <div className="min-w-0 space-y-2">
+              <h1 className="typo-h2 font-display">{hub.title}</h1>
+              <p className="typo-lead max-w-md text-muted-foreground">{hub.subtitle}</p>
             </div>
-            <RouteProgress
-              totalSteps={stepInfo.totalSteps}
-              currentStep={stepInfo.step}
-              label={`${t.petForm.step} ${stepInfo.step} ${t.petForm.of} ${stepInfo.totalSteps}`}
-              className="max-w-sm"
-            />
+            <button
+              type="button"
+              onClick={handleCloseForm}
+              className={surfaceIconButton}
+              aria-label={t.petForm.close}
+            >
+              <X className="size-5" aria-hidden />
+            </button>
           </div>
-        </section>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <button type="button" onClick={() => handleScenarioSelect('lost')} className={surfaceChoiceCard}>
+              <div className={surfaceChoiceIconLost}>
+                <Search className="size-7" aria-hidden />
+              </div>
+              <h3 className="text-base font-semibold text-foreground sm:text-lg">{hub.lostTitle}</h3>
+              <p className="text-sm leading-relaxed text-muted-foreground">{hub.lostDesc}</p>
+            </button>
+            <button type="button" onClick={() => handleScenarioSelect('found')} className={surfaceChoiceCard}>
+              <div className={surfaceChoiceIconFound}>
+                <Home className="size-7" aria-hidden />
+              </div>
+              <h3 className="text-base font-semibold text-foreground sm:text-lg">{hub.foundTitle}</h3>
+              <p className="text-sm leading-relaxed text-muted-foreground">{hub.foundDesc}</p>
+            </button>
+          </div>
+        </div>
       )}
 
-      <main className="flex-1 px-4 py-8">
-        <div className="max-w-[736px] mx-auto bg-white dark:bg-card rounded-md shadow-sm border border-border p-6 sm:p-8">
-          {showContactBanner ? (
-            <CreateAdContactBanner returnPath={createReturnPath} />
-          ) : null}
+      {flowStep === 'lost-role' && (
+        <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+          <div className="mb-6 flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setFlowStep('scenario')}
+              className={surfaceIconButton}
+              aria-label={t.common.back}
+            >
+              <ChevronLeft className="size-5" aria-hidden />
+            </button>
+            <h1 className="typo-h2 min-w-0 flex-1 truncate font-display">{hub.lostRoleTitle}</h1>
+            <button
+              type="button"
+              onClick={handleCloseForm}
+              className={surfaceIconButton}
+              aria-label={t.petForm.close}
+            >
+              <X className="size-5" aria-hidden />
+            </button>
+          </div>
+          <p className="mb-8 typo-lead max-w-md text-muted-foreground">{hub.lostRoleSubtitle}</p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <button type="button" onClick={() => handleLostRoleSelect('owner')} className={surfaceChoiceCard}>
+              <div className={surfaceChoiceIconBrand}>
+                <PawPrint className="size-7" aria-hidden />
+              </div>
+              <h3 className="text-base font-semibold text-foreground sm:text-lg">{hub.lostRoleOwnerTitle}</h3>
+              <p className="text-sm leading-relaxed text-muted-foreground">{hub.lostRoleOwnerDesc}</p>
+            </button>
+            <button type="button" onClick={() => handleLostRoleSelect('helping')} className={surfaceChoiceCard}>
+              <div className={surfaceChoiceIconMuted}>
+                <HandHelping className="size-7" aria-hidden />
+              </div>
+              <h3 className="text-base font-semibold text-foreground sm:text-lg">{hub.lostRoleHelpingTitle}</h3>
+              <p className="text-sm leading-relaxed text-muted-foreground">{hub.lostRoleHelpingDesc}</p>
+            </button>
+          </div>
+        </div>
+      )}
 
-          {flowStep === 'scenario' && (
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
-              <div className="flex items-center justify-between mb-6">
-                <h1 className="typo-h1">{hub.title}</h1>
-                <button
-                  type="button"
-                  onClick={handleCloseForm}
-                  className="text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              <p className="text-muted-foreground mb-8">{hub.subtitle}</p>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <button
-                  type="button"
-                  onClick={() => handleScenarioSelect('lost')}
-                  className="flex flex-col items-center text-center p-6 rounded-md border border-border bg-card hover:border-primary/50 hover:shadow-md transition-all group"
-                >
-                  <div className="w-14 h-14 rounded-full bg-rose-500/10 text-rose-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                    <Search className="w-7 h-7" />
-                  </div>
-                  <h3 className="font-semibold text-foreground mb-2">{hub.lostTitle}</h3>
-                  <p className="text-sm text-muted-foreground">{hub.lostDesc}</p>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleScenarioSelect('found')}
-                  className="flex flex-col items-center text-center p-6 rounded-md border border-border bg-card hover:border-primary/50 hover:shadow-md transition-all group"
-                >
-                  <div className="w-14 h-14 rounded-full bg-sky-500/10 text-sky-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                    <Home className="w-7 h-7" />
-                  </div>
-                  <h3 className="font-semibold text-foreground mb-2">{hub.foundTitle}</h3>
-                  <p className="text-sm text-muted-foreground">{hub.foundDesc}</p>
-                </button>
-              </div>
+      {flowStep === 'select-pet' && (
+        <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+          <div className="mb-6 flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setFlowStep('lost-role')}
+              className={surfaceIconButton}
+              aria-label={t.common.back}
+            >
+              <ChevronLeft className="size-5" aria-hidden />
+            </button>
+            <h1 className="typo-h2 min-w-0 flex-1 truncate font-display">{hub.selectPetTitle}</h1>
+            <button
+              type="button"
+              onClick={handleCloseForm}
+              className={surfaceIconButton}
+              aria-label={t.petForm.close}
+            >
+              <X className="size-5" aria-hidden />
+            </button>
+          </div>
+          <p className="mb-6 text-muted-foreground">{hub.selectPetDesc}</p>
+
+          {loadingPets ? (
+            <div className="flex justify-center py-12">
+              <PageLoader />
             </div>
-          )}
-
-          {flowStep === 'lost-role' && (
-            <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-              <div className="flex items-center gap-4 mb-6">
-                <button
-                  type="button"
-                  onClick={() => setFlowStep('scenario')}
-                  className="p-2 hover:bg-muted rounded-md transition-colors"
-                >
-                  <ChevronLeft className="w-5 h-5 text-muted-foreground" />
-                </button>
-                <h1 className="typo-h1 flex-1 truncate">{hub.lostRoleTitle}</h1>
-                <button
-                  type="button"
-                  onClick={handleCloseForm}
-                  className="text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              <p className="text-muted-foreground mb-8">{hub.lostRoleSubtitle}</p>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <button
-                  type="button"
-                  onClick={() => handleLostRoleSelect('owner')}
-                  className="flex flex-col items-center text-center p-6 rounded-md border border-border bg-card hover:border-primary/50 hover:shadow-md transition-all group"
-                >
-                  <div className="w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                    <PawPrint className="w-7 h-7" />
-                  </div>
-                  <h3 className="font-semibold text-foreground mb-2">{hub.lostRoleOwnerTitle}</h3>
-                  <p className="text-sm text-muted-foreground">{hub.lostRoleOwnerDesc}</p>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleLostRoleSelect('helping')}
-                  className="flex flex-col items-center text-center p-6 rounded-md border border-border bg-card hover:border-primary/50 hover:shadow-md transition-all group"
-                >
-                  <div className="w-14 h-14 rounded-full bg-amber-500/10 text-amber-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                    <HandHelping className="w-7 h-7" />
-                  </div>
-                  <h3 className="font-semibold text-foreground mb-2">{hub.lostRoleHelpingTitle}</h3>
-                  <p className="text-sm text-muted-foreground">{hub.lostRoleHelpingDesc}</p>
-                </button>
-              </div>
-            </div>
-          )}
-
-          {flowStep === 'select-pet' && (
-            <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-              <div className="flex items-center gap-4 mb-6">
-                <button
-                  type="button"
-                  onClick={() => setFlowStep('lost-role')}
-                  className="p-2 hover:bg-muted rounded-md transition-colors"
-                >
-                  <ChevronLeft className="w-5 h-5 text-muted-foreground" />
-                </button>
-                <h1 className="typo-h1 flex-1 truncate">{hub.selectPetTitle}</h1>
-                <button
-                  type="button"
-                  onClick={handleCloseForm}
-                  className="text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              <p className="text-muted-foreground mb-6">{hub.selectPetDesc}</p>
-
-              {loadingPets ? (
-                <div className="py-12 flex justify-center">
-                  <PageLoader />
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {myPets.length > 0 ? (
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      {myPets.map((pet) => (
-                        <button
-                          key={pet.id}
-                          type="button"
-                          onClick={() => {
-                            setSelectedProfilePetId(pet.id);
-                            setFlowStep('form');
-                          }}
-                          className="flex items-center gap-4 p-4 rounded-md border border-border bg-card hover:border-primary/50 hover:shadow-md transition-all text-left group"
-                        >
-                          {pet.photo ? (
-                            <img src={pet.photo} alt={pet.name} className="w-14 h-14 rounded-full object-cover shrink-0" />
-                          ) : (
-                            <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center shrink-0">
-                              <PawPrint className="w-6 h-6 text-muted-foreground/50" />
-                            </div>
-                          )}
-                          <div className="min-w-0 flex-1">
-                            <h3 className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">
-                              {pet.name}
-                            </h3>
-                            <p className="text-sm text-muted-foreground truncate">{pet.subtitle}</p>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 px-4 border border-dashed border-border rounded-md bg-muted/30">
-                      <PawPrint className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
-                      <p className="text-foreground font-medium mb-1">{hub.emptyPetsTitle}</p>
-                      <p className="text-sm text-muted-foreground">{hub.emptyPetsDesc}</p>
-                    </div>
-                  )}
-
-                  <div className="pt-6 mt-6 border-t border-border flex flex-col sm:flex-row gap-3">
-                    <Button variant="outline" className="flex-1" onClick={() => navigate('/my-pets/add')}>
-                      <Plus className="w-4 h-4 mr-2" />
-                      {hub.createProfile}
-                    </Button>
-                    <Button
-                      className="flex-1"
+          ) : (
+            <div className="space-y-4">
+              {myPets.length > 0 ? (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {myPets.map((pet) => (
+                    <button
+                      key={pet.id}
+                      type="button"
                       onClick={() => {
-                        setSelectedProfilePetId(null);
+                        setSelectedProfilePetId(pet.id);
                         setFlowStep('form');
                       }}
+                      className={cn(
+                        surfaceChoiceCard,
+                        'flex-row items-center gap-4 p-4 text-left',
+                      )}
                     >
-                      {hub.skipProfile}
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {flowStep === 'form' && (
-            <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-              {profilePrefillLoading ? (
-                <div className="py-12 flex justify-center">
-                  <PageLoader />
+                      {pet.photo ? (
+                        <img
+                          src={pet.photo}
+                          alt={pet.name}
+                          className="size-14 shrink-0 rounded-full object-cover ring-[3px] ring-medallion"
+                        />
+                      ) : (
+                        <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-landing-muted">
+                          <PawPrint className="size-6 text-muted-foreground/50" aria-hidden />
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <h3 className="truncate font-semibold text-foreground group-hover:text-primary">
+                          {pet.name}
+                        </h3>
+                        <p className="truncate text-sm text-muted-foreground">{pet.subtitle}</p>
+                      </div>
+                    </button>
+                  ))}
                 </div>
               ) : (
-                <>
-                  {profilePrefill &&
-                    (profilePrefill.description?.trim().length ?? 0) < MIN_DESCRIPTION && (
-                      <div
-                        role="status"
-                        className="mb-4 rounded-lg border border-amber-300/80 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-100"
-                      >
-                        {t.petForm.descriptionTooShortSearchHint}
-                      </div>
-                    )}
-                  <PetForm
-                    key={`${selectedProfilePetId ?? 'create'}-${scenario}`}
-                    variant="page"
-                    renderStepHeaderExternally
-                    closeOnSubmit={false}
-                    onStepChange={setStepInfo}
-                    onClose={handleCloseForm}
-                    onSubmit={handleSubmit}
-                    prefillPartial={profilePrefill}
-                    aiPhotoAssistEnabled={!selectedProfilePetId}
-                    initialStatus={scenario === 'found' ? 'found' : 'searching'}
-                  />
-                </>
+                <div className={surfaceEmpty}>
+                  <PawPrint className="mx-auto mb-3 size-12 text-muted-foreground/30" aria-hidden />
+                  <p className="mb-1 font-medium text-foreground">{hub.emptyPetsTitle}</p>
+                  <p className="text-sm text-muted-foreground">{hub.emptyPetsDesc}</p>
+                </div>
               )}
+
+              <div className="mt-6 flex flex-col gap-3 border-t border-border pt-6 sm:flex-row">
+                <button type="button" className={surfaceCtaOutline} onClick={() => navigate('/my-pets/add')}>
+                  <Plus className="size-4" aria-hidden />
+                  {hub.createProfile}
+                </button>
+                <button
+                  type="button"
+                  className={surfaceCtaPrimary}
+                  onClick={() => {
+                    setSelectedProfilePetId(null);
+                    setFlowStep('form');
+                  }}
+                >
+                  {hub.skipProfile}
+                </button>
+              </div>
             </div>
           )}
         </div>
-      </main>
+      )}
 
-      <ContactRequiredModal
-        open={showContactRequired}
-        returnPath={createReturnPath}
-        onClose={() => setShowContactRequired(false)}
-      />
+      {flowStep === 'form' && (
+        <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+          {profilePrefillLoading ? (
+            <div className="flex justify-center py-12">
+              <PageLoader />
+            </div>
+          ) : (
+            <>
+              {profilePrefill &&
+                (profilePrefill.description?.trim().length ?? 0) < MIN_DESCRIPTION && (
+                  <div
+                    role="status"
+                    className="mb-4 rounded-2xl border border-primary/25 bg-primary/5 px-4 py-3 text-sm text-foreground"
+                  >
+                    {t.petForm.descriptionTooShortSearchHint}
+                  </div>
+                )}
+              <PetForm
+                key={`${selectedProfilePetId ?? 'create'}-${scenario}`}
+                variant="page"
+                renderStepHeaderExternally
+                closeOnSubmit={false}
+                onStepChange={setStepInfo}
+                onClose={handleCloseForm}
+                onSubmit={handleSubmit}
+                prefillPartial={profilePrefill}
+                aiPhotoAssistEnabled={!selectedProfilePetId}
+                initialStatus={scenario === 'found' ? 'found' : 'searching'}
+              />
+            </>
+          )}
+        </div>
+      )}
 
-      <Footer />
-    </div>
+    </AdFormPageShell>
   );
 }

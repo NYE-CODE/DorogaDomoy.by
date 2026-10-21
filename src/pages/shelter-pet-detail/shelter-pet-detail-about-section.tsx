@@ -2,6 +2,7 @@ import { Calendar } from 'lucide-react';
 import type { Pet } from '@/entities/pet/model/types';
 import { formatCalendarDate, formatRelativeTime } from '@/shared/lib/pet-helpers';
 import { petScenarioSoftPillClass } from '@/shared/lib/pet-scenario-colors';
+import { surfacePanel } from '@/shared/styles/surface-classes';
 import { cn } from '@/shared/ui/utils';
 import { ShelterPetTraits } from '../../../components/ShelterPetTraits';
 import {
@@ -55,19 +56,27 @@ export function ShelterPetDetailAboutSection({
   onCopyLinkOnly,
 }: ShelterPetDetailAboutSectionProps) {
   return (
-    <div
-      className={cn(
-        'rounded-lg border border-border bg-card p-6 shadow-sm',
-        !showAbout && 'hidden',
-      )}
-    >
-      <h2 className="typo-h2 mb-4 max-lg:hidden">О питомце</h2>
-      <div className="space-y-3 text-sm">
-        <h1 className="typo-h1">{title}</h1>
+    <div className={cn(surfacePanel, 'p-5 sm:p-6', !showAbout && 'hidden')}>
+      <h2 className="mb-4 font-display text-lg font-semibold text-foreground max-lg:hidden sm:text-xl">
+        {t.shelterPet.stepAbout}
+      </h2>
+      <div className="space-y-4 text-sm">
+        <h1 className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+          {title}
+        </h1>
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
           <div className="flex flex-wrap gap-2">
-            <span className={cn('rounded-full px-3 py-1 text-sm font-medium', petScenarioSoftPillClass.shelter)}>{adoption}</span>
-            <span className="rounded-full bg-muted px-3 py-1 text-sm text-muted-foreground">{t.pet.animalType[pet.animalType]}</span>
+            <span
+              className={cn(
+                'rounded-full px-3 py-1 text-sm font-medium',
+                petScenarioSoftPillClass.shelter,
+              )}
+            >
+              {adoption}
+            </span>
+            <span className="rounded-full bg-landing-muted px-3 py-1 text-sm text-muted-foreground">
+              {t.pet.animalType[pet.animalType]}
+            </span>
           </div>
           <div
             className="flex shrink-0 items-center gap-2.5"
@@ -85,9 +94,12 @@ export function ShelterPetDetailAboutSection({
           </div>
         </div>
 
-        <p className="pt-1 whitespace-pre-line leading-relaxed text-muted-foreground">{pet.description || t.shelterPet.descriptionEmpty}</p>
+        <p className="max-w-prose whitespace-pre-line text-base leading-relaxed text-muted-foreground">
+          {pet.description || t.shelterPet.descriptionEmpty}
+        </p>
+
         {(pet.registrationAuthority?.trim() || pet.registrationTokenNumber?.trim()) && (
-          <div className="mt-3 rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm">
+          <div className="rounded-2xl border border-border bg-landing-muted/50 px-4 py-3 text-sm">
             <p className="font-semibold text-foreground">{t.petDetail.registrationTitle}</p>
             {pet.registrationAuthority?.trim() ? (
               <p className="mt-1 text-muted-foreground">
@@ -103,14 +115,31 @@ export function ShelterPetDetailAboutSection({
             ) : null}
           </div>
         )}
-        <p><span className="text-muted-foreground">{t.pet.breedLabel}: </span>{pet.breed?.trim() || '?'}</p>
-        <p><span className="text-muted-foreground">{t.pet.colorLabel}: </span>{colors}</p>
-        <p><span className="text-muted-foreground">{t.pet.ageLabel}: </span>{pet.approximateAge?.trim() || '?'}</p>
-        <p><span className="text-muted-foreground">Шерсть: </span>{coat}</p>
-        <ShelterPetTraits pet={pet} className="mt-3" />
+
+        <dl className="grid gap-2 sm:grid-cols-2">
+          <div>
+            <dt className="text-xs uppercase tracking-wide text-muted-foreground">{t.pet.breedLabel}</dt>
+            <dd className="mt-0.5 font-medium text-foreground">{pet.breed?.trim() || '—'}</dd>
+          </div>
+          <div>
+            <dt className="text-xs uppercase tracking-wide text-muted-foreground">{t.pet.colorLabel}</dt>
+            <dd className="mt-0.5 font-medium text-foreground">{colors}</dd>
+          </div>
+          <div>
+            <dt className="text-xs uppercase tracking-wide text-muted-foreground">{t.pet.ageLabel}</dt>
+            <dd className="mt-0.5 font-medium text-foreground">{pet.approximateAge?.trim() || '—'}</dd>
+          </div>
+          <div>
+            <dt className="text-xs uppercase tracking-wide text-muted-foreground">Шерсть</dt>
+            <dd className="mt-0.5 font-medium text-foreground">{coat}</dd>
+          </div>
+        </dl>
+
+        <ShelterPetTraits pet={pet} className="mt-1" />
+
         <div className="border-t border-border pt-3 text-muted-foreground">
           <p className="inline-flex items-start gap-2">
-            <Calendar className="size-4 shrink-0 mt-0.5" aria-hidden />
+            <Calendar className="mt-0.5 size-4 shrink-0" aria-hidden />
             <span>
               {t.petDetail.shelterAboutDatesLine
                 .replace('{published}', formatCalendarDate(pet.publishedAt))
