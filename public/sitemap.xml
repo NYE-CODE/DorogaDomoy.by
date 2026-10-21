@@ -11,123 +11,33 @@
   <url><loc>https://dorogadomoy.by/blog</loc><priority>0.6</priority></url>
   <url><loc>https://dorogadomoy.by/terms</loc><priority>0.3</priority></url>
   <url><loc>https://dorogadomoy.by/privacy</loc><priority>0.3</priority></url>
-  <url><loc>https://dorogadomoy.by/search?city=%D0%9C%D0%B8%D0%BD%D1%81%D0%BA</loc><priority>0.7</priority></url>
-  <url><loc>https://dorogadomoy.by/search?city=%D0%9C%D0%B8%D0%BD%D1%81%D0%BA&amp;status=searching</loc><priority>0.6</priority></url>
-  <url><loc>https://dorogadomoy.by/search?city=%D0%91%D1%80%D0%B5%D1%81%D1%82</loc><priority>0.7</priority></url>
-  <url><loc>https://dorogadomoy.by/search?city=%D0%91%D1%80%D0%B5%D1%81%D1%82&amp;status=searching</loc><priority>0.6</priority></url>
-  <url><loc>https://dorogadomoy.by/search?city=%D0%92%D0%B8%D1%82%D0%B5%D0%B1%D1%81%D0%BA</loc><priority>0.7</priority></url>
-  <url><loc>https://dorogadomoy.by/search?city=%D0%92%D0%B8%D1%82%D0%B5%D0%B1%D1%81%D0%BA&amp;status=searching</loc><priority>0.6</priority></url>
-  <url><loc>https://dorogadomoy.by/search?city=%D0%93%D0%BE%D0%BC%D0%B5%D0%BB%D1%8C</loc><priority>0.7</priority></url>
-  <url><loc>https://dorogadomoy.by/search?city=%D0%93%D0%BE%D0%BC%D0%B5%D0%BB%D1%8C&amp;status=searching</loc><priority>0.6</priority></url>
-  <url><loc>https://dorogadomoy.by/search?city=%D0%93%D1%80%D0%BE%D0%B4%D0%BD%D0%BE</loc><priority>0.7</priority></url>
-  <url><loc>https://dorogadomoy.by/search?city=%D0%93%D1%80%D0%BE%D0%B4%D0%BD%D0%BE&amp;status=searching</loc><priority>0.6</priority></url>
-  <url><loc>https://dorogadomoy.by/search?city=%D0%9C%D0%BE%D0%B3%D0%B8%D0%BB%D1%91%D0%B2</loc><priority>0.7</priority></url>
-  <url><loc>https://dorogadomoy.by/search?city=%D0%9C%D0%BE%D0%B3%D0%B8%D0%BB%D1%91%D0%B2&amp;status=searching</loc><priority>0.6</priority></url>
+  <url><loc>https://dorogadomoy.by/city/minsk</loc><priority>0.8</priority></url>
+  <url><loc>https://dorogadomoy.by/search?city=%D0%9C%D0%B8%D0%BD%D1%81%D0%BA</loc><priority>0.5</priority></url>
+  <url><loc>https://dorogadomoy.by/search?city=%D0%9C%D0%B8%D0%BD%D1%81%D0%BA&amp;status=searching</loc><priority>0.4</priority></url>
+  <url><loc>https://dorogadomoy.by/city/brest</loc><priority>0.8</priority></url>
+  <url><loc>https://dorogadomoy.by/search?city=%D0%91%D1%80%D0%B5%D1%81%D1%82</loc><priority>0.5</priority></url>
+  <url><loc>https://dorogadomoy.by/search?city=%D0%91%D1%80%D0%B5%D1%81%D1%82&amp;status=searching</loc><priority>0.4</priority></url>
+  <url><loc>https://dorogadomoy.by/city/vitebsk</loc><priority>0.8</priority></url>
+  <url><loc>https://dorogadomoy.by/search?city=%D0%92%D0%B8%D1%82%D0%B5%D0%B1%D1%81%D0%BA</loc><priority>0.5</priority></url>
+  <url><loc>https://dorogadomoy.by/search?city=%D0%92%D0%B8%D1%82%D0%B5%D0%B1%D1%81%D0%BA&amp;status=searching</loc><priority>0.4</priority></url>
+  <url><loc>https://dorogadomoy.by/city/gomel</loc><priority>0.8</priority></url>
+  <url><loc>https://dorogadomoy.by/search?city=%D0%93%D0%BE%D0%BC%D0%B5%D0%BB%D1%8C</loc><priority>0.5</priority></url>
+  <url><loc>https://dorogadomoy.by/search?city=%D0%93%D0%BE%D0%BC%D0%B5%D0%BB%D1%8C&amp;status=searching</loc><priority>0.4</priority></url>
+  <url><loc>https://dorogadomoy.by/city/grodno</loc><priority>0.8</priority></url>
+  <url><loc>https://dorogadomoy.by/search?city=%D0%93%D1%80%D0%BE%D0%B4%D0%BD%D0%BE</loc><priority>0.5</priority></url>
+  <url><loc>https://dorogadomoy.by/search?city=%D0%93%D1%80%D0%BE%D0%B4%D0%BD%D0%BE&amp;status=searching</loc><priority>0.4</priority></url>
+  <url><loc>https://dorogadomoy.by/city/mogilev</loc><priority>0.8</priority></url>
+  <url><loc>https://dorogadomoy.by/search?city=%D0%9C%D0%BE%D0%B3%D0%B8%D0%BB%D1%91%D0%B2</loc><priority>0.5</priority></url>
+  <url><loc>https://dorogadomoy.by/search?city=%D0%9C%D0%BE%D0%B3%D0%B8%D0%BB%D1%91%D0%B2&amp;status=searching</loc><priority>0.4</priority></url>
   <url><loc>https://dorogadomoy.by/pet/pet-53d94085</loc><priority>0.5</priority></url>
   <url><loc>https://dorogadomoy.by/pet/pet-c0274132</loc><priority>0.5</priority></url>
   <url><loc>https://dorogadomoy.by/pet/pet-5761d2f4</loc><priority>0.5</priority></url>
   <url><loc>https://dorogadomoy.by/pet/pet-51e952aa</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-3ff25ca7</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-82afe2e2</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-4ddfba4f</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-b3feb177</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-568f777d</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-76c8bc22</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-dd1a30bc</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-81a379ce</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-61034c07</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-861678d3</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-1e14c6f1</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-fcd16291</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-d1c488fb</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-df9ab2d4</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-d8b5fa3a</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-2960a471</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-195fbf33</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-4deb1cc3</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-a4103e21</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-e6974655</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-d0f3f40c</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-96f8311c</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-5b6ece73</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-d1769119</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-7d88e9bc</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-afebed94</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-a1cbbf63</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-7b39edea</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-391643b3</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-941930a9</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-8935dc20</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-208a3cb8</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-afc14bbd</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-feae405f</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-8b43e7d4</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-de371183</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-4e217c29</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-b2cd6a55</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-5888c352</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-c9be8f26</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-61a753a3</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-140aab02</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-8dec6002</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-b1e5e5cc</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-25d4dc8e</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-86347700</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-c652a826</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-0fda7375</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-9bf1ea20</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-1d5be028</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-a9b98096</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-f4cc5de6</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-6e12105f</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-30c7e859</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-27e70278</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-c153d5fa</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-d56ff5a7</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-e4237a12</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-167688d8</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-b912b126</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-4756b349</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-4fbb43b4</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-5c6e4894</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-988855ab</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-24927c27</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-2d116f9d</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-0bab4aa4</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-8e7cef05</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-ba7ce5c7</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-1b3b7871</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-64c6b87e</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-e40248e0</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-80268347</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-70562a3f</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-38f8c46b</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-b494d047</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-720f9f97</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-04d84083</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-a7ab6859</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-2db7a92a</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-9310d8ec</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-d4b477b4</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-aacd6825</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-c3b44add</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-1b8af9a1</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-a25bd534</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-baf5ea8e</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-cb95aa1c</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-e484c13d</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-c836c16d</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-29e822fd</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-aa3f8b4d</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-30172dee</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-5ad11fcf</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/pet/pet-71ba8047</loc><priority>0.5</priority></url>
   <url><loc>https://dorogadomoy.by/shelter-pet/pet-0fddd4b0</loc><priority>0.4</priority></url>
   <url><loc>https://dorogadomoy.by/shelter-pet/pet-93d277a8</loc><priority>0.4</priority></url>
   <url><loc>https://dorogadomoy.by/shelter-pet/pet-2fe1f3ea</loc><priority>0.4</priority></url>
   <url><loc>https://dorogadomoy.by/shelter-pet/pet-741e5b74</loc><priority>0.4</priority></url>
   <url><loc>https://dorogadomoy.by/shelters/fd00b8f7-703d-4f9a-90e8-8351d3835312</loc><priority>0.5</priority></url>
-  <url><loc>https://dorogadomoy.by/shelters/61e33109-fb3e-4a96-ae49-3ea11cbbc696</loc><priority>0.5</priority></url>
   <url><loc>https://dorogadomoy.by/blog/nashyol-zhivotnoe-na-ulitse-poshagovaya-instruktsiya-chto-delat</loc><priority>0.5</priority></url>
   <url><loc>https://dorogadomoy.by/blog/tri-veschi-kotorye-stoit-sdelat-do-togo-kak-pitomets-poteryaetsya</loc><priority>0.5</priority></url>
 </urlset>

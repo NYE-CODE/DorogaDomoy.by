@@ -1,7 +1,7 @@
 import { PawPrint } from 'lucide-react';
 import type { ProfilePetListCard } from '@/shared/lib/profile-pet-display';
 import { cn } from '@/shared/ui/utils';
-import { surfacePanelClass } from '@/shared/styles/surface-classes';
+import { surfacePanel } from '@/shared/styles/surface-classes';
 import { typoH3, typoH4 } from '@/shared/styles/typography-classes';
 
 export interface UserProfilePetsSectionProps {
@@ -16,7 +16,7 @@ export function UserProfilePetsSection({
   profilePets,
 }: UserProfilePetsSectionProps) {
   return (
-    <div className={cn(surfacePanelClass, 'mb-6')}>
+    <div className={cn(surfacePanel, 'mb-6')}>
       <div className="border-b border-border px-6 py-4">
         <h2 className={typoH3}>{title}</h2>
       </div>

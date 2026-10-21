@@ -5,7 +5,7 @@ import { RewardBadge } from '../../../components/reward-badge';
 import { dateLocaleForUi } from '@/shared/lib/profile-pet-text';
 import { petStatusPhotoPillClass } from '@/shared/lib/pet-helpers';
 import { cn } from '@/shared/ui/utils';
-import { surfacePanelClass } from '@/shared/styles/surface-classes';
+import { surfacePanel } from '@/shared/styles/surface-classes';
 import { typoH3 } from '@/shared/styles/typography-classes';
 import { USER_PROFILE_DEFAULT_PET_PHOTO } from './user-profile-constants';
 import { getUserProfileAdStatusTitle } from './user-profile-helpers';
@@ -32,7 +32,7 @@ export function UserProfileAdsSection({
   foundBadge,
 }: UserProfileAdsSectionProps) {
   return (
-    <div className={surfacePanelClass}>
+    <div className={surfacePanel}>
       <div className="border-b border-border px-6 py-4">
         <h2 className={typoH3}>{title}</h2>
       </div>

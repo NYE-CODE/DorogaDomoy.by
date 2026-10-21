@@ -33,7 +33,7 @@ import { PageLoader } from '@/shared/ui/page-loader';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { Button } from '@/shared/ui/button';
 import { appPrimaryCtaClass } from '@/shared/styles/cta-classes';
-import { surfacePanelClass } from '@/shared/styles/surface-classes';
+import { surfacePanel } from '@/shared/styles/surface-classes';
 import { cn } from '@/shared/ui/utils';
 import { BackQuickMenu } from '../../components/navigation/BackQuickMenu';
 
@@ -216,7 +216,7 @@ export default function PublicPetProfilePage() {
                 </div>
               )}
 
-              <div className={cn(surfacePanelClass)}>
+              <div className={cn(surfacePanel)}>
                 {mainPhoto && (
                   <div className="aspect-[4/3] md:aspect-[16/9] overflow-hidden bg-muted">
                     <img src={mainPhoto} alt={pet.name} className="w-full h-full object-cover" />
@@ -379,7 +379,7 @@ export default function PublicPetProfilePage() {
             </div>
 
             <div className="lg:col-span-1 space-y-6">
-              <div className={cn(surfacePanelClass, 'lg:sticky lg:top-24')}>
+              <div className={cn(surfacePanel, 'lg:sticky lg:top-24')}>
                 <div className="bg-primary px-5 md:px-6 py-4 md:py-5">
                   <h2 className="text-white font-bold text-lg md:text-xl flex items-center gap-2">
                     <Phone size={20} className="md:w-6 md:h-6" />

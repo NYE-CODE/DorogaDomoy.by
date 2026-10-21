@@ -11,7 +11,7 @@ import {
 import type { User } from '@/app/providers/AuthContext';
 import { dateLocaleForUi } from '@/shared/lib/profile-pet-text';
 import { cn } from '@/shared/ui/utils';
-import { surfaceCardPaddedClass } from '@/shared/styles/surface-classes';
+import { surfacePanel } from '@/shared/styles/surface-classes';
 import { getUserProfileRoleName } from './user-profile-helpers';
 
 export interface UserProfileHeaderProps {
@@ -51,7 +51,7 @@ export function UserProfileHeader({
   onShare,
 }: UserProfileHeaderProps) {
   return (
-    <div className={cn(surfaceCardPaddedClass, 'relative mb-6')}>
+    <div className={cn(surfacePanel, 'relative mb-6 p-6 sm:p-8')}>
       <div className="absolute right-4 top-4 flex items-center gap-2 sm:right-6 sm:top-6">
         {showAdminBlock ? (
           <button
