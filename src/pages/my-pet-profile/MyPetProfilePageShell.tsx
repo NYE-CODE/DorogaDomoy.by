@@ -1,4 +1,4 @@
-import '../../landing/styles/theme-scoped.css';
+import '../../../landing/styles/theme-scoped.css';
 import { Header } from '@/widgets/layout/Header';
 import { Footer } from '@/widgets/layout/Footer';
 import { BackQuickMenu } from '../../../components/navigation/BackQuickMenu';

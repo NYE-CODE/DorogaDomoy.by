@@ -27,7 +27,7 @@ import {
 import { getHomePath } from '@/shared/lib/home-route';
 import { formatPetAgeDisplay, genderLabel, temperamentLabel } from '@/shared/lib/profile-pet-text';
 import { toast } from 'sonner';
-import '../landing/styles/theme-scoped.css';
+import '../../landing/styles/theme-scoped.css';
 import { Header } from '@/widgets/layout/Header';
 import { Footer } from '@/widgets/layout/Footer';
 import { PageLoader } from '@/shared/ui/page-loader';
