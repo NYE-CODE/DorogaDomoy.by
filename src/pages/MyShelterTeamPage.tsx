@@ -22,7 +22,13 @@ import {
   SEO_KEYWORDS,
   SEO_ROBOTS_PRIVATE,
 } from '@/shared/lib/seo';
-import { appOutlineCtaClass, appPrimaryCtaClass } from '@/shared/styles/cta-classes';
+import {
+  surfaceCtaPrimary,
+  surfaceInput,
+  surfacePage,
+  surfacePanel,
+} from '@/shared/styles/surface-classes';
+import '../../landing/styles/theme-scoped.css';
 import { BackQuickMenu } from '../../components/navigation/BackQuickMenu';
 
 function sortMembers(rows: ShelterMemberResponse[]): ShelterMemberResponse[] {
@@ -189,7 +195,7 @@ export default function MyShelterTeamPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen flex-col bg-background pb-24 md:pb-8 dark:bg-background">
+      <div className={cn('landing-theme flex min-h-screen flex-col pb-24 md:pb-8', surfacePage)}>
         <Header showCitySelector />
         <main className="flex-1 py-10">
           <PageLoader />
@@ -201,7 +207,7 @@ export default function MyShelterTeamPage() {
 
   if (notFound) {
     return (
-      <div className="flex min-h-screen flex-col bg-background pb-24 md:pb-8 dark:bg-background">
+      <div className={cn('landing-theme flex min-h-screen flex-col pb-24 md:pb-8', surfacePage)}>
         <Header showCitySelector />
         <main className="flex-1 px-4 py-10">
           <p className="text-center text-muted-foreground">{tm.notFound}</p>
@@ -213,7 +219,7 @@ export default function MyShelterTeamPage() {
 
   if (forbidden) {
     return (
-      <div className="flex min-h-screen flex-col bg-background pb-24 md:pb-8 dark:bg-background">
+      <div className={cn('landing-theme flex min-h-screen flex-col pb-24 md:pb-8', surfacePage)}>
         <Header showCitySelector />
         <main className="flex-1 px-4 py-10">
           <p className="text-center text-muted-foreground">{tm.accessDenied}</p>
@@ -224,7 +230,7 @@ export default function MyShelterTeamPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-background pb-24 md:pb-8 dark:bg-background">
+    <div className={cn('landing-theme flex min-h-screen flex-col pb-24 md:pb-8', surfacePage)}>
       <Header showCitySelector />
       <main className="flex-1 py-6 sm:py-10">
         <div className="page-container">
@@ -248,9 +254,9 @@ export default function MyShelterTeamPage() {
           </div>
 
           {canManage ? (
-            <div className="mb-6 rounded-lg border border-border bg-card p-4 sm:mb-8 sm:p-6">
+            <div className={cn(surfacePanel, 'mb-6 p-4 sm:mb-8 sm:p-6')}>
               <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-lg font-semibold">{tm.inviteTitle}</h2>
+                <h2 className="font-display text-lg font-semibold">{tm.inviteTitle}</h2>
               </div>
               <p className="mb-3 text-sm text-muted-foreground">{tm.inviteVolunteersOnlyHint}</p>
               <div className="grid gap-3 lg:grid-cols-[minmax(180px,1fr)_minmax(180px,1fr)_auto]">
@@ -260,7 +266,7 @@ export default function MyShelterTeamPage() {
                     type="email"
                     value={inviteEmail}
                     onChange={(e) => setInviteEmail(e.target.value)}
-                    className="rounded-lg border border-border bg-background px-3 py-2"
+                    className={surfaceInput}
                     autoComplete="off"
                   />
                 </label>
@@ -269,7 +275,7 @@ export default function MyShelterTeamPage() {
                   <input
                     value={inviteUserId}
                     onChange={(e) => setInviteUserId(e.target.value)}
-                    className="rounded-lg border border-border bg-background px-3 py-2 font-mono text-xs"
+                    className={cn(surfaceInput, 'font-mono text-xs')}
                     placeholder="uuid…"
                     autoComplete="off"
                   />
@@ -277,7 +283,7 @@ export default function MyShelterTeamPage() {
                 <div className="flex items-end">
                   <Button
                     type="button"
-                    className={cn('w-full', appPrimaryCtaClass)}
+                    className={cn('w-full', surfaceCtaPrimary)}
                     disabled={inviting}
                     onClick={onInvite}
                   >
@@ -288,8 +294,8 @@ export default function MyShelterTeamPage() {
             </div>
           ) : null}
 
-          <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
-            <div className="hidden grid-cols-[1fr_auto_auto_auto] gap-4 border-b border-border bg-muted/40 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:grid">
+          <div className={cn(surfacePanel)}>
+            <div className="hidden grid-cols-[1fr_auto_auto_auto] gap-4 border-b border-border bg-landing-muted/50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:grid">
               <span>{tm.colMember}</span>
               <span>{tm.colRole}</span>
               <span>{tm.colStatus}</span>

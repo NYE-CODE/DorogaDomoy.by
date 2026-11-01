@@ -27,13 +27,18 @@ import {
 import { getHomePath } from '@/shared/lib/home-route';
 import { formatPetAgeDisplay, genderLabel, temperamentLabel } from '@/shared/lib/profile-pet-text';
 import { toast } from 'sonner';
+import '../landing/styles/theme-scoped.css';
 import { Header } from '@/widgets/layout/Header';
 import { Footer } from '@/widgets/layout/Footer';
 import { PageLoader } from '@/shared/ui/page-loader';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { Button } from '@/shared/ui/button';
-import { appPrimaryCtaClass } from '@/shared/styles/cta-classes';
-import { surfacePanel } from '@/shared/styles/surface-classes';
+import {
+  surfaceCtaOutline,
+  surfaceCtaPrimary,
+  surfacePage,
+  surfacePanel,
+} from '@/shared/styles/surface-classes';
 import { cn } from '@/shared/ui/utils';
 import { BackQuickMenu } from '../../components/navigation/BackQuickMenu';
 
@@ -126,7 +131,7 @@ export default function PublicPetProfilePage() {
 
   if (notFound || !pet) {
     return (
-      <div className="min-h-screen bg-muted/30 dark:bg-background flex flex-col">
+      <div className={cn('landing-theme min-h-screen flex flex-col', surfacePage)}>
         <Header showCitySelector={false} />
         <div className="flex-1 px-4 py-8">
           <div className="mx-auto max-w-md">
@@ -135,7 +140,7 @@ export default function PublicPetProfilePage() {
               description={pp.notFoundDesc}
               icon={<PawPrint size={28} />}
               action={
-                <Button asChild>
+                <Button className={surfaceCtaPrimary} asChild>
                   <Link to={getHomePath()}>{pp.backHome}</Link>
                 </Button>
               }
@@ -181,7 +186,7 @@ export default function PublicPetProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-muted/30 dark:bg-background flex flex-col">
+    <div className={cn('landing-theme min-h-screen flex flex-col', surfacePage)}>
       <Header showCitySelector={false} />
       <div className="flex-1 py-6 sm:py-8">
       <div className="page-container">
@@ -191,13 +196,13 @@ export default function PublicPetProfilePage() {
         <div className="grid lg:grid-cols-3 gap-6 lg:gap-8">
             <div className="lg:col-span-2 space-y-6">
               {showFoundSignalCta && (
-                <div className="rounded-lg bg-primary-light/10 dark:bg-primary-light/15 border border-primary-light/30 dark:border-primary-light/25 p-4 md:p-6">
+                <div className="rounded-2xl border border-primary/25 bg-primary/10 p-4 md:p-6">
                   <div className="flex items-start gap-3 md:gap-4">
-                    <div className="w-10 h-10 md:w-12 md:h-12 bg-primary rounded-full flex items-center justify-center shrink-0">
-                      <PawPrint size={20} className="text-white md:w-6 md:h-6" />
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary md:size-12">
+                      <PawPrint size={20} className="text-landing-dark md:size-6" />
                     </div>
                     <div>
-                      <p className="font-bold text-black dark:text-white mb-1 text-base md:text-lg">
+                      <p className="mb-1 font-display text-base font-semibold text-foreground md:text-lg">
                         {pp.bannerTitle}
                       </p>
                       <p className="text-sm md:text-base text-muted-foreground">{pp.bannerText}</p>
@@ -208,7 +213,7 @@ export default function PublicPetProfilePage() {
                       type="button"
                       onClick={handleFoundSignal}
                       disabled={sendingFoundSignal}
-                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-primary text-white hover:bg-primary-hover disabled:opacity-60 disabled:cursor-not-allowed rounded-lg h-11 px-5 text-sm md:text-base font-medium transition-colors"
+                      className={cn(surfaceCtaPrimary, 'w-full sm:w-auto sm:min-w-[12rem] px-6')}
                     >
                       {sendingFoundSignal ? pp.signalSending : pp.signalCta}
                     </button>
@@ -420,7 +425,7 @@ export default function PublicPetProfilePage() {
                   {ownerPhone && (
                     <a
                       href={`tel:${ownerPhone.replace(/[\s-]/g, '')}`}
-                      className="flex items-center justify-center gap-2 bg-primary text-white hover:bg-primary-hover rounded-lg h-12 text-base md:text-lg transition-colors font-medium w-full"
+                      className={cn(surfaceCtaPrimary, 'w-full')}
                     >
                       <Phone size={20} />
                       <span className="truncate">{pp.callWith.replace('{phone}', ownerPhone)}</span>
@@ -430,7 +435,7 @@ export default function PublicPetProfilePage() {
                   {ownerViber && (
                     <a
                       href={`viber://chat?number=${ownerViber.replace(/\D/g, '')}`}
-                      className="flex items-center justify-center gap-2 bg-viber-alt text-white hover:bg-viber-alt-hover rounded-lg h-12 text-base md:text-lg transition-colors font-medium w-full"
+                      className="inline-flex h-12 min-h-12 w-full items-center justify-center gap-2 rounded-full bg-viber-alt px-7 text-base font-semibold text-white shadow-sm transition-colors hover:bg-viber-alt-hover"
                     >
                       <MessageCircle size={20} />
                       <span>{pp.viberCta}</span>
@@ -440,7 +445,7 @@ export default function PublicPetProfilePage() {
                   {ownerEmail && (
                     <a
                       href={`mailto:${ownerEmail}`}
-                      className="flex items-center justify-center gap-2 bg-white dark:bg-transparent border-2 border-primary text-primary hover:bg-orange-50 dark:hover:bg-orange-950/20 rounded-lg h-12 text-base md:text-lg transition-colors font-medium w-full"
+                      className={cn(surfaceCtaOutline, 'w-full')}
                     >
                       <Mail size={20} />
                       <span>{pp.writeEmail}</span>
@@ -455,10 +460,10 @@ export default function PublicPetProfilePage() {
                 </div>
               </div>
 
-              <div className="bg-white dark:bg-card rounded-lg border border-border shadow-sm p-5 md:p-6 text-center">
-                <p className="text-sm md:text-base text-muted-foreground mb-1">{pp.promoService}</p>
-                <p className="font-medium text-black dark:text-white mb-4 text-sm md:text-base">{pp.promoText}</p>
-                <Button className={cn(appPrimaryCtaClass, 'w-full md:w-auto')} asChild>
+              <div className={cn(surfacePanel, 'p-5 text-center md:p-6')}>
+                <p className="mb-1 text-sm text-muted-foreground md:text-base">{pp.promoService}</p>
+                <p className="mb-4 font-display text-sm font-medium text-foreground md:text-base">{pp.promoText}</p>
+                <Button className={cn(surfaceCtaPrimary, 'w-full md:w-auto')} asChild>
                   <Link to={getHomePath()}>
                     <PawPrint size={18} />
                     <span>{pp.promoCta}</span>

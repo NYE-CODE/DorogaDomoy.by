@@ -68,6 +68,8 @@ def shelter_pet_to_response(p: Pet) -> ShelterPetResponse:
         good_with_kids=getattr(details, "good_with_kids", None),
         good_with_dogs=getattr(details, "good_with_dogs", None),
         good_with_cats=getattr(details, "good_with_cats", None),
+        views_count=int(getattr(p, "views_count", 0) or 0),
+        favorites_count=int(getattr(p, "favorites_count", 0) or 0),
     )
 
 

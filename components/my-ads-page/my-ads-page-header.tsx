@@ -16,7 +16,7 @@ export function MyAdsPageHeader({
   onBack,
 }: MyAdsPageHeaderProps) {
   return (
-    <div className="mb-6 flex flex-col gap-4 rounded-lg border border-border bg-muted/25 p-6 sm:mb-8 sm:flex-row sm:items-end sm:justify-between sm:p-8">
+    <div className="mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
         <button
           type="button"
@@ -25,7 +25,7 @@ export function MyAdsPageHeader({
         >
           ← {backLabel}
         </button>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">{title}</h1>
+        <h1 className="typo-h2 font-display text-foreground">{title}</h1>
         <p className="mt-2 max-w-2xl text-sm text-muted-foreground sm:text-base">{subtitle}</p>
       </div>
       {totalCount != null && totalCount > 0 && totalLabel ? (

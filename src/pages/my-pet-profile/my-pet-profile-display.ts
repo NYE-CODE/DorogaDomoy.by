@@ -5,9 +5,9 @@ import { dateLocaleForUi, formatPetAgeDisplay } from '@/shared/lib/profile-pet-t
 import { typoH3 } from '@/shared/styles/typography-classes';
 
 export const MY_PET_PROFILE_FIELD_CLASS =
-  'rounded-md border border-border/70 bg-muted/25 p-4 transition-colors hover:bg-muted/40';
+  'rounded-xl border border-border/70 bg-landing-muted/40 p-4 transition-colors hover:bg-landing-muted/70';
 
-export const MY_PET_PROFILE_SECTION_TITLE_CLASS = typoH3;
+export const MY_PET_PROFILE_SECTION_TITLE_CLASS = `font-display ${typoH3}`;
 
 export interface MyPetProfileDisplay {
   photos: string[];

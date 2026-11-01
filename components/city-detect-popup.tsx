@@ -1,6 +1,9 @@
 import { MapPin } from 'lucide-react';
 import { useScrollLock } from './ui/use-scroll-lock';
 import { useI18n } from '../context/I18nContext';
+import { cn } from '@/shared/lib/classNames';
+import { surfaceCtaOutline, surfaceCtaPrimary } from '@/shared/styles/surface-classes';
+import '../landing/styles/theme-scoped.css';
 
 interface CityDetectPopupProps {
   open: boolean;
@@ -16,32 +19,31 @@ export function CityDetectPopup({ open, detectedCity, onConfirm, onReject }: Cit
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+    <div className="landing-theme fixed inset-0 z-[70] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/50" aria-hidden />
 
-      <div className="relative bg-card rounded-lg w-full max-w-sm shadow-2xl p-6 text-center animate-in fade-in zoom-in-95 duration-200">
-        <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-          <MapPin className="w-7 h-7 text-primary" />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="city-detect-title"
+        className="relative w-full max-w-sm overflow-hidden rounded-2xl border border-border bg-card shadow-card"
+      >
+        <div className="border-b border-border/80 bg-card px-5 pb-4 pt-5 text-center sm:px-6">
+          <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <MapPin className="size-6" aria-hidden />
+          </div>
+          <h2 id="city-detect-title" className="typo-h2 font-display text-foreground">
+            {t.cityDetect.yourCity} {detectedCity}
+            {t.cityDetect.question}
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">{t.cityDetect.showAds}</p>
         </div>
 
-        <h2 className="text-lg font-semibold text-foreground mb-1">
-          {t.cityDetect.yourCity} {detectedCity}{t.cityDetect.question}
-        </h2>
-        <p className="text-sm text-muted-foreground mb-6">
-          {t.cityDetect.showAds}
-        </p>
-
-        <div className="flex gap-3">
-          <button
-            onClick={onReject}
-            className="flex-1 px-4 py-2.5 text-sm font-medium text-foreground/90 bg-muted hover:bg-accent dark:hover:bg-accent rounded-lg transition-colors"
-          >
+        <div className="flex gap-3 bg-landing px-5 py-5 sm:px-6">
+          <button type="button" onClick={onReject} className={cn(surfaceCtaOutline, 'flex-1')}>
             {t.cityDetect.no}
           </button>
-          <button
-            onClick={onConfirm}
-            className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-primary hover:bg-primary/90 rounded-lg transition-colors"
-          >
+          <button type="button" onClick={onConfirm} className={cn(surfaceCtaPrimary, 'flex-1')}>
             {t.cityDetect.yes}
           </button>
         </div>

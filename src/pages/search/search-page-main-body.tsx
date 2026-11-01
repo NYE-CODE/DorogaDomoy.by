@@ -1,5 +1,6 @@
 import { lazy, Suspense, Fragment } from 'react';
-import { List } from 'lucide-react';
+import { Link } from 'react-router';
+import { List, PawPrint, Plus, RotateCcw } from 'lucide-react';
 import type { Pet } from '@/entities/pet/model/types';
 import type { useI18n } from '@/app/providers/I18nContext';
 import { TermsPage } from '../../../components/terms-page';
@@ -12,6 +13,9 @@ import { MapLoadingFallback } from './map-loading-fallback';
 import type { SearchView } from './search-storage';
 import { PartnerAdSlot } from '@/features/partner-ads/PartnerAdSlot';
 import { PARTNER_AD_SEARCH_FEED_INTERVAL } from '@/shared/lib/partner-ad-placements';
+import { cn } from '@/shared/lib/classNames';
+import { surfaceCtaPrimary, surfaceEmpty } from '@/shared/styles/surface-classes';
+import { appOutlineCtaClass } from '@/shared/styles/cta-classes';
 
 const MapView = lazy(() => import('../../../components/map-view'));
 
@@ -109,21 +113,27 @@ export function SearchPageMainBody({
         : t.app.noPetsFoundHint;
 
     return (
-      <div className="max-w-md">
-        <EmptyState
-          title={title}
-          description={description}
-          hint={hint}
-          className="rounded-3xl p-6 md:p-8"
-          action={
-            hasActiveFilters && onResetFilters ? (
-              <Button type="button" variant="outline" onClick={onResetFilters}>
-                {t.app.resetFiltersCta}
-              </Button>
-            ) : undefined
-          }
-        />
-      </div>
+      <EmptyState
+        title={title}
+        description={description}
+        hint={hint}
+        tone="brand"
+        icon={<PawPrint className="size-7" aria-hidden />}
+        className={cn(surfaceEmpty, 'w-full px-6 py-12 sm:px-8 sm:py-16')}
+        action={
+          hasActiveFilters && onResetFilters ? (
+            <Button type="button" className={appOutlineCtaClass} onClick={onResetFilters}>
+              <RotateCcw className="size-4 shrink-0" aria-hidden />
+              {t.app.resetFiltersCta}
+            </Button>
+          ) : (
+            <Link to="/create" className={cn(surfaceCtaPrimary, 'w-auto min-w-[12rem] px-7')}>
+              <Plus className="size-5 shrink-0" aria-hidden />
+              {t.header.createAd}
+            </Link>
+          )
+        }
+      />
     );
   }
 

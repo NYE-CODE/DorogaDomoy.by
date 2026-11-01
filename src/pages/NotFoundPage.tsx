@@ -5,7 +5,6 @@ import { useI18n } from '@/app/providers/I18nContext';
 import { Header } from '@/widgets/layout/Header';
 import { Footer } from '@/widgets/layout/Footer';
 import { Button } from '@/shared/ui/button';
-import { appPrimaryCtaClass } from '@/shared/styles/cta-classes';
 import { getHomePath, getLogoHref } from '@/shared/lib/home-route';
 import { ERROR_REPORT_TELEGRAM_URL } from '@/shared/lib/support-links';
 import {
@@ -15,6 +14,13 @@ import {
   SEO_ROBOTS_PRIVATE,
   truncateMetaDescription,
 } from '@/shared/lib/seo';
+import { cn } from '@/shared/lib/classNames';
+import {
+  surfaceCtaOutline,
+  surfaceCtaPrimary,
+  surfacePage,
+} from '@/shared/styles/surface-classes';
+import '../../landing/styles/theme-scoped.css';
 
 export default function NotFoundPage() {
   const { t } = useI18n();
@@ -33,18 +39,18 @@ export default function NotFoundPage() {
   }, [nf.title, nf.description]);
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className={cn('landing-theme flex min-h-screen flex-col', surfacePage)}>
       <Header showCitySelector />
 
       <main className="flex flex-1 flex-col items-center justify-center px-4 py-16">
         <div className="max-w-md space-y-5 text-center">
-          <div className="mx-auto flex size-20 items-center justify-center rounded-full bg-muted/60 text-muted-foreground">
+          <div className="mx-auto flex size-20 items-center justify-center rounded-full bg-landing-muted text-muted-foreground">
             <MapPinOff className="size-10" aria-hidden />
           </div>
 
           <div className="space-y-2">
-            <p className="typo-display text-primary/80">404</p>
-            <h1 className="typo-h2">{nf.title}</h1>
+            <p className="font-display typo-display text-primary/80">404</p>
+            <h1 className="font-display typo-h2">{nf.title}</h1>
             <p className="text-muted-foreground">{nf.description}</p>
           </div>
 
@@ -54,7 +60,7 @@ export default function NotFoundPage() {
               href={ERROR_REPORT_TELEGRAM_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="font-medium text-primary hover:text-primary-hover hover:underline dark:text-primary-soft dark:hover:text-primary-soft-hover"
+              className="font-medium text-primary hover:text-primary-hover hover:underline"
             >
               {nf.reportLink}
             </a>
@@ -62,10 +68,10 @@ export default function NotFoundPage() {
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
-            <Button type="button" className={appPrimaryCtaClass} asChild>
+            <Button type="button" className={cn(surfaceCtaPrimary, 'w-auto min-w-[9rem] px-6')} asChild>
               <Link to={getHomePath()}>{nf.toMain}</Link>
             </Button>
-            <Button type="button" variant="outline" asChild>
+            <Button type="button" className={cn(surfaceCtaOutline, 'w-auto min-w-[9rem] px-6')} asChild>
               <Link to={getLogoHref()}>{nf.toLanding}</Link>
             </Button>
           </div>

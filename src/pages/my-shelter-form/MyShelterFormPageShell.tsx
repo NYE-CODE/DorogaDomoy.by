@@ -1,3 +1,4 @@
+import '../../../landing/styles/theme-scoped.css';
 import { Header } from '@/widgets/layout/Header';
 import { Footer } from '@/widgets/layout/Footer';
 import { PageLoader } from '@/shared/ui/page-loader';
@@ -7,6 +8,8 @@ import {
   CardDescription,
   CardHeader,
 } from '@/shared/ui/card';
+import { cn } from '@/shared/lib/classNames';
+import { surfacePage } from '@/shared/styles/surface-classes';
 import { SHELTER_FORM_STEPS } from '@/shared/lib/shelter-org-form';
 import { MyShelterFormPageFooter } from './my-shelter-form-page-footer';
 import { MyShelterFormPageHeader } from './my-shelter-form-page-header';
@@ -22,7 +25,7 @@ export default function MyShelterFormPage() {
 
   if (p.bootLoading) {
     return (
-      <div className="flex min-h-screen flex-col bg-background dark:bg-background">
+      <div className={cn('landing-theme flex min-h-screen flex-col', surfacePage)}>
         <Header showCitySelector />
         <main className="flex flex-1 items-center justify-center py-16">
           <PageLoader />
@@ -33,7 +36,7 @@ export default function MyShelterFormPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-muted/30 dark:bg-background">
+    <div className={cn('landing-theme flex min-h-screen flex-col', surfacePage)}>
       <Header showCitySelector />
 
       <MyShelterFormPageHeader

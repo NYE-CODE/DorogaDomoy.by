@@ -73,7 +73,7 @@ export function LandingShelterPetCard({
       </Link>
       <div className="pointer-events-none absolute left-0 right-0 top-0 z-[5] h-52">
         <div className="pointer-events-auto absolute bottom-3 right-3 z-[6]">
-          <FavoriteHeartButton petId={pet.id} size="sm" />
+          <FavoriteHeartButton petId={pet.id} size="sm" favoritesCount={pet.favoritesCount} />
         </div>
       </div>
     </div>

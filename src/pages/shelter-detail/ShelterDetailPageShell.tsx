@@ -1,3 +1,4 @@
+import '../../../landing/styles/theme-scoped.css';
 import { Header } from '@/widgets/layout/Header';
 import { Footer } from '@/widgets/layout/Footer';
 import { BackQuickMenu } from '../../../components/navigation/BackQuickMenu';
@@ -7,12 +8,14 @@ import { ShelterDetailHero } from './shelter-detail-hero';
 import { ShelterDetailMobileBody } from './shelter-detail-mobile-body';
 import { ShelterDetailLoadingView, ShelterDetailNotFoundView } from './shelter-detail-page-states';
 import { useShelterDetailPage } from './use-shelter-detail-page';
+import { cn } from '@/shared/lib/classNames';
+import { surfacePage } from '@/shared/styles/surface-classes';
 
 export default function ShelterDetailPage() {
   const p = useShelterDetailPage();
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className={cn('landing-theme flex min-h-screen flex-col', surfacePage)}>
       <Header showCitySelector={false} />
       <main className="overflow-x-clip overflow-y-visible pt-0 pb-0">
         {p.loading ? (
@@ -24,7 +27,7 @@ export default function ShelterDetailPage() {
             backLabel={p.s.detailBack}
           />
         ) : (
-          <div className="bg-muted/30">
+          <div>
             <div className="page-container w-full pt-4 sm:pt-6 lg:pt-8">
               <div className="mb-4 sm:mb-6">
                 <BackQuickMenu />

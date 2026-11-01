@@ -1,11 +1,11 @@
 import { Plus } from 'lucide-react';
-import { Button } from '../ui/button';
 import { EmptyState } from '../ui/empty-state';
-import { appPrimaryCtaClass } from '../../styles/cta-classes';
 import { MyAdsCard } from './my-ads-card';
 import { MyAdsStatusTabs } from './my-ads-status-tabs';
 import { MyAdsTabEmptyState } from './my-ads-tab-empty-state';
 import type { useMyAdsPage } from './use-my-ads-page';
+import { cn } from '@/shared/lib/classNames';
+import { surfaceCtaPrimary, surfaceEmpty, surfacePanel } from '@/shared/styles/surface-classes';
 
 type MyAdsPageState = ReturnType<typeof useMyAdsPage>;
 
@@ -41,7 +41,7 @@ export function MyAdsListPanel({
   } = state;
 
   return (
-    <div className="overflow-visible rounded-lg border border-border bg-card shadow-sm">
+    <div className={cn(surfacePanel, 'overflow-visible')}>
       <MyAdsStatusTabs
         statusTab={statusTab}
         moderationLabels={t.moderation}
@@ -98,14 +98,15 @@ export function MyAdsEmptyPage({ title, description, createLabel, onCreateClick 
     <EmptyState
       title={title}
       description={description}
-      icon={<Plus className="size-7" />}
+      tone="brand"
+      icon={<Plus className="size-7" aria-hidden />}
+      className={cn(surfaceEmpty, 'w-full px-6 py-12 sm:py-16')}
       action={
-        <Button className={appPrimaryCtaClass} onClick={onCreateClick}>
+        <button type="button" className={cn(surfaceCtaPrimary, 'w-auto min-w-[12rem] px-7')} onClick={onCreateClick}>
           <Plus className="size-5" aria-hidden />
           {createLabel}
-        </Button>
+        </button>
       }
-      className="border-dashed shadow-sm"
     />
   );
 }
@@ -118,10 +119,10 @@ export interface MyAdsCreateAnotherProps {
 export function MyAdsCreateAnother({ label, onCreateClick }: MyAdsCreateAnotherProps) {
   return (
     <div className="mt-8 flex justify-center">
-      <Button className={appPrimaryCtaClass} onClick={onCreateClick}>
+      <button type="button" className={cn(surfaceCtaPrimary, 'w-auto min-w-[12rem] px-7')} onClick={onCreateClick}>
         <Plus className="size-5" aria-hidden />
         {label}
-      </Button>
+      </button>
     </div>
   );
 }

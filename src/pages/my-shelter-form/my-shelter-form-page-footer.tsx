@@ -1,6 +1,6 @@
 import { Button } from '@/shared/ui/button';
 import { cn } from '@/shared/ui/utils';
-import { appOutlineCtaClass, appPrimaryCtaClass } from '@/shared/styles/cta-classes';
+import { surfaceCtaOutline, surfaceCtaPrimary } from '@/shared/styles/surface-classes';
 import { SHELTER_FORM_STEPS } from '@/shared/lib/shelter-org-form';
 
 export interface MyShelterFormPageFooterProps {
@@ -40,7 +40,7 @@ export function MyShelterFormPageFooter({
         <Button
           type="button"
           variant="outline"
-          className={cn('w-full sm:w-auto', appOutlineCtaClass)}
+          className={cn('w-full sm:w-auto', surfaceCtaOutline)}
           onClick={onCancel}
           disabled={saving}
         >
@@ -50,7 +50,7 @@ export function MyShelterFormPageFooter({
           <Button
             type="button"
             variant="outline"
-            className={cn('w-full sm:w-auto', appOutlineCtaClass)}
+            className={cn('w-full sm:w-auto', surfaceCtaOutline)}
             onClick={onBack}
             disabled={saving}
           >
@@ -60,13 +60,13 @@ export function MyShelterFormPageFooter({
       </div>
       <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:justify-end">
         {formStep < SHELTER_FORM_STEPS ? (
-          <Button type="button" className={cn('w-full sm:w-auto', appPrimaryCtaClass)} onClick={onNext}>
+          <Button type="button" className={cn('w-full sm:w-auto', surfaceCtaPrimary)} onClick={onNext}>
             {nextLabel}
           </Button>
         ) : (
           <Button
             type="button"
-            className={cn('w-full sm:w-auto', appPrimaryCtaClass)}
+            className={cn('w-full sm:w-auto', surfaceCtaPrimary)}
             onClick={onSave}
             disabled={saving}
           >

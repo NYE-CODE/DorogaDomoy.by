@@ -1,4 +1,4 @@
-"""Auth routes: login, register, me, change-password, avatar, telegram login, password reset."""
+"""Auth routes: login, register, me, change-password, avatar, telegram login, email password reset."""
 import hashlib
 import io
 import logging
@@ -11,7 +11,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, File, HTTPException, Body, Response, UploadFile, Request
 from PIL import Image
 from pydantic import BaseModel, field_validator
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 
 try:
@@ -44,7 +44,13 @@ from auth import (
 )
 from mappers.user import user_to_response
 from rate_limit import limiter
-from telegram_bot import BOT_TOKEN, BOT_USERNAME, send_password_reset_sync
+from telegram_bot import BOT_TOKEN
+from mailer import (
+    can_email_password_reset,
+    enqueue_password_reset_email,
+    enqueue_registration_email,
+    is_deliverable_mailbox,
+)
 from telegram_login import (
     verify_telegram_login_payload,
     telegram_display_name,
@@ -64,7 +70,7 @@ AVATAR_SIZE = 256
 SITE_URL = os.getenv("SITE_URL", "https://dorogadomoy.by").rstrip("/")
 PASSWORD_RESET_TTL_MINUTES = 30
 FORGOT_PASSWORD_GENERIC_MSG = (
-    "Если аккаунт найден и Telegram привязан, мы отправили ссылку для сброса пароля в бот."
+    "Если аккаунт найден, мы отправили ссылку для сброса пароля. Она действует 30 минут."
 )
 
 
@@ -116,7 +122,10 @@ def register(
     response: Response,
     db: Session = Depends(get_db),
 ):
-    existing = db.scalar(select(User).where(User.email == data.email))
+    email = (data.email or "").strip().lower()
+    if not is_deliverable_mailbox(email):
+        raise HTTPException(status_code=400, detail="Укажите корректный email")
+    existing = db.scalar(select(User).where(func.lower(User.email) == email))
     if existing:
         raise HTTPException(status_code=400, detail="Email уже зарегистрирован")
     user_id = "user-" + str(int(__import__("time").time() * 1000))
@@ -124,7 +133,7 @@ def register(
     reg_vol = signup_role == "volunteer"
     user = User(
         id=user_id,
-        email=data.email,
+        email=email,
         name=data.name,
         password_hash=get_password_hash(data.password),
         avatar=f"https://api.dicebear.com/7.x/avataaars/svg?seed={data.name}",
@@ -146,6 +155,7 @@ def register(
             status_code=500,
             detail="Не удалось зарегистрироваться. Попробуйте позже.",
         ) from e
+    enqueue_registration_email(to=user.email, name=user.name, role=user.role)
     token = create_access_token(data={"sub": user.id})
     set_auth_cookie(response, token)
     return Token(access_token=token, user=user_to_response(user))
@@ -269,6 +279,8 @@ def complete_profile(
         logging.exception("complete_profile error %s: %s", user.id, e)
         raise HTTPException(status_code=500, detail="Не удалось сохранить профиль") from e
 
+    if is_deliverable_mailbox(user.email):
+        enqueue_registration_email(to=user.email, name=user.name, role=user.role)
     return user_to_response(user)
 
 
@@ -280,9 +292,15 @@ def forgot_password(
     db: Session = Depends(get_db),
 ):
     email = body.email.strip().lower()
-    user = db.scalar(select(User).where(User.email == email)) if email else None
+    user = db.scalar(select(User).where(func.lower(User.email) == email)) if email else None
+    can_email = False
+    if user and not user.is_blocked:
+        can_email = can_email_password_reset(
+            email=user.email,
+            password_set=bool(getattr(user, "password_set", True)),
+        )
 
-    if user and user.telegram_id and bool(getattr(user, "password_set", True)):
+    if user and can_email:
         db.execute(
             update(PasswordResetToken)
             .where(PasswordResetToken.user_id == user.id, PasswordResetToken.used.is_(False))
@@ -304,7 +322,7 @@ def forgot_password(
             logging.exception("forgot_password token error: %s", e)
         else:
             reset_url = f"{SITE_URL}/reset-password?token={raw_token}"
-            send_password_reset_sync(user.telegram_id, reset_url)
+            enqueue_password_reset_email(to=user.email, reset_url=reset_url)
 
     return {"detail": FORGOT_PASSWORD_GENERIC_MSG}
 

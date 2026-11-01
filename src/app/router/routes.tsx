@@ -39,6 +39,8 @@ const MyShelterPetFormPage = lazy(() => import('@/pages/MyShelterPetFormPage'));
 const MyShelterPetCampaignPage = lazy(() => import('@/pages/MyShelterPetCampaignPage'));
 const MyShelterTeamPage = lazy(() => import('@/pages/MyShelterTeamPage'));
 const CompleteProfilePage = lazy(() => import('@/pages/CompleteProfilePage'));
+const ForgotPasswordPage = lazy(() => import('@/pages/ForgotPasswordPage'));
+const ResetPasswordPage = lazy(() => import('@/pages/ResetPasswordPage'));
 const WelcomePetProfilePage = lazy(() => import('@/pages/WelcomePetProfilePage'));
 const WelcomeShelterOrgPage = lazy(() => import('@/pages/WelcomeShelterOrgPage'));
 const MobileTelegramAuthPage = lazy(() => import('@/pages/mobile-telegram-auth-page'));
@@ -71,9 +73,8 @@ export function AppRoutes() {
       <Route path="/delete-account" element={<DeleteAccountPage />} />
       <Route path="/mobile-telegram-auth.html" element={<MobileTelegramAuthPage />} />
       <Route path="/mobile-telegram-auth" element={<MobileTelegramAuthPage />} />
-      {/* Password reset temporarily disabled */}
-      <Route path="/forgot-password" element={<Navigate to="/" replace />} />
-      <Route path="/reset-password" element={<Navigate to="/" replace />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route
         path="/complete-profile"
         element={

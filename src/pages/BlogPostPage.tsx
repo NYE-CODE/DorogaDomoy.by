@@ -17,6 +17,9 @@ import {
   SEO_ROBOTS_PUBLIC,
   truncateMetaDescription,
 } from '@/shared/lib/seo';
+import { cn } from '@/shared/lib/classNames';
+import { surfacePage } from '@/shared/styles/surface-classes';
+import '../../landing/styles/theme-scoped.css';
 
 function coverSrc(url?: string | null): string | undefined {
   if (!url) return undefined;
@@ -105,9 +108,9 @@ export default function BlogPostPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className={cn('landing-theme min-h-screen flex flex-col', surfacePage)}>
         <Header showCitySelector={false} />
-        <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-16">
+        <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-16">
           <p className="text-muted-foreground">{t.common.loading}</p>
         </main>
         <Footer />
@@ -117,14 +120,14 @@ export default function BlogPostPage() {
 
   if (!post) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className={cn('landing-theme min-h-screen flex flex-col', surfacePage)}>
         <Header showCitySelector={false} />
-        <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-16 text-center">
-          <p className="text-muted-foreground mb-6">{b.notFound}</p>
+        <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-16 text-center">
+          <p className="mb-6 text-muted-foreground">{b.notFound}</p>
           <button
             type="button"
             onClick={() => navigate('/blog')}
-            className="text-primary font-medium hover:underline"
+            className="font-medium text-primary hover:underline"
           >
             {b.backToList}
           </button>
@@ -141,36 +144,36 @@ export default function BlogPostPage() {
   );
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className={cn('landing-theme min-h-screen flex flex-col', surfacePage)}>
       <Header showCitySelector={false} />
-      <main className="flex-1 w-full flex flex-col">
-        <article className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 w-full">
+      <main className="flex w-full flex-1 flex-col">
+        <article className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
           <nav className="mb-6">
             <BackQuickMenu />
           </nav>
 
           {img ? (
-            <div className="rounded-md overflow-hidden border border-border mb-8 aspect-[21/9] max-h-[320px] bg-muted">
-              <img src={img} alt="" className="w-full h-full object-cover" />
+            <div className="mb-8 aspect-[21/9] max-h-[320px] overflow-hidden rounded-2xl border border-border bg-landing-muted shadow-card">
+              <img src={img} alt="" className="h-full w-full object-cover" />
             </div>
           ) : null}
 
           <header className="mb-8">
-            <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground mb-3">
-              <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium text-xs">
+            <div className="mb-3 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
                 {post.category_title || categoryLabel(post.category, t)}
               </span>
               <span className="inline-flex items-center gap-1">
-                <Calendar className="w-4 h-4" />
+                <Calendar className="size-4" />
                 {date}
               </span>
               <span>
                 {post.reading_minutes} {b.readingMin}
               </span>
             </div>
-            <h1 className="typo-h1">{post.title}</h1>
+            <h1 className="font-display typo-h1">{post.title}</h1>
             {post.excerpt ? (
-              <p className="mt-4 text-lg text-muted-foreground leading-relaxed">{post.excerpt}</p>
+              <p className="mt-4 text-lg leading-relaxed text-muted-foreground">{post.excerpt}</p>
             ) : null}
           </header>
 
@@ -179,9 +182,9 @@ export default function BlogPostPage() {
           <BlogBody markdown={post.body_md} />
         </article>
 
-        <section className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 pt-2 w-full border-t border-border mt-2">
-          <h2 className="text-lg font-semibold text-foreground mb-2">{b.commentsSectionTitle}</h2>
-          <p className="text-sm text-muted-foreground mb-4 max-w-xl">
+        <section className="mx-auto mt-2 w-full max-w-3xl border-t border-border px-4 pb-12 pt-2 sm:px-6 lg:px-8">
+          <h2 className="mb-2 font-display text-lg font-semibold text-foreground">{b.commentsSectionTitle}</h2>
+          <p className="mb-4 max-w-xl text-sm text-muted-foreground">
             {post.telegram_post_url ? b.commentsHint : b.commentsUnavailable}
           </p>
           {post.telegram_post_url ? (
@@ -189,18 +192,18 @@ export default function BlogPostPage() {
               href={post.telegram_post_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-telegram text-white text-sm font-medium hover:bg-telegram-hover transition-colors"
+              className="inline-flex h-12 min-h-12 items-center justify-center gap-2 rounded-full bg-telegram px-7 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-telegram-hover"
             >
-              <MessageCircle className="w-4 h-4" />
+              <MessageCircle className="size-4" />
               {b.commentsInTelegram}
             </a>
           ) : (
             <button
               type="button"
               disabled
-              className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-telegram/50 text-white/90 text-sm font-medium cursor-not-allowed opacity-70"
+              className="inline-flex h-12 min-h-12 cursor-not-allowed items-center justify-center gap-2 rounded-full bg-telegram/50 px-7 text-sm font-semibold text-white/90 opacity-70"
             >
-              <MessageCircle className="w-4 h-4" />
+              <MessageCircle className="size-4" />
               {b.commentsInTelegram}
             </button>
           )}

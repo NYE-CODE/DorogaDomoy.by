@@ -13,7 +13,7 @@ export function MyPetProfileDetailSections({ pet, f, op, addedAt }: MyPetProfile
   return (
     <>
       {pet.special_marks?.trim() ? (
-        <Card className="border-border/80 shadow-sm">
+        <Card className="overflow-hidden rounded-2xl border-border bg-card shadow-card">
           <CardHeader className="pb-2">
             <CardTitle className={MY_PET_PROFILE_SECTION_TITLE_CLASS}>{op.specialMarksTitle}</CardTitle>
           </CardHeader>
@@ -24,7 +24,7 @@ export function MyPetProfileDetailSections({ pet, f, op, addedAt }: MyPetProfile
       ) : null}
 
       {pet.medical_info?.trim() ? (
-        <Card className="border-border/80 shadow-sm">
+        <Card className="overflow-hidden rounded-2xl border-border bg-card shadow-card">
           <CardHeader className="pb-2">
             <CardTitle className={MY_PET_PROFILE_SECTION_TITLE_CLASS}>{op.medicalTitle}</CardTitle>
           </CardHeader>
@@ -35,7 +35,7 @@ export function MyPetProfileDetailSections({ pet, f, op, addedAt }: MyPetProfile
       ) : null}
 
       {pet.registration_authority?.trim() || pet.registration_token_number?.trim() ? (
-        <Card className="border-border/80 shadow-sm">
+        <Card className="overflow-hidden rounded-2xl border-border bg-card shadow-card">
           <CardHeader className="pb-2">
             <CardTitle className={MY_PET_PROFILE_SECTION_TITLE_CLASS}>{op.registrationTitle}</CardTitle>
           </CardHeader>
@@ -64,7 +64,7 @@ export function MyPetProfileDetailSections({ pet, f, op, addedAt }: MyPetProfile
         </Card>
       ) : null}
 
-      <Card className="border-border/80 shadow-sm">
+      <Card className="overflow-hidden rounded-2xl border-border bg-card shadow-card">
         <CardHeader className="pb-2">
           <CardTitle className={MY_PET_PROFILE_SECTION_TITLE_CLASS}>{op.extraInfoTitle}</CardTitle>
         </CardHeader>

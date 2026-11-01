@@ -127,7 +127,7 @@ export function ShelterDetailAboutSection({
   websiteHref,
   hasAnyContact,
   headingClassName = 'mb-4 text-xl font-bold tracking-tight text-foreground',
-  sectionClassName = 'rounded-lg border border-border bg-card p-6 shadow-sm',
+  sectionClassName = 'rounded-2xl border border-border bg-card p-6 shadow-card',
   showShareMenu = false,
   aboutMenuOpen = false,
   aboutMenuRef,

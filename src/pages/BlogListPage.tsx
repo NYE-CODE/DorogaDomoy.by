@@ -14,6 +14,9 @@ import {
 } from '@/shared/lib/seo';
 import { PartnerAdSlot } from '@/features/partner-ads/PartnerAdSlot';
 import { PARTNER_AD_BLOG_LIST_INTERVAL } from '@/shared/lib/partner-ad-placements';
+import { cn } from '@/shared/lib/classNames';
+import { surfaceCtaOutline, surfacePage } from '@/shared/styles/surface-classes';
+import '../../landing/styles/theme-scoped.css';
 
 function coverSrc(url?: string | null): string | undefined {
   if (!url) return undefined;
@@ -87,20 +90,22 @@ export default function BlogListPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className={cn('landing-theme min-h-screen flex flex-col', surfacePage)}>
       <Header showCitySelector={false} />
       <main className="page-container-narrow flex-1 w-full py-10">
         <header className="mb-10">
-          <h1 className="typo-h1">{b.pageTitle}</h1>
-          <p className="mt-2 text-muted-foreground text-lg">{b.pageSubtitle}</p>
+          <h1 className="font-display typo-h1">{b.pageTitle}</h1>
+          <p className="mt-2 text-lg text-muted-foreground">{b.pageSubtitle}</p>
         </header>
 
         {loading ? (
           <p className="text-muted-foreground">{t.common.loading}</p>
         ) : posts.length === 0 ? (
-          <p className="text-muted-foreground">{b.empty}</p>
+          <p className="rounded-2xl border border-dashed border-border bg-landing-muted/40 px-4 py-8 text-center text-muted-foreground">
+            {b.empty}
+          </p>
         ) : (
-          <ul className="space-y-8">
+          <ul className="space-y-6">
             {posts.map((post, index) => {
               const img = coverSrc(post.cover_image_url);
               const date = new Date(post.published_at).toLocaleDateString(
@@ -110,11 +115,11 @@ export default function BlogListPage() {
               return (
                 <Fragment key={post.id}>
                 <li>
-                  <article className="rounded-md border border-border bg-card overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                    <Link to={`/blog/${post.slug}`} className="flex flex-col sm:flex-row sm:min-h-[200px] group">
+                  <article className="overflow-hidden rounded-2xl border border-border bg-card shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/35">
+                    <Link to={`/blog/${post.slug}`} className="group flex flex-col sm:min-h-[200px] sm:flex-row">
                       {img ? (
-                        <div className="sm:w-72 shrink-0 aspect-[16/10] sm:aspect-auto sm:min-h-[200px] bg-muted">
-                          <img src={img} alt="" className="w-full h-full object-cover group-hover:opacity-95 transition-opacity" />
+                        <div className="aspect-[16/10] shrink-0 bg-landing-muted sm:aspect-auto sm:min-h-[200px] sm:w-72">
+                          <img src={img} alt="" className="h-full w-full object-cover transition-opacity group-hover:opacity-95" />
                         </div>
                       ) : null}
                       <div
@@ -133,7 +138,7 @@ export default function BlogListPage() {
                               {post.reading_minutes} {b.readingMin}
                             </span>
                           </div>
-                          <h2 className="typo-h3 group-hover:text-primary transition-colors">
+                          <h2 className="font-display typo-h3 transition-colors group-hover:text-primary">
                             {post.title}
                           </h2>
                           {post.excerpt ? (
@@ -167,7 +172,7 @@ export default function BlogListPage() {
               type="button"
               onClick={loadMore}
               disabled={loadingMore}
-              className="px-6 py-2.5 rounded-lg border border-border bg-card text-foreground font-medium hover:bg-muted disabled:opacity-60 transition-colors"
+              className={cn(surfaceCtaOutline, 'w-auto min-w-[10rem] px-6 disabled:opacity-60')}
             >
               {loadingMore ? t.common.loading : b.loadMore}
             </button>

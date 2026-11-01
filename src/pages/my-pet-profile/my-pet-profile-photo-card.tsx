@@ -55,8 +55,8 @@ export function MyPetProfilePhotoCard({
   const mainPhoto = photos[photoIndex] ?? photos[0];
 
   return (
-    <Card className="gap-0 overflow-hidden border-border/80 shadow-md ring-1 ring-border/50">
-      <div className="relative bg-muted">
+    <Card className="gap-0 overflow-hidden rounded-2xl border-border bg-card shadow-card">
+      <div className="relative bg-landing-muted/60">
         {photos.length > 1 ? (
           <>
             <button

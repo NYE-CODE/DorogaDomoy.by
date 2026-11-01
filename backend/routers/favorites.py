@@ -10,6 +10,15 @@ from models import Pet, PetFavorite, User
 from schemas import FavoriteIdsResponse, FavoriteImportBody, PaginatedPetListResponse, PetResponse
 from routers.pets import pet_favoritable, pet_to_response
 
+
+def _bump_favorites_count(db: Session, pet_id: str, delta: int) -> None:
+    if delta == 0:
+        return
+    pet = db.scalar(select(Pet).where(Pet.id == pet_id))
+    if not pet:
+        return
+    pet.favorites_count = max(0, int(getattr(pet, "favorites_count", 0) or 0) + delta)
+
 router = APIRouter(prefix="/favorites", tags=["favorites"])
 
 
@@ -118,6 +127,7 @@ def import_favorites(
                 pet_id=pet_id,
             )
         )
+        _bump_favorites_count(db, pet_id, 1)
     db.commit()
 
     rows = db.scalars(
@@ -149,6 +159,7 @@ def _upsert_favorite(pet_id: str, db: Session, user: User) -> dict:
             pet_id=pet_id,
         )
     )
+    _bump_favorites_count(db, pet_id, 1)
     db.commit()
     return {"ok": True, "already": False}
 
@@ -177,11 +188,13 @@ def remove_favorite(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user_required),
 ):
-    db.execute(
+    result = db.execute(
         delete(PetFavorite).where(
             PetFavorite.user_id == user.id,
             PetFavorite.pet_id == pet_id,
         )
     )
+    if result.rowcount:
+        _bump_favorites_count(db, pet_id, -1)
     db.commit()
     return None

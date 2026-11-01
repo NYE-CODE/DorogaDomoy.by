@@ -5,13 +5,17 @@ import { useI18n } from '../context/I18nContext';
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
-  DialogHeader,
   DialogTitle,
 } from './ui/dialog';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Textarea } from './ui/textarea';
+import { cn } from '@/shared/lib/classNames';
+import {
+  surfaceCtaOutline,
+  surfaceCtaPrimary,
+  surfaceFieldLabel,
+  surfaceIconButton,
+  surfaceInput,
+} from '@/shared/styles/surface-classes';
+import '../landing/styles/theme-scoped.css';
 
 interface DeleteReasonModalProps {
   onClose: () => void;
@@ -20,6 +24,9 @@ interface DeleteReasonModalProps {
   enableRewardSection?: boolean;
   rewardPoints?: number;
 }
+
+const fieldInput = cn(surfaceInput, 'h-11 rounded-lg py-0 text-sm');
+const fieldTextarea = cn(surfaceInput, 'min-h-[5.5rem] resize-none rounded-lg py-3 text-sm');
 
 export function DeleteReasonModal({
   onClose,
@@ -81,10 +88,11 @@ export function DeleteReasonModal({
 
   const handleConfirm = () => {
     if (!selectedReason) return;
-    
-    const finalReason = selectedReason === 'other' && customReason 
-      ? customReason 
-      : deleteReasons.find(r => r.id === selectedReason)?.label || selectedReason;
+
+    const finalReason =
+      selectedReason === 'other' && customReason
+        ? customReason
+        : deleteReasons.find((r) => r.id === selectedReason)?.label || selectedReason;
 
     onConfirm({
       reason: finalReason,
@@ -99,73 +107,85 @@ export function DeleteReasonModal({
 
   return (
     <Dialog open onOpenChange={(next) => !next && onClose()}>
-      <DialogContent className="max-w-md rounded-lg p-0" showCloseButton={false}>
-        <DialogHeader className="border-b border-border p-4">
-          <div className="flex items-start justify-between gap-4">
-          <div>
-              <DialogTitle className="text-lg">{t.deleteReason.title}</DialogTitle>
-            {petDescription && (
+      <DialogContent
+        showCloseButton={false}
+        className="landing-theme max-w-md gap-0 overflow-hidden rounded-2xl border border-border bg-card p-0 shadow-card"
+      >
+        <div className="border-b border-border/80 bg-card px-5 py-4 sm:px-6">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <DialogTitle className="typo-h2 font-display text-foreground">
+                {t.deleteReason.title}
+              </DialogTitle>
+              {petDescription ? (
                 <p className="mt-1 text-sm text-muted-foreground">{petDescription}</p>
-            )}
+              ) : null}
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className={surfaceIconButton}
+              aria-label={t.common.close}
+            >
+              <X className="size-5" aria-hidden />
+            </button>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-accent dark:hover:bg-accent rounded-lg transition-colors"
-          >
-              <X className="w-5 h-5 text-muted-foreground" />
-          </button>
-          </div>
-        </DialogHeader>
+        </div>
 
-        <div className="p-6">
-          <p className="mb-4 text-sm text-muted-foreground">
-            {t.deleteReason.prompt}
-          </p>
-          
-          <div className="bg-muted border border-border rounded-lg p-3 mb-4">
-            <p className="text-xs text-foreground">
-              <strong>{t.deleteReason.goodNews}</strong> {t.deleteReason.goodNewsHint}
-            </p>
+        <div className="max-h-[min(70vh,32rem)] space-y-4 overflow-y-auto bg-landing px-5 py-5 sm:px-6">
+          <p className="text-sm text-muted-foreground">{t.deleteReason.prompt}</p>
+
+          <div className="rounded-xl border border-border bg-card px-3 py-3 text-xs text-foreground">
+            <strong>{t.deleteReason.goodNews}</strong> {t.deleteReason.goodNewsHint}
           </div>
 
-          <div className="space-y-2">
-            {deleteReasons.map((reason) => (
-              <label
-                key={reason.id}
-                className={`flex items-start gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
-                  selectedReason === reason.id
-                    ? 'bg-primary/10 border-primary/30'
-                    : 'bg-card border-border hover:bg-accent'
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="deleteReason"
-                  value={reason.id}
-                  checked={selectedReason === reason.id}
-                  onChange={(e) => setSelectedReason(e.target.value)}
-                  className="mt-0.5 w-4 h-4 text-primary focus:ring-primary"
-                />
-                <span className="text-sm text-foreground">{reason.label}</span>
+          <div className="space-y-1.5">
+            {deleteReasons.map((reason) => {
+                const active = selectedReason === reason.id;
+                return (
+                  <label
+                    key={reason.id}
+                    className={cn(
+                      'flex cursor-pointer items-start gap-3 rounded-xl border px-3 py-3 transition-colors',
+                      active
+                        ? 'border-primary/45 bg-primary/12 text-primary shadow-sm'
+                        : 'border-border bg-card text-foreground hover:bg-muted/80',
+                    )}
+                  >
+                    <input
+                      type="radio"
+                      name="deleteReason"
+                      value={reason.id}
+                      checked={active}
+                      onChange={(e) => setSelectedReason(e.target.value)}
+                      className="mt-0.5 size-4 accent-primary"
+                    />
+                    <span className="text-sm">{reason.label}</span>
+                  </label>
+                );
+              })}
+          </div>
+
+          {selectedReason === 'other' ? (
+            <div className="space-y-1.5">
+              <label htmlFor="delete-custom-reason" className={surfaceFieldLabel}>
+                {t.deleteReason.descPlaceholder}
               </label>
-            ))}
-          </div>
-
-          {selectedReason === 'other' && (
-            <div className="mt-4">
-              <Textarea
+              <textarea
+                id="delete-custom-reason"
                 value={customReason}
                 onChange={(e) => setCustomReason(e.target.value)}
                 placeholder={t.deleteReason.descPlaceholder}
                 rows={3}
+                className={fieldTextarea}
                 autoFocus
               />
             </div>
-          )}
+          ) : null}
 
-          {canShowRewardToggle && (
-            <div className="mt-4 border border-border rounded-lg p-3 space-y-3">
-              <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
+          {canShowRewardToggle ? (
+            <div className="space-y-3 rounded-xl border border-border bg-card p-3">
+              <label className="flex cursor-pointer items-center gap-2 text-sm text-foreground">
                 <input
                   type="checkbox"
                   checked={awardPoints}
@@ -176,15 +196,15 @@ export function DeleteReasonModal({
                       setCandidate(null);
                     }
                   }}
-                  className="w-4 h-4 text-primary focus:ring-primary"
+                  className="size-4 accent-primary"
                 />
                 Начислить очки за помощь (+{rewardPoints})
               </label>
 
-              {awardPoints && (
+              {awardPoints ? (
                 <div className="space-y-3">
                   <div className="flex gap-2">
-                    <Input
+                    <input
                       type="text"
                       value={helperCode}
                       onChange={(e) => {
@@ -193,27 +213,38 @@ export function DeleteReasonModal({
                         setCandidate(null);
                       }}
                       placeholder="ID получателя очков (DD-XXXXXXXX)"
-                      className="flex-1"
+                      className={cn(fieldInput, 'flex-1')}
                     />
-                    <Button
+                    <button
                       type="button"
-                      onClick={() => { void handleLookup(); }}
+                      onClick={() => {
+                        void handleLookup();
+                      }}
                       disabled={!normalizedCode || lookupLoading}
-                      variant="outline"
-                      className="h-11 px-3"
+                      className={cn(surfaceCtaOutline, 'w-auto shrink-0 px-3')}
+                      aria-label={t.common.search}
                     >
-                      {lookupLoading
-                        ? <div className="w-4 h-4 border-2 border-border border-t-transparent rounded-full animate-spin" />
-                        : <Search className="w-4 h-4" />}
-                    </Button>
+                      {lookupLoading ? (
+                        <span
+                          className="size-4 animate-spin rounded-full border-2 border-border border-t-transparent"
+                          aria-hidden
+                        />
+                      ) : (
+                        <Search className="size-4" aria-hidden />
+                      )}
+                    </button>
                   </div>
-                  {lookupError && <p className="text-xs text-red-500">{lookupError}</p>}
-                  {candidate && (
-                    <div className="border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/20 rounded-lg p-3">
+                  {lookupError ? <p className="text-xs text-destructive">{lookupError}</p> : null}
+                  {candidate ? (
+                    <div className="rounded-xl border border-shelter-border bg-shelter-soft px-3 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full overflow-hidden bg-white border border-green-200 dark:border-green-800">
+                        <div className="size-9 overflow-hidden rounded-full border border-shelter-border bg-card">
                           {candidateAvatar ? (
-                            <img src={candidateAvatar} alt={candidate.name} className="w-full h-full object-cover" />
+                            <img
+                              src={candidateAvatar}
+                              alt={candidate.name}
+                              className="size-full object-cover"
+                            />
                           ) : null}
                         </div>
                         <div>
@@ -222,28 +253,31 @@ export function DeleteReasonModal({
                         </div>
                       </div>
                     </div>
-                  )}
+                  ) : null}
                 </div>
-              )}
+              ) : null}
             </div>
-          )}
+          ) : null}
         </div>
 
-        <DialogFooter className="border-t border-border p-4">
-          <Button
-            onClick={onClose}
-            variant="ghost"
-          >
+        <div className="flex flex-col-reverse gap-3 border-t border-border/80 bg-landing px-5 py-4 sm:flex-row sm:px-6">
+          <button type="button" onClick={onClose} className={cn(surfaceCtaOutline, 'sm:flex-1')}>
             {t.common.cancel}
-          </Button>
-          <Button
+          </button>
+          <button
+            type="button"
             onClick={handleConfirm}
             disabled={!canConfirm}
-            variant="destructive"
+            className={cn(
+              surfaceCtaPrimary,
+              'sm:flex-1',
+              'bg-destructive text-destructive-foreground hover:bg-destructive/90',
+              'disabled:bg-muted disabled:text-muted-foreground',
+            )}
           >
             {t.deleteReason.deleteAd}
-          </Button>
-        </DialogFooter>
+          </button>
+        </div>
       </DialogContent>
     </Dialog>
   );

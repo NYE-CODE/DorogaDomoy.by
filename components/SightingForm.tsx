@@ -14,7 +14,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from './ui/dialog';
-import { Button } from './ui/button';
+import { cn } from '@/shared/lib/classNames';
+import {
+  surfaceCtaOutline,
+  surfaceCtaPrimary,
+  surfaceFieldLabel,
+  surfaceInput,
+} from '@/shared/styles/surface-classes';
+import '../landing/styles/theme-scoped.css';
 
 interface SightingFormProps {
   pet: Pet;
@@ -139,33 +146,42 @@ export function SightingForm({ pet, open, onClose, onSuccess }: SightingFormProp
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
-      <DialogContent className="flex max-h-[90vh] max-w-lg flex-col gap-0 overflow-hidden p-0">
-        <DialogHeader className="border-b border-border px-6 py-4 text-left">
-          <DialogTitle className="flex items-center gap-2 text-lg">
-            <MapPin className="size-5 text-amber-500" aria-hidden />
+      <DialogContent
+        className="landing-theme flex max-h-[90vh] max-w-lg flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card p-0 shadow-card"
+        showCloseButton
+      >
+        <DialogHeader className="border-b border-border/80 px-5 py-4 text-left sm:px-6">
+          <DialogTitle className="font-display flex items-center gap-2 text-lg text-foreground">
+            <MapPin className="size-5 text-primary" aria-hidden />
             {t.sightings.title}
           </DialogTitle>
           <DialogDescription className="sr-only">{t.sightings.mapHint}</DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={(e) => void handleSubmit(e)} className="min-h-0 flex-1 space-y-4 overflow-y-auto p-6">
+        <form
+          onSubmit={(e) => void handleSubmit(e)}
+          className="min-h-0 flex-1 space-y-4 overflow-y-auto bg-landing px-5 py-5 sm:px-6"
+        >
           <div>
             <p className="mb-2 text-sm text-muted-foreground">{t.sightings.mapHint}</p>
-            <div ref={mapContainerRef} className="h-48 overflow-hidden rounded-lg border border-border" />
+            <div
+              ref={mapContainerRef}
+              className="h-48 overflow-hidden rounded-xl border border-border bg-card"
+            />
             <button
               type="button"
               onClick={handleUseMyLocation}
-              className="mt-2 text-sm text-primary hover:text-primary/90"
+              className="mt-2 text-sm font-medium text-primary hover:text-primary-hover"
             >
               {t.sightings.useMyLocation}
             </button>
             {!location && (
-              <p className="mt-1 text-sm text-amber-600 dark:text-amber-400">{t.sightings.selectPoint}</p>
+              <p className="mt-1 text-sm text-primary">{t.sightings.selectPoint}</p>
             )}
           </div>
 
           <div>
-            <label htmlFor="sighting-seen-at" className="mb-1 block text-sm font-medium text-foreground/90">
+            <label htmlFor="sighting-seen-at" className={surfaceFieldLabel}>
               {t.sightings.whenSeen}
             </label>
             <input
@@ -173,14 +189,16 @@ export function SightingForm({ pet, open, onClose, onSuccess }: SightingFormProp
               type="datetime-local"
               value={seenAt}
               onChange={(e) => setSeenAt(e.target.value)}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/30"
+              className={surfaceInput}
             />
           </div>
 
           <div>
-            <label htmlFor="sighting-comment" className="mb-1 block text-sm font-medium text-foreground/90">
+            <label htmlFor="sighting-comment" className={surfaceFieldLabel}>
               {t.sightings.comment}{' '}
-              <span className="text-muted-foreground/80">{t.sightings.optional}</span>
+              <span className="normal-case tracking-normal text-muted-foreground/80">
+                {t.sightings.optional}
+              </span>
             </label>
             <textarea
               id="sighting-comment"
@@ -189,19 +207,23 @@ export function SightingForm({ pet, open, onClose, onSuccess }: SightingFormProp
               placeholder={t.sightings.commentPlaceholder}
               rows={2}
               maxLength={COMMENT_MAX}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-foreground placeholder:text-muted-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/30"
+              className={cn(surfaceInput, 'resize-y')}
             />
             <p
-              className={`mt-1 text-xs tabular-nums ${comment.length >= COMMENT_MAX ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'}`}
+              className={`mt-1 text-xs tabular-nums ${
+                comment.length >= COMMENT_MAX ? 'text-primary' : 'text-muted-foreground'
+              }`}
             >
               {comment.length} / {COMMENT_MAX} {t.common.characters}
             </p>
           </div>
 
           <div>
-            <label htmlFor="sighting-contact" className="mb-1 block text-sm font-medium text-foreground/90">
+            <label htmlFor="sighting-contact" className={surfaceFieldLabel}>
               {t.sightings.contact}{' '}
-              <span className="text-muted-foreground/80">{t.sightings.optional}</span>
+              <span className="normal-case tracking-normal text-muted-foreground/80">
+                {t.sightings.optional}
+              </span>
             </label>
             <input
               id="sighting-contact"
@@ -210,22 +232,28 @@ export function SightingForm({ pet, open, onClose, onSuccess }: SightingFormProp
               onChange={(e) => setContact(e.target.value.slice(0, CONTACT_MAX))}
               placeholder={t.sightings.contactPlaceholder}
               maxLength={CONTACT_MAX}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-foreground placeholder:text-muted-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/30"
+              className={surfaceInput}
             />
             <p
-              className={`mt-1 text-xs tabular-nums ${contact.length >= CONTACT_MAX ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'}`}
+              className={`mt-1 text-xs tabular-nums ${
+                contact.length >= CONTACT_MAX ? 'text-primary' : 'text-muted-foreground'
+              }`}
             >
               {contact.length} / {CONTACT_MAX} {t.common.characters}
             </p>
           </div>
 
-          <div className="flex gap-3 pt-2">
-            <Button type="button" variant="outline" className="flex-1" onClick={onClose}>
+          <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row">
+            <button type="button" onClick={onClose} className={cn(surfaceCtaOutline, 'sm:flex-1')}>
               {t.common.cancel}
-            </Button>
-            <Button type="submit" disabled={!location || submitting} className="flex-1 bg-amber-500 hover:bg-amber-600">
+            </button>
+            <button
+              type="submit"
+              disabled={!location || submitting}
+              className={cn(surfaceCtaPrimary, 'sm:flex-1')}
+            >
               {submitting ? t.sightings.submitting : t.sightings.submit}
-            </Button>
+            </button>
           </div>
         </form>
       </DialogContent>

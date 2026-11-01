@@ -7,11 +7,11 @@ from typing import Optional
 import uuid
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
 from sqlalchemy import case, delete, func, or_, select
-from sqlalchemy.exc import OperationalError
+from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.orm import Session, selectinload
 
 from database import get_db
-from models import Pet, PointsTransaction, ProfilePet, Report, Shelter, ShelterMembership, User
+from models import Pet, PetViewDaily, PointsTransaction, ProfilePet, Report, Shelter, ShelterMembership, User
 from schemas import (
     ARCHIVE_HAPPY_KEYWORDS,
     PaginatedPetListResponse,
@@ -216,7 +216,64 @@ def pet_to_response(p: Pet) -> PetResponse:
         registration_authority=getattr(p, "registration_authority", None),
         registration_token_number=getattr(p, "registration_token_number", None),
         profile_pet_id=getattr(p, "profile_pet_id", None),
+        views_count=int(getattr(p, "views_count", 0) or 0),
+        favorites_count=int(getattr(p, "favorites_count", 0) or 0),
     )
+
+
+def _viewer_key_for_request(request: Request, user: Optional[User]) -> Optional[str]:
+    if user is not None:
+        return f"u:{user.id}"
+    from routers.sightings import _get_ip_hash
+
+    ip_hash = _get_ip_hash(request)
+    if not ip_hash:
+        return None
+    return f"a:{ip_hash}"
+
+
+def record_pet_view(
+    db: Session,
+    pet: Pet,
+    request: Request,
+    user: Optional[User],
+) -> None:
+    """Уникальный просмотр за день UTC; автора не считаем."""
+    if user is not None and user.id == pet.author_id:
+        return
+    if pet.is_archived or pet.moderation_status != "approved":
+        return
+    if (pet.pet_scope or "lost_found") == "shelter_pet" and not bool(getattr(pet, "is_published", True)):
+        return
+    viewer_key = _viewer_key_for_request(request, user)
+    if not viewer_key:
+        return
+    viewed_on = utc_now().strftime("%Y-%m-%d")
+    existing = db.scalar(
+        select(PetViewDaily.id).where(
+            PetViewDaily.pet_id == pet.id,
+            PetViewDaily.viewer_key == viewer_key,
+            PetViewDaily.viewed_on == viewed_on,
+        )
+    )
+    if existing:
+        return
+    db.add(
+        PetViewDaily(
+            id="pv-" + str(uuid.uuid4())[:12],
+            pet_id=pet.id,
+            viewer_key=viewer_key,
+            viewed_on=viewed_on,
+        )
+    )
+    pet.views_count = int(getattr(pet, "views_count", 0) or 0) + 1
+    try:
+        db.commit()
+        db.refresh(pet)
+    except IntegrityError:
+        db.rollback()
+    except Exception:
+        db.rollback()
 
 
 def _is_active_shelter_member(db: Session, shelter_id: Optional[str], user_id: str) -> bool:
@@ -621,6 +678,7 @@ def get_similar_pets(
 
 @router.get("/{pet_id}", response_model=PetResponse)
 def get_pet(
+    request: Request,
     pet_id: str,
     db: Session = Depends(get_db),
     user: Optional[User] = Depends(get_current_user),
@@ -646,6 +704,7 @@ def get_pet(
         raise HTTPException(status_code=404, detail="Объявление не найдено")
     if (pet.pet_scope or "lost_found") == "shelter_pet" and not pet.is_published and not (is_admin or is_author or is_member):
         raise HTTPException(status_code=404, detail="Объявление не найдено")
+    record_pet_view(db, pet, request, user)
     return pet_to_response(pet)
 
 

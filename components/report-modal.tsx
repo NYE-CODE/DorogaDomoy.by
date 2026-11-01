@@ -1,22 +1,30 @@
 import { useState } from 'react';
-import { Send, AlertCircle } from 'lucide-react';
+import { AlertCircle, Send, X } from 'lucide-react';
 import { ReportReason } from '../types/admin';
 import { useI18n } from '../context/I18nContext';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
-  DialogHeader,
   DialogTitle,
 } from './ui/dialog';
-import { Button } from './ui/button';
-import { Textarea } from './ui/textarea';
+import { cn } from '@/shared/lib/classNames';
+import {
+  surfaceCtaOutline,
+  surfaceCtaPrimary,
+  surfaceFieldLabel,
+  surfaceIconButton,
+  surfaceInput,
+} from '@/shared/styles/surface-classes';
+import '../landing/styles/theme-scoped.css';
 
 interface ReportModalProps {
   onClose: () => void;
   onSubmit: (reason: ReportReason, description: string) => void;
 }
+
+const fieldInput = cn(surfaceInput, 'h-11 rounded-lg py-0 text-sm');
+const fieldTextarea = cn(surfaceInput, 'min-h-[7.5rem] resize-none rounded-lg py-3 text-sm');
 
 export function ReportModal({ onClose, onSubmit }: ReportModalProps) {
   const { t } = useI18n();
@@ -41,23 +49,41 @@ export function ReportModal({ onClose, onSubmit }: ReportModalProps) {
 
   return (
     <Dialog open onOpenChange={(next) => !next && onClose()}>
-      <DialogContent className="max-w-2xl rounded-lg">
-        <DialogHeader>
-          <DialogTitle className="text-2xl">{t.report.title}</DialogTitle>
-          <DialogDescription className="text-base">
-            {t.report.intro}
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent
+        showCloseButton={false}
+        className="landing-theme max-w-lg gap-0 overflow-hidden rounded-2xl border border-border bg-card p-0 shadow-card sm:max-w-lg"
+      >
+        <div className="border-b border-border/80 bg-card px-5 py-4 sm:px-6">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <DialogTitle className="typo-h2 font-display text-foreground">
+                {t.report.title}
+              </DialogTitle>
+              <DialogDescription className="mt-1 text-sm text-muted-foreground">
+                {t.report.intro}
+              </DialogDescription>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className={surfaceIconButton}
+              aria-label={t.common.close}
+            >
+              <X className="size-5" aria-hidden />
+            </button>
+          </div>
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="mb-2 block text-sm font-medium text-foreground">
-              {t.report.reasonLabel} <span className="text-red-500">*</span>
+        <form onSubmit={handleSubmit} className="space-y-5 bg-landing px-5 py-6 sm:px-6">
+          <div className="space-y-1.5">
+            <label htmlFor="report-reason" className={surfaceFieldLabel}>
+              {t.report.reasonLabel} <span className="text-destructive">*</span>
             </label>
             <select
+              id="report-reason"
               value={reason}
               onChange={(e) => setReason(e.target.value as ReportReason | '')}
-              className="mt-1 block h-11 w-full rounded-lg border border-border bg-card px-4 text-sm text-foreground shadow-sm transition-[border-color,box-shadow] focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+              className={fieldInput}
               required
             >
               <option value="">{t.report.reasonPlaceholder}</option>
@@ -69,40 +95,52 @@ export function ReportModal({ onClose, onSubmit }: ReportModalProps) {
             </select>
           </div>
 
-          <div>
-            <label className="mb-2 block text-sm font-medium text-foreground">
+          <div className="space-y-1.5">
+            <label htmlFor="report-desc" className={surfaceFieldLabel}>
               {t.report.descLabel}
-              {isDescRequired && <span className="text-red-500"> *</span>}
+              {isDescRequired ? <span className="text-destructive"> *</span> : null}
             </label>
-            <Textarea
+            <textarea
+              id="report-desc"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder={t.report.descPlaceholder}
               rows={5}
               maxLength={500}
-              className="resize-none"
+              className={fieldTextarea}
             />
-            <p className="mt-1 text-xs text-muted-foreground">{t.report.descHint}</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground">{t.report.descHint}</p>
+            <p className="text-xs text-muted-foreground">
               {description.length}/500 {t.common.characters}
             </p>
           </div>
 
-          <div className="mt-6 border-t border-border pt-6">
-            <div className="mb-4 flex items-start gap-3 text-sm text-muted-foreground">
-              <AlertCircle size={18} className="mt-0.5 shrink-0 text-primary" />
-              <p>{t.report.warning24h}</p>
-            </div>
+          <div className="flex items-start gap-3 rounded-xl border border-border bg-card px-3 py-3 text-sm text-muted-foreground">
+            <AlertCircle size={18} className="mt-0.5 shrink-0 text-primary" aria-hidden />
+            <p>{t.report.warning24h}</p>
+          </div>
 
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={onClose}>
-                {t.common.cancel}
-              </Button>
-              <Button type="submit" disabled={!canSubmit || isSubmitting}>
-                <Send size={18} />
-                {isSubmitting ? t.report.submitting : t.report.submit}
-              </Button>
-            </DialogFooter>
+          <div className="flex flex-col-reverse gap-3 sm:flex-row">
+            <button type="button" onClick={onClose} className={cn(surfaceCtaOutline, 'sm:flex-1')}>
+              {t.common.cancel}
+            </button>
+            <button
+              type="submit"
+              disabled={!canSubmit || isSubmitting}
+              className={cn(surfaceCtaPrimary, 'sm:flex-1')}
+            >
+              {isSubmitting ? (
+                <span
+                  className="size-5 animate-spin rounded-full border-2 border-landing-dark/30 border-t-landing-dark"
+                  aria-hidden
+                />
+              ) : (
+                <>
+                  <Send size={18} aria-hidden />
+                  {t.report.submit}
+                </>
+              )}
+            </button>
           </div>
         </form>
       </DialogContent>

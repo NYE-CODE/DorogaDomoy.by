@@ -9,7 +9,8 @@ import {
   DialogTitle,
 } from '@/shared/ui/dialog';
 import { cn } from '@/shared/ui/utils';
-import { appPrimaryCtaClass } from '@/shared/styles/cta-classes';
+import { surfaceCtaPrimary } from '@/shared/styles/surface-classes';
+import '../../../landing/styles/theme-scoped.css';
 
 export interface MyPetProfilePartnersModalProps {
   open: boolean;
@@ -35,20 +36,20 @@ export function MyPetProfilePartnersModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="flex max-h-[min(90vh,720px)] max-w-2xl flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl"
+        className="landing-theme flex max-h-[min(90vh,720px)] max-w-2xl flex-col gap-0 overflow-hidden rounded-2xl border border-border bg-card p-0 shadow-card sm:max-w-2xl"
         showCloseButton
       >
-        <DialogHeader className="sticky top-0 z-10 border-b border-border bg-background px-6 py-4 text-left">
-          <DialogTitle>{op.partnersModalTitle}</DialogTitle>
+        <DialogHeader className="sticky top-0 z-10 border-b border-border/80 bg-card px-5 py-4 text-left sm:px-6">
+          <DialogTitle className="font-display">{op.partnersModalTitle}</DialogTitle>
           <DialogDescription>{op.partnersModalSubtitle}</DialogDescription>
         </DialogHeader>
-        <div className="space-y-3 overflow-y-auto px-6 py-4">
+        <div className="space-y-3 overflow-y-auto bg-landing px-5 py-4 sm:px-6">
           {partnersLoading ? (
             <p className="text-sm text-muted-foreground">{loadingLabel}</p>
           ) : partnersError ? (
             <div className="space-y-3">
               <p className="text-sm text-destructive">{partnersError}</p>
-              <Button type="button" onClick={onRetry}>
+              <Button type="button" className={cn(surfaceCtaPrimary, 'w-full sm:w-auto')} onClick={onRetry}>
                 {op.partnersRetry}
               </Button>
             </div>
@@ -58,16 +59,16 @@ export function MyPetProfilePartnersModal({
             medallionPartners.map((partner) => (
               <div
                 key={partner.id}
-                className="flex flex-col gap-3 rounded-md border border-border/80 bg-muted/20 p-4 sm:flex-row sm:items-center"
+                className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 shadow-card sm:flex-row sm:items-center"
               >
                 {partner.logo_url ? (
                   <img
                     src={partner.logo_url}
                     alt={partner.name}
-                    className="size-12 shrink-0 rounded-lg border border-border object-cover"
+                    className="size-12 shrink-0 rounded-xl border border-border object-cover"
                   />
                 ) : (
-                  <div className="size-12 shrink-0 rounded-lg border border-border bg-muted" />
+                  <div className="size-12 shrink-0 rounded-xl border border-border bg-landing-muted" />
                 )}
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-medium text-foreground">{partner.name}</p>
@@ -77,13 +78,13 @@ export function MyPetProfilePartnersModal({
                     href={partner.link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={cn(appPrimaryCtaClass, 'inline-flex shrink-0 text-sm')}
+                    className={cn(surfaceCtaPrimary, 'h-11 min-h-11 w-full shrink-0 text-sm sm:w-auto sm:px-5')}
                   >
                     {op.partnersOpenLink}
                     <ExternalLink className="size-4" />
                   </a>
                 ) : (
-                  <Button type="button" disabled variant="secondary" size="sm" className="shrink-0">
+                  <Button type="button" disabled variant="secondary" size="sm" className="shrink-0 rounded-full">
                     {op.partnersNoLink}
                   </Button>
                 )}

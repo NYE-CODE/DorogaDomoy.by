@@ -4,7 +4,7 @@ import type { ProfilePetResponse } from '@/shared/api/client';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card';
 import { cn } from '@/shared/ui/utils';
-import { appOutlineCtaClass, appPrimaryCtaClass } from '@/shared/styles/cta-classes';
+import { surfaceCtaOutline, surfaceCtaPrimary } from '@/shared/styles/surface-classes';
 import { MY_PET_PROFILE_SECTION_TITLE_CLASS } from './my-pet-profile-display';
 
 export interface MyPetProfileQrSidebarProps {
@@ -29,13 +29,13 @@ export function MyPetProfileQrSidebar({
   onOpenPartners,
 }: MyPetProfileQrSidebarProps) {
   return (
-    <Card className="sticky top-20 border-primary/15 bg-card/95 shadow-lg ring-1 ring-border/60 backdrop-blur-sm supports-[backdrop-filter]:bg-card/85 lg:top-24 lg:self-start">
+    <Card className="sticky top-20 overflow-hidden rounded-2xl border-border bg-card shadow-card lg:top-24 lg:self-start">
       <CardHeader className="pb-3">
         <CardTitle className={MY_PET_PROFILE_SECTION_TITLE_CLASS}>{op.qrTitle}</CardTitle>
         <CardDescription className="text-sm leading-relaxed">{op.qrDescription}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex flex-col items-center gap-3 rounded-lg bg-medallion-soft/70 px-4 pb-4 pt-8 dark:bg-background/80">
+        <div className="flex flex-col items-center gap-3 rounded-2xl bg-medallion-soft/70 px-4 pb-4 pt-8 dark:bg-landing-muted/60">
           <div className="relative">
             <span
               aria-hidden="true"
@@ -50,14 +50,14 @@ export function MyPetProfileQrSidebar({
           </div>
           {pet.name ? <p className="typo-engraved text-medallion-foreground">{pet.name}</p> : null}
         </div>
-        <div className="rounded-md border border-border/80 bg-muted/25 p-4">
+        <div className="rounded-xl border border-border/80 bg-landing-muted/40 p-4">
           <p className="text-sm font-semibold text-foreground">{op.freeOptionTitle}</p>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{op.freeOptionHint}</p>
         </div>
         <div className="flex flex-col gap-3">
           <Button
             type="button"
-            className={cn(appPrimaryCtaClass, 'h-12 w-full text-base')}
+            className={cn(surfaceCtaPrimary, 'w-full')}
             onClick={onDownloadQr}
           >
             <Download size={20} />
@@ -66,21 +66,21 @@ export function MyPetProfileQrSidebar({
           <Button
             type="button"
             variant="outline"
-            className={cn(appOutlineCtaClass, 'h-12 w-full text-base')}
+            className={cn(surfaceCtaOutline, 'w-full')}
             onClick={onShareLink}
           >
             <Share2 size={20} />
             <span>{op.shareLink}</span>
           </Button>
         </div>
-        <div className="rounded-md border border-border/80 bg-muted/25 p-4">
+        <div className="rounded-xl border border-border/80 bg-landing-muted/40 p-4">
           <p className="text-sm font-semibold text-foreground">{op.partnerOptionTitle}</p>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{op.partnerOptionHint}</p>
         </div>
         <Button
           type="button"
           variant="outline"
-          className="h-12 w-full gap-2 border-primary/40 text-base text-primary hover:bg-primary/10"
+          className={cn(surfaceCtaOutline, 'w-full gap-2')}
           onClick={onOpenPartners}
         >
           <ExternalLink size={18} />

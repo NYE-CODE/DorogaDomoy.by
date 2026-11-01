@@ -44,6 +44,8 @@ export interface PetResponse {
   registration_authority?: string | null;
   registration_token_number?: string | null;
   profile_pet_id?: string | null;
+  views_count?: number;
+  favorites_count?: number;
 }
 
 export interface ShelterPetResponse {
@@ -82,6 +84,8 @@ export interface ShelterPetResponse {
   good_with_kids?: 'yes' | 'no' | 'unknown' | null;
   good_with_dogs?: 'yes' | 'no' | 'unknown' | null;
   good_with_cats?: 'yes' | 'no' | 'unknown' | null;
+  views_count?: number;
+  favorites_count?: number;
 }
 
 
@@ -132,6 +136,8 @@ export function toPet(p: PetResponse): Pet {
     registrationAuthority: p.registration_authority ?? undefined,
     registrationTokenNumber: p.registration_token_number ?? undefined,
     profilePetId: p.profile_pet_id ?? undefined,
+    viewsCount: p.views_count ?? 0,
+    favoritesCount: p.favorites_count ?? 0,
   };
 }
 
@@ -176,6 +182,8 @@ export function toPetFromShelter(p: ShelterPetResponse): Pet {
     goodWithKids: (p.good_with_kids ?? undefined) as Pet['goodWithKids'],
     goodWithDogs: (p.good_with_dogs ?? undefined) as Pet['goodWithDogs'],
     goodWithCats: (p.good_with_cats ?? undefined) as Pet['goodWithCats'],
+    viewsCount: p.views_count ?? 0,
+    favoritesCount: p.favorites_count ?? 0,
   };
 }
 

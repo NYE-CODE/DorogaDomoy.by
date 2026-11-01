@@ -94,7 +94,12 @@ export function ShelterPetCard({ pet, onClick, compact = false }: ShelterPetCard
         )}
       >
         <div className="absolute right-2 top-2 z-10">
-          <FavoriteHeartButton petId={pet.id} size="sm" className="!p-1.5" />
+          <FavoriteHeartButton
+            petId={pet.id}
+            size="sm"
+            favoritesCount={pet.favoritesCount}
+            className="!h-9 !min-w-9 !px-2"
+          />
         </div>
         <div className="relative flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-landing-muted">
           {pet.photos?.[0] ? (
@@ -139,7 +144,12 @@ export function ShelterPetCard({ pet, onClick, compact = false }: ShelterPetCard
     >
       <div className="relative mb-3 flex aspect-square w-full items-center justify-center overflow-hidden rounded-xl bg-landing-muted">
         <div className="absolute right-2 top-2 z-10">
-          <FavoriteHeartButton petId={pet.id} size="sm" className="!p-1.5" />
+          <FavoriteHeartButton
+            petId={pet.id}
+            size="sm"
+            favoritesCount={pet.favoritesCount}
+            className="!h-9 !min-w-9 !px-2"
+          />
         </div>
         {pet.photos?.[0] ? (
           <img

@@ -54,7 +54,7 @@ export function UserProfileAdsSection({
                 <Link
                   key={pet.id}
                   to={`/pet/${pet.id}`}
-                  className="group block overflow-hidden rounded-lg bg-white shadow-lg transition-all duration-300 hover:shadow-2xl dark:bg-transparent"
+                  className="group block overflow-hidden rounded-2xl border border-border bg-card shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/35"
                 >
                   <div className="relative overflow-hidden">
                     <img

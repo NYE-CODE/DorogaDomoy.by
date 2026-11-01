@@ -80,6 +80,11 @@ PET_DISTINCTIVE_MARKS_COLUMNS_TO_ADD = [
     ("distinctive_marks", "JSON DEFAULT '[]'"),
 ]
 
+PET_STATS_COLUMNS_TO_ADD = [
+    ("views_count", "INTEGER DEFAULT 0"),
+    ("favorites_count", "INTEGER DEFAULT 0"),
+]
+
 SHELTER_PET_DETAILS_COLUMNS_TO_ADD = [
     ("nickname", "VARCHAR"),
     ("health_status", "VARCHAR"),
@@ -414,6 +419,16 @@ NEW_TABLES = {
             UNIQUE (token)
         )
     """,
+    "pet_views_daily": """
+        CREATE TABLE pet_views_daily (
+            id VARCHAR PRIMARY KEY,
+            pet_id VARCHAR NOT NULL REFERENCES pets(id) ON DELETE CASCADE,
+            viewer_key VARCHAR NOT NULL,
+            viewed_on VARCHAR NOT NULL,
+            created_at DATETIME,
+            UNIQUE (pet_id, viewer_key, viewed_on)
+        )
+    """,
 }
 
 
@@ -442,7 +457,8 @@ def migrate(conn):
             + PET_PHOTO_EMBEDDING_COLUMNS_TO_ADD
             + PET_PROFILE_LINK_COLUMNS_TO_ADD
             + PET_AGE_RAW_COLUMNS_TO_ADD
-            + PET_DISTINCTIVE_MARKS_COLUMNS_TO_ADD,
+            + PET_DISTINCTIVE_MARKS_COLUMNS_TO_ADD
+            + PET_STATS_COLUMNS_TO_ADD,
         ),
         ("users", USER_COLUMNS_TO_ADD),
         ("profile_pets", PROFILE_PET_COLUMNS_TO_ADD),
@@ -567,6 +583,8 @@ PERFORMANCE_INDEXES = [
         "ON pets (shelter_id, pet_scope, moderation_status, is_archived, published_at DESC)"
     ),
     "CREATE INDEX IF NOT EXISTS ix_pet_favorites_user_created ON pet_favorites (user_id, created_at DESC)",
+    "CREATE INDEX IF NOT EXISTS ix_pet_favorites_pet_id ON pet_favorites (pet_id)",
+    "CREATE INDEX IF NOT EXISTS ix_pet_views_daily_pet_day ON pet_views_daily (pet_id, viewed_on)",
     "CREATE UNIQUE INDEX IF NOT EXISTS uq_shelter_memberships_shelter_user ON shelter_memberships (shelter_id, user_id)",
     "CREATE INDEX IF NOT EXISTS ix_shelter_memberships_shelter_id ON shelter_memberships (shelter_id)",
     "CREATE INDEX IF NOT EXISTS ix_shelter_memberships_user_id ON shelter_memberships (user_id)",
@@ -677,6 +695,21 @@ def backfill_shelter_pet_details(conn):
         return
 
 
+def backfill_pet_favorites_count(conn):
+    """Синхронизировать pets.favorites_count с pet_favorites."""
+    try:
+        conn.execute(
+            """
+            UPDATE pets
+            SET favorites_count = COALESCE((
+                SELECT COUNT(*) FROM pet_favorites f WHERE f.pet_id = pets.id
+            ), 0)
+            """
+        )
+    except sqlite3.OperationalError:
+        return
+
+
 if __name__ == "__main__":
     db_path = resolve_sqlite_db_path()
     if not db_path.exists():
@@ -694,6 +727,7 @@ if __name__ == "__main__":
         backfill_shelter_owner_memberships(conn)
         backfill_shelter_pet_details(conn)
         backfill_pet_listing_expires_at(conn)
+        backfill_pet_favorites_count(conn)
         conn.commit()
         if changes:
             print("Added columns:", ", ".join(changes))

@@ -4,6 +4,8 @@ import {
   CalendarClock,
   Edit,
   Eye,
+  Heart,
+  MapPin,
   MoreVertical,
   Trash2,
 } from 'lucide-react';
@@ -172,13 +174,32 @@ export function MyAdsCard({
             <span className="hidden text-xs text-muted-foreground sm:inline sm:text-sm">
               {petTypeLabel}
             </span>
-            {pet.moderationStatus === 'approved' && pet.status === 'searching' && sightingCount > 0 ? (
+            {pet.moderationStatus === 'approved' ? (
               <>
                 <span className="hidden text-muted-foreground sm:inline">·</span>
-                <span className="flex items-center gap-1 text-xs text-muted-foreground sm:text-sm">
+                <span
+                  className="flex items-center gap-1 text-xs text-muted-foreground sm:text-sm"
+                  title={t.myAds.viewsCount}
+                >
                   <Eye className="size-3.5 sm:size-4" aria-hidden />
-                  {sightingCount}
+                  {pet.viewsCount ?? 0}
                 </span>
+                <span
+                  className="flex items-center gap-1 text-xs text-muted-foreground sm:text-sm"
+                  title={t.myAds.favoritesCount}
+                >
+                  <Heart className="size-3.5 sm:size-4" aria-hidden />
+                  {pet.favoritesCount ?? 0}
+                </span>
+                {pet.status === 'searching' && sightingCount > 0 ? (
+                  <span
+                    className="flex items-center gap-1 text-xs text-muted-foreground sm:text-sm"
+                    title={t.myAds.sightingsCount}
+                  >
+                    <MapPin className="size-3.5 sm:size-4" aria-hidden />
+                    {sightingCount}
+                  </span>
+                ) : null}
               </>
             ) : null}
           </div>

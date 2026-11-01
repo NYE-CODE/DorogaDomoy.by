@@ -1,7 +1,10 @@
+import '../../landing/styles/theme-scoped.css';
 import { Header } from '@/widgets/layout/Header';
 import { Footer } from '@/widgets/layout/Footer';
 import { BackQuickMenu } from '../../../components/navigation/BackQuickMenu';
 import { PageLoader } from '@/shared/ui/page-loader';
+import { cn } from '@/shared/lib/classNames';
+import { surfacePage } from '@/shared/styles/surface-classes';
 import { buildMyPetProfileDisplay } from './my-pet-profile-display';
 import { MyPetProfileDetailSections } from './my-pet-profile-detail-sections';
 import { MyPetProfileMainInfoCard } from './my-pet-profile-main-info-card';
@@ -16,9 +19,9 @@ export default function MyPetProfilePage() {
 
   if (p.pageLoading) {
     return (
-      <div className="flex min-h-screen flex-col bg-background">
+      <div className={cn('landing-theme flex min-h-screen flex-col', surfacePage)}>
         <Header />
-        <PageLoader label={p.t.common.loading} className="flex-1 bg-muted/30" />
+        <PageLoader label={p.t.common.loading} className="flex-1" />
         <Footer />
       </div>
     );
@@ -27,7 +30,7 @@ export default function MyPetProfilePage() {
   const display = buildMyPetProfileDisplay(p.pet, p.locale, p.f, p.pp);
 
   return (
-    <div className="flex min-h-screen flex-col bg-gradient-to-b from-muted/45 via-background to-background">
+    <div className={cn('landing-theme flex min-h-screen flex-col', surfacePage)}>
       <Header />
       <main className="flex-1 py-6 sm:py-10">
         <div className="page-container">

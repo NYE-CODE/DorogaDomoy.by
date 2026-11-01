@@ -199,7 +199,11 @@ export function PetCard({
           </div>
           {showFavoriteToggle ? (
             <div className="absolute bottom-3 right-3 z-10" onClick={(e) => e.stopPropagation()}>
-              <FavoriteHeartButton petId={pet.id} size="sm" />
+              <FavoriteHeartButton
+                petId={pet.id}
+                size="sm"
+                favoritesCount={pet.favoritesCount}
+              />
             </div>
           ) : null}
         </div>
@@ -260,7 +264,7 @@ export function PetCard({
         )}
         {showFavoriteToggle && (
           <div className="absolute bottom-3 right-3 z-10">
-            <FavoriteHeartButton petId={pet.id} />
+            <FavoriteHeartButton petId={pet.id} favoritesCount={pet.favoritesCount} />
           </div>
         )}
 

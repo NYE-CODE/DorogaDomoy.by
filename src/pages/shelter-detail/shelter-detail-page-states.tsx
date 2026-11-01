@@ -31,11 +31,11 @@ export function ShelterDetailNotFoundView({
       <div className="mb-6">
         <BackQuickMenu />
       </div>
-      <div className="space-y-3 rounded-md border border-border bg-muted/30 p-8 text-center">
+      <div className="space-y-3 rounded-2xl border border-dashed border-border bg-landing-muted/40 p-8 text-center">
         <Building2 className="mx-auto size-12 text-muted-foreground opacity-50" aria-hidden />
-        <h1 className="typo-h1">{title}</h1>
+        <h1 className="font-display typo-h1">{title}</h1>
         <p className="mx-auto max-w-md text-sm text-muted-foreground">{hint}</p>
-        <Button asChild className="mt-2 w-full sm:w-auto">
+        <Button asChild className="mt-2 w-full rounded-full sm:w-auto">
           <Link to="/shelters">{backLabel}</Link>
         </Button>
       </div>

@@ -11,7 +11,12 @@ import {
 import type { User } from '@/app/providers/AuthContext';
 import { dateLocaleForUi } from '@/shared/lib/profile-pet-text';
 import { cn } from '@/shared/ui/utils';
-import { surfacePanel } from '@/shared/styles/surface-classes';
+import {
+  surfaceCtaOutline,
+  surfaceCtaPrimary,
+  surfaceIconButton,
+  surfacePanel,
+} from '@/shared/styles/surface-classes';
 import { getUserProfileRoleName } from './user-profile-helpers';
 
 export interface UserProfileHeaderProps {
@@ -78,8 +83,9 @@ export function UserProfileHeader({
           </button>
         ) : null}
         <button
+          type="button"
           onClick={onShare}
-          className="rounded-lg p-2 text-primary transition-colors hover:bg-orange-50 dark:hover:bg-orange-950/30"
+          className={cn(surfaceIconButton, 'text-primary')}
           title={isCopied ? t.shareCopied : t.shareProfile}
         >
           <Share2 size={20} />
@@ -91,14 +97,14 @@ export function UserProfileHeader({
           <img
             src={avatarUrl}
             alt={user.name}
-            className="h-24 w-24 rounded-full border-4 border-primary-light object-cover sm:h-32 sm:w-32"
+            className="h-24 w-24 rounded-full border-4 border-primary/30 object-cover sm:h-32 sm:w-32"
           />
         </div>
 
         <div className="flex-1 text-center sm:text-left">
-          <h1 className="typo-h1 mb-2">{user.name}</h1>
+          <h1 className="font-display typo-h1 mb-2">{user.name}</h1>
           <div className="mb-4">
-            <span className="inline-block rounded-full bg-primary-light px-3 py-1 text-sm font-medium text-black">
+            <span className="inline-block rounded-full bg-primary/15 px-3 py-1 text-sm font-medium text-foreground">
               {getUserProfileRoleName(user.role, t)}
             </span>
           </div>
@@ -128,7 +134,7 @@ export function UserProfileHeader({
             {user.contacts?.phone ? (
               <a
                 href={`tel:${user.contacts.phone.replace(/\s/g, '')}`}
-                className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover sm:text-base"
+                className={cn(surfaceCtaPrimary, 'w-full sm:w-auto sm:min-w-[8.5rem] px-5')}
               >
                 <Phone size={18} />
                 {t.call}
@@ -139,7 +145,7 @@ export function UserProfileHeader({
                 href={`https://t.me/${user.contacts.telegram.replace(/^@/, '')}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 rounded-lg border-2 border-primary bg-white px-5 py-2.5 text-sm font-medium text-primary transition-colors hover:bg-orange-50 dark:bg-transparent dark:hover:bg-orange-950/20 sm:text-base"
+                className={cn(surfaceCtaOutline, 'w-full sm:w-auto sm:min-w-[8.5rem] px-5')}
               >
                 <MessageCircle size={18} />
                 {t.contact}
@@ -148,7 +154,7 @@ export function UserProfileHeader({
             {!user.contacts?.telegram && user.contacts?.viber && /\d/.test(user.contacts.viber) ? (
               <a
                 href={`viber://chat?number=${user.contacts.viber.replace(/\D/g, '')}`}
-                className="inline-flex items-center justify-center gap-2 rounded-lg border-2 border-primary bg-white px-5 py-2.5 text-sm font-medium text-primary transition-colors hover:bg-orange-50 dark:bg-transparent dark:hover:bg-orange-950/20 sm:text-base"
+                className={cn(surfaceCtaOutline, 'w-full sm:w-auto sm:min-w-[8.5rem] px-5')}
               >
                 <MessageCircle size={18} />
                 {t.contact}
@@ -159,7 +165,7 @@ export function UserProfileHeader({
             user.email ? (
               <a
                 href={`mailto:${user.email}`}
-                className="inline-flex items-center justify-center gap-2 rounded-lg border-2 border-primary bg-white px-5 py-2.5 text-sm font-medium text-primary transition-colors hover:bg-orange-50 dark:bg-transparent dark:hover:bg-orange-950/20 sm:text-base"
+                className={cn(surfaceCtaOutline, 'w-full sm:w-auto sm:min-w-[8.5rem] px-5')}
               >
                 <Mail size={18} />
                 {t.writeEmail}

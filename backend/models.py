@@ -102,6 +102,9 @@ class Pet(Base):
         nullable=True,
         index=True,
     )
+    # Денормализованная статистика для кабинета автора
+    views_count = Column(Integer, default=0, nullable=False)
+    favorites_count = Column(Integer, default=0, nullable=False)
 
     author = relationship("User", back_populates="pets", foreign_keys=[author_id])
     profile_pet = relationship("ProfilePet", foreign_keys=[profile_pet_id])
@@ -118,6 +121,21 @@ class Pet(Base):
         uselist=False,
         cascade="all, delete-orphan",
     )
+
+
+class PetViewDaily(Base):
+    """Уникальный просмотр объявления за календарный день (UTC)."""
+
+    __tablename__ = "pet_views_daily"
+    __table_args__ = (
+        UniqueConstraint("pet_id", "viewer_key", "viewed_on", name="uq_pet_views_daily_pet_viewer_day"),
+    )
+
+    id = Column(String, primary_key=True, index=True)
+    pet_id = Column(String, ForeignKey("pets.id", ondelete="CASCADE"), nullable=False, index=True)
+    viewer_key = Column(String, nullable=False, index=True)  # u:{user_id} | a:{ip_hash}
+    viewed_on = Column(String, nullable=False)  # YYYY-MM-DD UTC
+    created_at = Column(DateTime, default=datetime.utcnow)
 
 
 class ShelterPetDetails(Base):

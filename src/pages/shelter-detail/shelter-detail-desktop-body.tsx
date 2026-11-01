@@ -51,7 +51,7 @@ export function ShelterDetailDesktopBody({
         locationLine={locationLine}
         websiteHref={websiteHref}
         hasAnyContact={hasAnyContact}
-        sectionClassName="self-start rounded-lg border border-border bg-card p-6 shadow-sm lg:col-span-1"
+        sectionClassName="self-start rounded-2xl border border-border bg-card p-6 shadow-card lg:col-span-1"
         showShareMenu
         aboutMenuOpen={aboutMenuOpen}
         aboutMenuRef={aboutMenuRef}
@@ -59,7 +59,7 @@ export function ShelterDetailDesktopBody({
         onShare={() => {
           onShare();
         }}
-        headingClassName="text-xl font-bold tracking-tight text-foreground md:text-2xl"
+        headingClassName="font-display text-xl font-semibold tracking-tight text-foreground md:text-2xl"
       />
 
       <aside className="space-y-4 lg:col-span-2">
@@ -69,14 +69,14 @@ export function ShelterDetailDesktopBody({
           searchingPets={searchingPets}
         />
 
-        <div className="inline-flex w-full rounded-lg border border-border bg-card p-1">
+        <div className="grid w-full grid-cols-2 gap-0.5 rounded-md border border-border bg-muted/60 p-0.5">
           <button
             type="button"
             onClick={() => onActiveTabChange('pets')}
-            className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+            className={`min-h-11 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
               activeTab === 'pets'
-                ? 'bg-primary text-primary-foreground'
-                : 'text-muted-foreground hover:bg-muted'
+                ? 'bg-card text-foreground shadow-sm'
+                : 'text-muted-foreground hover:bg-background/80 hover:text-foreground'
             }`}
           >
             {s.tabPets}
@@ -84,10 +84,10 @@ export function ShelterDetailDesktopBody({
           <button
             type="button"
             onClick={() => onActiveTabChange('fundraisers')}
-            className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+            className={`min-h-11 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
               activeTab === 'fundraisers'
-                ? 'bg-primary text-primary-foreground'
-                : 'text-muted-foreground hover:bg-muted'
+                ? 'bg-card text-foreground shadow-sm'
+                : 'text-muted-foreground hover:bg-background/80 hover:text-foreground'
             }`}
           >
             {s.detailTabFundraisers}

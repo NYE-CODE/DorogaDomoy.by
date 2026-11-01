@@ -83,4 +83,8 @@ export interface Pet {
   registrationTokenNumber?: string | null;
   /** Связь с карточкой питомца (адресник), если объявление создано из профиля */
   profilePetId?: string | null;
+  /** Уникальные просмотры (для кабинета автора) */
+  viewsCount?: number;
+  /** Сколько пользователей добавили в избранное */
+  favoritesCount?: number;
 }

@@ -29,14 +29,14 @@ export function ShelterDetailMobileBody({
 }: ShelterDetailMobileBodyProps) {
   return (
     <>
-      <div className="mb-5 inline-flex w-full rounded-lg border border-border bg-card p-1 lg:hidden">
+      <div className="mb-5 grid w-full grid-cols-3 gap-0.5 rounded-md border border-border bg-muted/60 p-0.5 lg:hidden">
         <button
           type="button"
           onClick={() => onMobileTabChange('about')}
-          className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+          className={`min-h-11 rounded-lg px-2 py-2 text-sm font-medium transition-all ${
             mobileTab === 'about'
-              ? 'bg-primary text-primary-foreground'
-              : 'text-muted-foreground hover:bg-muted'
+              ? 'bg-card text-foreground shadow-sm'
+              : 'text-muted-foreground hover:bg-background/80 hover:text-foreground'
           }`}
         >
           О нас
@@ -44,10 +44,10 @@ export function ShelterDetailMobileBody({
         <button
           type="button"
           onClick={() => onMobileTabChange('pets')}
-          className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+          className={`min-h-11 rounded-lg px-2 py-2 text-sm font-medium transition-all ${
             mobileTab === 'pets'
-              ? 'bg-primary text-primary-foreground'
-              : 'text-muted-foreground hover:bg-muted'
+              ? 'bg-card text-foreground shadow-sm'
+              : 'text-muted-foreground hover:bg-background/80 hover:text-foreground'
           }`}
         >
           {s.tabPets}
@@ -55,10 +55,10 @@ export function ShelterDetailMobileBody({
         <button
           type="button"
           onClick={() => onMobileTabChange('fundraisers')}
-          className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+          className={`min-h-11 rounded-lg px-2 py-2 text-sm font-medium transition-all ${
             mobileTab === 'fundraisers'
-              ? 'bg-primary text-primary-foreground'
-              : 'text-muted-foreground hover:bg-muted'
+              ? 'bg-card text-foreground shadow-sm'
+              : 'text-muted-foreground hover:bg-background/80 hover:text-foreground'
           }`}
         >
           {s.detailTabFundraisers}

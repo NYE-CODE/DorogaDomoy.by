@@ -415,6 +415,8 @@ class PetResponse(PetBase):
     published_by_user_id: Optional[str] = None
     updated_by_user_id: Optional[str] = None
     profile_pet_id: Optional[str] = None
+    views_count: int = 0
+    favorites_count: int = 0
 
     class Config:
         from_attributes = True
@@ -496,6 +498,8 @@ class ShelterPetResponse(BaseModel):
     good_with_kids: Optional[str] = None
     good_with_dogs: Optional[str] = None
     good_with_cats: Optional[str] = None
+    views_count: int = 0
+    favorites_count: int = 0
 
     class Config:
         from_attributes = True

@@ -28,10 +28,10 @@ export function ShelterDetailHero({
   onSubscribeToggle,
 }: ShelterDetailHeroProps) {
   return (
-    <section className="relative overflow-hidden rounded-lg border border-border/60 bg-card">
+    <section className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-card">
       <div className="flex items-end gap-4 px-5 py-5 md:gap-6 md:px-6 md:py-6">
         <div className="shrink-0">
-          <div className="flex size-20 items-center justify-center overflow-hidden rounded-lg border border-border/70 bg-muted shadow-sm md:size-28 lg:size-32">
+          <div className="flex size-20 items-center justify-center overflow-hidden rounded-2xl border border-border/70 bg-landing-muted shadow-sm md:size-28 lg:size-32">
             {logo ? (
               <img src={logo} alt={`${row.name} logo`} className="size-full object-cover" />
             ) : (
@@ -49,7 +49,7 @@ export function ShelterDetailHero({
         </div>
 
         <div className="min-w-0 flex-1 pr-12 sm:pr-0">
-          <h1 className="typo-h1 text-balance text-foreground">{row.name}</h1>
+          <h1 className="font-display typo-h1 text-balance text-foreground">{row.name}</h1>
           {row.city ? (
             <p className="mt-1 text-sm text-muted-foreground md:text-base">{row.city}</p>
           ) : null}

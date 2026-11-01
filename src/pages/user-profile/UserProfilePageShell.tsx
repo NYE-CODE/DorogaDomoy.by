@@ -1,4 +1,5 @@
 import { Link } from 'react-router';
+import '../../../landing/styles/theme-scoped.css';
 import { Header } from '@/widgets/layout/Header';
 import { Footer } from '@/widgets/layout/Footer';
 import { getHomePath } from '@/shared/lib/home-route';
@@ -8,6 +9,8 @@ import { UserProfileLoadingView, UserProfileNotFoundView } from './user-profile-
 import { UserProfilePetsSection } from './user-profile-pets-section';
 import { resolveUserProfileAvatarUrl } from './user-profile-helpers';
 import { useUserProfilePage } from './use-user-profile-page';
+import { cn } from '@/shared/lib/classNames';
+import { surfacePage } from '@/shared/styles/surface-classes';
 
 export default function UserProfilePage() {
   const p = useUserProfilePage();
@@ -31,7 +34,7 @@ export default function UserProfilePage() {
     p.currentUser?.role === 'admin' && p.currentUser.id !== p.user.id;
 
   return (
-    <div className="flex min-h-screen flex-col bg-muted/30 dark:bg-background">
+    <div className={cn('landing-theme flex min-h-screen flex-col', surfacePage)}>
       <Header />
 
       <main className="flex-1 py-6 sm:py-8">

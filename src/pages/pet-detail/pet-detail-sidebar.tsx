@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import {
   AlertCircle,
   Calendar,
+  Eye,
   MapPin,
   MessageCircle,
   Palette,
@@ -61,6 +62,8 @@ export function PetDetailSidebar({ pet, t, archiveBadge, onReport }: PetDetailSi
   const colorStr = pet.colors.length
     ? pet.colors.map((c) => t.pet.color[c]).join(', ')
     : t.pet.notSpecified;
+  const views = pet.viewsCount ?? 0;
+  const favorites = pet.favoritesCount ?? 0;
 
   return (
     <aside className="space-y-5 lg:sticky lg:top-24 lg:self-start">
@@ -72,6 +75,7 @@ export function PetDetailSidebar({ pet, t, archiveBadge, onReport }: PetDetailSi
           <FavoriteHeartButton
             petId={pet.id}
             size="md"
+            favoritesCount={favorites}
             className="border-border bg-landing-muted text-foreground shadow-sm hover:bg-muted"
           />
         </div>
@@ -86,6 +90,15 @@ export function PetDetailSidebar({ pet, t, archiveBadge, onReport }: PetDetailSi
             {pet.status === 'searching' ? t.pet.status.searching : t.pet.status.found}
           </span>
           {pet.status === 'searching' ? <RewardBadge pet={pet} compact /> : null}
+          {views > 0 ? (
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full bg-landing-muted px-3 py-1 text-sm text-muted-foreground"
+              title={t.petDetail.ownerStatsViews}
+            >
+              <Eye className="size-3.5" aria-hidden />
+              <span className="tabular-nums">{views}</span>
+            </span>
+          ) : null}
         </div>
 
         <div className="divide-y divide-border/70">

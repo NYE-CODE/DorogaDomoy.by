@@ -33,28 +33,28 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "rounded-lg border border-border bg-card p-8 text-center md:p-12",
+        "rounded-2xl border border-border bg-card p-8 text-center md:p-12",
         className,
       )}
     >
       <div
         className={cn(
-          "mx-auto mb-4 flex size-16 items-center justify-center rounded-full",
+          "mx-auto mb-5 flex size-14 items-center justify-center rounded-full",
           iconWrapClass,
         )}
       >
-        {icon ?? <AlertCircle className="size-7" />}
+        {icon ?? <AlertCircle className="size-7" aria-hidden />}
       </div>
-      <h2 className={typoH2}>{title}</h2>
+      <h2 className={cn(typoH2, "font-display")}>{title}</h2>
       <p className={cn(typoBody, "mx-auto mt-2 max-w-md text-muted-foreground")}>
         {description}
       </p>
-      {hint && (
-        <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground/90">
+      {hint ? (
+        <p className="mx-auto mt-1.5 max-w-md text-sm text-muted-foreground">
           {hint}
         </p>
-      )}
-      {action && <div className="mt-6 flex justify-center">{action}</div>}
+      ) : null}
+      {action ? <div className="mt-6 flex justify-center">{action}</div> : null}
     </div>
   );
 }

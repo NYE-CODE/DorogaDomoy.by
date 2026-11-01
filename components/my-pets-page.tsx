@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router";
-import { Plus, QrCode, Edit, PawPrint, MoreVertical, AlertCircle, Trash2, X } from "lucide-react";
+import { Plus, QrCode, Edit, PawPrint, MoreVertical, AlertCircle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useI18n } from "../context/I18nContext";
 import { profilePetsApi } from "../api/client";
@@ -8,9 +8,10 @@ import { profilePetToListCard, type ProfilePetListCard } from "../utils/profile-
 import { PageLoader } from "./ui/page-loader";
 import { EmptyState } from "./ui/empty-state";
 import { ConfirmDialog } from "./confirm-dialog";
-import { Button } from "./ui/button";
 import { PetMedallion } from "@/shared/ui/atoms";
-import { appPrimaryCtaClass } from "@/shared/styles/cta-classes";
+import { cn } from "@/shared/lib/classNames";
+import { pageContainer } from "@/shared/styles/layout-classes";
+import { surfaceCtaPrimary, surfaceEmpty, surfacePanel } from "@/shared/styles/surface-classes";
 
 export function MyPetsContent() {
   const { t } = useI18n();
@@ -80,7 +81,7 @@ export function MyPetsContent() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/30 dark:bg-background py-4 sm:py-8">
+    <div className="py-6 sm:py-8">
       <ConfirmDialog
         open={!!deleteTarget}
         onOpenChange={(open) => {
@@ -96,12 +97,12 @@ export function MyPetsContent() {
         }}
         cancelText={t.common.cancel}
         confirmText={deleting ? t.common.loading : mp.deletePetConfirm}
-        confirmClass="bg-red-600 hover:bg-red-700 text-white disabled:opacity-60"
+        confirmClass="bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-60"
         extra={
           <label className="mt-3 flex cursor-pointer items-start gap-2 text-sm text-foreground">
             <input
               type="checkbox"
-              className="mt-1 size-4 shrink-0 rounded border-border"
+              className="mt-1 size-4 shrink-0 rounded border-border accent-primary"
               checked={archiveLinkedAds}
               onChange={(e) => setArchiveLinkedAds(e.target.checked)}
               disabled={deleting}
@@ -111,18 +112,16 @@ export function MyPetsContent() {
         }
       />
 
-      <div className="page-container">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 page-header-block">
+      <div className={cn(pageContainer, 'mx-auto px-4')}>
+        <div className="mb-8 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <div>
-            <h1 className="typo-h1 mb-2">{mp.title}</h1>
-            <p className="text-sm sm:text-base text-muted-foreground">{mp.subtitle}</p>
+            <h1 className="typo-h2 font-display text-foreground">{mp.title}</h1>
+            <p className="mt-2 text-sm text-muted-foreground sm:text-base">{mp.subtitle}</p>
           </div>
-          <Button className={appPrimaryCtaClass} asChild>
-            <Link to="/my-pets/add">
-              <Plus size={20} />
-              <span>{mp.addPet}</span>
-            </Link>
-          </Button>
+          <Link to="/my-pets/add" className={cn(surfaceCtaPrimary, 'w-auto min-w-[10rem] px-7')}>
+            <Plus size={20} aria-hidden />
+            <span>{mp.addPet}</span>
+          </Link>
         </div>
 
         {loadError ? (
@@ -131,29 +130,30 @@ export function MyPetsContent() {
             description={mp.loadErrorDesc}
             hint={loadError}
             tone="danger"
-            icon={<AlertCircle size={32} />}
+            icon={<AlertCircle className="size-7" aria-hidden />}
+            className={cn(surfaceEmpty, 'w-full px-6 py-12')}
             action={
-              <Button onClick={loadPets}>
+              <button type="button" onClick={loadPets} className={cn(surfaceCtaPrimary, 'w-auto px-7')}>
                 {mp.retryLoad}
-              </Button>
+              </button>
             }
           />
         ) : pets.length === 0 ? (
           <EmptyState
             title={mp.emptyTitle}
             description={mp.emptyDesc}
-            icon={<PawPrint size={32} />}
+            tone="brand"
+            icon={<PawPrint className="size-7" aria-hidden />}
+            className={cn(surfaceEmpty, 'w-full px-6 py-12 sm:py-16')}
             action={
-              <Button asChild>
-                <Link to="/my-pets/add">
-                  <Plus size={18} />
-                  <span>{mp.addFirst}</span>
-                </Link>
-              </Button>
+              <Link to="/my-pets/add" className={cn(surfaceCtaPrimary, 'w-auto min-w-[12rem] px-7')}>
+                <Plus size={18} aria-hidden />
+                <span>{mp.addFirst}</span>
+              </Link>
             }
           />
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {pets.map((pet) => (
               <PetCard
                 key={pet.id}
@@ -197,7 +197,7 @@ function PetCard({
   };
 }) {
   return (
-    <div className="bg-white dark:bg-card rounded-lg shadow-sm hover:shadow-md transition-all border border-border overflow-hidden group relative">
+    <div className={cn(surfacePanel, 'group relative transition-all hover:border-primary/35')}>
       <div className="absolute top-3 right-3 z-10 pet-card-menu">
         <button
           type="button"
@@ -206,7 +206,7 @@ function PetCard({
             e.stopPropagation();
             setOpenMenuId(openMenuId === pet.id ? null : pet.id);
           }}
-          className="p-2 bg-white/90 dark:bg-card/90 backdrop-blur-sm hover:bg-white dark:hover:bg-card rounded-lg transition-colors shadow-sm"
+          className="rounded-full bg-card/90 p-2 shadow-sm backdrop-blur-sm transition-colors hover:bg-landing-muted"
           aria-expanded={openMenuId === pet.id}
           aria-label={labels.menuAria}
         >
@@ -214,7 +214,7 @@ function PetCard({
         </button>
 
         {openMenuId === pet.id && (
-          <div className="absolute right-0 mt-1 w-52 bg-white dark:bg-card rounded-lg shadow-lg border border-border py-1 z-20">
+          <div className="absolute right-0 z-20 mt-1 w-52 rounded-2xl border border-border bg-card py-1 shadow-card">
             <button
               type="button"
               className="flex w-full items-center gap-3 px-4 py-2.5 hover:bg-muted/50 transition-colors text-sm text-left"

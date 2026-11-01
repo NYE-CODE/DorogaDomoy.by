@@ -22,7 +22,7 @@ export function MyPetProfileMainInfoCard({
   colorsLine,
 }: MyPetProfileMainInfoCardProps) {
   return (
-    <Card className="border-border/80 shadow-sm">
+    <Card className="overflow-hidden rounded-2xl border-border bg-card shadow-card">
       <CardHeader className="pb-2">
         <CardTitle className={MY_PET_PROFILE_SECTION_TITLE_CLASS}>{op.mainInfoTitle}</CardTitle>
       </CardHeader>

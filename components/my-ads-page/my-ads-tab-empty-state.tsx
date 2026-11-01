@@ -1,8 +1,8 @@
 import { CheckCircle, Clock, Plus, XCircle } from 'lucide-react';
 import type { ModerationStatus } from '@/entities/pet/model/types';
-import { Button } from '../ui/button';
 import { EmptyState } from '../ui/empty-state';
-import { appPrimaryCtaClass } from '../../styles/cta-classes';
+import { cn } from '@/shared/lib/classNames';
+import { surfaceCtaPrimary } from '@/shared/styles/surface-classes';
 
 export interface MyAdsTabEmptyStateProps {
   statusTab: ModerationStatus;
@@ -47,10 +47,14 @@ export function MyAdsTabEmptyState({ statusTab, labels, onCreateClick }: MyAdsTa
       icon={icon}
       action={
         statusTab === 'approved' ? (
-          <Button className={appPrimaryCtaClass} onClick={onCreateClick}>
+          <button
+            type="button"
+            className={cn(surfaceCtaPrimary, 'w-auto min-w-[12rem] px-7')}
+            onClick={onCreateClick}
+          >
             <Plus className="size-5" aria-hidden />
             {labels.createFirst}
-          </Button>
+          </button>
         ) : undefined
       }
       className="border-0 bg-transparent px-2 py-10 shadow-none md:px-4 md:py-14"

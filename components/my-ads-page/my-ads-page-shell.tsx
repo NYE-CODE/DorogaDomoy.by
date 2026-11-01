@@ -1,3 +1,4 @@
+import '../../landing/styles/theme-scoped.css';
 import { Header } from '../layout/Header';
 import { Footer } from '../layout/Footer';
 import {
@@ -8,6 +9,9 @@ import {
 import { MyAdsPageHeader } from './my-ads-page-header';
 import type { MyAdsPageProps } from './my-ads-types';
 import { useMyAdsPage } from './use-my-ads-page';
+import { cn } from '@/shared/lib/classNames';
+import { pageContainer } from '@/shared/styles/layout-classes';
+import { surfacePage } from '@/shared/styles/surface-classes';
 
 export function MyAdsPage({
   pets,
@@ -26,11 +30,11 @@ export function MyAdsPage({
   });
 
   return (
-    <div className="flex min-h-screen flex-col bg-background dark:bg-background">
+    <div className={cn('landing-theme flex min-h-screen flex-col', surfacePage)}>
       <Header />
 
-      <main className="flex-1 py-6 sm:py-10">
-        <div className="page-container">
+      <main className="flex-1 py-6 sm:py-8">
+        <div className={cn(pageContainer, 'mx-auto px-4')}>
           <MyAdsPageHeader
             backLabel={state.t.header.searchAds}
             title={state.t.myAds.title}

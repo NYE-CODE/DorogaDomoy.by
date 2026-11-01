@@ -25,7 +25,12 @@ import {
   SEO_KEYWORDS,
   SEO_ROBOTS_PRIVATE,
 } from '@/shared/lib/seo';
-import { appOutlineCtaClass, appPrimaryCtaClass } from '@/shared/styles/cta-classes';
+import {
+  surfaceCtaPrimary,
+  surfacePage,
+  surfacePanel,
+} from '@/shared/styles/surface-classes';
+import '../../landing/styles/theme-scoped.css';
 
 export default function MySheltersPage() {
   const { t } = useI18n();
@@ -70,7 +75,7 @@ export default function MySheltersPage() {
 
   if (!isVolunteer) {
     return (
-      <div className="flex min-h-screen flex-col bg-background pb-24 md:pb-8 dark:bg-background">
+      <div className={cn('landing-theme flex min-h-screen flex-col pb-24 md:pb-8', surfacePage)}>
         <Header showCitySelector />
         <main className="flex-1 py-6 sm:py-10">
           <div className="page-container">
@@ -80,7 +85,7 @@ export default function MySheltersPage() {
               hint={ms.volunteerUpgradeHint}
               icon={<Building2 className="size-7 text-muted-foreground" aria-hidden />}
               action={
-                <Button type="button" className={appPrimaryCtaClass} asChild>
+                <Button type="button" className={surfaceCtaPrimary} asChild>
                   <Link to="/profile">{ms.volunteerUpgradeCta}</Link>
                 </Button>
               }
@@ -220,21 +225,21 @@ export default function MySheltersPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-background pb-24 md:pb-8 dark:bg-background">
+    <div className={cn('landing-theme flex min-h-screen flex-col pb-24 md:pb-8', surfacePage)}>
       <Header showCitySelector />
       <main className="flex-1 py-6 sm:py-10">
         <div className="page-container">
-          <div className="mb-6 rounded-lg border border-border bg-card p-4 sm:mb-8 sm:p-6">
+          <div className={cn(surfacePanel, 'mb-6 p-4 sm:mb-8 sm:p-6')}>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
-                <h1 className="typo-h1 flex items-center gap-2">
+                <h1 className="font-display typo-h1 flex items-center gap-2">
                   <Building2 className="size-7 shrink-0 text-primary" aria-hidden />
                   {ms.title}
                 </h1>
                 <p className="mt-2 max-w-2xl text-sm text-muted-foreground sm:text-base">{ms.subtitle}</p>
               </div>
               <div className="flex flex-wrap gap-2">
-                <Button type="button" className={cn('shrink-0', appPrimaryCtaClass)} onClick={openCreate}>
+                <Button type="button" className={cn('shrink-0', surfaceCtaPrimary)} onClick={openCreate}>
                   <Building2 className="size-5 shrink-0" aria-hidden />
                   {ms.createCard}
                 </Button>
@@ -250,7 +255,7 @@ export default function MySheltersPage() {
               description={ms.empty}
               icon={<Building2 className="size-7 text-muted-foreground" aria-hidden />}
               action={
-                <Button type="button" className={appPrimaryCtaClass} onClick={openCreate}>
+                <Button type="button" className={surfaceCtaPrimary} onClick={openCreate}>
                   <Building2 className="size-5 shrink-0" aria-hidden />
                   {ms.createCard}
                 </Button>
@@ -258,8 +263,8 @@ export default function MySheltersPage() {
             />
           ) : (
             <>
-              <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
-                <div className="hidden grid-cols-[minmax(200px,2fr)_minmax(90px,1fr)_minmax(130px,1fr)_minmax(160px,1fr)_auto_auto] gap-4 border-b border-border bg-muted/40 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground lg:grid">
+              <div className={cn(surfacePanel)}>
+                <div className="hidden grid-cols-[minmax(200px,2fr)_minmax(90px,1fr)_minmax(130px,1fr)_minmax(160px,1fr)_auto_auto] gap-4 border-b border-border bg-landing-muted/50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground lg:grid">
                   <span>{ms.fieldName}</span>
                   <span>{ms.fieldCity}</span>
                   <span>{ms.fieldKind}</span>

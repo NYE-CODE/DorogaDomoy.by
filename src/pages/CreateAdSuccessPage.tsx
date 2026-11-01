@@ -3,11 +3,13 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { CheckCircle2, List } from 'lucide-react';
 import { Header } from '@/widgets/layout/Header';
 import { SimilarPetsSection } from '../../components/similar-pets-section';
-import { Button } from '@/shared/ui/button';
 import { useI18n } from '@/app/providers/I18nContext';
 import { petsApi } from '@/shared/api/client';
 import type { Pet } from '@/entities/pet/model/types';
 import { getHomePath } from '@/shared/lib/home-route';
+import { cn } from '@/shared/lib/classNames';
+import { surfaceCtaOutline, surfaceCtaPrimary, surfacePage, surfacePanel } from '@/shared/styles/surface-classes';
+import '../../landing/styles/theme-scoped.css';
 
 export default function CreateAdSuccessPage() {
   const { id } = useParams<{ id: string }>();
@@ -38,27 +40,31 @@ export default function CreateAdSuccessPage() {
   }, [id, navigate]);
 
   return (
-    <div className="min-h-screen bg-muted/30 dark:bg-background">
+    <div className={cn('landing-theme min-h-screen', surfacePage)}>
       <Header />
       <main className="mx-auto max-w-4xl px-4 py-8 sm:py-12">
-        <div className="mb-8 rounded-xl border border-border bg-card p-6 text-center shadow-sm sm:p-8">
-          <CheckCircle2 className="mx-auto mb-4 h-12 w-12 text-green-600 dark:text-green-400" aria-hidden />
-          <h1 className="typo-h1 mb-2">
-            {moderation === 'pending' ? t.createAd.success.sentModerationTitle : t.createAd.success.publishedTitle}
+        <div className={cn(surfacePanel, 'mb-8 px-6 py-8 text-center sm:px-8')}>
+          <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-shelter-soft text-shelter">
+            <CheckCircle2 className="size-7" aria-hidden />
+          </div>
+          <h1 className="typo-h2 font-display text-foreground">
+            {moderation === 'pending'
+              ? t.createAd.success.sentModerationTitle
+              : t.createAd.success.publishedTitle}
           </h1>
-          <p className="text-muted-foreground">
+          <p className="mt-2 text-muted-foreground">
             {moderation === 'pending'
               ? t.createAd.success.sentModerationDesc
               : t.createAd.success.publishedDesc}
           </p>
-          {pet && (
+          {pet ? (
             <p className="mt-3 text-sm text-muted-foreground">
               {pet.status === 'searching' ? t.createAd.success.hintLost : t.createAd.success.hintFound}
             </p>
-          )}
+          ) : null}
         </div>
 
-        {id && (
+        {id ? (
           <SimilarPetsSection
             petId={id}
             className="mb-8"
@@ -68,18 +74,16 @@ export default function CreateAdSuccessPage() {
             retryDelaysMs={[3000]}
             highlightTopMatch
           />
-        )}
+        ) : null}
 
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-          <Button asChild>
-            <Link to="/my-ads">
-              <List className="mr-2 h-4 w-4" aria-hidden />
-              {t.app.myAds}
-            </Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link to={getHomePath()}>{t.petDetail.toMain}</Link>
-          </Button>
+          <Link to="/my-ads" className={cn(surfaceCtaPrimary, 'w-full sm:w-auto sm:min-w-[12rem] px-7')}>
+            <List className="size-4" aria-hidden />
+            {t.app.myAds}
+          </Link>
+          <Link to={getHomePath()} className={cn(surfaceCtaOutline, 'w-full sm:w-auto sm:min-w-[12rem] px-7')}>
+            {t.petDetail.toMain}
+          </Link>
         </div>
       </main>
     </div>

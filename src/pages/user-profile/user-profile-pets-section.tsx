@@ -28,7 +28,7 @@ export function UserProfilePetsSection({
             {profilePets.map((pet) => (
               <div
                 key={pet.id}
-                className="group overflow-hidden rounded-md border border-border bg-white shadow-sm transition-all duration-300 hover:shadow-md dark:bg-card"
+                className="group overflow-hidden rounded-2xl border border-border bg-card shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/35"
               >
                 <div className="relative overflow-hidden">
                   <img

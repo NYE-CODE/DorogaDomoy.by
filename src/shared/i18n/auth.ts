@@ -27,7 +27,6 @@ export const authLocales = {
     registerAsVolunteer: 'Волонтёр',
     orDivider: 'или',
     forgotPasswordLink: 'Забыли пароль?',
-    forgotPasswordDisabled: 'Сброс пароля временно недоступен',
     telegramLoginSuccess: 'Вы вошли через Telegram',
     completeProfile: {
       title: 'Завершите регистрацию',
@@ -42,11 +41,10 @@ export const authLocales = {
     },
     forgotPassword: {
       title: 'Восстановление пароля',
-      subtitle: 'Мы отправим ссылку в Telegram, если он привязан к аккаунту.',
-      telegramOnlyHint: 'Работает только для аккаунтов с привязанным Telegram и заданным паролем.',
+      subtitle: 'Укажите email аккаунта. Если он есть у нас, пришлём ссылку для нового пароля.',
+      hint: 'Вход через Telegram — кнопкой в окне входа. Эта форма только для пароля по email.',
       submit: 'Отправить ссылку',
-      sentGeneric: 'Если аккаунт найден и Telegram привязан, ссылка отправлена в бот.',
-      checkTelegram: 'Проверьте сообщения от бота DorogaDomoy.',
+      sentGeneric: 'Если аккаунт с этим email есть, мы отправили письмо со ссылкой. Она действует 30 минут.',
       backToLogin: 'Вернуться на главную',
     },
     resetPassword: {
@@ -57,6 +55,7 @@ export const authLocales = {
       submit: 'Сохранить пароль',
       success: 'Пароль изменён. Можно войти с новым паролем.',
       invalidLink: 'Ссылка недействительна или устарела.',
+      missingToken: 'В ссылке нет кода. Запросите восстановление ещё раз.',
       passwordMismatch: 'Пароли не совпадают',
       backHome: 'На главную',
     },
@@ -89,7 +88,6 @@ export const authLocales = {
     registerAsVolunteer: 'Валанцёр',
     orDivider: 'або',
     forgotPasswordLink: 'Забылі пароль?',
-    forgotPasswordDisabled: 'Скід пароля часова недаступны',
     telegramLoginSuccess: 'Вы ўвайшлі праз Telegram',
     completeProfile: {
       title: 'Завершыце рэгістрацыю',
@@ -104,11 +102,10 @@ export const authLocales = {
     },
     forgotPassword: {
       title: 'Аднаўленне пароля',
-      subtitle: 'Мы адправім спасылку ў Telegram, калі ён прывязаны да акаўнта.',
-      telegramOnlyHint: 'Працуе толькі для акаўнтаў з прывязаным Telegram і заданым паролем.',
+      subtitle: 'Пакажыце email акаўнта. Калі ён у нас ёсць, дашлём спасылку для новага пароля.',
+      hint: 'Уваход праз Telegram — кнопкай у акне ўваходу. Гэтая форма толькі для пароля па email.',
       submit: 'Адправіць спасылку',
-      sentGeneric: 'Калі акаўнт знайдзены і Telegram прывязаны, спасылка адправлена ў бот.',
-      checkTelegram: 'Праверце паведамленні ад бота DorogaDomoy.',
+      sentGeneric: 'Калі акаўнт з гэтым email ёсць, мы адправілі ліст са спасылкай. Яна дзейнічае 30 хвілін.',
       backToLogin: 'Вярнуцца на галоўную',
     },
     resetPassword: {
@@ -119,6 +116,7 @@ export const authLocales = {
       submit: 'Захаваць пароль',
       success: 'Пароль зменены. Можна ўвайсці з новым паролем.',
       invalidLink: 'Спасылка несапраўдная або састарэла.',
+      missingToken: 'У спасылцы няма кода. Запытайце аднаўленне яшчэ раз.',
       passwordMismatch: 'Паролі не супадаюць',
       backHome: 'На галоўную',
     },
@@ -151,7 +149,6 @@ export const authLocales = {
     registerAsVolunteer: 'Volunteer',
     orDivider: 'or',
     forgotPasswordLink: 'Forgot password?',
-    forgotPasswordDisabled: 'Password reset is temporarily unavailable',
     telegramLoginSuccess: 'Signed in with Telegram',
     completeProfile: {
       title: 'Complete your profile',
@@ -166,11 +163,10 @@ export const authLocales = {
     },
     forgotPassword: {
       title: 'Password recovery',
-      subtitle: 'We will send a link in Telegram if it is linked to your account.',
-      telegramOnlyHint: 'Works only for accounts with linked Telegram and a password set.',
+      subtitle: 'Enter the account email. If we have it, we will send a link to choose a new password.',
+      hint: 'Telegram sign-in is the button in the login window. This form is only for an email password.',
       submit: 'Send link',
-      sentGeneric: 'If the account exists and Telegram is linked, the link was sent to the bot.',
-      checkTelegram: 'Check messages from the DorogaDomoy bot.',
+      sentGeneric: 'If an account with this email exists, we sent a message with a link. It works for 30 minutes.',
       backToLogin: 'Back to home',
     },
     resetPassword: {
@@ -181,6 +177,7 @@ export const authLocales = {
       submit: 'Save password',
       success: 'Password updated. You can sign in with the new password.',
       invalidLink: 'This link is invalid or expired.',
+      missingToken: 'This link has no code. Request a new recovery link.',
       passwordMismatch: 'Passwords do not match',
       backHome: 'Home',
     },

@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useState, Fragment } from 'react';
-import { useNavigate } from 'react-router';
+import { Link } from 'react-router';
 import { Clock, Heart, MapPin, Search } from 'lucide-react';
 import { favoritesApi, petsApi } from '@/shared/api/client';
 import { Footer } from '@/widgets/layout/Footer';
 import { Header } from '@/widgets/layout/Header';
 import { ShelterPetCard } from '../../components/shelter-pet-card';
 import { FavoriteHeartButton } from '../../components/favorite-heart-button';
-import { Button } from '@/shared/ui/button';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { PageLoader } from '@/shared/ui/page-loader';
 import { useAuth } from '@/app/providers/AuthContext';
@@ -24,15 +23,31 @@ import {
 } from '@/shared/lib/seo';
 import { getHomePath } from '@/shared/lib/home-route';
 import { formatRelativeTime, petStatusPhotoPillClass } from '@/shared/lib/pet-helpers';
-import { appPrimaryCtaClass } from '@/shared/styles/cta-classes';
+import { cn } from '@/shared/lib/classNames';
+import { pageContainer } from '@/shared/styles/layout-classes';
+import {
+  surfaceCtaPrimary,
+  surfaceEmpty,
+  surfacePage,
+} from '@/shared/styles/surface-classes';
 import { PartnerAdSlot } from '@/features/partner-ads/PartnerAdSlot';
 import { PARTNER_AD_FAVORITES_GRID_INTERVAL } from '@/shared/lib/partner-ad-placements';
+import '../../landing/styles/theme-scoped.css';
+
+const segmentTrack = 'grid gap-0.5 rounded-md border border-border bg-muted/60 p-0.5';
+function segmentClass(active: boolean) {
+  return cn(
+    'flex min-h-11 items-center justify-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium transition-all',
+    active
+      ? 'bg-card text-foreground shadow-sm'
+      : 'text-muted-foreground hover:bg-background/80 hover:text-foreground',
+  );
+}
 
 export default function FavoritesPage() {
   const { t } = useI18n();
   const { isAuthenticated } = useAuth();
   const { hydrated, favoriteIds, count } = useFavorites();
-  const navigate = useNavigate();
   const [pets, setPets] = useState<Pet[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'search' | 'shelters'>('search');
@@ -104,7 +119,7 @@ export default function FavoritesPage() {
 
   if (!hydrated) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className={cn('landing-theme flex min-h-screen flex-col', surfacePage)}>
         <Header showCitySelector={false} />
         <PageLoader />
         <div className="hidden lg:block">
@@ -115,51 +130,47 @@ export default function FavoritesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24 md:pb-8">
+    <div className={cn('landing-theme flex min-h-screen flex-col pb-24 md:pb-8', surfacePage)}>
       <Header showCitySelector={false} />
-      <main className="page-container-medium py-8">
+      <main className={cn(pageContainer, 'mx-auto w-full flex-1 px-4 py-6 sm:py-8')}>
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="typo-h1 flex items-center gap-2">
-              <Heart className="size-7 shrink-0 text-rose-500" aria-hidden />
+            <h1 className="typo-h2 flex items-center gap-2 font-display text-foreground">
+              <Heart className="size-7 shrink-0 text-primary" aria-hidden />
               {t.favorites.title}
             </h1>
             <p className="mt-2 max-w-xl text-muted-foreground">{t.favorites.subtitle}</p>
-            {!isAuthenticated && count > 0 && (
-              <p className="mt-3 text-sm text-amber-700 dark:text-amber-400">{t.favorites.guestHint}</p>
-            )}
+            {!isAuthenticated && count > 0 ? (
+              <p className="mt-3 text-sm text-muted-foreground">{t.favorites.guestHint}</p>
+            ) : null}
           </div>
-          {count > 0 && (
-            <p className="text-sm font-medium text-muted-foreground tabular-nums">
+          {count > 0 ? (
+            <p className="text-sm font-medium tabular-nums text-muted-foreground">
               {t.favorites.countLabel.replace('{n}', String(count))}
             </p>
-          )}
+          ) : null}
         </div>
 
-        {count > 0 && (
-          <div className="mb-6 inline-flex rounded-lg border border-border bg-card p-1">
+        {count > 0 ? (
+          <div className={cn(segmentTrack, 'mb-6 inline-grid w-full max-w-md grid-cols-2')}>
             <button
               type="button"
               onClick={() => setActiveTab('search')}
-              className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-                activeTab === 'search' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'
-              }`}
+              className={segmentClass(activeTab === 'search')}
             >
               {t.favorites.tabSearchPets}
-              <span className="ml-1.5 opacity-80">{searchPets.length}</span>
+              <span className="tabular-nums opacity-80">{searchPets.length}</span>
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('shelters')}
-              className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-                activeTab === 'shelters' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted'
-              }`}
+              className={segmentClass(activeTab === 'shelters')}
             >
               {t.favorites.tabShelterPets}
-              <span className="ml-1.5 opacity-80">{shelterPets.length}</span>
+              <span className="tabular-nums opacity-80">{shelterPets.length}</span>
             </button>
           </div>
-        )}
+        ) : null}
 
         {loading ? (
           <PageLoader />
@@ -167,23 +178,23 @@ export default function FavoritesPage() {
           <EmptyState
             title={t.favorites.emptyTitle}
             description={t.favorites.emptyDescription}
-            icon={<Heart className="size-7 text-rose-400" aria-hidden />}
+            tone="brand"
+            icon={<Heart className="size-7" aria-hidden />}
+            className={cn(surfaceEmpty, 'w-full px-6 py-12 sm:py-16')}
             action={
-              <Button
-                type="button"
-                className={appPrimaryCtaClass}
-                onClick={() => navigate(getHomePath())}
-              >
+              <Link to={getHomePath()} className={cn(surfaceCtaPrimary, 'w-auto min-w-[12rem] px-7')}>
                 <Search className="size-5 shrink-0" aria-hidden />
                 {t.favorites.openSearch}
-              </Button>
+              </Link>
             }
           />
         ) : activePets.length === 0 ? (
           <EmptyState
             title={t.favorites.emptyTitle}
             description={activeTab === 'search' ? t.favorites.emptySearchTab : t.favorites.emptyShelterTab}
-            icon={<Heart className="size-7 text-rose-400" aria-hidden />}
+            tone="brand"
+            icon={<Heart className="size-7" aria-hidden />}
+            className={cn(surfaceEmpty, 'w-full px-6 py-12 sm:py-16')}
           />
         ) : activeTab === 'search' ? (
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -191,7 +202,7 @@ export default function FavoritesPage() {
               <Fragment key={pet.id}>
               <div
                 onClick={() => window.open(`/pet/${pet.id}`, '_blank')}
-                className="group relative cursor-pointer overflow-hidden rounded-lg border border-border/80 bg-card shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-xl"
+                className="group relative cursor-pointer overflow-hidden rounded-2xl border border-border bg-card shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/35"
               >
                 <div className="relative overflow-hidden">
                   {pet.photos?.[0] ? (

@@ -3,11 +3,11 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
-  DialogHeader,
   DialogTitle,
 } from './ui/dialog';
-import { Button } from './ui/button';
+import { cn } from '@/shared/lib/classNames';
+import { surfaceCtaOutline, surfaceCtaPrimary } from '@/shared/styles/surface-classes';
+import '../landing/styles/theme-scoped.css';
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -30,7 +30,7 @@ export function ConfirmDialog({
   onConfirm,
   confirmText = 'Подтвердить',
   cancelText = 'Отмена',
-  confirmClass = 'bg-primary hover:bg-primary/90 text-primary-foreground',
+  confirmClass,
   extra,
 }: ConfirmDialogProps) {
   const handleConfirm = () => {
@@ -44,20 +44,30 @@ export function ConfirmDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md rounded-lg" onEscapeKeyDown={handleCancel}>
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{description}</DialogDescription>
-        </DialogHeader>
-        {extra ? <div className="px-1">{extra}</div> : null}
-        <DialogFooter>
-          <Button variant="outline" onClick={handleCancel}>
+      <DialogContent
+        showCloseButton={false}
+        className="landing-theme max-w-md gap-0 overflow-hidden rounded-2xl border border-border bg-card p-0 shadow-card"
+        onEscapeKeyDown={handleCancel}
+      >
+        <div className="border-b border-border/80 bg-card px-5 py-5 sm:px-6">
+          <DialogTitle className="typo-h2 font-display text-foreground">{title}</DialogTitle>
+          <DialogDescription className="mt-1.5 text-sm text-muted-foreground">
+            {description}
+          </DialogDescription>
+        </div>
+        {extra ? <div className="border-b border-border/60 bg-landing px-5 py-4 sm:px-6">{extra}</div> : null}
+        <div className="flex flex-col-reverse gap-3 bg-landing px-5 py-5 sm:flex-row sm:px-6">
+          <button type="button" onClick={handleCancel} className={cn(surfaceCtaOutline, 'sm:flex-1')}>
             {cancelText}
-          </Button>
-          <Button onClick={handleConfirm} className={confirmClass}>
+          </button>
+          <button
+            type="button"
+            onClick={handleConfirm}
+            className={cn(surfaceCtaPrimary, 'sm:flex-1', confirmClass)}
+          >
             {confirmText}
-          </Button>
-        </DialogFooter>
+          </button>
+        </div>
       </DialogContent>
     </Dialog>
   );

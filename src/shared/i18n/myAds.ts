@@ -32,6 +32,9 @@ export const myAdsLocales = {
     expiresToday: 'Истекает сегодня',
     expiredArchived: 'Срок размещения истёк',
     expiresOn: 'Активно до {date}',
+    viewsCount: 'Просмотры',
+    favoritesCount: 'В избранном',
+    sightingsCount: 'Отметки «видел»',
   },
   be: {
     title: 'Мае аб\'явы',
@@ -65,6 +68,9 @@ export const myAdsLocales = {
     expiresToday: 'Тэрмін мінае сёння',
     expiredArchived: 'Тэрмін размяшчэння скончыўся',
     expiresOn: 'Актыўна да {date}',
+    viewsCount: 'Прагляды',
+    favoritesCount: 'У абраным',
+    sightingsCount: 'Адзнакі «бачыў»',
   },
   en: {
     title: 'My ads',
@@ -97,5 +103,8 @@ export const myAdsLocales = {
     expiresToday: 'Expires today',
     expiredArchived: 'Publication period ended',
     expiresOn: 'Active until {date}',
+    viewsCount: 'Views',
+    favoritesCount: 'In favorites',
+    sightingsCount: '“Saw similar” marks',
   },
 } as const;

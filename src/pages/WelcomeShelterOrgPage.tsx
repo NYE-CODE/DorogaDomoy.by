@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
-import { Building2, PawPrint, Users, ArrowRight } from 'lucide-react';
+import { ArrowRight, Building2, PawPrint, Users } from 'lucide-react';
 import { Header } from '@/widgets/layout/Header';
 import { Footer } from '@/widgets/layout/Footer';
-import { Button } from '@/shared/ui/button';
 import { PageLoader } from '@/shared/ui/page-loader';
 import { useAuth } from '@/app/providers/AuthContext';
 import { useI18n } from '@/app/providers/I18nContext';
@@ -14,6 +13,8 @@ import {
   dismissShelterOrgOnboarding,
   shouldShowShelterOrgOnboarding,
 } from '@/shared/lib/shelter-org-onboarding';
+import { cn } from '@/shared/lib/classNames';
+import { surfaceCtaOutline, surfaceCtaPrimary, surfacePage, surfacePanel } from '@/shared/styles/surface-classes';
 import '../../landing/styles/theme-scoped.css';
 
 export default function WelcomeShelterOrgPage() {
@@ -85,7 +86,7 @@ export default function WelcomeShelterOrgPage() {
 
   if (!user || checking) {
     return (
-      <div className="landing-theme min-h-screen bg-muted/30 dark:bg-background">
+      <div className={cn('landing-theme min-h-screen', surfacePage)}>
         <PageLoader />
       </div>
     );
@@ -98,37 +99,42 @@ export default function WelcomeShelterOrgPage() {
   ];
 
   return (
-    <div className="landing-theme min-h-screen flex flex-col bg-muted/30 dark:bg-background">
+    <div className={cn('landing-theme flex min-h-screen flex-col', surfacePage)}>
       <Header showCitySelector />
-      <main className="flex-1 px-4 py-10">
-        <div className="mx-auto max-w-lg rounded-lg border border-border bg-card p-8 shadow-sm">
-          <div className="mb-6 flex justify-center">
-            <div className="flex size-16 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <Building2 className="size-8" />
+      <main className="flex-1 px-4 py-8 sm:py-10">
+        <div className={cn(surfacePanel, 'mx-auto max-w-lg overflow-hidden')}>
+          <div className="border-b border-border/80 bg-card px-5 py-6 text-center sm:px-8">
+            <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <Building2 className="size-7" aria-hidden />
             </div>
+            <h1 className="typo-h2 font-display text-foreground">{tip.title}</h1>
+            <p className="mt-2 text-sm text-muted-foreground">{tip.subtitle}</p>
           </div>
-          <h1 className="typo-h1 text-center">{tip.title}</h1>
-          <p className="mt-2 text-center text-sm text-muted-foreground">{tip.subtitle}</p>
 
-          <ul className="mt-8 space-y-4">
-            {benefits.map(({ icon: Icon, text }) => (
-              <li key={text} className="flex items-start gap-3 text-sm text-foreground">
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-primary">
-                  <Icon className="size-4" />
-                </div>
-                <span className="pt-1.5">{text}</span>
-              </li>
-            ))}
-          </ul>
+          <div className="bg-landing px-5 py-6 sm:px-8">
+            <ul className="space-y-3">
+              {benefits.map(({ icon: Icon, text }) => (
+                <li
+                  key={text}
+                  className="flex items-start gap-3 rounded-xl border border-border bg-card px-3 py-3 text-sm text-foreground"
+                >
+                  <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <Icon className="size-4" aria-hidden />
+                  </div>
+                  <span className="pt-1.5">{text}</span>
+                </li>
+              ))}
+            </ul>
 
-          <div className="mt-8 space-y-3">
-            <Button type="button" onClick={handleCreate} className="h-11 w-full">
-              {tip.create}
-              <ArrowRight className="size-4" />
-            </Button>
-            <Button type="button" variant="ghost" onClick={handleLater} className="h-11 w-full">
-              {tip.later}
-            </Button>
+            <div className="mt-6 space-y-3">
+              <button type="button" onClick={handleCreate} className={surfaceCtaPrimary}>
+                {tip.create}
+                <ArrowRight className="size-4" aria-hidden />
+              </button>
+              <button type="button" onClick={handleLater} className={surfaceCtaOutline}>
+                {tip.later}
+              </button>
+            </div>
           </div>
         </div>
       </main>

@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState, type ChangeEvent } from 'react';
+import { useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
-import { Upload, X } from 'lucide-react';
+import { Cat, Dog, PawPrint, Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
+import '../../landing/styles/theme-scoped.css';
 import { Footer } from '@/widgets/layout/Footer';
 import { Header } from '@/widgets/layout/Header';
 import { Button } from '@/shared/ui/button';
@@ -13,6 +14,24 @@ import type { Compatibility, Pet } from '@/entities/pet/model/types';
 import { useI18n } from '@/app/providers/I18nContext';
 import { compressImageFileToDataUrl } from '@/shared/lib/compress-image';
 import { formatI18nTemplate } from '@/shared/lib/i18n-template';
+import { cn } from '@/shared/lib/classNames';
+import {
+  surfaceCtaOutline,
+  surfaceCtaPrimary,
+  surfaceFieldLabel,
+  surfacePage,
+  surfacePanel,
+  surfaceSelectRow,
+  surfaceUploadZone,
+} from '@/shared/styles/surface-classes';
+import {
+  profilePetField,
+  profilePetInput,
+  profilePetSegmentClass,
+  profilePetSegmentTrack,
+  profilePetTagClass,
+  profilePetTextarea,
+} from '../../components/add-edit-pet-page/add-edit-pet-form-styles';
 
 type FormState = {
   photos: string[];
@@ -63,6 +82,22 @@ const emptyForm = (): FormState => ({
   goodWithCats: 'unknown',
 });
 
+function Field({
+  label,
+  className,
+  children,
+}: {
+  label: string;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className={cn(profilePetField, className)}>
+      <span className={surfaceFieldLabel}>{label}</span>
+      {children}
+    </div>
+  );
+}
 
 function TraitScale({
   label,
@@ -80,37 +115,33 @@ function TraitScale({
   onChange: (v: number) => void;
 }) {
   return (
-    <div className="rounded-lg border border-border bg-background px-3 py-2.5 sm:col-span-2">
-      <div className="mb-2 flex items-center justify-between">
-        <span className="text-sm font-medium text-foreground">{label}</span>
-        {value > 0 && (
+    <div className="rounded-2xl border border-border bg-card p-4 shadow-card sm:col-span-2">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <span className={cn(surfaceFieldLabel, 'mb-0')}>{label}</span>
+        {value > 0 ? (
           <button
             type="button"
             onClick={() => onChange(0)}
-            className="text-xs text-muted-foreground hover:text-foreground"
+            className="text-xs font-medium text-muted-foreground hover:text-foreground"
           >
             {clearLabel}
           </button>
-        )}
+        ) : null}
       </div>
-      <div className="flex gap-1.5">
+      <div className={cn(profilePetSegmentTrack, 'grid-cols-5')}>
         {[1, 2, 3, 4, 5].map((n) => (
           <button
             key={n}
             type="button"
             onClick={() => onChange(n)}
             aria-pressed={value === n}
-            className={`flex-1 rounded-md border py-1.5 text-sm font-semibold transition-colors ${
-              value >= n && value > 0
-                ? 'border-primary bg-primary text-white'
-                : 'border-border bg-muted/40 text-muted-foreground hover:bg-muted'
-            }`}
+            className={profilePetSegmentClass(value === n)}
           >
             {n}
           </button>
         ))}
       </div>
-      <div className="mt-1 flex justify-between text-xs text-muted-foreground">
+      <div className="mt-2 flex justify-between text-xs text-muted-foreground">
         <span>{lowHint}</span>
         <span>{highHint}</span>
       </div>
@@ -139,20 +170,16 @@ function CompatibilitySelect({
     { v: 'unknown', t: unknownLabel },
   ];
   return (
-    <div className="rounded-lg border border-border bg-background px-3 py-2.5">
-      <div className="mb-2 text-sm font-medium text-foreground">{label}</div>
-      <div className="flex gap-1.5">
+    <div className="rounded-2xl border border-border bg-card p-4 shadow-card">
+      <div className={cn(surfaceFieldLabel, 'mb-3')}>{label}</div>
+      <div className={cn(profilePetSegmentTrack, 'grid-cols-3')}>
         {options.map((o) => (
           <button
             key={o.v}
             type="button"
             onClick={() => onChange(o.v)}
             aria-pressed={value === o.v}
-            className={`flex-1 rounded-md border py-1.5 text-xs font-semibold transition-colors ${
-              value === o.v
-                ? 'border-primary bg-primary text-white'
-                : 'border-border bg-muted/40 text-muted-foreground hover:bg-muted'
-            }`}
+            className={profilePetSegmentClass(value === o.v)}
           >
             {o.t}
           </button>
@@ -172,6 +199,7 @@ export default function MyShelterPetFormPage() {
   const compatYes = mf.yes;
   const compatNo = mf.no;
   const compatUnknown = t.pet.gender.unknown;
+  const coatTitle = t.landing.shelters.detailPetsCoatTitle;
   const { shelterId, petId } = useParams<{ shelterId: string; petId?: string }>();
   const navigate = useNavigate();
   const isEdit = Boolean(petId);
@@ -272,9 +300,9 @@ export default function MyShelterPetFormPage() {
     if (step === 2) {
       return Boolean(
         form.nickname.trim() &&
-        form.approximateAge.trim() &&
-        form.colorsCsv.trim() &&
-        form.description.trim(),
+          form.approximateAge.trim() &&
+          form.colorsCsv.trim() &&
+          form.description.trim(),
       );
     }
     return true;
@@ -349,7 +377,7 @@ export default function MyShelterPetFormPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen flex-col bg-background">
+      <div className={cn('landing-theme flex min-h-screen flex-col', surfacePage)}>
         <Header showCitySelector />
         <main className="flex-1 py-10">
           <PageLoader />
@@ -362,22 +390,59 @@ export default function MyShelterPetFormPage() {
   const totalSteps = 3;
   const pageTitle = isEdit ? sp.formEditTitle : sp.formAddTitle;
 
+  const animalOptions: {
+    value: FormState['animalType'];
+    label: string;
+    icon: ReactNode;
+  }[] = [
+    { value: 'cat', label: t.pet.animalType.cat, icon: <Cat className="size-4" aria-hidden /> },
+    { value: 'dog', label: t.pet.animalType.dog, icon: <Dog className="size-4" aria-hidden /> },
+    { value: 'other', label: t.pet.animalType.other, icon: <PawPrint className="size-4" aria-hidden /> },
+  ];
+
+  const genderOptions: { value: FormState['gender']; label: string }[] = [
+    { value: 'unknown', label: t.pet.gender.unknown },
+    { value: 'male', label: t.pet.gender.male },
+    { value: 'female', label: t.pet.gender.female },
+  ];
+
+  const healthOptions: { value: FormState['healthStatus']; label: string }[] = [
+    { value: 'disabled', label: sp.healthDisabled },
+    { value: 'treatment', label: sp.healthTreatment },
+    { value: 'good', label: sp.healthGood },
+    { value: 'excellent', label: sp.healthExcellent },
+  ];
+
+  const coatOptions: { value: FormState['coatType']; label: string }[] = [
+    { value: 'smooth', label: sp.coatSmooth },
+    { value: 'semi', label: sp.coatSemi },
+    { value: 'fluffy', label: sp.coatFluffy },
+  ];
+
+  const adoptionOptions: { value: FormState['adoptionStatus']; label: string }[] = [
+    { value: 'available', label: msl.statusAvailable },
+    { value: 'reserved', label: msl.statusReserved },
+    { value: 'adopted', label: msl.statusAdopted },
+    { value: 'on_treatment', label: msl.statusTreatment },
+    { value: 'not_for_adoption', label: msl.statusNotForAdoption },
+  ];
+
   return (
-    <div className="landing-theme min-h-screen bg-muted/30 dark:bg-background flex flex-col">
+    <div className={cn('landing-theme flex min-h-screen flex-col', surfacePage)}>
       <Header showCitySelector />
-      <section className="bg-white dark:bg-card border-b border-border px-4 sm:px-6 lg:px-8">
-        <div className="max-w-[736px] mx-auto py-4">
-          <div className="flex items-center gap-4 mb-4">
+      <section className="border-b border-border/80 bg-card/90 px-4 backdrop-blur-sm sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-[736px] py-4">
+          <div className="mb-4 flex items-center gap-4">
             <BackQuickMenu />
-            <div className="flex-1 min-w-0">
-              <h1 className="typo-h1 truncate">{pageTitle}</h1>
-              <p className="text-sm text-muted-foreground mt-1">
+            <div className="min-w-0 flex-1">
+              <h1 className="font-display typo-h1 truncate">{pageTitle}</h1>
+              <p className="mt-1 text-sm text-muted-foreground">
                 {t.petForm.step} {step} {t.petForm.of} {totalSteps}: {stepTitle}
               </p>
             </div>
             <Link
               to={`/my-shelters/${shelterId}/pets`}
-              className="text-muted-foreground hover:text-black dark:text-muted-foreground dark:hover:text-foreground whitespace-nowrap transition-colors"
+              className="whitespace-nowrap text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
               {t.petForm.close}
             </Link>
@@ -392,111 +457,300 @@ export default function MyShelterPetFormPage() {
       </section>
 
       <main className="flex-1 px-4 py-8">
-        <div className="max-w-[736px] mx-auto bg-white dark:bg-card rounded-lg shadow-sm border border-border p-8">
-          <div>
+        <div className={cn(surfacePanel, 'mx-auto max-w-[736px] p-5 sm:p-8')}>
+          <div className="space-y-6">
+            {step === 1 ? (
+              <div>
+                <div className="mb-2 flex items-baseline justify-between gap-3">
+                  <span className={cn(surfaceFieldLabel, 'mb-0')}>{sp.stepPhotos}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {form.photos.length} {pf.of} {maxPhotos}
+                  </span>
+                </div>
+                <p className="mb-3 text-xs text-muted-foreground">{pf.photoFileSizeHint}</p>
+                <div className="grid grid-cols-3 gap-3">
+                  {form.photos.map((photo, idx) => (
+                    <div key={idx} className="group relative aspect-square overflow-hidden rounded-2xl border border-border">
+                      <img
+                        src={photo}
+                        alt={formatI18nTemplate(pf.photoAltNumber, { n: idx + 1 }, 'Photo')}
+                        className="size-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setForm((p) => ({ ...p, photos: p.photos.filter((_, i) => i !== idx) }))
+                        }
+                        className="absolute inset-0 flex items-center justify-center bg-black/45 opacity-0 transition-opacity group-hover:opacity-100"
+                        aria-label={t.common.close}
+                      >
+                        <X className="size-6 text-white" />
+                      </button>
+                    </div>
+                  ))}
+                  {form.photos.length < maxPhotos ? (
+                    <label className={cn(surfaceUploadZone, 'aspect-square cursor-pointer gap-2 p-3')}>
+                      <Upload className="size-6 text-muted-foreground" />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={(e) => void handlePhotoUpload(e)}
+                      />
+                    </label>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
 
-            <div className="mt-5">
-              {step === 1 ? (
-                <div>
-                  <div className="mb-2 text-sm text-muted-foreground">{form.photos.length} {pf.of} {maxPhotos}</div>
-                  <p className="mb-3 text-xs text-muted-foreground">{pf.photoFileSizeHint}</p>
-                  <div className="grid grid-cols-3 gap-3">
-                    {form.photos.map((photo, idx) => (
-                      <div key={idx} className="group relative aspect-square overflow-hidden rounded-lg">
-                        <img
-                          src={photo}
-                          alt={formatI18nTemplate(pf.photoAltNumber, { n: idx + 1 }, 'Photo')}
-                          className="size-full object-cover"
-                        />
-                        <button type="button" onClick={() => setForm((p) => ({ ...p, photos: p.photos.filter((_, i) => i !== idx) }))} className="absolute inset-0 flex items-center justify-center bg-black/45 opacity-0 transition-opacity group-hover:opacity-100">
-                          <X className="size-6 text-white" />
-                        </button>
-                      </div>
+            {step === 2 ? (
+              <div className="grid gap-5 sm:grid-cols-2">
+                <Field label={sp.nicknamePlaceholder}>
+                  <input
+                    value={form.nickname}
+                    onChange={(e) => setForm((p) => ({ ...p, nickname: e.target.value }))}
+                    className={profilePetInput}
+                    placeholder={sp.nicknamePlaceholder}
+                  />
+                </Field>
+
+                <Field label={pf.whoIsThis}>
+                  <div className={cn(profilePetSegmentTrack, 'grid-cols-3')}>
+                    {animalOptions.map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setForm((p) => ({ ...p, animalType: opt.value }))}
+                        className={profilePetSegmentClass(form.animalType === opt.value)}
+                      >
+                        {opt.icon}
+                        <span className="truncate">{opt.label}</span>
+                      </button>
                     ))}
-                    {form.photos.length < maxPhotos && (
-                      <label className="flex aspect-square cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border hover:bg-muted/50">
-                        <Upload className="mb-2 size-6 text-muted-foreground" />
-                        <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => void handlePhotoUpload(e)} />
-                      </label>
-                    )}
                   </div>
-                </div>
-              ) : null}
+                </Field>
 
-              {step === 2 ? (
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <input value={form.nickname} onChange={(e) => setForm((p) => ({ ...p, nickname: e.target.value }))} className="rounded-lg border border-border bg-background px-3 py-2 text-sm" placeholder={sp.nicknamePlaceholder} />
-                  <select value={form.animalType} onChange={(e) => setForm((p) => ({ ...p, animalType: e.target.value as FormState['animalType'] }))} className="rounded-lg border border-border bg-background px-3 py-2 text-sm">
-                    <option value="cat">{t.pet.animalType.cat}</option>
-                    <option value="dog">{t.pet.animalType.dog}</option>
-                    <option value="other">{t.pet.animalType.other}</option>
-                  </select>
-                  <input value={form.breed} onChange={(e) => setForm((p) => ({ ...p, breed: e.target.value }))} className="rounded-lg border border-border bg-background px-3 py-2 text-sm" placeholder={sp.breedPlaceholder} />
-                  <select value={form.gender} onChange={(e) => setForm((p) => ({ ...p, gender: e.target.value as FormState['gender'] }))} className="rounded-lg border border-border bg-background px-3 py-2 text-sm">
-                    <option value="unknown">{t.pet.gender.unknown}</option>
-                    <option value="male">{t.pet.gender.male}</option>
-                    <option value="female">{t.pet.gender.female}</option>
-                  </select>
-                  <input value={form.approximateAge} onChange={(e) => setForm((p) => ({ ...p, approximateAge: e.target.value }))} className="rounded-lg border border-border bg-background px-3 py-2 text-sm" placeholder={sp.agePlaceholder} />
-                  <input value={form.colorsCsv} onChange={(e) => setForm((p) => ({ ...p, colorsCsv: e.target.value }))} className="rounded-lg border border-border bg-background px-3 py-2 text-sm" placeholder={sp.colorsPlaceholder} />
-                  <select value={form.healthStatus} onChange={(e) => setForm((p) => ({ ...p, healthStatus: e.target.value as FormState['healthStatus'] }))} className="rounded-lg border border-border bg-background px-3 py-2 text-sm">
-                    <option value="disabled">{sp.healthDisabled}</option>
-                    <option value="treatment">{sp.healthTreatment}</option>
-                    <option value="good">{sp.healthGood}</option>
-                    <option value="excellent">{sp.healthExcellent}</option>
-                  </select>
-                  <select value={form.coatType} onChange={(e) => setForm((p) => ({ ...p, coatType: e.target.value as FormState['coatType'] }))} className="rounded-lg border border-border bg-background px-3 py-2 text-sm">
-                    <option value="smooth">{sp.coatSmooth}</option>
-                    <option value="semi">{sp.coatSemi}</option>
-                    <option value="fluffy">{sp.coatFluffy}</option>
-                  </select>
-                  <textarea value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} className="min-h-24 rounded-lg border border-border bg-background px-3 py-2 text-sm sm:col-span-2" placeholder={sp.descriptionPlaceholder} />
-                  <input value={form.registrationAuthority} onChange={(e) => setForm((p) => ({ ...p, registrationAuthority: e.target.value }))} className="rounded-lg border border-border bg-background px-3 py-2 text-sm sm:col-span-2" placeholder={t.petForm.registrationAuthorityPlaceholder} maxLength={300} />
-                  <input value={form.registrationTokenNumber} onChange={(e) => setForm((p) => ({ ...p, registrationTokenNumber: e.target.value }))} className="rounded-lg border border-border bg-background px-3 py-2 text-sm sm:col-span-2" placeholder={t.petForm.registrationTokenPlaceholder} maxLength={80} />
+                <Field label={sp.breedPlaceholder}>
+                  <input
+                    value={form.breed}
+                    onChange={(e) => setForm((p) => ({ ...p, breed: e.target.value }))}
+                    className={profilePetInput}
+                    placeholder={sp.breedPlaceholder}
+                  />
+                </Field>
 
-                  <div className="sm:col-span-2 mt-2 border-t border-border pt-4">
-                    <h3 className="text-sm font-semibold text-foreground">{sp.traitsSectionTitle}</h3>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {sp.traitsSectionHint}
-                    </p>
+                <Field label={pf.genderLabel}>
+                  <div className={cn(profilePetSegmentTrack, 'grid-cols-3')}>
+                    {genderOptions.map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setForm((p) => ({ ...p, gender: opt.value }))}
+                        className={profilePetSegmentClass(form.gender === opt.value)}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
                   </div>
-                  <TraitScale label={pt.energyLevel.label} lowHint={pt.energyLevel.levels[0]} highHint={pt.energyLevel.levels[4]} clearLabel={sp.clearTrait} value={form.energyLevel} onChange={(v) => setForm((p) => ({ ...p, energyLevel: v }))} />
-                  <TraitScale label={pt.friendlinessLevel.label} lowHint={pt.friendlinessLevel.levels[0]} highHint={pt.friendlinessLevel.levels[4]} clearLabel={sp.clearTrait} value={form.friendlinessLevel} onChange={(v) => setForm((p) => ({ ...p, friendlinessLevel: v }))} />
-                  <TraitScale label={pt.trainingLevel.label} lowHint={pt.trainingLevel.levels[0]} highHint={pt.trainingLevel.levels[4]} clearLabel={sp.clearTrait} value={form.trainingLevel} onChange={(v) => setForm((p) => ({ ...p, trainingLevel: v }))} />
-                  <TraitScale label={pt.independenceLevel.label} lowHint={pt.independenceLevel.levels[0]} highHint={pt.independenceLevel.levels[4]} clearLabel={sp.clearTrait} value={form.independenceLevel} onChange={(v) => setForm((p) => ({ ...p, independenceLevel: v }))} />
-                  <CompatibilitySelect label={pt.compatYesKids} yesLabel={compatYes} noLabel={compatNo} unknownLabel={compatUnknown} value={form.goodWithKids} onChange={(v) => setForm((p) => ({ ...p, goodWithKids: v }))} />
-                  <CompatibilitySelect label={pt.compatYesDogs} yesLabel={compatYes} noLabel={compatNo} unknownLabel={compatUnknown} value={form.goodWithDogs} onChange={(v) => setForm((p) => ({ ...p, goodWithDogs: v }))} />
-                  <CompatibilitySelect label={pt.compatYesCats} yesLabel={compatYes} noLabel={compatNo} unknownLabel={compatUnknown} value={form.goodWithCats} onChange={(v) => setForm((p) => ({ ...p, goodWithCats: v }))} />
-                </div>
-              ) : null}
+                </Field>
 
-              {step === 3 ? (
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <select value={form.adoptionStatus} onChange={(e) => setForm((p) => ({ ...p, adoptionStatus: e.target.value as FormState['adoptionStatus'] }))} className="rounded-lg border border-border bg-background px-3 py-2 text-sm">
-                    <option value="available">{msl.statusAvailable}</option>
-                    <option value="reserved">{msl.statusReserved}</option>
-                    <option value="adopted">{msl.statusAdopted}</option>
-                    <option value="on_treatment">{msl.statusTreatment}</option>
-                    <option value="not_for_adoption">{msl.statusNotForAdoption}</option>
-                  </select>
-                  <label className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm">
-                    <input type="checkbox" checked={form.isPublished} onChange={(e) => setForm((p) => ({ ...p, isPublished: e.target.checked }))} />
-                    {sp.publishCheckbox}
-                  </label>
-                </div>
-              ) : null}
-            </div>
+                <Field label={pf.ageLabel}>
+                  <input
+                    value={form.approximateAge}
+                    onChange={(e) => setForm((p) => ({ ...p, approximateAge: e.target.value }))}
+                    className={profilePetInput}
+                    placeholder={sp.agePlaceholder}
+                  />
+                </Field>
 
-            <div className="mt-6 flex flex-wrap gap-2">
-              <Button type="button" variant="outline" onClick={() => setStep((s) => Math.max(1, s - 1))} disabled={step === 1 || saving}>
+                <Field label={sp.colorsPlaceholder}>
+                  <input
+                    value={form.colorsCsv}
+                    onChange={(e) => setForm((p) => ({ ...p, colorsCsv: e.target.value }))}
+                    className={profilePetInput}
+                    placeholder={sp.colorsPlaceholder}
+                  />
+                </Field>
+
+                <Field label={sp.healthLabel} className="sm:col-span-2">
+                  <div className="flex flex-wrap gap-2">
+                    {healthOptions.map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setForm((p) => ({ ...p, healthStatus: opt.value }))}
+                        className={cn(profilePetTagClass(form.healthStatus === opt.value), 'flex-1 sm:flex-none')}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </Field>
+
+                <Field label={coatTitle} className="sm:col-span-2">
+                  <div className={cn(profilePetSegmentTrack, 'grid-cols-3')}>
+                    {coatOptions.map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setForm((p) => ({ ...p, coatType: opt.value }))}
+                        className={profilePetSegmentClass(form.coatType === opt.value)}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </Field>
+
+                <Field label={sp.descriptionPlaceholder} className="sm:col-span-2">
+                  <textarea
+                    value={form.description}
+                    onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
+                    className={profilePetTextarea}
+                    placeholder={sp.descriptionPlaceholder}
+                  />
+                </Field>
+
+                <Field label={pf.registrationAuthorityLabel} className="sm:col-span-2">
+                  <input
+                    value={form.registrationAuthority}
+                    onChange={(e) => setForm((p) => ({ ...p, registrationAuthority: e.target.value }))}
+                    className={profilePetInput}
+                    placeholder={pf.registrationAuthorityPlaceholder}
+                    maxLength={300}
+                  />
+                </Field>
+
+                <Field label={pf.registrationTokenLabel} className="sm:col-span-2">
+                  <input
+                    value={form.registrationTokenNumber}
+                    onChange={(e) => setForm((p) => ({ ...p, registrationTokenNumber: e.target.value }))}
+                    className={profilePetInput}
+                    placeholder={pf.registrationTokenPlaceholder}
+                    maxLength={80}
+                  />
+                </Field>
+
+                <div className="sm:col-span-2 mt-1 border-t border-border pt-5">
+                  <h3 className="font-display text-sm font-semibold text-foreground">{sp.traitsSectionTitle}</h3>
+                  <p className="mt-0.5 text-xs text-muted-foreground">{sp.traitsSectionHint}</p>
+                </div>
+
+                <TraitScale
+                  label={pt.energyLevel.label}
+                  lowHint={pt.energyLevel.levels[0]}
+                  highHint={pt.energyLevel.levels[4]}
+                  clearLabel={sp.clearTrait}
+                  value={form.energyLevel}
+                  onChange={(v) => setForm((p) => ({ ...p, energyLevel: v }))}
+                />
+                <TraitScale
+                  label={pt.friendlinessLevel.label}
+                  lowHint={pt.friendlinessLevel.levels[0]}
+                  highHint={pt.friendlinessLevel.levels[4]}
+                  clearLabel={sp.clearTrait}
+                  value={form.friendlinessLevel}
+                  onChange={(v) => setForm((p) => ({ ...p, friendlinessLevel: v }))}
+                />
+                <TraitScale
+                  label={pt.trainingLevel.label}
+                  lowHint={pt.trainingLevel.levels[0]}
+                  highHint={pt.trainingLevel.levels[4]}
+                  clearLabel={sp.clearTrait}
+                  value={form.trainingLevel}
+                  onChange={(v) => setForm((p) => ({ ...p, trainingLevel: v }))}
+                />
+                <TraitScale
+                  label={pt.independenceLevel.label}
+                  lowHint={pt.independenceLevel.levels[0]}
+                  highHint={pt.independenceLevel.levels[4]}
+                  clearLabel={sp.clearTrait}
+                  value={form.independenceLevel}
+                  onChange={(v) => setForm((p) => ({ ...p, independenceLevel: v }))}
+                />
+                <CompatibilitySelect
+                  label={pt.compatYesKids}
+                  yesLabel={compatYes}
+                  noLabel={compatNo}
+                  unknownLabel={compatUnknown}
+                  value={form.goodWithKids}
+                  onChange={(v) => setForm((p) => ({ ...p, goodWithKids: v }))}
+                />
+                <CompatibilitySelect
+                  label={pt.compatYesDogs}
+                  yesLabel={compatYes}
+                  noLabel={compatNo}
+                  unknownLabel={compatUnknown}
+                  value={form.goodWithDogs}
+                  onChange={(v) => setForm((p) => ({ ...p, goodWithDogs: v }))}
+                />
+                <CompatibilitySelect
+                  label={pt.compatYesCats}
+                  yesLabel={compatYes}
+                  noLabel={compatNo}
+                  unknownLabel={compatUnknown}
+                  value={form.goodWithCats}
+                  onChange={(v) => setForm((p) => ({ ...p, goodWithCats: v }))}
+                />
+              </div>
+            ) : null}
+
+            {step === 3 ? (
+              <div className="space-y-5">
+                <Field label={msl.colStatus}>
+                  <div className="flex flex-wrap gap-2">
+                    {adoptionOptions.map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setForm((p) => ({ ...p, adoptionStatus: opt.value }))}
+                        className={cn(profilePetTagClass(form.adoptionStatus === opt.value), 'flex-1 sm:flex-none')}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </Field>
+
+                <label className={cn(surfaceSelectRow, 'select-none')}>
+                  <input
+                    type="checkbox"
+                    checked={form.isPublished}
+                    onChange={(e) => setForm((p) => ({ ...p, isPublished: e.target.checked }))}
+                    className="size-4 rounded border-border text-primary focus-visible:ring-ring"
+                  />
+                  <span className="text-sm font-medium text-foreground">{sp.publishCheckbox}</span>
+                </label>
+              </div>
+            ) : null}
+
+            <div className="flex flex-col-reverse gap-3 border-t border-border pt-6 sm:flex-row sm:justify-between">
+              <Button
+                type="button"
+                variant="outline"
+                className={cn(surfaceCtaOutline, 'w-full sm:w-auto sm:min-w-[8rem]')}
+                onClick={() => setStep((s) => Math.max(1, s - 1))}
+                disabled={step === 1 || saving}
+              >
                 {t.common.back}
               </Button>
               {step < 3 ? (
-                <Button type="button" onClick={() => setStep((s) => Math.min(3, s + 1))} disabled={!canNext()}>
+                <Button
+                  type="button"
+                  className={cn(surfaceCtaPrimary, 'w-full sm:w-auto sm:min-w-[8rem]')}
+                  onClick={() => setStep((s) => Math.min(3, s + 1))}
+                  disabled={!canNext()}
+                >
                   {t.common.next}
                 </Button>
               ) : (
-                <Button type="button" onClick={() => void onSubmit()} disabled={saving || !canNext()}>
+                <Button
+                  type="button"
+                  className={cn(surfaceCtaPrimary, 'w-full sm:w-auto sm:min-w-[10rem]')}
+                  onClick={() => void onSubmit()}
+                  disabled={saving || !canNext()}
+                >
                   {saving ? t.common.submitting : isEdit ? sp.savePet : sp.addPetButton}
                 </Button>
               )}
