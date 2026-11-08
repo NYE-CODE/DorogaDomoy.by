@@ -14,6 +14,66 @@ def test_fcm_configured_only_server_key(monkeypatch):
     assert fcm_configured() is True
 
 
+def test_fcm_configured_service_account_file(monkeypatch, tmp_path):
+    monkeypatch.delenv("FCM_SERVER_KEY", raising=False)
+    path = tmp_path / "sa.json"
+    path.write_text(
+        json.dumps(
+            {
+                "project_id": "dorogadomoy-by",
+                "client_email": "push@dorogadomoy-by.iam.gserviceaccount.com",
+                "private_key": "not-used-here",
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("FCM_SERVICE_ACCOUNT_JSON", str(path))
+    assert fcm_configured() is True
+
+
+def test_send_fcm_v1_deactivates_unregistered(monkeypatch, tmp_path):
+    monkeypatch.delenv("FCM_SERVER_KEY", raising=False)
+    path = tmp_path / "sa.json"
+    path.write_text(
+        json.dumps(
+            {
+                "project_id": "dorogadomoy-by",
+                "client_email": "push@dorogadomoy-by.iam.gserviceaccount.com",
+                "private_key": "not-used-here",
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("FCM_SERVICE_ACCOUNT_JSON", str(path))
+
+    ok = MagicMock()
+    ok.status_code = 200
+    ok.json.return_value = {"name": "projects/dorogadomoy-by/messages/1"}
+    dead = MagicMock()
+    dead.status_code = 404
+    dead.json.return_value = {
+        "error": {
+            "status": "NOT_FOUND",
+            "details": [{"errorCode": "UNREGISTERED"}],
+        }
+    }
+
+    with patch("integrations.fcm._access_token", return_value="ya29.test"):
+        with patch("integrations.fcm.httpx.post", side_effect=[ok, dead]) as mock_post:
+            success, invalid = send_fcm_to_tokens(
+                ["tok-good", "tok-dead"],
+                title="T",
+                body="B",
+                data={"pet_id": "p1"},
+            )
+    assert success == 1
+    assert invalid == ["tok-dead"]
+    sent = mock_post.call_args_list[0].kwargs["json"]["message"]
+    assert sent["token"] == "tok-good"
+    assert sent["data"]["pet_id"] == "p1"
+    assert "fcm/send" not in mock_post.call_args_list[0].args[0]
+
+
 def test_send_fcm_returns_invalid_tokens(monkeypatch):
     monkeypatch.setenv("FCM_SERVER_KEY", "server-key")
     tokens = ["tok-good", "tok-dead", "tok-bad"]
