@@ -6,6 +6,20 @@ from integrations.fcm import fcm_configured, send_fcm_to_tokens
 from telegram_login import MAX_AUTH_AGE_SECONDS
 
 
+def test_device_token_extract_prefers_fcm_token():
+    from routers.device_tokens import _extract_token_and_platform
+
+    class _Req:
+        query_params = {"token": "query-token-value-1234567890"}
+
+    token, platform = _extract_token_and_platform(
+        {"fcm_token": "body-fcm-token-value-1234567890", "platform": "ios"},
+        _Req(),
+    )
+    assert token.startswith("body-fcm-token")
+    assert platform == "ios"
+
+
 def test_fcm_configured_only_server_key(monkeypatch):
     monkeypatch.delenv("FCM_SERVER_KEY", raising=False)
     monkeypatch.setenv("FCM_SERVICE_ACCOUNT_JSON", "/tmp/missing.json")

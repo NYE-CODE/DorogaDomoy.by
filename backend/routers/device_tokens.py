@@ -3,10 +3,10 @@ from __future__ import annotations
 
 import logging
 import uuid
-from typing import Literal
+from typing import Any, Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Request
-from pydantic import BaseModel, Field
+from fastapi import APIRouter, Body, Depends, HTTPException, Request
+from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -24,15 +24,34 @@ MAX_DEVICES_PER_USER = 10
 Platform = Literal["android", "ios", "web"]
 
 
-class DeviceTokenUpsert(BaseModel):
-    token: str = Field(..., min_length=20, max_length=4096)
-    platform: Platform = "android"
-
-
 class DeviceTokenResponse(BaseModel):
     ok: bool = True
     id: str
     platform: str
+
+
+def _extract_token_and_platform(
+    payload: dict[str, Any] | None,
+    request: Request,
+) -> tuple[str, str]:
+    data = payload if isinstance(payload, dict) else {}
+    token = str(
+        data.get("fcm_token")
+        or data.get("registration_token")
+        or data.get("token")
+        or request.query_params.get("fcm_token")
+        or request.query_params.get("registration_token")
+        or request.query_params.get("token")
+        or ""
+    ).strip()
+    platform = str(
+        data.get("platform")
+        or request.query_params.get("platform")
+        or "android"
+    ).strip().lower()
+    if platform not in {"android", "ios", "web"}:
+        platform = "android"
+    return token, platform
 
 
 def _active_token_count(db: Session, user_id: str) -> int:
@@ -53,20 +72,18 @@ def _active_token_count(db: Session, user_id: str) -> int:
 @limiter.limit("30/minute")
 def upsert_device_token(
     request: Request,
-    body: DeviceTokenUpsert,
     user: User = Depends(get_current_user_required),
     db: Session = Depends(get_db),
+    payload: dict[str, Any] | None = Body(default=None),
 ):
-    token = body.token.strip()
-    if not token:
-        raise HTTPException(status_code=400, detail="token обязателен")
-    platform = body.platform
+    token, platform = _extract_token_and_platform(payload, request)
+    if len(token) < 20:
+        raise HTTPException(status_code=400, detail="fcm_token обязателен")
 
     existing = db.scalar(select(DeviceToken).where(DeviceToken.token == token))
     now = utc_now()
     if existing:
         if existing.user_id != user.id:
-            # Handoff to another account still counts against the new owner's cap.
             if _active_token_count(db, user.id) >= MAX_DEVICES_PER_USER:
                 raise HTTPException(
                     status_code=400,
@@ -110,11 +127,13 @@ def upsert_device_token(
 @limiter.limit("30/minute")
 def delete_device_token(
     request: Request,
-    body: DeviceTokenUpsert,
     user: User = Depends(get_current_user_required),
     db: Session = Depends(get_db),
+    payload: dict[str, Any] | None = Body(default=None),
 ):
-    token = body.token.strip()
+    token, _platform = _extract_token_and_platform(payload, request)
+    if not token:
+        return None
     row = db.scalar(
         select(DeviceToken).where(
             DeviceToken.token == token,
