@@ -250,7 +250,7 @@ export function AuthModal({ onNavigateToTerms }: AuthModalProps = {}) {
               </div>
             ) : null}
 
-            <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
+            <form onSubmit={handleSubmit} className="space-y-4" autoComplete="on">
               {mode === 'register' ? (
                 <div className="space-y-1.5">
                   <label htmlFor="auth-name" className={surfaceFieldLabel}>
