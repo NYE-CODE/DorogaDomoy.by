@@ -454,6 +454,10 @@ def list_pets(
     west: Optional[float] = Query(None),
     limit: Optional[int] = Query(None, ge=1, le=500),
     offset: int = Query(0, ge=0),
+    sort: Optional[str] = Query(
+        None,
+        description="newest (default) or oldest, by published_at",
+    ),
     db: Session = Depends(get_db),
     user: Optional[User] = Depends(get_current_user),
 ):
@@ -481,10 +485,11 @@ def list_pets(
     filtered = _apply_pet_list_filters(select(Pet), **filter_kwargs)
     total = db.scalar(select(func.count()).select_from(filtered.subquery())) or 0
     effective_limit = limit if limit is not None else LIST_PETS_DEFAULT_LIMIT
+    order = Pet.published_at.asc() if sort == "oldest" else Pet.published_at.desc()
     pets = db.scalars(
         _apply_pet_list_filters(select(Pet), **filter_kwargs)
         .options(selectinload(Pet.shelter_details))
-        .order_by(Pet.published_at.desc())
+        .order_by(order)
         .offset(offset)
         .limit(effective_limit)
     ).all()
