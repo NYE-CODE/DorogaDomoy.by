@@ -4,8 +4,8 @@ import { FavoriteHeartButton } from './favorite-heart-button';
 import { useI18n } from '../context/I18nContext';
 import type { Pet } from '../types/pet';
 import { cn } from './ui/utils';
-import { displayPhotoUrl } from '@/shared/lib/display-photo-url';
 import { petScenarioPhotoPillClass } from '@/shared/lib/pet-scenario-colors';
+import { CardPhotoGallery } from './card-photo-gallery';
 import { surfacePanel } from '@/shared/styles/surface-classes';
 
 const DEFAULT_PHOTO =
@@ -32,34 +32,34 @@ export function LandingShelterPetCard({
   const age = pet.approximateAge?.trim();
   const breed = pet.breed?.trim() || copy.breedDefault;
   const meta = [breed, age].filter(Boolean).join(' · ');
-  const photo = pet.photos?.[0] ? displayPhotoUrl(pet.photos[0], 640) : DEFAULT_PHOTO;
+  const galleryPhotos = pet.photos?.filter((src) => Boolean(src)) ?? [];
 
   return (
     <div className={cn(surfacePanel, 'group relative h-full', className)}>
+      <div className="relative overflow-hidden">
+        <CardPhotoGallery
+          photos={galleryPhotos.length > 0 ? galleryPhotos : [DEFAULT_PHOTO]}
+          alt={name}
+          className="h-52 w-full"
+          linkTo={to}
+          onNavigate={onNavigate}
+        />
+        <div className="pointer-events-none absolute left-3 top-3 z-10">
+          <span
+            className={cn(
+              'inline-flex items-center rounded-full px-2.5 py-1 text-[0.65rem] font-semibold',
+              petScenarioPhotoPillClass.shelter,
+            )}
+          >
+            {copy.badge}
+          </span>
+        </div>
+      </div>
       <Link
         to={to}
         onClick={onNavigate}
         className="block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
-        <div className="relative overflow-hidden">
-          <img
-            src={photo}
-            alt={name}
-            className="h-52 w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-            loading="lazy"
-            decoding="async"
-          />
-          <div className="absolute left-3 top-3">
-            <span
-              className={cn(
-                'inline-flex items-center rounded-full px-2.5 py-1 text-[0.65rem] font-semibold',
-                petScenarioPhotoPillClass.shelter,
-              )}
-            >
-              {copy.badge}
-            </span>
-          </div>
-        </div>
         <div className="p-4 md:p-5">
           <h3 className="mb-1 line-clamp-1 font-display text-lg font-semibold leading-tight text-foreground sm:text-xl">
             {name}

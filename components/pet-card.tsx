@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { useI18n } from '../context/I18nContext';
 import { RewardBadge, getRewardBadgeMeta } from './reward-badge';
 import { FavoriteHeartButton } from './favorite-heart-button';
+import { CardPhotoGallery } from './card-photo-gallery';
 import { cn } from './ui/utils';
 import { activateOnKeyboard, interactiveCardClass } from '@/shared/styles/interaction-classes';
 import {
@@ -145,9 +146,11 @@ export function PetCard({
   };
 
   if (compact) {
-    const photoUrl =
-      pet.photos[0] ||
-      'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&h=400&fit=crop';
+    const galleryPhotos = pet.photos.filter((src) => Boolean(src));
+    const compactPhotos =
+      galleryPhotos.length > 0
+        ? galleryPhotos
+        : ['https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&h=400&fit=crop'];
     const colorStr = pet.colors.length
       ? pet.colors.map((c) => t.pet.color[c as keyof typeof t.pet.color]).join(', ')
       : '—';
@@ -168,15 +171,13 @@ export function PetCard({
         )}
       >
         <div className="relative overflow-hidden">
-          <img
-            src={photoUrl}
+          <CardPhotoGallery
+            photos={compactPhotos}
             alt={photoAlt}
-            loading="lazy"
-            decoding="async"
-            className="h-52 w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+            className="h-52 w-full"
+            scrim
           />
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-          <div className="absolute left-3 right-3 top-3 flex items-start justify-between gap-2">
+          <div className="absolute left-3 right-3 top-3 z-10 flex items-start justify-between gap-2">
             {!hideStatusBadge ? (
               <span
                 className={cn(
@@ -243,14 +244,14 @@ export function PetCard({
       onKeyDown={activateOnKeyboard(onClick)}
       className={cn(
         interactiveCardClass,
-        'overflow-hidden rounded-lg border border-border bg-card shadow-sm',
+        'group overflow-hidden rounded-lg border border-border bg-card shadow-sm',
       )}
     >
       <div className="relative">
-        <img
-          src={pet.photos[0]}
+        <CardPhotoGallery
+          photos={pet.photos}
           alt={t.pet.animalType[pet.animalType]}
-          className="w-full h-48 object-cover"
+          className="h-48 w-full bg-muted"
         />
         {!hideStatusBadge && (
           <div
@@ -270,7 +271,7 @@ export function PetCard({
 
         {/* Меню владельца/админа — три точки справа */}
         {canEditDelete && (onEdit || onDelete) && (
-          <div className="absolute top-3 right-3" ref={menuRef}>
+          <div className="absolute top-3 right-3 z-10" ref={menuRef}>
             <button
               onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v); }}
               className="p-1.5 bg-white/90 dark:bg-card/90 hover:bg-card dark:hover:bg-card text-foreground/90 rounded-lg shadow-sm transition-colors"

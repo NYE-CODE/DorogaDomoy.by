@@ -7,6 +7,7 @@ import { typoH4 } from '@/shared/styles/typography-classes';
 import { activateOnKeyboard, interactiveCardClass } from '@/shared/styles/interaction-classes';
 import { displayPhotoUrl } from '@/shared/lib/display-photo-url';
 import { FavoriteHeartButton } from './favorite-heart-button';
+import { CardPhotoGallery } from './card-photo-gallery';
 
 interface ShelterPetCardProps {
   pet: Pet;
@@ -142,7 +143,14 @@ export function ShelterPetCard({ pet, onClick, compact = false }: ShelterPetCard
         'hover:-translate-y-0.5 hover:border-shelter-border',
       )}
     >
-      <div className="relative mb-3 flex aspect-square w-full items-center justify-center overflow-hidden rounded-xl bg-landing-muted">
+      <div className="relative mb-3 aspect-square w-full overflow-hidden rounded-xl bg-landing-muted">
+        <CardPhotoGallery
+          photos={pet.photos}
+          alt={name}
+          className="absolute inset-0"
+          reserveEndCorner={false}
+          fallback={<PawPrint className="size-16 text-muted-foreground opacity-35" aria-hidden />}
+        />
         <div className="absolute right-2 top-2 z-10">
           <FavoriteHeartButton
             petId={pet.id}
@@ -151,17 +159,6 @@ export function ShelterPetCard({ pet, onClick, compact = false }: ShelterPetCard
             className="!h-9 !min-w-9 !px-2"
           />
         </div>
-        {pet.photos?.[0] ? (
-          <img
-            src={pet.photos[0]}
-            alt=""
-            className="size-full object-cover object-center transition-transform duration-500 group-hover:scale-[1.03]"
-            loading="lazy"
-            decoding="async"
-          />
-        ) : (
-          <PawPrint className="size-16 text-muted-foreground opacity-35" aria-hidden />
-        )}
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col gap-2.5">
