@@ -521,11 +521,17 @@ def blog_page_seo(
     if image:
         article["image"] = [image]
 
+    img_html = ""
+    if image != default_og_image():
+        img_html = (
+            f'<p><img src="{escape_attr(image)}" '
+            f'alt="{escape_attr(title.strip())}" width="600" /></p>'
+        )
     crawl = (
         f"<h1>{escape_text(title.strip())}</h1>"
         f"<p>{escape_text(desc)}</p>"
         f"<p>{escape_text(truncate_text(plain, 800))}</p>"
-        f'{f"<p><img src=\"{escape_attr(image)}\" alt=\"{escape_attr(title.strip())}\" width=\"600\" /></p>" if image != default_og_image() else ""}'
+        f"{img_html}"
         f'<p><a href="{escape_attr(page_url)}">Читать на DorogaDomoy.by</a> · '
         f'<a href="/blog">Все статьи</a> · <a href="/">На главную</a></p>'
     )
@@ -603,12 +609,19 @@ def shelter_page_seo(
     if image:
         org["image"] = image
 
+    addr_suffix = f" · {escape_text(addr_bit)}" if addr_bit else ""
+    phone_html = ""
+    if phone:
+        phone_html = (
+            f'<p>Телефон: <a href="tel:{escape_attr(phone)}">'
+            f"{escape_text(phone)}</a></p>"
+        )
     crawl = (
         f"<h1>{escape_text(name.strip())}</h1>"
         f"<p><strong>{escape_text(kind_label)}</strong> · {escape_text(city_bit)}"
-        f"{f' · {escape_text(addr_bit)}' if addr_bit else ''}</p>"
+        f"{addr_suffix}</p>"
         f"<p>{escape_text(truncate_text(description or desc, 600))}</p>"
-        f'{f"<p>Телефон: <a href=\"tel:{escape_attr(phone)}\">{escape_text(phone)}</a></p>" if phone else ""}'
+        f"{phone_html}"
         f'<p><a href="{escape_attr(page_url)}">Открыть карточку</a> · '
         f'<a href="/shelters">Каталог приютов</a> · <a href="/">На главную</a></p>'
     )
