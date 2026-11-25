@@ -123,6 +123,14 @@ else
   exit 1
 fi
 
+# Sitemap во время vite build часто без API (backend ещё не перезапущен).
+# Пересобираем по localhost после /health и кладём в frontend/.
+echo "==> 9b. Sitemap (после backend)"
+SITEMAP_API_ORIGIN="http://127.0.0.1:8000" VITE_SITE_URL="$VITE_API_URL" \
+  node "$REPO_DIR/scripts/generate-sitemap.mjs"
+cp -a "$REPO_DIR/public/sitemap.xml" "$FRONTEND_DIR/sitemap.xml"
+echo "    sitemap: $(grep -c '<loc>' "$FRONTEND_DIR/sitemap.xml" || true) URL"
+
 # 8. Кэш статики и HTTP/2 (nginx -t, при ошибке конфиг откатывается)
 echo "==> 10. Кэш статики и HTTP/2"
 sudo "$PYTHON" "$REPO_DIR/deploy/nginx/apply_static_cache.py" || echo "    Предупреждение: кэш nginx не обновлён"
