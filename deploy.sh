@@ -97,8 +97,9 @@ else
 fi
 
 # 5. Сборка фронтенда
+# Sitemap с API — в шаге 9b: во время build публичный HTTPS с VPS часто недоступен (hairpin).
 echo "==> 7. Сборка фронтенда (VITE_API_URL=$VITE_API_URL)"
-VITE_API_URL="$VITE_API_URL" npm run build
+VITE_API_URL="$VITE_API_URL" SITEMAP_SKIP_API=1 npm run build
 
 # 6. Копирование билда
 echo "==> 8. Копирование dist/ в frontend/"

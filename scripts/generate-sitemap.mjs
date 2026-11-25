@@ -8,9 +8,35 @@ import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const SITE = (process.env.VITE_SITE_URL || 'https://doragadomoy.by').replace(/\/+$/, '');
-const API = (process.env.SITEMAP_API_ORIGIN || SITE).replace(/\/+$/, '');
+const SITE = (process.env.VITE_SITE_URL || 'https://dorogadomoy.by').replace(/\/+$/, '');
 const OUT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../public/sitemap.xml');
+const SKIP_API = process.env.SITEMAP_SKIP_API === '1' || process.env.SITEMAP_SKIP_API === 'true';
+
+/** На VPS публичный HTTPS часто недоступен с localhost (hairpin) → fetch failed. */
+async function resolveApiOrigin() {
+  const candidates = [];
+  if (process.env.SITEMAP_API_ORIGIN) {
+    candidates.push(process.env.SITEMAP_API_ORIGIN.replace(/\/+$/, ''));
+  }
+  candidates.push('http://127.0.0.1:8000');
+  if (!candidates.includes(SITE)) candidates.push(SITE);
+
+  for (const origin of candidates) {
+    try {
+      const response = await fetch(`${origin}/health`, { signal: AbortSignal.timeout(3000) });
+      if (response.ok) {
+        console.log(`sitemap: API origin ${origin}`);
+        return origin;
+      }
+    } catch {
+      // try next
+    }
+  }
+  console.warn(`sitemap: ни один API origin не ответил (${candidates.join(', ')})`);
+  return candidates[0] || SITE;
+}
+
+const API = SKIP_API ? '' : await resolveApiOrigin();
 
 const CITIES = [
   { name: 'Минск', slug: 'minsk' },
@@ -66,7 +92,13 @@ function staticEntries() {
 }
 
 async function fetchJson(url) {
-  const response = await fetch(url, { signal: AbortSignal.timeout(20000) });
+  let response;
+  try {
+    response = await fetch(url, { signal: AbortSignal.timeout(20000) });
+  } catch (error) {
+    const cause = error instanceof Error ? (error.cause?.message || error.message) : String(error);
+    throw new Error(`fetch failed: ${cause} (${url})`);
+  }
   if (!response.ok) throw new Error(`${response.status} ${url}`);
   return response.json();
 }
@@ -157,11 +189,17 @@ async function dynamicEntries() {
 
 const staticUrls = staticEntries();
 let dynamicUrls = [];
-try {
-  dynamicUrls = await dynamicEntries();
-  console.log(`sitemap: статических ${staticUrls.length}, из API ${dynamicUrls.length}`);
-} catch (error) {
-  console.warn(`sitemap: API недоступен (${error instanceof Error ? error.message : error}), только статические адреса`);
+if (SKIP_API) {
+  console.log('sitemap: SITEMAP_SKIP_API=1 — только статические адреса (API позже в deploy)');
+} else {
+  try {
+    dynamicUrls = await dynamicEntries();
+    console.log(`sitemap: статических ${staticUrls.length}, из API ${dynamicUrls.length}`);
+  } catch (error) {
+    console.warn(
+      `sitemap: API недоступен (${error instanceof Error ? error.message : error}), только статические адреса`,
+    );
+  }
 }
 
 const xml = `<?xml version="1.0" encoding="UTF-8"?>
