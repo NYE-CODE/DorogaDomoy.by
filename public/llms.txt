@@ -6,25 +6,25 @@
 
 ## Поиск
 
-- [Как искать пропавшее животное](https://dorogadomoy.by/poisk-propavshih-zhivotnyh/index.md): Размещение объявления, проверка находок и ссылки по городам Беларуси
-- [Карта объявлений](https://dorogadomoy.by/search): Пропавшие и найденные собаки, кошки и другие питомцы
-- [Пропала собака](https://dorogadomoy.by/search?animal=dog&status=searching): Объявления о пропавших собаках
-- [Потерялся кот](https://dorogadomoy.by/search?animal=cat&status=searching): Объявления о пропавших кошках
-- [Найденные животные](https://dorogadomoy.by/search?status=found): Объявления о находках
+- [Как искать пропавшее животное](https://doragadomoy.by/poisk-propavshih-zhivotnyh/index.md): Размещение объявления, проверка находок и ссылки по городам Беларуси
+- [Пропала собака](https://doragadomoy.by/poisk-propavshej-sobaki/): Что делать и где искать объявления о собаках
+- [Потерялся кот](https://doragadomoy.by/poisk-propavshego-kota/): Что делать и где искать объявления о кошках
+- [Найденные животные](https://doragadomoy.by/najdennye-zhivotnye/): Объявления о находках и что делать, если нашли питомца
+- [Карта объявлений](https://doragadomoy.by/search): Пропавшие и найденные собаки, кошки и другие питомцы
 
 ## Города
 
-- [Минск](https://dorogadomoy.by/city/minsk): Объявления в Минске
-- [Брест](https://dorogadomoy.by/city/brest): Объявления в Бресте
-- [Гродно](https://dorogadomoy.by/city/grodno): Объявления в Гродно
-- [Гомель](https://dorogadomoy.by/city/gomel): Объявления в Гомеле
-- [Витебск](https://dorogadomoy.by/city/vitebsk): Объявления в Витебске
-- [Могилёв](https://dorogadomoy.by/city/mogilev): Объявления в Могилёве
+- [Минск](https://doragadomoy.by/city/minsk): Объявления в Минске
+- [Брест](https://doragadomoy.by/city/brest): Объявления в Бресте
+- [Гродно](https://doragadomoy.by/city/grodno): Объявления в Гродно
+- [Гомель](https://doragadomoy.by/city/gomel): Объявления в Гомеле
+- [Витебск](https://doragadomoy.by/city/vitebsk): Объявления в Витебске
+- [Могилёв](https://doragadomoy.by/city/mogilev): Объявления в Могилёве
 
 ## Optional
 
-- [Приюты](https://dorogadomoy.by/shelters): Каталог приютов и питомцы, которым нужен дом
-- [Блог](https://dorogadomoy.by/blog): Материалы о поиске животных
-- [Правила размещения](https://dorogadomoy.by/terms): Условия публикации объявлений
-- [Политика конфиденциальности](https://dorogadomoy.by/privacy): Обработка персональных данных
-- [Главная](https://dorogadomoy.by/): Краткое описание сервиса
+- [Приюты](https://doragadomoy.by/shelters): Каталог приютов и питомцы, которым нужен дом
+- [Блог](https://doragadomoy.by/blog): Материалы о поиске животных
+- [Правила размещения](https://doragadomoy.by/terms): Условия публикации объявлений
+- [Политика конфиденциальности](https://doragadomoy.by/privacy): Обработка персональных данных
+- [Главная](https://doragadomoy.by/): Краткое описание сервиса

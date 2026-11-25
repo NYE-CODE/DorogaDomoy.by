@@ -5,12 +5,21 @@ import react from '@vitejs/plugin-react'
 /** В dev/preview Vite не отдаёт каталог `public/.../index.html` по пути без файла.
  *  На проде nginx делает это через `try_files $uri $uri/ /index.html`. */
 function guidePageDevFallback(): Plugin {
+  const GUIDE_DIRS = [
+    '/poisk-propavshih-zhivotnyh',
+    '/poisk-propavshej-sobaki',
+    '/poisk-propavshego-kota',
+    '/najdennye-zhivotnye',
+  ]
   const rewrite = (req: { url?: string }) => {
     const raw = req.url ?? ''
     const pathOnly = raw.split('?')[0]
-    if (pathOnly !== '/poisk-propavshih-zhivotnyh' && pathOnly !== '/poisk-propavshih-zhivotnyh/') return
+    const base = GUIDE_DIRS.find(
+      (dir) => pathOnly === dir || pathOnly === `${dir}/`,
+    )
+    if (!base) return
     const query = raw.includes('?') ? `?${raw.split('?')[1]}` : ''
-    req.url = `/poisk-propavshih-zhivotnyh/index.html${query}`
+    req.url = `${base}/index.html${query}`
   }
   return {
     name: 'guide-page-dev-fallback',
@@ -33,7 +42,8 @@ function guidePageDevFallback(): Plugin {
 function seoBotProxy(): Plugin {
   const BOT_UA =
     /TelegramBot|facebookexternalhit|Twitterbot|Slackbot|Discordbot|LinkedInBot|WhatsApp|Viber|Googlebot|YandexBot|bingbot|Applebot|Preview/i
-  const SEO_PATH = /^\/(pet|shelter-pet|city)\/[^/]+\/?$/
+  const SEO_PATH =
+    /^\/((pet|shelter-pet|city|blog|shelters)\/[^/]+|search|blog|shelters)\/?$/
   const apiOrigin = (process.env.VITE_API_URL || 'http://127.0.0.1:8000').replace(/\/+$/, '')
 
   const middleware = async (

@@ -14,18 +14,18 @@ DorogaDomoy.by — сервис для помощи в поиске потеря
 
 После модерации объявление появляется на карте. Нашедший человек может открыть его и написать вам. Если вы сами нашли животное, создайте объявление о находке: владельцы смотрят те же [объявления о найденных питомцах](https://dorogadomoy.by/search?status=found).
 
-Частые запросы на карте: [пропала собака](https://dorogadomoy.by/search?animal=dog&status=searching), [потерялся кот](https://dorogadomoy.by/search?animal=cat&status=searching), [все пропавшие](https://dorogadomoy.by/search?status=searching), [все найденные](https://dorogadomoy.by/search?status=found).
+Отдельные гайды: [пропала собака](https://doragadomoy.by/poisk-propavshej-sobaki/), [потерялся кот](https://doragadomoy.by/poisk-propavshego-kota/). На карте: [все пропавшие](https://doragadomoy.by/search?status=searching), [все найденные](https://doragadomoy.by/search?status=found).
 
 ## Города Беларуси
 
 Сервис работает по всей Беларуси. Ниже — областные центры. В каждом городе показаны те объявления, которые уже разместили жители. Другие населённые пункты выбираются на карте.
 
-- [Минск](https://dorogadomoy.by/search?city=%D0%9C%D0%B8%D0%BD%D1%81%D0%BA): пропавшие и найденные собаки и кошки
-- [Брест](https://dorogadomoy.by/search?city=%D0%91%D1%80%D0%B5%D1%81%D1%82): объявления о пропавших животных
-- [Гродно](https://dorogadomoy.by/search?city=%D0%93%D1%80%D0%BE%D0%B4%D0%BD%D0%BE): поиск потерявшегося питомца
-- [Гомель](https://dorogadomoy.by/search?city=%D0%93%D0%BE%D0%BC%D0%B5%D0%BB%D1%8C): пропавшие и найденные животные
-- [Витебск](https://dorogadomoy.by/search?city=%D0%92%D0%B8%D1%82%D0%B5%D0%B1%D1%81%D0%BA): объявления о потерявшихся питомцах
-- [Могилёв](https://dorogadomoy.by/search?city=%D0%9C%D0%BE%D0%B3%D0%B8%D0%BB%D1%91%D0%B2): поиск собаки или кошки
+- [Минск](https://dorogadomoy.by/city/minsk): пропавшие и найденные собаки и кошки
+- [Брест](https://dorogadomoy.by/city/brest): объявления о пропавших животных
+- [Гродно](https://dorogadomoy.by/city/grodno): поиск потерявшегося питомца
+- [Гомель](https://dorogadomoy.by/city/gomel): пропавшие и найденные животные
+- [Витебск](https://dorogadomoy.by/city/vitebsk): объявления о потерявшихся питомцах
+- [Могилёв](https://dorogadomoy.by/city/mogilev): поиск собаки или кошки
 
 ## Что ещё есть на сайте
 

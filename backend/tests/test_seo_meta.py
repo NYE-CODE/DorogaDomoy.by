@@ -1,10 +1,16 @@
 """Тесты OG / crawl HTML без полного SSR."""
 from seo_meta import (
+    blog_list_seo,
+    blog_page_seo,
     city_name_from_slug,
     city_page_seo,
     city_slug,
+    default_og_image,
     inject_seo_into_html,
     pet_page_seo,
+    search_list_seo,
+    shelter_page_seo,
+    shelters_list_seo,
     truncate_text,
 )
 
@@ -73,3 +79,55 @@ def test_city_page_seo():
     html = inject_seo_into_html(SHELL, seo)
     assert "/city/minsk" in html
     assert "Пропавшие и найденные" in html
+
+
+def test_blog_page_seo():
+    seo = blog_page_seo(
+        slug="kak-iskat-sobaku",
+        title="Как искать пропавшую собаку",
+        excerpt="Пошаговая инструкция",
+        body_md="## Шаг 1\n\nПроверьте [карту](/search).",
+        meta_description=None,
+        cover_image_url="/uploads/cover.jpg",
+        published_iso="2026-01-01T12:00:00Z",
+    )
+    assert seo.canonical_path == "/blog/kak-iskat-sobaku"
+    assert "Article" in str(seo.json_ld)
+    html = inject_seo_into_html(SHELL, seo)
+    assert "Как искать пропавшую собаку" in html
+    assert "application/ld+json" in html
+
+
+def test_shelter_page_seo():
+    seo = shelter_page_seo(
+        shelter_id="sh-1",
+        name="Добрые лапы",
+        kind="shelter",
+        city="Минск",
+        address="ул. Примерная, 1",
+        description="Приют для собак и кошек.",
+        logo_url="/uploads/logo-s.png",
+        cover_url=None,
+        phone="+375291112233",
+        lat=53.9,
+        lng=27.566667,
+    )
+    assert seo.canonical_path == "/shelters/sh-1"
+    assert seo.json_ld and seo.json_ld.get("@graph")
+    types = {node.get("@type") for node in seo.json_ld["@graph"]}
+    assert "AnimalShelter" in types
+    assert "BreadcrumbList" in types
+    html = inject_seo_into_html(SHELL, seo)
+    assert "Добрые лапы" in html
+    assert "+375291112233" in html
+
+
+def test_list_pages_seo():
+    assert "hero/search-main.webp" in default_og_image()
+    search = search_list_seo()
+    assert search.canonical_path == "/search"
+    assert "карта" in search.description.lower() or "Карта" in search.description
+    blog = blog_list_seo(post_summaries=[{"url": "/blog/a", "label": "Статья A"}])
+    assert "Статья A" in blog.crawl_html
+    shelters = shelters_list_seo()
+    assert shelters.canonical_path == "/shelters"

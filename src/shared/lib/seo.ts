@@ -1,4 +1,4 @@
-﻿import { isMobileTelegramAuthPath } from '@/shared/lib/mobile-telegram-auth-path';
+import { isMobileTelegramAuthPath } from '@/shared/lib/mobile-telegram-auth-path';
 
 /** Публичный URL сайта для canonical и мета (без слэша в конце). */
 const RAW_SITE =
@@ -99,7 +99,7 @@ function upsertLinkCanonical(href: string) {
 
 function absoluteSeoUrl(url: string): string {
   const raw = url.trim();
-  if (!raw) return `${getSiteOrigin()}/logo.png`;
+  if (!raw) return `${getSiteOrigin()}/hero/search-main.webp`;
   if (/^https?:\/\//i.test(raw)) return raw;
   if (raw.startsWith('//')) return `https:${raw}`;
   const path = raw.startsWith('/') ? raw : `/${raw}`;
@@ -179,8 +179,11 @@ export function isPrivateSeoPath(pathname: string): boolean {
   if (pathname.startsWith('/my-shelters')) return true;
   if (pathname.startsWith('/settings')) return true;
   if (pathname === '/favorites') return true;
-  if (pathname === '/create') return true;
-  if (pathname.startsWith('/edit/')) return true;
+  if (pathname === '/create' || pathname.startsWith('/create/')) return true;
+  if (pathname.startsWith('/edit/') || pathname === '/edit') return true;
+  if (pathname.startsWith('/complete-profile')) return true;
+  if (pathname.startsWith('/welcome')) return true;
+  if (pathname.startsWith('/forgot-password') || pathname.startsWith('/reset-password')) return true;
   return false;
 }
 

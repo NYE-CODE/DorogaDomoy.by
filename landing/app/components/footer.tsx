@@ -196,6 +196,24 @@ export function Footer() {
             <span className="text-on-landing-dark/30" aria-hidden>
               ·
             </span>
+            <a href="/poisk-propavshej-sobaki/" className={linkClass}>
+              {f.dogGuide}
+            </a>
+            <span className="text-on-landing-dark/30" aria-hidden>
+              ·
+            </span>
+            <a href="/poisk-propavshego-kota/" className={linkClass}>
+              {f.catGuide}
+            </a>
+            <span className="text-on-landing-dark/30" aria-hidden>
+              ·
+            </span>
+            <a href="/najdennye-zhivotnye/" className={linkClass}>
+              {f.foundGuide}
+            </a>
+            <span className="text-on-landing-dark/30" aria-hidden>
+              ·
+            </span>
             <Link to="/terms" className={linkClass}>
               {f.rules}
             </Link>

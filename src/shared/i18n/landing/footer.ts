@@ -3,6 +3,9 @@ export const landingFooterLocales = {
   ru: {
     about: 'Поиск пропавших и найденных животных в Беларуси: объявления с фото, карта по городам, приюты и советы.',
     searchGuide: 'Как искать пропавшее животное',
+    dogGuide: 'Пропала собака',
+    catGuide: 'Потерялся кот',
+    foundGuide: 'Найденные животные',
     contactsTitle: 'КОНТАКТЫ',
     telegramGroup: 'Telegram-группа',
     supportBot: 'Бот поддержки',
@@ -28,6 +31,9 @@ export const landingFooterLocales = {
   be: {
     about: 'Пошук зніклых і знойдзеных жывёл у Беларусі: аб\'явы з фота, карта па гарадах, прытулкі і парады.',
     searchGuide: 'Як шукаць зніклую жывёлу',
+    dogGuide: 'Знікла сабака',
+    catGuide: 'Згубіўся кот',
+    foundGuide: 'Знойдзеныя жывёлы',
     contactsTitle: 'КАНТАКТЫ',
     telegramGroup: 'Telegram-група',
     supportBot: 'Бот падтрымкі',
@@ -53,6 +59,9 @@ export const landingFooterLocales = {
   en: {
     about: 'Search for lost and found pets in Belarus: photo listings, a city map, shelters, and advice.',
     searchGuide: 'How to search for a lost pet',
+    dogGuide: 'Lost dog',
+    catGuide: 'Lost cat',
+    foundGuide: 'Found pets',
     contactsTitle: 'CONTACTS',
     telegramGroup: 'Telegram group',
     supportBot: 'Support bot',

@@ -2,7 +2,8 @@
 <html lang="ru">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/logo.png" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" href="/logo.png" sizes="48x48" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -40,20 +41,74 @@
       content="Разместите объявление о пропаже или находке собаки или кошки. Карта по городам Беларуси, контакты владельца, блог с советами. Бесплатно на DorogaDomoy.by."
     />
     <meta property="og:url" content="https://dorogadomoy.by/" />
-    <meta property="og:image" content="https://dorogadomoy.by/logo.png" />
+    <meta property="og:image" content="https://dorogadomoy.by/hero/search-main.webp" />
+    <meta property="og:image:alt" content="Поиск пропавших и найденных животных в Беларуси" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Пропавшие и найденные животные в Беларуси — объявления и карта | DorogaDomoy.by" />
     <meta
       name="twitter:description"
       content="Разместите объявление о пропаже или находке собаки или кошки. Карта по городам Беларуси, контакты владельца, блог с советами. Бесплатно на DorogaDomoy.by."
     />
-    <meta name="twitter:image" content="https://dorogadomoy.by/logo.png" />
+    <meta name="twitter:image" content="https://dorogadomoy.by/hero/search-main.webp" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="DorogaDomoy" />
     <link rel="apple-touch-icon" href="/logo.png" />
     <title>Пропавшие и найденные животные в Беларуси — объявления и карта | DorogaDomoy.by</title>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://doragadomoy.by/#organization",
+            "name": "DorogaDomoy.by",
+            "url": "https://doragadomoy.by/",
+            "logo": "https://doragadomoy.by/logo.png",
+            "email": "contact@doragadomoy.by",
+            "sameAs": ["https://t.me/doragadomoy_by"]
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://doragadomoy.by/#website",
+            "name": "DorogaDomoy.by",
+            "url": "https://doragadomoy.by/",
+            "inLanguage": "ru",
+            "publisher": { "@id": "https://doragadomoy.by/#organization" }
+          },
+          {
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "Сколько стоит размещение объявления?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Размещение объявлений на DorogaDomoy.by бесплатное."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "В каких регионах работает сервис?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Сервис работает по всей Беларуси: объявления из всех регионов страны."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Что делать, если я нашел чужого питомца?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Создайте объявление о находке с фото и местом. Похожие объявления о пропаже подберутся автоматически."
+                }
+              }
+            ]
+          }
+        ]
+      }
+    </script>
     <script>
       document.documentElement.classList.add('js');
     </script>
@@ -64,13 +119,16 @@
   <body>
     <div id="root">
       <article id="crawl-fallback" style="padding: 2rem 1.25rem 3rem; max-width: 42rem; margin: 0 auto; font-family: system-ui, sans-serif; line-height: 1.55; color: #111827;">
-        <h1 style="font-size: 1.7rem; line-height: 1.25; margin: 0 0 0.75rem;">DorogaDomoy.by — поиск пропавших и найденных животных в Беларуси</h1>
+        <h1 style="font-size: 1.7rem; line-height: 1.25; margin: 0 0 0.75rem;">Пропавшие и найденные животные — по всей Беларуси</h1>
         <p style="margin: 0 0 1rem; color: #5c5c6b;">
           Сервис помогает найти потерявшуюся собаку или кошку: карта объявлений по городам Беларуси, фотографии и контакты.
           Смотреть объявления можно без регистрации.
         </p>
         <ul style="padding-left: 1.25rem; margin: 0 0 1rem;">
           <li><a href="/poisk-propavshih-zhivotnyh/">Как искать пропавшее животное</a></li>
+          <li><a href="/poisk-propavshej-sobaki/">Пропала собака — что делать</a></li>
+          <li><a href="/poisk-propavshego-kota/">Потерялся кот — что делать</a></li>
+          <li><a href="/najdennye-zhivotnye/">Найденные животные</a></li>
           <li><a href="/search">Карта объявлений о пропавших и найденных питомцах</a></li>
           <li><a href="/shelters">Каталог приютов</a></li>
           <li><a href="/create">Сообщить о пропаже или находке</a></li>

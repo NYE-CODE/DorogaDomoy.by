@@ -2,10 +2,10 @@
 export const landingHeroLocales = {
   ru: {
     badge: 'Платформа для питомцев',
-    title: 'Дорога домой для питомцев —',
+    title: 'Пропавшие и найденные животные —',
     titleHighlight: 'по всей Беларуси',
     subtitle:
-      'Смотрите объявления на карте или сообщите, если питомец потерялся или найден.',
+      'Смотрите объявления на карте или сообщите, если питомец потерялся или найден. DorogaDomoy.by — дорога домой.',
     primaryCta: 'Открыть карту',
     secondaryCta: 'Потерял или нашёл',
     paths: {
@@ -27,10 +27,10 @@ export const landingHeroLocales = {
   },
   be: {
     badge: 'Платформа для жывёл',
-    title: 'Дарога дадому для жывёл —',
+    title: 'Зніклыя і знойдзеныя жывёлы —',
     titleHighlight: 'па ўсёй Беларусі',
     subtitle:
-      'Глядзіце аб\'явы на карце або паведаміце, калі жывёла згубілася ці знойдзена.',
+      'Глядзіце аб\'явы на карце або паведаміце, калі жывёла згубілася ці знойдзена. DorogaDomoy.by — дарога дадому.',
     primaryCta: 'Адкрыць карту',
     secondaryCta: 'Згубіў або знайшоў',
     paths: {
@@ -52,10 +52,10 @@ export const landingHeroLocales = {
   },
   en: {
     badge: 'Platform for pets',
-    title: 'The road home for pets —',
+    title: 'Lost and found pets —',
     titleHighlight: 'across Belarus',
     subtitle:
-      'Browse listings on the map, or post if a pet is lost or found.',
+      'Browse listings on the map, or post if a pet is lost or found. DorogaDomoy.by — the road home.',
     primaryCta: 'Open map',
     secondaryCta: 'Lost or found',
     paths: {

@@ -1,3 +1,53 @@
-# SPA fallback (Netlify и аналоги): несуществующие пути отдают index.html.
-# Реальные файлы из dist (/assets/*, sw.js, …) обслуживаются как обычно.
-/*    /index.html   200
+# Netlify / аналоги. На проде с nginx используйте
+# deploy/nginx/dorogadomoy-spa-fallback.example.conf — там настоящий 404.
+
+# Статические SEO-гайды
+/poisk-propavshih-zhivotnyh /poisk-propavshih-zhivotnyh/index.html 200
+/poisk-propavshih-zhivotnyh/ /poisk-propavshih-zhivotnyh/index.html 200
+/poisk-propavshej-sobaki /poisk-propavshej-sobaki/index.html 200
+/poisk-propavshej-sobaki/ /poisk-propavshej-sobaki/index.html 200
+/poisk-propavshego-kota /poisk-propavshego-kota/index.html 200
+/poisk-propavshego-kota/ /poisk-propavshego-kota/index.html 200
+/najdennye-zhivotnye /najdennye-zhivotnye/index.html 200
+/najdennye-zhivotnye/ /najdennye-zhivotnye/index.html 200
+
+# Публичные и личные SPA-маршруты (иначе catch-all 404 сломает приложение)
+/search /index.html 200
+/search/* /index.html 200
+/city/* /index.html 200
+/pet/* /index.html 200
+/shelter-pet/* /index.html 200
+/pet-profile/* /index.html 200
+/user/* /index.html 200
+/shelters /index.html 200
+/shelters/* /index.html 200
+/blog /index.html 200
+/blog/* /index.html 200
+/terms /index.html 200
+/privacy /index.html 200
+/delete-account /index.html 200
+/favorites /index.html 200
+/profile /index.html 200
+/profile/* /index.html 200
+/my-ads /index.html 200
+/my-ads/* /index.html 200
+/my-pets /index.html 200
+/my-pets/* /index.html 200
+/my-shelters /index.html 200
+/my-shelters/* /index.html 200
+/create /index.html 200
+/create/* /index.html 200
+/edit/* /index.html 200
+/settings /index.html 200
+/settings/* /index.html 200
+/admin /index.html 200
+/admin/* /index.html 200
+/complete-profile /index.html 200
+/welcome/* /index.html 200
+/forgot-password /index.html 200
+/reset-password /index.html 200
+/mobile-telegram-auth /index.html 200
+/mobile-telegram-auth.html /index.html 200
+
+# Неизвестные URL — настоящий 404 (не soft 200 с главной)
+/* /404.html 404

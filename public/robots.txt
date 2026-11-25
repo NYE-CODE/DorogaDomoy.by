@@ -1,4 +1,4 @@
-# Поисковый индекс ChatGPT. Приватные разделы не содержат публичных объявлений.
+# ChatGPT: не обходим личные разделы (там нет публичных объявлений).
 User-agent: OAI-SearchBot
 Allow: /
 Disallow: /admin
@@ -13,8 +13,9 @@ Disallow: /edit/
 Disallow: /complete-profile
 Disallow: /welcome/
 Disallow: /mobile-telegram-auth
+Disallow: /forgot-password
+Disallow: /reset-password
 
-# Запросы, которые пользователь явно просит открыть в браузере ChatGPT.
 User-agent: ChatGPT-User
 Allow: /
 Disallow: /admin
@@ -29,20 +30,16 @@ Disallow: /edit/
 Disallow: /complete-profile
 Disallow: /welcome/
 Disallow: /mobile-telegram-auth
+Disallow: /forgot-password
+Disallow: /reset-password
 
+# Google / Яндекс: личные URL не Disallow — иначе не увидят noindex (X-Robots-Tag / meta).
 User-agent: *
 Allow: /
-Disallow: /admin
-Disallow: /profile
-Disallow: /my-ads
-Disallow: /my-pets
-Disallow: /my-shelters
-Disallow: /settings
-Disallow: /favorites
-Disallow: /create
-Disallow: /edit/
-Disallow: /complete-profile
-Disallow: /welcome/
-Disallow: /mobile-telegram-auth
 
-Sitemap: https://dorogadomoy.by/sitemap.xml
+# Яндекс: склеить метки с каноническим URL (часть utm_* чистит и сам).
+User-agent: Yandex
+Allow: /
+Clean-param: utm_source&utm_medium&utm_campaign&utm_content&utm_term&ref&fbclid&gclid&ysclid&yrclid
+
+Sitemap: https://doragadomoy.by/sitemap.xml

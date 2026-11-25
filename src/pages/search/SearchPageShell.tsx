@@ -31,7 +31,7 @@ import {
   saveSearchLayoutMode,
   type SearchLayoutMode,
 } from '@/shared/lib/home-route';
-import { findCityBySlug } from '@/shared/lib/cities';
+import { CITY_SLUG_BY_NAME, findCityBySlug } from '@/shared/lib/cities';
 import {
   applySeo,
   canonicalUrlFromPath,
@@ -103,6 +103,29 @@ export default function SearchPage() {
 
   const pets = useSearchPetsData(view, filters);
   const city = useSearchCitySetup(saveCity, clearCity, pageQuery.cityName, setSelectedCity);
+
+  // Областные центры: /search?city=Минск → /city/minsk (канон без query-дубля).
+  useEffect(() => {
+    if (citySlugParam) return;
+    if (location.pathname !== '/search') return;
+    const rawName = pageQuery.cityName.trim();
+    if (!rawName) return;
+    const slug =
+      CITY_SLUG_BY_NAME[rawName] ||
+      (pageQuery.city ? CITY_SLUG_BY_NAME[pageQuery.city.name] : undefined);
+    if (!slug) return;
+    const params = new URLSearchParams(location.search);
+    params.delete('city');
+    const rest = params.toString();
+    routerNavigate(`/city/${slug}${rest ? `?${rest}` : ''}`, { replace: true });
+  }, [
+    citySlugParam,
+    location.pathname,
+    location.search,
+    pageQuery.city,
+    pageQuery.cityName,
+    routerNavigate,
+  ]);
 
   useEffect(() => {
     const fromSlug = citySlugParam ? findCityBySlug(citySlugParam) : undefined;

@@ -8,7 +8,8 @@
     "dev": "vite",
     "build": "node scripts/generate-sitemap.mjs && vite build",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "seo:smoke": "node scripts/seo-smoke.mjs"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.3",

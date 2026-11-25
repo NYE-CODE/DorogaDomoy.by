@@ -39,6 +39,8 @@ location /uploads/ {
 
 Каталог с билдом (`dist/` → `frontend/`) нужно отдавать с fallback на `index.html`, иначе при **прямом** заходе по URL или обновлении страницы nginx ищет файл по пути и возвращает 404, не загружая приложение.
 
+Минимум (удобно для разработки, но даёт soft 404 на мусорных URL):
+
 ```nginx
 root /home/dorogado/DorogaDomoy.by/frontend;
 index index.html;
@@ -48,7 +50,19 @@ location / {
 }
 ```
 
-Блоки `location /api/v1/` и `location /uploads/` должны быть **выше** или с более узким префиксом, чтобы не перехватывались этим `location /`.
+Для SEO лучше **не** отдавать `index.html` на неизвестные пути. Подключите
+`deploy/nginx/dorogadomoy-static-cache.conf` (карточки/города/блог/приюты + `X-Robots-Tag` на ЛК)
+и вместо голого `location /` — allowlist из
+`deploy/nginx/dorogadomoy-spa-fallback.example.conf` (с `error_page 404 /404.html`).
+
+После выкладки с машины с доступом к продy:
+
+```bash
+node scripts/seo-smoke.mjs
+# или SITE_URL=https://doragadomoy.by node scripts/seo-smoke.mjs
+```
+
+Блоки `location /api/v1/` и `location /uploads/` должны быть **выше** или с более узким префиксом, чтобы не перехватывались SPA-location.
 
 ---
 
